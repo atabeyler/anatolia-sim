@@ -1,0 +1,98 @@
+import { Router } from 'express';
+import { authenticate } from '../middleware/auth.js';
+import { query } from '../../db/database.js';
+import { simulationManager } from '../simulationManager.js';
+import Anthropic from '@anthropic-ai/sdk';
+
+const router = Router();
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+router.post('/:simId/intervene', authenticate, async (req, res) => {
+  try {
+    const { simId } = req.params;
+    const { type, params, user_note } = req.body;
+    const engine = simulationManager.getEngine(simId);
+    if (!engine) return res.status(400).json({ error: 'Simulation not running' });
+    const alive = [...engine.population.values()].filter(i => i.alive);
+    let affected = 0, deaths = 0;
+    switch (type) {
+      case 'earthquake': {
+        const { magnitude, lat, lon, radius = 100 } = params;
+        for (const ind of alive) {
+          const dist = Math.hypot(ind.x - lon, ind.y - lat);
+          if (dist < radius) {
+            const risk = (magnitude - 4) / 5 * (1 - dist / radius);
+            if (Math.random() < risk) { ind.alive = false; ind.death_day = engine.currentDay; ind.death_cause = 'earthquake'; deaths++; }
+            else ind.health.hp = Math.max(0.1, ind.health.hp - risk * 0.5);
+            affected++;
+          }
+        }
+        break;
+      }
+      case 'flood': {
+        const { severity, lat, lon, radius = 150 } = params;
+        for (const ind of alive) {
+          if (Math.hypot(ind.x - lon, ind.y - lat) < radius) {
+            if (Math.random() < severity * 0.15) { ind.alive = false; ind.death_day = engine.currentDay; ind.death_cause = 'flood'; deaths++; }
+            affected++;
+          }
+        }
+        break;
+      }
+      case 'epidemic': {
+        const { mortality_rate = 0.2, spread_rate = 0.5 } = params;
+        for (const ind of alive) {
+          if (Math.random() < spread_rate) {
+            if (Math.random() < mortality_rate * (1 - ind.phenotype.immune_strength)) { ind.alive = false; ind.death_day = engine.currentDay; ind.death_cause = 'epidemic'; deaths++; }
+            else ind.health.disease = { type: 'epidemic', duration: 21, daily_mortality_risk: 0.01 };
+            affected++;
+          }
+        }
+        break;
+      }
+      case 'genetic_boost': {
+        const ind = engine.population.get(params.individual_id);
+        if (ind) { ind.phenotype[params.trait] = Math.min(1, (ind.phenotype[params.trait] ?? 0.5) + params.amount); affected = 1; }
+        break;
+      }
+      case 'instant_death': {
+        const ind = engine.population.get(params.individual_id);
+        if (ind?.alive) { ind.alive = false; ind.death_day = engine.currentDay; ind.death_cause = 'god_intervention'; deaths = 1; affected = 1; }
+        break;
+      }
+      case 'drought': {
+        engine.worldState.food_abundance = Math.max(0.05, engine.worldState.food_abundance * 0.3);
+        engine.worldState.water_abundance = Math.max(0.05, engine.worldState.water_abundance * 0.2);
+        affected = alive.length;
+        break;
+      }
+    }
+    await query(`INSERT INTO god_interventions (simulation_id,sim_day,sim_year,type,params,affected_individuals,deaths,user_note) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [simId, engine.currentDay, Math.floor(engine.currentDay/365), type, JSON.stringify(params), affected, deaths, user_note]);
+    res.json({ message: 'Intervention applied', affected, deaths });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Intervention failed' }); }
+});
+
+router.post('/:simId/talk/:individualId', authenticate, async (req, res) => {
+  try {
+    const { simId, individualId } = req.params;
+    const { message } = req.body;
+    const engine = simulationManager.getEngine(simId);
+    if (!engine) return res.status(400).json({ error: 'Simulation not running' });
+    const individual = engine.population.get(individualId);
+    if (!individual) return res.status(404).json({ error: 'Individual not found' });
+    const age = Math.floor((engine.currentDay - individual.birth_day) / 365);
+    const langStage = individual.language?.stage ?? 0;
+    const response = await anthropic.messages.create({
+      model: 'claude-opus-4-7', max_tokens: 500,
+      system: `You are roleplaying as a simulated human in a civilization simulation. Age: ${age}, Sex: ${individual.sex}, Language stage: ${langStage} (${individual.language?.stage_name ?? 'pre-linguistic'}), Intelligence: ${individual.phenotype?.fluid_intelligence?.toFixed(2)}/1.0. If stage 0-1: only grunts/gestures. If stage 2: proto-sounds. If stage 3: max 10 simple words. If stage 4+: simple sentences. Never break character.`,
+      messages: [{ role: 'user', content: message }],
+    });
+    const individualResponse = response.content[0].text;
+    await query(`INSERT INTO individual_conversations (simulation_id,individual_id,sim_day,user_message,individual_response,language_stage) VALUES ($1,$2,$3,$4,$5,$6)`,
+      [simId, individualId, engine.currentDay, message, individualResponse, individual.language.stage_name ?? 'pre-linguistic']);
+    res.json({ response: individualResponse });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Conversation failed' }); }
+});
+
+export default router;
