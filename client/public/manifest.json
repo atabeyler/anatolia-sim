@@ -1,0 +1,10 @@
+{
+  "name": "ANTİLİA-SİM MEDENİYET",
+  "short_name": "ANTİLİA-SİM",
+  "description": "Civilization Simulation — RST Q-Nation",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a1a",
+  "theme_color": "#4f6ef7",
+  "icons": [{"src":"/icons/icon-192.png","sizes":"192x192","type":"image/png"},{"src":"/icons/icon-512.png","sizes":"512x512","type":"image/png"}]
+}
