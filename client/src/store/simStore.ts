@@ -66,6 +66,7 @@ interface SimStore {
   events: SimEvent[];
   setStats: (stats: SimStats) => void;
   addEvent: (event: SimEvent) => void;
+  resetLiveState: () => void;
 
   // UI state
   activePanel: string | null;
@@ -93,6 +94,7 @@ export const useSimStore = create<SimStore>((set) => ({
   events: [],
   setStats: (stats) => set({ stats }),
   addEvent: (event) => set(s => ({ events: [event, ...s.events].slice(0, 200) })),
+  resetLiveState: () => set({ stats: null, events: [] }),
 
   activePanel: null,
   setActivePanel: (panel) => set(s => ({ activePanel: s.activePanel === panel ? null : panel })),

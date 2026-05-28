@@ -18,7 +18,7 @@ import { initializePsychology, updateMentalState, processBonding, computePopulat
 import { initializeEpigenome, inheritEpigenome, updateEpigenome } from './epigenetics/epigeneticsEngine.js';
 import { processAstronomyTick } from './astronomy/astronomyEngine.js';
 
-const SOCIAL_INTERACTION_RADIUS = 50;
+const SOCIAL_INTERACTION_RADIUS = 5;  // degrees (~500 km) — was 50 (causes O(n²) explosion)
 const CHECKPOINT_INTERVAL = 100;
 
 export class SimulationEngine {
@@ -54,12 +54,21 @@ export class SimulationEngine {
   async start() {
     if (this.running) return;
     this.running = true;
+    let fastBatch = 0;
     while (this.running) {
       const alive = [...this.population.values()].filter(i => !i.is_dead);
       if (alive.length === 0) { this.running = false; break; }
       await this.tick();
       if (this.speedMultiplier < 100) {
+        fastBatch = 0;
         await sleep(1000 / this.speedMultiplier);
+      } else {
+        // At max speed: yield to event loop every 10 ticks so WebSocket/DB can breathe
+        fastBatch++;
+        if (fastBatch >= 10) {
+          fastBatch = 0;
+          await new Promise(resolve => setImmediate(resolve));
+        }
       }
     }
   }
@@ -386,13 +395,18 @@ export class SimulationEngine {
   }
 
   processSocialInteractions(alive, day, tickEvents) {
-    for (let i = 0; i < alive.length; i++) {
+    // Cap total pairs per tick to prevent O(n²) explosion at large populations
+    const MAX_PAIRS = 300;
+    let pairs = 0;
+    outer: for (let i = 0; i < alive.length; i++) {
       const ind = alive[i];
       for (let j = i + 1; j < alive.length; j++) {
+        if (pairs >= MAX_PAIRS) break outer;
         const other = alive[j];
         if (ind.is_dead || other.is_dead) continue;
         const dist = Math.hypot((ind.x ?? 0) - (other.x ?? 0), (ind.y ?? 0) - (other.y ?? 0));
         if (dist > SOCIAL_INTERACTION_RADIUS) continue;
+        pairs++;
 
         // Mating attempt
         if (!ind.social?.mate_id && !other.social?.mate_id) {

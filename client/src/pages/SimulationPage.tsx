@@ -75,7 +75,7 @@ function translateEventDesc(desc: string, type: string): string {
 export default function SimulationPage() {
   const { simId } = useParams<{ simId: string }>();
   const navigate = useNavigate();
-  const { accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, toggleLang, speedMultiplier, setSpeed } = useSimStore();
+  const { accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, toggleLang, speedMultiplier, setSpeed, resetLiveState } = useSimStore();
   const [individuals, setIndividuals] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'harita' | 'durum' | 'kontrol'>('harita');
@@ -99,6 +99,9 @@ export default function SimulationPage() {
 
   useEffect(() => {
     if (!simId || !accessToken) return;
+    // Clear previous simulation's live data immediately
+    resetLiveState();
+    setIndividuals([]);
     axios.get(`/api/simulations/${simId}`, { headers: { Authorization: `Bearer ${accessToken}` } })
       .then(r => setCurrentSim(r.data));
     const interval = setInterval(() => {
