@@ -5,7 +5,7 @@ class SimulationManager {
   constructor() { this.engines = new Map(); this.wsClients = new Map(); }
 
   async start(simulation) {
-    if (this.engines.has(simulation.id)) { this.engines.get(simulation.id).resume(); return; }
+    if (this.engines.has(simulation.id)) { this.runEngine(simulation.id, this.engines.get(simulation.id)); return; }
     const { rows: individuals } = await query('SELECT * FROM individuals WHERE simulation_id = $1', [simulation.id]);
     const engine = new SimulationEngine(simulation);
     engine.load(individuals.map(parseIndividual));
@@ -17,7 +17,17 @@ class SimulationManager {
       await this.persistPopulation(simulation.id, engine);
     };
     this.engines.set(simulation.id, engine);
-    engine.start();
+    this.runEngine(simulation.id, engine);
+  }
+
+  runEngine(simId, engine) {
+    engine.start().catch(async (err) => {
+      console.error(`[SIM ${simId}] Engine stopped after error:`, err);
+      engine.pause();
+      await this.persistState(simId, engine).catch(console.error);
+      await query("UPDATE simulations SET status = 'paused' WHERE id = $1", [simId]).catch(console.error);
+      this.broadcast(simId, { type: 'error', error: 'Simulation engine paused after an internal error.' });
+    });
   }
 
   pause(simId) { this.engines.get(simId)?.pause(); }

@@ -36,6 +36,8 @@ interface Simulation {
   status: 'running' | 'paused' | 'completed';
   current_day: number;
   current_year: number;
+  total_ever?: number;
+  population?: number;
   start_latitude: number;
   start_longitude: number;
   speed_multiplier?: number;

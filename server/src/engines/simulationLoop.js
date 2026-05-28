@@ -52,6 +52,7 @@ export class SimulationEngine {
   }
 
   async start() {
+    if (this.running) return;
     this.running = true;
     while (this.running) {
       const alive = [...this.population.values()].filter(i => !i.is_dead);
@@ -68,7 +69,10 @@ export class SimulationEngine {
 
   async tick() {
     const day = this.currentDay;
-    for (const ind of this.population.values()) ind.alive = !ind.is_dead;
+    for (const ind of this.population.values()) {
+      ind.alive = !ind.is_dead;
+      ind.age = day - (ind.birth_day ?? 0);
+    }
     const alive = [...this.population.values()].filter(i => !i.is_dead);
     const tickEvents = [];
 

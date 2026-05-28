@@ -15,6 +15,8 @@ export function useSimWebSocket(simId: string | null) {
         if (data.type === 'tick') {
           if (data.stats) setStats(data.stats);
           if (data.events) data.events.forEach(addEvent);
+        } else if (data.type === 'error') {
+          console.error(data.error);
         }
       } catch {}
     };

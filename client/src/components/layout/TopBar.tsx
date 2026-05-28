@@ -16,11 +16,9 @@ function Seg({ label, value, color = '#c0ccee' }: { label: string; value: string
     </div>
   );
 }
-
 function Divider() {
   return <div className="w-px h-6 flex-shrink-0" style={{ background: 'rgba(79,110,247,0.25)' }} />;
 }
-
 function SettingsOverlay({ onClose, onSpeedChange }: { onClose: () => void; onSpeedChange: (speed: number) => void }) {
   const { lang, toggleLang, speedMultiplier } = useSimStore();
   const ref = useRef<HTMLDivElement>(null);
@@ -245,8 +243,12 @@ export default function TopBar() {
   }
 
   const isRunning = currentSim?.status === 'running';
-  const births = Math.max((stats?.total_ever ?? 0) - 2, 0);
-  const deaths = Math.max((stats?.total_ever ?? 0) - (stats?.population ?? 0), 0);
+  const simDay = stats?.day ?? currentSim?.current_day ?? 0;
+  const simYear = stats?.year ?? currentSim?.current_year ?? Math.floor(simDay / 365);
+  const liveCount = stats?.population ?? currentSim?.population ?? 0;
+  const totalEver = stats?.total_ever ?? currentSim?.total_ever ?? liveCount;
+  const births = Math.max(totalEver - 2, 0);
+  const deaths = Math.max(totalEver - liveCount, 0);
   const hourStr = stats?.hour !== undefined ? String(stats.hour).padStart(2, '0') + ':00' : '--:--';
 
   return (
@@ -348,7 +350,7 @@ export default function TopBar() {
       <div className="flex-1" />
 
       {/* SIM TIME — YIL / GÜN / SAAT */}
-      {stats && (
+      {currentSim && (
         <div className="flex items-center flex-shrink-0"
           style={{
             background: 'rgba(4,4,20,0.85)',
@@ -356,9 +358,9 @@ export default function TopBar() {
             padding: '2px 0',
           }}>
           <Divider />
-          <Seg label={lang === 'tr' ? 'ZAMAN' : 'TIME'} value={`Y${stats.year.toLocaleString()} D${stats.day.toLocaleString()}`} color="#7090ff" />
+          <Seg label={lang === 'tr' ? 'ZAMAN' : 'TIME'} value={`Y${simYear.toLocaleString()} D${simDay.toLocaleString()}`} color="#7090ff" />
           <Divider />
-          <Seg label={lang === 'tr' ? 'CANLI' : 'LIVE'} value={stats.population.toLocaleString()} color="#4ecb71" />
+          <Seg label={lang === 'tr' ? 'CANLI' : 'LIVE'} value={liveCount.toLocaleString()} color="#4ecb71" />
           {!isMobile && (
             <>
               <Divider />
@@ -372,12 +374,12 @@ export default function TopBar() {
           {!isMobile && (
             <>
               <Divider />
-              <Seg label={lang === 'tr' ? 'MEVSİM' : 'SEASON'} value={stats.season.toUpperCase().slice(0, 3)} color="#a0b4ff" />
+              <Seg label={lang === 'tr' ? 'MEVSİM' : 'SEASON'} value={(stats?.season ?? '---').toUpperCase().slice(0, 3)} color="#a0b4ff" />
               <Divider />
-              <Seg label={lang === 'tr' ? 'ISI' : 'TEMP'} value={`${stats.temperature}°`}
-                color={stats.temperature > 30 ? '#e05a5a' : stats.temperature < 5 ? '#00d4ff' : '#a0b4ff'} />
+              <Seg label={lang === 'tr' ? 'ISI' : 'TEMP'} value={stats ? `${stats.temperature}°` : '--'}
+                color={(stats?.temperature ?? 20) > 30 ? '#e05a5a' : (stats?.temperature ?? 20) < 5 ? '#00d4ff' : '#a0b4ff'} />
               <Divider />
-              <Seg label="TECH" value={`T${stats.technologies}`} color="#4ecb71" />
+              <Seg label="TECH" value={`T${stats?.technologies ?? 0}`} color="#4ecb71" />
             </>
           )}
           <Divider />

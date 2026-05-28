@@ -82,7 +82,14 @@ function serializeIndividual(ind, currentDay) {
 
 router.get('/', authenticate, async (req, res) => {
   try {
-    const { rows } = await query(`SELECT id, name, status, current_day, current_year, start_latitude, start_longitude, created_at FROM simulations WHERE user_id = $1 ORDER BY created_at DESC`, [req.user.id]);
+    const { rows } = await query(`SELECT s.id, s.name, s.status, s.current_day, s.current_year, s.start_latitude, s.start_longitude, s.created_at,
+      COUNT(i.id)::int AS total_ever,
+      COUNT(i.id) FILTER (WHERE i.alive = true)::int AS population
+      FROM simulations s
+      LEFT JOIN individuals i ON i.simulation_id = s.id
+      WHERE s.user_id = $1
+      GROUP BY s.id
+      ORDER BY s.created_at DESC`, [req.user.id]);
     res.json(rows);
   } catch { res.status(500).json({ error: 'Failed to fetch simulations' }); }
 });
@@ -107,7 +114,13 @@ router.post('/', authenticate, async (req, res) => {
 
 router.get('/:id', authenticate, async (req, res) => {
   try {
-    const { rows } = await query('SELECT * FROM simulations WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+    const { rows } = await query(`SELECT s.*,
+      COUNT(i.id)::int AS total_ever,
+      COUNT(i.id) FILTER (WHERE i.alive = true)::int AS population
+      FROM simulations s
+      LEFT JOIN individuals i ON i.simulation_id = s.id
+      WHERE s.id = $1 AND s.user_id = $2
+      GROUP BY s.id`, [req.params.id, req.user.id]);
     if (!rows[0]) return res.status(404).json({ error: 'Simulation not found' });
     res.json(rows[0]);
   } catch { res.status(500).json({ error: 'Failed to fetch simulation' }); }
