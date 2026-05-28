@@ -118,14 +118,14 @@ function GridLines() {
       const phi = (lat * Math.PI) / 180;
       for (let i = 0; i <= 128; i++) {
         const lon = (i / 128) * 2 * Math.PI;
-        pts.push(r * Math.cos(phi) * Math.cos(lon), r * Math.sin(phi), r * Math.cos(phi) * Math.sin(lon));
+        pts.push(r * Math.cos(phi) * Math.sin(lon), r * Math.sin(phi), r * Math.cos(phi) * Math.cos(lon));
       }
     }
     for (let lon = 0; lon < 360; lon += 30) {
       const theta = (lon * Math.PI) / 180;
       for (let i = 0; i <= 64; i++) {
         const phi = ((i / 64) * 180 - 90) * (Math.PI / 180);
-        pts.push(r * Math.cos(phi) * Math.cos(theta), r * Math.sin(phi), r * Math.cos(phi) * Math.sin(theta));
+        pts.push(r * Math.cos(phi) * Math.sin(theta), r * Math.sin(phi), r * Math.cos(phi) * Math.cos(theta));
       }
     }
     const geo = new THREE.BufferGeometry();
@@ -140,12 +140,20 @@ function GridLines() {
   );
 }
 
-function PopulationDots({ individuals }: { individuals: any[] }) {
+function PopulationDots({
+  individuals,
+  groupRef,
+  onSelect,
+}: {
+  individuals: any[];
+  groupRef: React.RefObject<THREE.Group | null>;
+  onSelect?: (ind: any) => void;
+}) {
   const meshRef = useRef<THREE.Points>(null);
   useFrame(({ clock }) => {
     if (meshRef.current) {
       (meshRef.current.material as THREE.PointsMaterial).size =
-        0.055 + Math.sin(clock.elapsedTime * 1.5) * 0.008;
+        0.12 + Math.sin(clock.elapsedTime * 1.5) * 0.02;
     }
   });
 
@@ -157,7 +165,11 @@ function PopulationDots({ individuals }: { individuals: any[] }) {
     for (const ind of individuals) {
       const lat = (ind.y ?? 0) * Math.PI / 180;
       const lon = (ind.x ?? 0) * Math.PI / 180;
-      positions.push(r * Math.cos(lat) * Math.cos(lon), r * Math.sin(lat), r * Math.cos(lat) * Math.sin(lon));
+      positions.push(
+        r * Math.cos(lat) * Math.sin(lon),
+        r * Math.sin(lat),
+        r * Math.cos(lat) * Math.cos(lon),
+      );
       if (ind.sex === 'male') colors.push(0.35, 0.6, 1.0);
       else                    colors.push(1.0, 0.45, 0.65);
     }
@@ -167,8 +179,30 @@ function PopulationDots({ individuals }: { individuals: any[] }) {
   }, [individuals]);
 
   return (
-    <points ref={meshRef} geometry={geo}>
-      <pointsMaterial size={0.055} vertexColors sizeAttenuation transparent opacity={0.92} />
+    <points
+      ref={meshRef}
+      geometry={geo}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!onSelect || individuals.length === 0) return;
+        const r = 2.025;
+        let minDist = Infinity, minIdx = -1;
+        individuals.forEach((ind, i) => {
+          const lat = ((ind.y ?? 0) * Math.PI) / 180;
+          const lon = ((ind.x ?? 0) * Math.PI) / 180;
+          const px = r * Math.cos(lat) * Math.sin(lon);
+          const py = r * Math.sin(lat);
+          const pz = r * Math.cos(lat) * Math.cos(lon);
+          const ry = groupRef.current?.rotation.y ?? 0;
+          const wx = px * Math.cos(ry) + pz * Math.sin(ry);
+          const wz = -px * Math.sin(ry) + pz * Math.cos(ry);
+          const d = Math.hypot(wx - e.point.x, py - e.point.y, wz - e.point.z);
+          if (d < minDist) { minDist = d; minIdx = i; }
+        });
+        if (minIdx >= 0 && minDist < 0.3) onSelect(individuals[minIdx]);
+      }}
+    >
+      <pointsMaterial size={0.12} vertexColors sizeAttenuation transparent opacity={1.0} />
     </points>
   );
 }
@@ -181,7 +215,11 @@ function PopulationGlow({ individuals }: { individuals: any[] }) {
     for (const ind of individuals) {
       const lat = (ind.y ?? 0) * Math.PI / 180;
       const lon = (ind.x ?? 0) * Math.PI / 180;
-      positions.push(r * Math.cos(lat) * Math.cos(lon), r * Math.sin(lat), r * Math.cos(lat) * Math.sin(lon));
+      positions.push(
+        r * Math.cos(lat) * Math.sin(lon),
+        r * Math.sin(lat),
+        r * Math.cos(lat) * Math.cos(lon),
+      );
     }
     g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     return g;
@@ -189,12 +227,12 @@ function PopulationGlow({ individuals }: { individuals: any[] }) {
 
   return (
     <points geometry={geo}>
-      <pointsMaterial size={0.14} color="#6090ff" sizeAttenuation transparent opacity={0.18} />
+      <pointsMaterial size={0.28} color="#6090ff" sizeAttenuation transparent opacity={0.18} />
     </points>
   );
 }
 
-function RotatingGroup({ individuals }: { individuals: any[] }) {
+function RotatingGroup({ individuals, onSelect }: { individuals: any[]; onSelect?: (ind: any) => void }) {
   const groupRef = useRef<THREE.Group>(null);
   useFrame((_, delta) => {
     if (groupRef.current) groupRef.current.rotation.y += delta * 0.025;
@@ -206,14 +244,14 @@ function RotatingGroup({ individuals }: { individuals: any[] }) {
       {individuals.length > 0 && (
         <>
           <PopulationGlow individuals={individuals} />
-          <PopulationDots individuals={individuals} />
+          <PopulationDots individuals={individuals} groupRef={groupRef} onSelect={onSelect} />
         </>
       )}
     </group>
   );
 }
 
-export default function WorldGlobe({ individuals = [] }: { individuals?: any[] }) {
+export default function WorldGlobe({ individuals = [], onSelect }: { individuals?: any[]; onSelect?: (ind: any) => void }) {
   return (
     <Canvas
       camera={{ position: [0, 0.5, 5.5], fov: 42 }}
@@ -227,7 +265,7 @@ export default function WorldGlobe({ individuals = [] }: { individuals?: any[] }
       <Moon />
       <Stars radius={200} depth={80} count={6000} factor={5} saturation={0} fade speed={0.3} />
       <Globe />
-      <RotatingGroup individuals={individuals} />
+      <RotatingGroup individuals={individuals} onSelect={onSelect} />
       <OrbitControls
         enablePan={false}
         minDistance={2.8}

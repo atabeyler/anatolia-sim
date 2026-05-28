@@ -59,9 +59,13 @@ function buildFounderParams(params = {}, defaults = {}) {
 
 function serializeIndividual(ind, currentDay) {
   const age = Math.max(0, (currentDay - (ind.birth_day ?? 0)) / 365);
+  const heightFactor = ind.phenotype?.height_factor ?? 0.5;
+  const metabolism = ind.phenotype?.metabolism ?? 0.5;
+  const heightCm = ind.phenotype?.height_cm ?? Math.round(150 + heightFactor * 45);
+  const weightKg = Math.round((heightCm / 100) * (heightCm / 100) * (19 + metabolism * 8));
   return {
     id: ind.id,
-    name: ind.phenotype?.name ?? ind.name ?? 'Unnamed',
+    name: ind.phenotype?.name ?? ind.name ?? 'Bilinmiyor',
     sex: ind.sex,
     birth_day: ind.birth_day,
     death_day: ind.death_day,
@@ -69,6 +73,8 @@ function serializeIndividual(ind, currentDay) {
     age_years: Math.round(age * 10) / 10,
     x: ind.x,
     y: ind.y,
+    height_cm: heightCm,
+    weight_kg: weightKg,
     genome: ind.genome,
     phenotype: ind.phenotype,
     health: ind.health,

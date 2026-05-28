@@ -99,6 +99,21 @@ function IndividualDetail({ ind, onClose }: { ind: any; onClose: () => void }) {
             </div>
           </div>
 
+          {/* Physical measurements */}
+          <div>
+            <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 8 }}>FİZİKSEL</div>
+            <div className="space-y-1.5">
+              <div className="flex justify-between">
+                <span className="font-share-tech" style={{ fontSize: 9, color: '#8898c8' }}>{lang === 'tr' ? 'Boy' : 'Height'}</span>
+                <span className="font-share-tech" style={{ fontSize: 9, color: '#a0b4ff', fontFamily: 'monospace' }}>{ind.height_cm ?? '—'} cm</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-share-tech" style={{ fontSize: 9, color: '#8898c8' }}>{lang === 'tr' ? 'Kilo' : 'Weight'}</span>
+                <span className="font-share-tech" style={{ fontSize: 9, color: '#a0b4ff', fontFamily: 'monospace' }}>{ind.weight_kg ?? '—'} kg</span>
+              </div>
+            </div>
+          </div>
+
           {/* Health */}
           <div>
             <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 8 }}>SAĞLIK</div>
