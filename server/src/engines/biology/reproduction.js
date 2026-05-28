@@ -3,7 +3,7 @@ import { isFertile, getAge, createChild } from './individual.js';
 const PREGNANCY_MIN = 266;
 const PREGNANCY_MAX = 280;
 
-export function checkReproduction(population, currentDay, simulationId) {
+export function checkReproduction(population, currentDay, simulationId, communityLangStage = 0) {
   const newborns = [];
   const females = [...population.values()].filter(i =>
     i.alive && i.sex === 'female' && isFertile(i, currentDay) && !(i.health?.pregnancy)
@@ -26,7 +26,7 @@ export function checkReproduction(population, currentDay, simulationId) {
       const father = population.get(preg.father_id);
       if (father) {
         if (!female.social.children_ids) female.social.children_ids = [];
-        const { child, motherSurvives } = deliverBirth(female, father, currentDay, simulationId);
+        const { child, motherSurvives } = deliverBirth(female, father, currentDay, simulationId, communityLangStage);
         newborns.push(child);
         if (!motherSurvives) { female.alive = false; female.is_dead = true; female.death_day = currentDay; female.death_cause = 'birth_complications'; }
       }
@@ -48,9 +48,9 @@ function conceptionProbability(female, male, currentDay) {
   return Math.max(0, Math.min(0.15, p));
 }
 
-function deliverBirth(mother, father, birthDay, simulationId) {
+function deliverBirth(mother, father, birthDay, simulationId, communityLangStage = 0) {
   const motherSurvives = Math.random() > 0.02;
-  const child = createChild(mother, father, birthDay, simulationId);
+  const child = createChild(mother, father, birthDay, simulationId, communityLangStage);
   if (Math.random() < 0.05) { child.alive = false; child.is_dead = true; child.death_day = birthDay; child.death_cause = 'birth_complications'; }
   mother.social.children_ids.push(child.id);
   return { child, motherSurvives };

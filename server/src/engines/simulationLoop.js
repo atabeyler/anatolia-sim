@@ -169,8 +169,9 @@ export class SimulationEngine {
     // 7. Social interactions, mating, bonding, disease spread
     this.processSocialInteractions(alive, day, tickEvents);
 
-    // 8. Reproduction
-    const newborns = checkReproduction(this.population, day, this.simId);
+    // 8. Reproduction — pass community language stage so newborn names are era-appropriate
+    const communityLangStage = Math.max(0, ...alive.map(i => i.language?.stage ?? 0));
+    const newborns = checkReproduction(this.population, day, this.simId, communityLangStage);
     for (const nb of newborns) {
       nb.inventory = initializeInventory();
       nb.beliefs = new Set(); // must be Set in-memory
@@ -182,7 +183,8 @@ export class SimulationEngine {
       if (p1 && p2) inheritEpigenome(nb, p1, p2);
       this.population.set(nb.id, nb);
       tickEvents.push({ type: 'birth', individual_id: nb.id, day, importance: 'low' });
-      this.logEvent(day, 'birth', `New individual born`, { individual_id: nb.id }, 1);
+      const nbLabel = nb.phenotype?.name ?? `${nb.sex === 'male' ? '♂' : '♀'}-${nb.id.slice(-4).toUpperCase()}`;
+      this.logEvent(day, 'birth', `Born: ${nbLabel}`, { individual_id: nb.id }, 1);
     }
 
     // 9. Microbiome & disease outbreaks

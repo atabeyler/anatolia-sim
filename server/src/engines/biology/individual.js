@@ -13,11 +13,17 @@ const MALE_NAMES = ['Alp', 'Kaan', 'Mete', 'Aras', 'Bora', 'Tuna', 'Eren', 'Bara
 const FEMALE_NAMES = ['Ayla', 'Asena', 'Defne', 'Elif', 'Mira', 'Sena', 'Lara', 'Ada', 'Nehir', 'Selin'];
 const FAMILY_NAMES = ['Anatol', 'Bozkir', 'Irmak', 'Gunes', 'Toros', 'Mavi', 'Kaya', 'Yildiz'];
 
+// Proto-language sounds (stage 1 — basic vocalization)
+const PROTO_SOUNDS = ['Ka', 'Ro', 'Ga', 'Bu', 'Ta', 'Ma', 'Na', 'Ur', 'Ak', 'El', 'Om', 'Ra'];
+
 function pick(list) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
-function defaultName(sex) {
+// languageStage: 0 = pre-linguistic ID, 1 = proto sound, 2+ = full name
+function defaultName(sex, languageStage = 2) {
+  if (languageStage < 1) return null; // no name yet — will be shown as ID in UI
+  if (languageStage < 2) return pick(PROTO_SOUNDS); // single proto-syllable
   return `${pick(sex === 'female' ? FEMALE_NAMES : MALE_NAMES)} ${pick(FAMILY_NAMES)}`;
 }
 
@@ -48,11 +54,11 @@ export function createFounder(params = {}) {
   };
 }
 
-export function createChild(parent1, parent2, birthDay, simulationId) {
+export function createChild(parent1, parent2, birthDay, simulationId, communityLangStage = 0) {
   const sex = Math.random() < 0.5 ? 'male' : 'female';
   const genome = combineGametes(createGamete(parent1.genome), createGamete(parent2.genome), sex);
   const phenotype = computePhenotype(genome);
-  phenotype.name = defaultName(sex);
+  phenotype.name = defaultName(sex, communityLangStage);
   phenotype.height_cm = Math.round(150 + phenotype.height_factor * 45);
   return {
     id: uuidv4(), simulation_id: simulationId,

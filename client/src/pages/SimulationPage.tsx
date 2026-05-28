@@ -506,7 +506,14 @@ export default function SimulationPage() {
                 {selectedInd && (
                   <div style={{ position: 'absolute', top: 80, right: 8, zIndex: 50, background: 'rgba(0,5,2,0.97)', border: '1px solid #00e887', padding: 12, minWidth: 160, fontFamily: 'Share Tech Mono, monospace' }}>
                     <div style={{ fontSize: 8, color: '#3a6040', marginBottom: 4 }}>// {lang === 'tr' ? 'BİREY' : 'INDIVIDUAL'}</div>
-                    <div style={{ fontSize: 12, color: '#00e887', marginBottom: 6 }}>{selectedInd.name ?? (selectedInd.sex === 'male' ? (lang === 'tr' ? 'Erkek' : 'Male') : (lang === 'tr' ? 'Kadın' : 'Female'))}</div>
+                    <div style={{ fontSize: 12, color: '#00e887', marginBottom: 2 }}>
+                      {selectedInd.name ?? `${selectedInd.sex === 'male' ? '♂' : '♀'}-${selectedInd.id?.slice(-4).toUpperCase()}`}
+                    </div>
+                    {!selectedInd.name && (
+                      <div style={{ fontSize: 7, color: '#4a6a40', marginBottom: 4, fontStyle: 'italic' }}>
+                        {lang === 'tr' ? '// dil henüz gelişmedi' : '// pre-linguistic era'}
+                      </div>
+                    )}
                     <div style={{ fontSize: 9, color: '#6090a0' }}>{lang === 'tr' ? 'Cinsiyet' : 'Sex'}: <span style={{ color: '#fff' }}>{selectedInd.sex === 'male' ? (lang === 'tr' ? 'Erkek' : 'Male') : (lang === 'tr' ? 'Kadın' : 'Female')}</span></div>
                     <div style={{ fontSize: 9, color: '#6090a0' }}>{lang === 'tr' ? 'Yaş' : 'Age'}: <span style={{ color: '#fff' }}>{selectedInd.age_years ?? '—'}</span></div>
                     <div style={{ fontSize: 9, color: '#6090a0' }}>{lang === 'tr' ? 'Boy' : 'Height'}: <span style={{ color: '#a0e887' }}>{selectedInd.height_cm ?? selectedInd.phenotype?.height_cm ?? '—'} cm</span></div>

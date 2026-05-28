@@ -67,7 +67,7 @@ function serializeIndividual(ind, currentDay) {
   const weightKg = Math.round((heightCm / 100) * (heightCm / 100) * (19 + metabolism * 8));
   return {
     id: ind.id,
-    name: ind.phenotype?.name ?? ind.name ?? 'Bilinmiyor',
+    name: ind.phenotype?.name ?? ind.name ?? null, // null = pre-linguistic, UI shows ID
     sex: ind.sex,
     birth_day: ind.birth_day,
     death_day: ind.death_day,
