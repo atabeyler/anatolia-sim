@@ -11,6 +11,14 @@ interface SimStats {
   season: string;
   temperature: number;
   food_abundance: number;
+  beliefs: number;
+  art_forms: number;
+  groups: number;
+  gini: number;
+  happiness_index: number;
+  sick_rate: number;
+  mean_wealth: number;
+  total_ever: number;
 }
 
 interface SimEvent {
@@ -33,7 +41,7 @@ interface Simulation {
 
 interface SimStore {
   // Auth
-  user: { id: string; username: string; email: string } | null;
+  user: { id: string; username: string; email: string; role: string; first_name?: string; last_name?: string } | null;
   accessToken: string | null;
   setUser: (user: SimStore['user'], token: string) => void;
   logout: () => void;
