@@ -100,11 +100,16 @@ router.get('/quick-approve/:token', async (req, res) => {
 
 // SMTP test — GET /api/admin/test-email (no auth, for debugging only)
 router.get('/test-email', async (req, res) => {
+  const timer = setTimeout(() => {
+    if (!res.headersSent) res.status(504).json({ error: 'SMTP bağlantısı zaman aşımına uğradı (15s). Port 587 engellenmiş olabilir.' });
+  }, 16000);
   try {
     await sendTestEmail();
-    res.json({ message: `Test maili ${process.env.ADMIN_EMAIL ?? 'info@boldkimya.com.tr'} adresine gönderildi.` });
+    clearTimeout(timer);
+    if (!res.headersSent) res.json({ message: `Test maili ${process.env.ADMIN_EMAIL ?? 'info@boldkimya.com.tr'} adresine gönderildi.` });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    clearTimeout(timer);
+    if (!res.headersSent) res.status(500).json({ error: err.message });
   }
 });
 
