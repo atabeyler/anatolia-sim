@@ -79,13 +79,13 @@ function StarField() {
     draw();
     return () => { cancelAnimationFrame(frame); window.removeEventListener('resize', resize); };
   }, []);
-  return <canvas ref={ref} className="absolute inset-0 pointer-events-none" />;
+  return <canvas ref={ref} className="fixed inset-0 pointer-events-none" />;
 }
 
 /* ── Scanning line ────────────────────────────────────────── */
 function ScanBar() {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <div className="fixed inset-0 overflow-hidden pointer-events-none">
       <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-sim-accent/40 to-transparent"
         style={{ animation: 'hud-scan 4s linear infinite' }} />
     </div>
@@ -95,7 +95,7 @@ function ScanBar() {
 /* ── HEX grid pattern ─────────────────────────────────────── */
 function HexGrid() {
   return (
-    <div className="absolute inset-0 pointer-events-none opacity-[0.035]"
+    <div className="fixed inset-0 pointer-events-none opacity-[0.035]"
       style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 66L0 50V18L28 2l28 16v32L28 66zM28 100l-28-16V68l28 16 28-16v16L28 100z' fill='none' stroke='%234f6ef7' stroke-width='0.8'/%3E%3C/svg%3E")`,
         backgroundSize: '56px 100px',
@@ -190,7 +190,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const { setUser, lang, toggleLang } = useSimStore();
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [form, setForm] = useState({ user_code: '', first_name: '', last_name: '', tc_no: '', email: '', password: '' });
+  const [form, setForm] = useState({ user_code: '', reg_user_code: '', first_name: '', last_name: '', tc_no: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -207,12 +207,13 @@ export default function LoginPage() {
         await axios.post('/api/auth/register', {
           first_name: form.first_name, last_name: form.last_name,
           tc_no: form.tc_no, email: form.email, password: form.password,
+          user_code: form.reg_user_code.toUpperCase(),
         });
         setSuccess(lang === 'en'
-          ? 'Registration request received. Awaiting admin approval.'
-          : 'Kayıt talebiniz alındı. Yönetim onayı bekleniyor.');
+          ? `Registration request received. Your code: ${form.reg_user_code.toUpperCase()} — awaiting admin approval.`
+          : `Kayıt talebiniz alındı. Kullanıcı kodunuz: ${form.reg_user_code.toUpperCase()} — Yönetim onayı bekleniyor.`);
         setMode('login');
-        setForm(p => ({ ...p, first_name: '', last_name: '', tc_no: '', email: '', password: '' }));
+        setForm(p => ({ ...p, reg_user_code: '', first_name: '', last_name: '', tc_no: '', email: '', password: '' }));
       } else {
         const { data } = await axios.post('/api/auth/login', { user_code: form.user_code, password: form.password });
         setUser(data.user, data.access_token);
@@ -224,27 +225,27 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-x-hidden bg-[#030310] scanlines">
+    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-x-hidden overflow-y-auto bg-[#030310] scanlines">
       {/* Backgrounds */}
       <StarField />
       <HexGrid />
       <ScanBar />
 
       {/* Ambient glow blobs */}
-      <div className="absolute w-96 h-96 rounded-full pointer-events-none"
+      <div className="fixed w-96 h-96 rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(79,110,247,0.08) 0%, transparent 70%)', top: '20%', left: '30%', filter: 'blur(40px)' }} />
-      <div className="absolute w-64 h-64 rounded-full pointer-events-none"
+      <div className="fixed w-64 h-64 rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%)', bottom: '20%', right: '25%', filter: 'blur(30px)' }} />
 
       {/* Lang toggle */}
       <button onClick={toggleLang}
-        className="absolute top-5 right-5 px-3 py-1.5 text-xs font-share-tech tracking-widest border border-sim-border hover:border-sim-accent/60 hover:text-sim-accent text-sim-muted transition-all z-20"
+        className="fixed top-5 right-5 px-3 py-1.5 text-xs font-share-tech tracking-widest border border-sim-border hover:border-sim-accent/60 hover:text-sim-accent text-sim-muted transition-all z-20"
         style={{ clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))' }}>
         {lang === 'en' ? 'TR' : 'EN'}
       </button>
 
       {/* System status top-left */}
-      <div className="absolute top-5 left-5 z-20 space-y-1 hidden sm:block">
+      <div className="fixed top-5 left-5 z-20 space-y-1 hidden sm:block">
         {STATUS.map((s, i) => (
           <div key={s.label} className="flex items-center gap-2 boot-in" style={{ animationDelay: `${i * 120}ms` }}>
             <div className={`w-1.5 h-1.5 rounded-full ${s.ok ? 'bg-sim-green pulse-live' : 'bg-sim-red'}`} />
@@ -255,7 +256,7 @@ export default function LoginPage() {
       </div>
 
       {/* Coordinate display bottom */}
-      <div className="absolute bottom-5 left-5 z-20 font-share-tech text-xs text-sim-muted/50 tracking-widest hidden sm:block">
+      <div className="fixed bottom-5 left-5 z-20 font-share-tech text-xs text-sim-muted/50 tracking-widest hidden sm:block">
         <div>LAT: 39.9334°N · LON: 32.8597°E</div>
         <div className="mt-0.5">SYS: ANATOLİA-SIM v1.0 · BUILD 2026</div>
       </div>
@@ -337,13 +338,20 @@ export default function LoginPage() {
                   <HudInput label={lang === 'en' ? 'Last Name' : 'Soyad'} type="text"
                     value={form.last_name} onChange={f('last_name')} placeholder="SOYAD" />
                 </div>
+                <HudInput label={lang === 'en' ? 'USER CODE' : 'KULLANICI KODU'} type="text" maxLength={20}
+                  value={form.reg_user_code}
+                  onChange={(e: any) => setForm(p => ({ ...p, reg_user_code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') }))}
+                  placeholder="ANSYZ0001" />
+                <p className="font-share-tech text-sim-muted/40 tracking-wide -mt-2 mb-2" style={{ fontSize: 9 }}>
+                  {lang === 'en' ? '4-20 chars · letters & numbers only' : '4-20 karakter · harf ve rakam'}
+                </p>
                 <HudInput label="TC KİMLİK NO" type="text" maxLength={11}
                   value={form.tc_no} onChange={f('tc_no')} placeholder="00000000000" />
                 <HudInput label="E-POSTA" type="email"
                   value={form.email} onChange={f('email')} placeholder="user@domain.com" />
                 <HudInput label={lang === 'en' ? 'Password' : 'ŞİFRE'} type="password"
                   value={form.password} onChange={f('password')} placeholder="••••••••" />
-                <p className="font-share-tech text-sim-muted/50 tracking-wide mb-3" style={{ fontSize: 9 }}>
+                <p className="font-share-tech text-sim-muted/40 tracking-wide mb-3" style={{ fontSize: 9 }}>
                   {lang === 'en'
                     ? 'Min 8 chars · uppercase · lowercase · number · symbol'
                     : 'Min 8 karakter · büyük harf · küçük harf · rakam · özel karakter'}

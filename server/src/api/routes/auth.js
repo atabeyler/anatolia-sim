@@ -31,28 +31,30 @@ function validatePassword(password) {
 
 router.post('/register', async (req, res) => {
   try {
-    const { first_name, last_name, tc_no, email, password } = req.body;
-    if (!first_name || !last_name || !tc_no || !email || !password)
+    const { first_name, last_name, tc_no, email, password, user_code } = req.body;
+    if (!first_name || !last_name || !tc_no || !email || !password || !user_code)
       return res.status(400).json({ error: 'Tüm alanlar zorunludur.' });
     if (!/^\d{11}$/.test(tc_no))
       return res.status(400).json({ error: 'TC Kimlik No 11 haneli rakam olmalıdır.' });
+    const code = user_code.toUpperCase().trim();
+    if (!/^[A-Z0-9]{4,20}$/.test(code))
+      return res.status(400).json({ error: 'Kullanıcı kodu 4-20 karakter, sadece harf ve rakam olmalıdır.' });
     const pwErr = validatePassword(password);
     if (pwErr) return res.status(400).json({ error: pwErr });
 
     const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-    const tempCode = generateUserCode();
 
     const { rows } = await query(
       `INSERT INTO users (first_name, last_name, tc_no, email, password_hash, user_code, username, role, is_approved)
        VALUES ($1,$2,$3,$4,$5,$6,$6,'pending',false) RETURNING id, first_name, last_name, email, user_code`,
-      [first_name.trim(), last_name.trim(), tc_no.trim(), email.toLowerCase().trim(), hash, tempCode]
+      [first_name.trim(), last_name.trim(), tc_no.trim(), email.toLowerCase().trim(), hash, code]
     );
 
     const approvalToken = generateApprovalToken(rows[0].id);
-    await sendAdminRegistrationNotification({ first_name, last_name, tc_no, email, user_code_temp: tempCode, approvalToken });
+    await sendAdminRegistrationNotification({ first_name, last_name, tc_no, email, user_code_temp: code, approvalToken });
     res.status(201).json({ message: 'Kayıt talebiniz alındı. Yönetim onayı bekleniyor.' });
   } catch (err) {
-    if (err.code === '23505') return res.status(409).json({ error: 'Bu e-posta veya TC No zaten kayıtlı.' });
+    if (err.code === '23505') return res.status(409).json({ error: 'Bu e-posta, TC No veya kullanıcı kodu zaten kayıtlı.' });
     console.error(err);
     res.status(500).json({ error: 'Kayıt başarısız.' });
   }
