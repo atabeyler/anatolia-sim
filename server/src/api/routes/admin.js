@@ -148,8 +148,8 @@ router.get('/quick-approve/:token', async (req, res) => {
       [payload.userId]
     );
     if (!rows[0]) return res.send(pageHtml(null, '', { ok: true, text: 'Bu kullanıcı zaten onaylanmış.' }));
-    await sendApprovalEmail(rows[0]);
-    res.send(pageHtml(null, '', { ok: true, text: `✔ ${rows[0].first_name} ${rows[0].last_name} onaylandı — kullanıcı kodu: ${rows[0].user_code}. Bildirim maili gönderildi.` }));
+    try { await sendApprovalEmail(rows[0]); } catch (mailErr) { console.error('[APPROVE] Mail gönderilemedi:', mailErr.message); }
+    res.send(pageHtml(null, '', { ok: true, text: `✔ ${rows[0].first_name} ${rows[0].last_name} onaylandı — kullanıcı kodu: ${rows[0].user_code}.` }));
   } catch (err) {
     const msg = err.name === 'TokenExpiredError' ? 'Link süresi dolmuş.' : 'Geçersiz link.';
     res.status(400).send(pageHtml(null, '', { ok: false, text: msg }));
@@ -166,8 +166,8 @@ router.get('/quick-reject/:token', async (req, res) => {
       [payload.userId]
     );
     if (!rows[0]) return res.send(pageHtml(null, '', { ok: false, text: 'Kullanıcı bulunamadı veya zaten onaylı.' }));
-    await sendRejectionEmail(rows[0]);
-    res.send(pageHtml(null, '', { ok: true, text: `✘ ${rows[0].first_name} ${rows[0].last_name} reddedildi. Bildirim maili gönderildi.` }));
+    try { await sendRejectionEmail(rows[0]); } catch (mailErr) { console.error('[REJECT] Mail gönderilemedi:', mailErr.message); }
+    res.send(pageHtml(null, '', { ok: true, text: `✘ ${rows[0].first_name} ${rows[0].last_name} reddedildi.` }));
   } catch (err) {
     const msg = err.name === 'TokenExpiredError' ? 'Link süresi dolmuş.' : 'Geçersiz link.';
     res.status(400).send(pageHtml(null, '', { ok: false, text: msg }));
