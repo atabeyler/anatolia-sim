@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 import { useSimStore } from './store/simStore';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -18,6 +20,18 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const { setUser } = useSimStore();
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    axios.post('/api/auth/refresh')
+      .then(({ data }) => setUser(data.user, data.access_token))
+      .catch(() => {})
+      .finally(() => setAuthChecked(true));
+  }, [setUser]);
+
+  if (!authChecked) return <div className="w-screen h-screen bg-sim-bg" />;
+
   return (
     <BrowserRouter>
       <Routes>

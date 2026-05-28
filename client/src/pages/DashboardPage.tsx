@@ -5,58 +5,52 @@ import axios from 'axios';
 import { useSimStore } from '../store/simStore';
 
 const FOUNDER_TRAITS = [
-  { id: 'fluid_intelligence', label: 'Intelligence',   labelTr: 'Zeka',           color: '#7c3aed' },
-  { id: 'empathy',            label: 'Empathy',        labelTr: 'Empati',          color: '#ec4899' },
-  { id: 'curiosity',          label: 'Curiosity',      labelTr: 'Merak',           color: '#f59e0b' },
-  { id: 'aggression',         label: 'Aggression',     labelTr: 'Saldırganlık',    color: '#ef4444' },
-  { id: 'conscientiousness',  label: 'Discipline',     labelTr: 'Disiplin',        color: '#3b82f6' },
-  { id: 'artistic_sense',     label: 'Art Sense',      labelTr: 'Sanat Duygusu',   color: '#f97316' },
-  { id: 'immune_strength',    label: 'Immune Strength',labelTr: 'Bağışıklık',      color: '#4ecb71' },
-  { id: 'physical_strength',  label: 'Phys. Strength', labelTr: 'Fiziksel Güç',    color: '#e05a5a' },
-  { id: 'fertility',          label: 'Fertility',      labelTr: 'Doğurganlık',     color: '#ff8ab0' },
-  { id: 'longevity',          label: 'Longevity',      labelTr: 'Uzun Ömürlülük',  color: '#00d4ff' },
-  { id: 'language_capacity',  label: 'Language',       labelTr: 'Dil Yeteneği',    color: '#a855f7' },
+  { id: 'fluid_intelligence', label: 'Intelligence', labelTr: 'Zeka',          color: '#7c3aed' },
+  { id: 'empathy',            label: 'Empathy',      labelTr: 'Empati',         color: '#ec4899' },
+  { id: 'curiosity',          label: 'Curiosity',    labelTr: 'Merak',          color: '#f59e0b' },
+  { id: 'aggression',         label: 'Aggression',   labelTr: 'Saldırganlık',   color: '#ef4444' },
+  { id: 'conscientiousness',  label: 'Discipline',   labelTr: 'Disiplin',       color: '#3b82f6' },
+  { id: 'artistic_sense',     label: 'Art Sense',    labelTr: 'Sanat Duygusu',  color: '#f97316' },
 ];
 
-const EYE_COLORS = [
-  { label: 'Kahverengi', labelEn: 'Brown', value: 0.85, bg: '#6b3a2a', border: '#8b5e3c' },
-  { label: 'Ela',        labelEn: 'Hazel', value: 0.60, bg: '#7d5a3a', border: '#9c7b4f' },
-  { label: 'Yeşil',      labelEn: 'Green', value: 0.40, bg: '#3a6b3a', border: '#5a9a5a' },
-  { label: 'Mavi',       labelEn: 'Blue',  value: 0.15, bg: '#2a5080', border: '#4a80c0' },
-];
+const DEFAULT_TRAITS = Object.fromEntries(FOUNDER_TRAITS.map(t => [t.id, 0.5]));
+FOUNDER_TRAITS.push(
+  { id: 'language_capacity', label: 'Language', labelTr: 'Dil', color: '#14b8a6' },
+  { id: 'immune_strength', label: 'Immunity', labelTr: 'Bagisiklik', color: '#22c55e' },
+  { id: 'fertility', label: 'Fertility', labelTr: 'Dogurganlik', color: '#f43f5e' },
+  { id: 'longevity', label: 'Longevity', labelTr: 'Uzun Omur', color: '#84cc16' },
+  { id: 'height', label: 'Height', labelTr: 'Boy', color: '#06b6d4' },
+  { id: 'metabolism', label: 'Metabolism', labelTr: 'Metabolizma', color: '#a855f7' },
+);
 
-const HAIR_COLORS = [
-  { label: 'Siyah',        labelEn: 'Black',  value: 0.95, bg: '#1a1a1a', border: '#333' },
-  { label: 'Koyu Kahve',   labelEn: 'Dark',   value: 0.75, bg: '#3d2b1f', border: '#6b4c3b' },
-  { label: 'Kahverengi',   labelEn: 'Brown',  value: 0.50, bg: '#6b4c3b', border: '#a07050' },
-  { label: 'Açık Kahve',   labelEn: 'Light',  value: 0.32, bg: '#9c7b4f', border: '#c9a87a' },
-  { label: 'Sarı',         labelEn: 'Blonde', value: 0.15, bg: '#d4a838', border: '#f0c060' },
-  { label: 'Kızıl',        labelEn: 'Red',    value: 0.08, bg: '#8b2e12', border: '#c44a22' },
-];
+const EXTRA_DEFAULT_TRAITS = Object.fromEntries(FOUNDER_TRAITS.map(t => [t.id, 0.5]));
+const EYE_OPTIONS = ['brown', 'hazel', 'green', 'blue'];
+const HAIR_OPTIONS = ['black', 'dark', 'brown', 'light', 'blond', 'red'];
+const SKIN_OPTIONS = ['fair', 'light', 'olive', 'tan', 'brown', 'dark'];
 
-const DEFAULT_FOUNDER = {
-  name: '',
-  ageYears: 20,
-  eye_color: 0.85,
-  hair_color: 0.75,
-  skin_tone: 0.4,
-  ...Object.fromEntries(FOUNDER_TRAITS.map(t => [t.id, 0.5])),
-};
+const founderDefaults = (sex: 'male' | 'female') => ({
+  name: sex === 'male' ? 'Kurucu Erkek' : 'Kurucu Kadin',
+  ageYears: sex === 'male' ? 22 : 20,
+  eye_color: 'brown',
+  hair_color: sex === 'male' ? 'dark' : 'brown',
+  skin_tone: 'olive',
+  ...EXTRA_DEFAULT_TRAITS,
+});
 
 function TraitSlider({ traitId, label, labelTr, color, value, onChange, lang }: any) {
   return (
-    <div className="mb-2">
-      <div className="flex justify-between mb-0.5">
-        <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 9 }}>
+    <div className="mb-2.5">
+      <div className="flex justify-between mb-1">
+        <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 10 }}>
           {lang === 'en' ? label : labelTr}
         </span>
-        <span className="font-orbitron font-bold" style={{ color, fontSize: 9, textShadow: `0 0 6px ${color}80` }}>
+        <span className="font-orbitron font-bold" style={{ color, fontSize: 10, textShadow: `0 0 6px ${color}80` }}>
           {(value * 100).toFixed(0)}%
         </span>
       </div>
-      <div className="relative h-1.5" style={{ background: 'rgba(22,22,58,0.8)', border: '1px solid rgba(79,110,247,0.12)' }}>
+      <div className="relative h-1.5" style={{ background: 'rgba(22,22,58,0.8)', border: '1px solid rgba(79,110,247,0.15)' }}>
         <div className="absolute top-0 left-0 h-full transition-all duration-300"
-          style={{ width: `${value * 100}%`, background: `linear-gradient(90deg, ${color}60, ${color})`, boxShadow: `0 0 6px ${color}50` }} />
+          style={{ width: `${value * 100}%`, background: `linear-gradient(90deg, ${color}60, ${color})`, boxShadow: `0 0 6px ${color}60` }} />
         <input type="range" min="0" max="1" step="0.01" value={value}
           onChange={e => onChange(traitId, parseFloat(e.target.value))}
           className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
@@ -65,110 +59,52 @@ function TraitSlider({ traitId, label, labelTr, color, value, onChange, lang }: 
   );
 }
 
-function FounderConfig({ label, founder, onChange, lang }: { label: string; founder: any; onChange: (key: string, value: any) => void; lang: 'en' | 'tr' }) {
-  const inputStyle = {
-    background: 'rgba(7,7,26,0.9)', border: '1px solid rgba(79,110,247,0.25)',
-    padding: '5px 8px', color: '#c0c8e8', fontSize: 10, width: '100%',
-    fontFamily: 'Share Tech Mono, monospace',
-    clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))',
-  };
-
+function FounderConfig({ label, traits, founder, onChange, lang }: any) {
+  const data = founder ?? traits;
   return (
     <div className="relative p-3" style={{
-      background: 'rgba(4,4,15,0.9)', border: '1px solid rgba(79,110,247,0.2)',
+      background: 'rgba(4,4,15,0.9)',
+      border: '1px solid rgba(79,110,247,0.2)',
       clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
     }}>
       <div className="font-share-tech text-sim-muted tracking-[0.2em] mb-3" style={{ fontSize: 9 }}>
         {label.toUpperCase()}
       </div>
-
-      {/* Name + Age */}
       <div className="grid grid-cols-2 gap-2 mb-3">
-        <div>
-          <div className="font-share-tech text-sim-muted tracking-widest mb-1" style={{ fontSize: 8 }}>
-            {lang === 'tr' ? 'İSİM' : 'NAME'}
-          </div>
-          <input type="text" value={founder.name} placeholder={lang === 'tr' ? 'Kurucu adı…' : 'Founder name…'}
-            onChange={e => onChange('name', e.target.value)} style={inputStyle} />
+        <div className="col-span-2">
+          <label className="font-share-tech text-sim-muted tracking-widest block mb-1" style={{ fontSize: 8 }}>
+            {lang === 'en' ? 'NAME' : 'ISIM'}
+          </label>
+          <input value={data.name ?? ''} onChange={e => onChange('name', e.target.value)}
+            className="w-full bg-sim-bg border border-sim-border px-2 py-1.5 text-xs text-sim-text font-share-tech focus:outline-none focus:border-sim-accent" />
         </div>
         <div>
-          <div className="font-share-tech text-sim-muted tracking-widest mb-1" style={{ fontSize: 8 }}>
-            {lang === 'tr' ? 'YAŞ' : 'AGE'}: <span style={{ color: '#a0b4ff' }}>{founder.ageYears}</span>
-          </div>
-          <div className="relative h-6" style={{ background: 'rgba(22,22,58,0.8)', border: '1px solid rgba(79,110,247,0.15)' }}>
-            <div className="absolute top-0 left-0 h-full"
-              style={{ width: `${(founder.ageYears - 15) / 20 * 100}%`, background: 'linear-gradient(90deg, rgba(79,110,247,0.4), rgba(79,110,247,0.8))' }} />
-            <input type="range" min="15" max="35" step="1" value={founder.ageYears}
-              onChange={e => onChange('ageYears', parseInt(e.target.value))}
-              className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
-          </div>
+          <label className="font-share-tech text-sim-muted tracking-widest block mb-1" style={{ fontSize: 8 }}>
+            {lang === 'en' ? 'AGE' : 'YAS'}
+          </label>
+          <input type="number" min="15" max="65" value={data.ageYears ?? 20}
+            onChange={e => onChange('ageYears', parseInt(e.target.value || '20', 10))}
+            className="w-full bg-sim-bg border border-sim-border px-2 py-1.5 text-xs text-sim-text font-share-tech focus:outline-none focus:border-sim-accent" />
         </div>
-      </div>
-
-      {/* Physical appearance */}
-      <div className="mb-3">
-        <div className="font-share-tech text-sim-muted tracking-widest mb-1.5" style={{ fontSize: 8 }}>
-          {lang === 'tr' ? 'GÖZ RENGİ' : 'EYE COLOR'}
-        </div>
-        <div className="flex gap-1">
-          {EYE_COLORS.map(ec => (
-            <button key={ec.value} title={lang === 'tr' ? ec.label : ec.labelEn}
-              onClick={() => onChange('eye_color', ec.value)}
-              className="flex-1 h-5 transition-all"
-              style={{
-                background: ec.bg,
-                border: `2px solid ${Math.abs(founder.eye_color - ec.value) < 0.1 ? ec.border : 'transparent'}`,
-                boxShadow: Math.abs(founder.eye_color - ec.value) < 0.1 ? `0 0 8px ${ec.border}` : 'none',
-              }} />
-          ))}
-        </div>
-        <div className="font-share-tech text-center mt-0.5" style={{ fontSize: 7, color: '#6878a8' }}>
-          {(EYE_COLORS.find(e => Math.abs(founder.eye_color - e.value) < 0.15) ?? EYE_COLORS[0])[lang === 'tr' ? 'label' : 'labelEn']}
-        </div>
-      </div>
-
-      <div className="mb-3">
-        <div className="font-share-tech text-sim-muted tracking-widest mb-1.5" style={{ fontSize: 8 }}>
-          {lang === 'tr' ? 'SAÇ RENGİ' : 'HAIR COLOR'}
-        </div>
-        <div className="flex gap-1">
-          {HAIR_COLORS.map(hc => (
-            <button key={hc.value} title={lang === 'tr' ? hc.label : hc.labelEn}
-              onClick={() => onChange('hair_color', hc.value)}
-              className="flex-1 h-5 transition-all"
-              style={{
-                background: hc.bg,
-                border: `2px solid ${Math.abs(founder.hair_color - hc.value) < 0.12 ? hc.border : 'transparent'}`,
-                boxShadow: Math.abs(founder.hair_color - hc.value) < 0.12 ? `0 0 8px ${hc.border}` : 'none',
-              }} />
-          ))}
-        </div>
-        <div className="font-share-tech text-center mt-0.5" style={{ fontSize: 7, color: '#6878a8' }}>
-          {(HAIR_COLORS.find(h => Math.abs(founder.hair_color - h.value) < 0.15) ?? HAIR_COLORS[1])[lang === 'tr' ? 'label' : 'labelEn']}
-        </div>
-      </div>
-
-      <div className="mb-3">
-        <div className="flex justify-between mb-0.5">
-          <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 8 }}>
-            {lang === 'tr' ? 'TEN RENGİ (KOYU → AÇIK)' : 'SKIN TONE (DARK → LIGHT)'}
-          </span>
-        </div>
-        <div className="relative h-4 rounded overflow-hidden" style={{ background: 'linear-gradient(90deg, #3d2314, #7b5230, #c08050, #e8b888, #fad5b0)' }}>
-          <div className="absolute top-1/2 -translate-y-1/2 w-2 h-3 rounded-sm" style={{ left: `calc(${founder.skin_tone * 100}% - 4px)`, background: '#fff', boxShadow: '0 0 4px rgba(0,0,0,0.5)' }} />
-          <input type="range" min="0.05" max="0.95" step="0.01" value={founder.skin_tone}
-            onChange={e => onChange('skin_tone', parseFloat(e.target.value))}
-            className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
-        </div>
-      </div>
-
-      {/* Genetic traits */}
-      <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 8 }}>
-        {lang === 'tr' ? 'GENETİK ÖZELLİKLER' : 'GENETIC TRAITS'}
+        <SelectField label={lang === 'en' ? 'EYE' : 'GOZ'} value={data.eye_color} options={EYE_OPTIONS} onChange={(v: string) => onChange('eye_color', v)} />
+        <SelectField label={lang === 'en' ? 'HAIR' : 'SAC'} value={data.hair_color} options={HAIR_OPTIONS} onChange={(v: string) => onChange('hair_color', v)} />
+        <SelectField label={lang === 'en' ? 'SKIN' : 'TEN'} value={data.skin_tone} options={SKIN_OPTIONS} onChange={(v: string) => onChange('skin_tone', v)} />
       </div>
       {FOUNDER_TRAITS.map(t => (
-        <TraitSlider key={t.id} {...t} value={founder[t.id] ?? 0.5} onChange={onChange} lang={lang} />
+        <TraitSlider key={t.id} {...t} value={data[t.id] ?? 0.5} onChange={onChange} lang={lang} />
       ))}
+    </div>
+  );
+}
+
+function SelectField({ label, value, options, onChange }: any) {
+  return (
+    <div>
+      <label className="font-share-tech text-sim-muted tracking-widest block mb-1" style={{ fontSize: 8 }}>{label}</label>
+      <select value={value} onChange={e => onChange(e.target.value)}
+        className="w-full bg-sim-bg border border-sim-border px-2 py-1.5 text-xs text-sim-text font-share-tech focus:outline-none focus:border-sim-accent">
+        {options.map((option: string) => <option key={option} value={option}>{option.toUpperCase()}</option>)}
+      </select>
     </div>
   );
 }
@@ -181,15 +117,15 @@ export default function DashboardPage() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [form, setForm] = useState({ name: '', latitude: '39.9334', longitude: '32.8597' });
-  const [founder1, setFounder1] = useState({ ...DEFAULT_FOUNDER });
-  const [founder2, setFounder2] = useState({ ...DEFAULT_FOUNDER });
+  const [founder1, setFounder1] = useState(founderDefaults('male'));
+  const [founder2, setFounder2] = useState(founderDefaults('female'));
   const [loading, setLoading] = useState(false);
   const headers = { Authorization: `Bearer ${accessToken}` };
 
   useEffect(() => { axios.get('/api/simulations', { headers }).then(r => setSims(r.data)); }, []);
 
-  function makeFounderSetter(setter: React.Dispatch<React.SetStateAction<typeof DEFAULT_FOUNDER>>) {
-    return (key: string, value: any) => setter(prev => ({ ...prev, [key]: value }));
+  function setTrait(setter: any) {
+    return (traitId: string, value: number) => setter((prev: any) => ({ ...prev, [traitId]: value }));
   }
 
   async function createSim() {
@@ -199,13 +135,13 @@ export default function DashboardPage() {
         name: form.name,
         latitude: parseFloat(form.latitude),
         longitude: parseFloat(form.longitude),
-        founder1_params: showAdvanced ? founder1 : { name: founder1.name || undefined },
-        founder2_params: showAdvanced ? founder2 : { name: founder2.name || undefined },
+        founder1_params: founder1,
+        founder2_params: founder2,
       }, { headers });
       setSims(s => [data, ...s]);
       setShowNew(false);
-      setFounder1({ ...DEFAULT_FOUNDER });
-      setFounder2({ ...DEFAULT_FOUNDER });
+      setFounder1(founderDefaults('male'));
+      setFounder2(founderDefaults('female'));
     } finally { setLoading(false); }
   }
 
@@ -397,41 +333,15 @@ export default function DashboardPage() {
                 {lang === 'en' ? '// FOUNDER GENETICS (ADVANCED)' : '// KURUCU GENETİĞİ (GELİŞMİŞ)'}
               </button>
 
-              {/* Founder names always visible */}
-              {!showAdvanced && (
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div>
-                    <label className="font-share-tech text-sim-muted tracking-widest block mb-1" style={{ fontSize: 9 }}>
-                      {lang === 'tr' ? 'KURUCU 1 ADI (ERKEK)' : 'FOUNDER 1 NAME (MALE)'}
-                    </label>
-                    <input type="text" value={founder1.name} placeholder={lang === 'tr' ? 'İsteğe bağlı…' : 'Optional…'}
-                      onChange={e => setFounder1(f => ({ ...f, name: e.target.value }))}
-                      className="w-full text-sm focus:outline-none font-share-tech"
-                      style={{ background: 'rgba(7,7,26,0.9)', border: '1px solid rgba(79,110,247,0.25)', padding: '6px 10px', color: '#c0c8e8', fontSize: 11 }}
-                    />
-                  </div>
-                  <div>
-                    <label className="font-share-tech text-sim-muted tracking-widest block mb-1" style={{ fontSize: 9 }}>
-                      {lang === 'tr' ? 'KURUCU 2 ADI (KADIN)' : 'FOUNDER 2 NAME (FEMALE)'}
-                    </label>
-                    <input type="text" value={founder2.name} placeholder={lang === 'tr' ? 'İsteğe bağlı…' : 'Optional…'}
-                      onChange={e => setFounder2(f => ({ ...f, name: e.target.value }))}
-                      className="w-full text-sm focus:outline-none font-share-tech"
-                      style={{ background: 'rgba(7,7,26,0.9)', border: '1px solid rgba(79,110,247,0.25)', padding: '6px 10px', color: '#c0c8e8', fontSize: 11 }}
-                    />
-                  </div>
-                </div>
-              )}
-
               {showAdvanced && (
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <FounderConfig
                     label={lang === 'en' ? 'Founder 1 — Male' : 'Kurucu 1 — Erkek'}
-                    founder={founder1} onChange={makeFounderSetter(setFounder1)} lang={lang}
+                    founder={founder1} onChange={setTrait(setFounder1)} lang={lang}
                   />
                   <FounderConfig
                     label={lang === 'en' ? 'Founder 2 — Female' : 'Kurucu 2 — Kadın'}
-                    founder={founder2} onChange={makeFounderSetter(setFounder2)} lang={lang}
+                    founder={founder2} onChange={setTrait(setFounder2)} lang={lang}
                   />
                 </div>
               )}

@@ -52,6 +52,7 @@ export class SimulationEngine {
   }
 
   async start() {
+    if (this.running) return;
     this.running = true;
     while (this.running) {
       const alive = [...this.population.values()].filter(i => !i.is_dead);
@@ -68,6 +69,10 @@ export class SimulationEngine {
 
   async tick() {
     const day = this.currentDay;
+    for (const ind of this.population.values()) {
+      ind.alive = !ind.is_dead;
+      ind.age = day - (ind.birth_day ?? 0);
+    }
     const alive = [...this.population.values()].filter(i => !i.is_dead);
     const tickEvents = [];
 
@@ -156,6 +161,7 @@ export class SimulationEngine {
       const cause = rollDeath(ind, day, this.worldState);
       if (cause) {
         ind.is_dead = true;
+        ind.alive = false;
         ind.death_day = day;
         ind.death_cause = cause;
         tickEvents.push({ type: 'death_of_kin', individual_id: ind.id, day });
@@ -376,6 +382,7 @@ export class SimulationEngine {
         if (ind.is_dead) continue;
         if (Math.random() < mortality_factor) {
           ind.is_dead = true;
+          ind.alive = false;
           ind.death_day = day;
           ind.death_cause = type;
           deaths++;
@@ -466,6 +473,7 @@ function compactIndividual(ind) {
     death_day: ind.death_day,
     x: ind.x,
     y: ind.y,
+    genome: ind.genome,
     phenotype: ind.phenotype,
     language_stage: ind.language?.stage,
     group_id: ind.group_id,

@@ -6,6 +6,15 @@ import { sendApprovalEmail, sendRejectionEmail, sendTestEmail, APP_URL } from '.
 
 const router = Router();
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 function requireAdmin(req, res, next) {
   if (req.user?.role !== 'admin') return res.status(403).json({ error: 'Yönetici yetkisi gerekli.' });
   next();
@@ -76,7 +85,23 @@ router.delete('/users/:id', authenticate, requireAdmin, async (req, res) => {
   } catch { res.status(500).json({ error: 'Silme başarısız.' }); }
 });
 
-const pageHtml = (user, token, msg) => `<!DOCTYPE html>
+const pageHtml = (user, token, msg) => {
+  const safeMsg = msg ? { ...msg, text: escapeHtml(msg.text) } : null;
+  const safeUser = user ? {
+    ...user,
+    first_name: escapeHtml(user.first_name),
+    last_name: escapeHtml(user.last_name),
+    tc_no: escapeHtml(user.tc_no ?? '---'),
+    email: escapeHtml(user.email),
+    user_code: escapeHtml(user.user_code),
+    created_at: user.created_at,
+  } : null;
+  const safeToken = encodeURIComponent(token);
+  const safeAppUrl = escapeHtml(APP_URL);
+  user = safeUser;
+  msg = safeMsg;
+  token = safeToken;
+  return `<!DOCTYPE html>
 <html lang="tr">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ANATOLİA-SİM — Kayıt İnceleme</title>
@@ -102,8 +127,8 @@ const pageHtml = (user, token, msg) => `<!DOCTYPE html>
 </style></head>
 <body><div class="card">
   <h1>⬡ ANATOLİA-SİM — Kayıt Talebi</h1>
-  ${msg ? `<div class="msg ${msg.ok ? 'ok' : 'err'}">${msg.text}</div>` : ''}
-  ${user ? `
+  ${safeMsg ? `<div class="msg ${safeMsg.ok ? 'ok' : 'err'}">${safeMsg.text}</div>` : ''}
+  ${safeUser ? `
   <div class="row"><span class="label">Ad Soyad</span><span class="val">${user.first_name} ${user.last_name}</span></div>
   <div class="row"><span class="label">TC No</span><span class="val">${user.tc_no ?? '—'}</span></div>
   <div class="row"><span class="label">E-posta</span><span class="val">${user.email}</span></div>
@@ -114,8 +139,9 @@ const pageHtml = (user, token, msg) => `<!DOCTYPE html>
     <a class="btn approve" href="/api/admin/quick-approve/${token}">✔ ONAYLA</a>
     <a class="btn reject" href="/api/admin/quick-reject/${token}">✘ REDDET</a>
   </div>` : ''}
-  <a class="back" href="${APP_URL}/admin">← YÖNETİM PANELİ</a>
+  <a class="back" href="${safeAppUrl}/admin">← YÖNETİM PANELİ</a>
 </div></body></html>`;
+};
 
 // Review page — shows user info with approve/reject links
 router.get('/review/:token', async (req, res) => {
@@ -174,8 +200,8 @@ router.get('/quick-reject/:token', async (req, res) => {
   }
 });
 
-// SMTP test — GET /api/admin/test-email (no auth, for debugging only)
-router.get('/test-email', async (req, res) => {
+// SMTP test — GET /api/admin/test-email
+router.get('/test-email', authenticate, requireAdmin, async (req, res) => {
   const timer = setTimeout(() => {
     if (!res.headersSent) res.status(504).json({ error: 'SMTP bağlantısı zaman aşımına uğradı (15s). Port 587 engellenmiş olabilir.' });
   }, 16000);
@@ -196,6 +222,13 @@ router.post('/seed-admin', async (req, res) => {
     const adminPass = process.env.ADMIN_PASSWORD;
     const adminEmail = process.env.ADMIN_EMAIL ?? 'info@boldkimya.com.tr';
     if (!adminCode || !adminPass) return res.status(400).json({ error: 'ADMIN_USER_CODE ve ADMIN_PASSWORD env var gerekli.' });
+    const adminCount = await query("SELECT COUNT(*)::int AS count FROM users WHERE role = 'admin' AND is_approved = true");
+    if (adminCount.rows[0].count > 0) {
+      const seedToken = process.env.ADMIN_SEED_TOKEN;
+      if (!seedToken || req.headers['x-seed-token'] !== seedToken) {
+        return res.status(403).json({ error: 'Admin seed token gerekli.' });
+      }
+    }
     const bcrypt = (await import('bcrypt')).default;
     const hash = await bcrypt.hash(adminPass, 12);
 

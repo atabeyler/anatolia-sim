@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, requireSimulationOwner } from '../middleware/auth.js';
 import { query } from '../../db/database.js';
 import { simulationManager } from '../simulationManager.js';
 import Anthropic from '@anthropic-ai/sdk';
@@ -7,13 +7,20 @@ import Anthropic from '@anthropic-ai/sdk';
 const router = Router();
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-router.post('/:simId/intervene', authenticate, async (req, res) => {
+function markDead(individual, day, cause) {
+  individual.is_dead = true;
+  individual.alive = false;
+  individual.death_day = day;
+  individual.death_cause = cause;
+}
+
+router.post('/:simId/intervene', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const { simId } = req.params;
     const { type, params, user_note } = req.body;
     const engine = simulationManager.getEngine(simId);
     if (!engine) return res.status(400).json({ error: 'Simulation not running' });
-    const alive = [...engine.population.values()].filter(i => i.alive);
+    const alive = [...engine.population.values()].filter(i => !i.is_dead);
     let affected = 0, deaths = 0;
     switch (type) {
       case 'earthquake': {
@@ -22,7 +29,7 @@ router.post('/:simId/intervene', authenticate, async (req, res) => {
           const dist = Math.hypot(ind.x - lon, ind.y - lat);
           if (dist < radius) {
             const risk = (magnitude - 4) / 5 * (1 - dist / radius);
-            if (Math.random() < risk) { ind.alive = false; ind.death_day = engine.currentDay; ind.death_cause = 'earthquake'; deaths++; }
+            if (Math.random() < risk) { markDead(ind, engine.currentDay, 'earthquake'); deaths++; }
             else ind.health.hp = Math.max(0.1, ind.health.hp - risk * 0.5);
             affected++;
           }
@@ -33,7 +40,7 @@ router.post('/:simId/intervene', authenticate, async (req, res) => {
         const { severity, lat, lon, radius = 150 } = params;
         for (const ind of alive) {
           if (Math.hypot(ind.x - lon, ind.y - lat) < radius) {
-            if (Math.random() < severity * 0.15) { ind.alive = false; ind.death_day = engine.currentDay; ind.death_cause = 'flood'; deaths++; }
+            if (Math.random() < severity * 0.15) { markDead(ind, engine.currentDay, 'flood'); deaths++; }
             affected++;
           }
         }
@@ -43,7 +50,7 @@ router.post('/:simId/intervene', authenticate, async (req, res) => {
         const { mortality_rate = 0.2, spread_rate = 0.5 } = params;
         for (const ind of alive) {
           if (Math.random() < spread_rate) {
-            if (Math.random() < mortality_rate * (1 - ind.phenotype.immune_strength)) { ind.alive = false; ind.death_day = engine.currentDay; ind.death_cause = 'epidemic'; deaths++; }
+            if (Math.random() < mortality_rate * (1 - ind.phenotype.immune_strength)) { markDead(ind, engine.currentDay, 'epidemic'); deaths++; }
             else ind.health.disease = { type: 'epidemic', duration: 21, daily_mortality_risk: 0.01 };
             affected++;
           }
@@ -57,7 +64,7 @@ router.post('/:simId/intervene', authenticate, async (req, res) => {
       }
       case 'instant_death': {
         const ind = engine.population.get(params.individual_id);
-        if (ind?.alive) { ind.alive = false; ind.death_day = engine.currentDay; ind.death_cause = 'god_intervention'; deaths = 1; affected = 1; }
+        if (ind && !ind.is_dead) { markDead(ind, engine.currentDay, 'god_intervention'); deaths = 1; affected = 1; }
         break;
       }
       case 'drought': {
@@ -73,7 +80,7 @@ router.post('/:simId/intervene', authenticate, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ error: 'Intervention failed' }); }
 });
 
-router.post('/:simId/talk/:individualId', authenticate, async (req, res) => {
+router.post('/:simId/talk/:individualId', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const { simId, individualId } = req.params;
     const { message } = req.body;

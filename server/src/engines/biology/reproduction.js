@@ -27,7 +27,7 @@ export function checkReproduction(population, currentDay, simulationId) {
       if (father) {
         const { child, motherSurvives } = deliverBirth(female, father, currentDay, simulationId);
         newborns.push(child);
-        if (!motherSurvives) { female.alive = false; female.death_day = currentDay; female.death_cause = 'birth_complications'; }
+        if (!motherSurvives) { female.alive = false; female.is_dead = true; female.death_day = currentDay; female.death_cause = 'birth_complications'; }
       }
       female.health.pregnancy = null;
     }
@@ -50,7 +50,7 @@ function conceptionProbability(female, male, currentDay) {
 function deliverBirth(mother, father, birthDay, simulationId) {
   const motherSurvives = Math.random() > 0.02;
   const child = createChild(mother, father, birthDay, simulationId);
-  if (Math.random() < 0.05) { child.alive = false; child.death_day = birthDay; child.death_cause = 'birth_complications'; }
+  if (Math.random() < 0.05) { child.alive = false; child.is_dead = true; child.death_day = birthDay; child.death_cause = 'birth_complications'; }
   mother.social.children_ids.push(child.id);
   return { child, motherSurvives };
 }
