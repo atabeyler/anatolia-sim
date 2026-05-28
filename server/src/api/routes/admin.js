@@ -80,17 +80,29 @@ router.post('/seed-admin', async (req, res) => {
   try {
     const adminCode = process.env.ADMIN_USER_CODE;
     const adminPass = process.env.ADMIN_PASSWORD;
+    const adminEmail = process.env.ADMIN_EMAIL ?? 'info@boldkimya.com.tr';
     if (!adminCode || !adminPass) return res.status(400).json({ error: 'ADMIN_USER_CODE ve ADMIN_PASSWORD env var gerekli.' });
     const bcrypt = (await import('bcrypt')).default;
     const hash = await bcrypt.hash(adminPass, 12);
+
+    // Check if admin already exists
+    const existing = await query('SELECT id FROM users WHERE user_code=$1 OR email=$2', [adminCode, adminEmail]);
+    if (existing.rows.length > 0) {
+      await query(`UPDATE users SET role='admin', is_approved=true, is_banned=false, password_hash=$1 WHERE user_code=$2 OR email=$3`,
+        [hash, adminCode, adminEmail]);
+      return res.json({ message: 'Admin güncellendi.' });
+    }
+
     await query(
       `INSERT INTO users (user_code, username, first_name, last_name, email, password_hash, role, is_approved)
-       VALUES ($1,$1,'Admin','Yönetici',$2,$3,'admin',true)
-       ON CONFLICT (user_code) DO UPDATE SET role='admin', is_approved=true`,
-      [adminCode, process.env.ADMIN_EMAIL ?? 'info@boldkimya.com.tr', hash]
+       VALUES ($1,$1,'Admin','Yönetici',$2,$3,'admin',true)`,
+      [adminCode, adminEmail, hash]
     );
     res.json({ message: 'Admin oluşturuldu.' });
-  } catch (err) { console.error(err); res.status(500).json({ error: 'Admin oluşturulamadı.' }); }
+  } catch (err) {
+    console.error('seed-admin error:', err.message, err.code);
+    res.status(500).json({ error: 'Admin oluşturulamadı.', detail: err.message });
+  }
 });
 
 export default router;
