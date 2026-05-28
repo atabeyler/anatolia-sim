@@ -3,6 +3,7 @@ import { create } from 'zustand';
 interface SimStats {
   day: number;
   year: number;
+  hour?: number;
   population: number;
   avg_age: number;
   sex_ratio: number;
