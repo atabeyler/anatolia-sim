@@ -6,15 +6,18 @@ SET search_path TO antsim;
 
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  username VARCHAR(50) UNIQUE NOT NULL,
+  user_code VARCHAR(20) UNIQUE,
+  username VARCHAR(50) UNIQUE,
+  first_name VARCHAR(100) NOT NULL DEFAULT '',
+  last_name VARCHAR(100) NOT NULL DEFAULT '',
+  tc_no VARCHAR(11) UNIQUE,
   email VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
-  two_fa_secret VARCHAR(100),
-  two_fa_enabled BOOLEAN DEFAULT false,
+  role VARCHAR(20) DEFAULT 'pending',
+  is_approved BOOLEAN DEFAULT false,
+  is_banned BOOLEAN DEFAULT false,
+  ban_reason TEXT,
   email_verified BOOLEAN DEFAULT false,
-  email_verification_token VARCHAR(255),
-  password_reset_token VARCHAR(255),
-  password_reset_expires TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

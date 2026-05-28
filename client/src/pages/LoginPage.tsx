@@ -144,7 +144,7 @@ function LogoRings() {
 }
 
 /* ── HUD input field ──────────────────────────────────────── */
-function HudInput({ label, type, value, onChange, placeholder }: any) {
+function HudInput({ label, type, value, onChange, placeholder, maxLength }: any) {
   const [focused, setFocused] = useState(false);
   return (
     <div className="mb-4">
@@ -160,6 +160,7 @@ function HudInput({ label, type, value, onChange, placeholder }: any) {
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           placeholder={placeholder}
+          maxLength={maxLength}
           className={`w-full bg-sim-bg/80 px-3 py-2.5 text-sm text-sim-text font-share-tech tracking-wide placeholder-sim-muted/50 focus:outline-none transition-all border ${focused ? 'border-sim-accent/70 bg-sim-surface/80' : 'border-sim-border'}`}
           style={{ clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))' }}
         />
@@ -189,8 +190,9 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const { setUser, lang, toggleLang } = useSimStore();
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [form, setForm] = useState({ username: '', email: '', password: '' });
+  const [form, setForm] = useState({ user_code: '', first_name: '', last_name: '', tc_no: '', email: '', password: '' });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [booted, setBooted] = useState(false);
   const f = (k: string) => (e: any) => setForm(p => ({ ...p, [k]: e.target.value }));
@@ -199,18 +201,25 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(''); setLoading(true);
+    setError(''); setSuccess(''); setLoading(true);
     try {
       if (mode === 'register') {
-        await axios.post('/api/auth/register', form);
+        await axios.post('/api/auth/register', {
+          first_name: form.first_name, last_name: form.last_name,
+          tc_no: form.tc_no, email: form.email, password: form.password,
+        });
+        setSuccess(lang === 'en'
+          ? 'Registration request received. Awaiting admin approval.'
+          : 'Kayıt talebiniz alındı. Yönetim onayı bekleniyor.');
         setMode('login');
+        setForm(p => ({ ...p, first_name: '', last_name: '', tc_no: '', email: '', password: '' }));
       } else {
-        const { data } = await axios.post('/api/auth/login', { email: form.email, password: form.password });
+        const { data } = await axios.post('/api/auth/login', { user_code: form.user_code, password: form.password });
         setUser(data.user, data.access_token);
-        navigate('/');
+        navigate(data.user.role === 'admin' ? '/admin' : '/');
       }
     } catch (err: any) {
-      setError(err.response?.data?.error ?? 'Authentication failed');
+      setError(err.response?.data?.error ?? (lang === 'en' ? 'Authentication failed' : 'Giriş başarısız'));
     } finally { setLoading(false); }
   }
 
@@ -321,17 +330,39 @@ export default function LoginPage() {
             </div>
 
             <form onSubmit={handleSubmit}>
-              {mode === 'register' && (
-                <HudInput label={lang === 'en' ? 'Username' : 'Kullanıcı Adı'} type="text"
-                  value={form.username} onChange={f('username')} placeholder="CALLSIGN" />
-              )}
-              <HudInput label="EMAIL" type="email" value={form.email} onChange={f('email')} placeholder="user@domain.com" />
-              <HudInput label={lang === 'en' ? 'Password' : 'Şifre'} type="password"
-                value={form.password} onChange={f('password')} placeholder="••••••••" />
+              {mode === 'register' ? (<>
+                <div className="grid grid-cols-2 gap-2">
+                  <HudInput label={lang === 'en' ? 'First Name' : 'Ad'} type="text"
+                    value={form.first_name} onChange={f('first_name')} placeholder="AD" />
+                  <HudInput label={lang === 'en' ? 'Last Name' : 'Soyad'} type="text"
+                    value={form.last_name} onChange={f('last_name')} placeholder="SOYAD" />
+                </div>
+                <HudInput label="TC KİMLİK NO" type="text" maxLength={11}
+                  value={form.tc_no} onChange={f('tc_no')} placeholder="00000000000" />
+                <HudInput label="E-POSTA" type="email"
+                  value={form.email} onChange={f('email')} placeholder="user@domain.com" />
+                <HudInput label={lang === 'en' ? 'Password' : 'ŞİFRE'} type="password"
+                  value={form.password} onChange={f('password')} placeholder="••••••••" />
+                <p className="font-share-tech text-sim-muted/50 tracking-wide mb-3" style={{ fontSize: 9 }}>
+                  {lang === 'en'
+                    ? 'Min 8 chars · uppercase · lowercase · number · symbol'
+                    : 'Min 8 karakter · büyük harf · küçük harf · rakam · özel karakter'}
+                </p>
+              </>) : (<>
+                <HudInput label={lang === 'en' ? 'User Code' : 'KULLANICI KODU'} type="text"
+                  value={form.user_code} onChange={f('user_code')} placeholder="ANSXX0000" />
+                <HudInput label={lang === 'en' ? 'Password' : 'ŞİFRE'} type="password"
+                  value={form.password} onChange={f('password')} placeholder="••••••••" />
+              </>)}
 
               {error && (
                 <div className="mb-4 px-3 py-2 border-l-2 border-sim-red bg-sim-red/10 text-xs font-share-tech text-sim-red tracking-wide">
-                  ⚠ {error.toUpperCase()}
+                  ⚠ {error}
+                </div>
+              )}
+              {success && (
+                <div className="mb-4 px-3 py-2 border-l-2 border-sim-green bg-sim-green/10 text-xs font-share-tech text-sim-green tracking-wide">
+                  ✓ {success}
                 </div>
               )}
 
@@ -347,10 +378,10 @@ export default function LoginPage() {
                     <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
                     </svg>
-                    {lang === 'en' ? 'AUTHENTICATING' : 'DOĞRULANIY'}
+                    {lang === 'en' ? 'PROCESSING...' : 'İŞLENİYOR...'}
                   </span>
                 ) : (
-                  mode === 'login' ? (lang === 'en' ? 'INITIATE' : 'BAŞLAT') : (lang === 'en' ? 'CREATE PROFILE' : 'PROFİL OLUŞTUR')
+                  mode === 'login' ? (lang === 'en' ? 'INITIATE' : 'GİRİŞ') : (lang === 'en' ? 'SUBMIT REQUEST' : 'TALEP GÖNDER')
                 )}
               </button>
             </form>

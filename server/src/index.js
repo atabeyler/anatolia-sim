@@ -12,6 +12,7 @@ import simulationsRouter from './api/routes/simulations.js';
 import godRouter from './api/routes/god.js';
 import analysisRouter from './api/routes/analysis.js';
 import ariaRouter from './api/routes/aria.js';
+import adminRouter from './api/routes/admin.js';
 import { simulationManager } from './api/simulationManager.js';
 
 const app = express();
@@ -40,6 +41,7 @@ app.use('/api/simulations', simulationsRouter);
 app.use('/api/god', godRouter);
 app.use('/api/analysis', analysisRouter);
 app.use('/api/aria', ariaRouter);
+app.use('/api/admin', adminRouter);
 app.get('/api/health', (_, res) => res.json({ status: 'ok', version: '1.0.0' }));
 
 const wss = new WebSocketServer({ server, path: '/ws' });

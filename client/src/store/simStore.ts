@@ -5,7 +5,7 @@ interface SimEvent { sim_day: number; sim_year: number; event_type: string; desc
 interface Simulation { id: string; name: string; status: 'running' | 'paused' | 'completed'; current_day: number; current_year: number; start_latitude: number; start_longitude: number; }
 
 interface SimStore {
-  user: { id: string; username: string; email: string } | null;
+  user: { id: string; username: string; email: string; role: string; first_name?: string; last_name?: string } | null;
   accessToken: string | null;
   setUser: (user: SimStore['user'], token: string) => void;
   logout: () => void;
