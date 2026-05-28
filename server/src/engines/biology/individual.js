@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { createGenome, createGamete, combineGametes, computePhenotype } from './genome.js';
+import { generateName } from '../language/nameEngine.js';
 
 export const LIFE_STAGE = {
   INFANT:     { name: 'infant',     minAge: 0,  maxAge: 2   },
@@ -9,22 +10,8 @@ export const LIFE_STAGE = {
   ELDER:      { name: 'elder',      minAge: 45, maxAge: 999 },
 };
 
-const MALE_NAMES = ['Alp', 'Kaan', 'Mete', 'Aras', 'Bora', 'Tuna', 'Eren', 'Baran', 'Deniz', 'Ozan'];
-const FEMALE_NAMES = ['Ayla', 'Asena', 'Defne', 'Elif', 'Mira', 'Sena', 'Lara', 'Ada', 'Nehir', 'Selin'];
-const FAMILY_NAMES = ['Anatol', 'Bozkir', 'Irmak', 'Gunes', 'Toros', 'Mavi', 'Kaya', 'Yildiz'];
-
-// Proto-language sounds (stage 1 — basic vocalization)
-const PROTO_SOUNDS = ['Ka', 'Ro', 'Ga', 'Bu', 'Ta', 'Ma', 'Na', 'Ur', 'Ak', 'El', 'Om', 'Ra'];
-
 function pick(list) {
   return list[Math.floor(Math.random() * list.length)];
-}
-
-// languageStage: 0 = pre-linguistic ID, 1 = proto sound, 2+ = full name
-function defaultName(sex, languageStage = 2) {
-  if (languageStage < 1) return null; // no name yet — will be shown as ID in UI
-  if (languageStage < 2) return pick(PROTO_SOUNDS); // single proto-syllable
-  return `${pick(sex === 'female' ? FEMALE_NAMES : MALE_NAMES)} ${pick(FAMILY_NAMES)}`;
 }
 
 export function createFounder(params = {}) {
@@ -32,7 +19,7 @@ export function createFounder(params = {}) {
   const genome = createGenome(params.genome ?? {});
   const phenotype = computePhenotype(genome);
   const appearance = params.appearance ?? {};
-  phenotype.name = params.name?.trim() || defaultName(sex);
+  phenotype.name = params.name?.trim() || null; // founders get user-supplied name or none
   phenotype.eye_color = appearance.eye_color ?? phenotype.eye_color;
   phenotype.hair_color = appearance.hair_color ?? phenotype.hair_color;
   phenotype.skin_tone = appearance.skin_tone ?? phenotype.skin_tone;
@@ -54,11 +41,12 @@ export function createFounder(params = {}) {
   };
 }
 
-export function createChild(parent1, parent2, birthDay, simulationId, communityLangStage = 0) {
+export function createChild(parent1, parent2, birthDay, simulationId, communityLangStage = 0, phonology = null) {
   const sex = Math.random() < 0.5 ? 'male' : 'female';
   const genome = combineGametes(createGamete(parent1.genome), createGamete(parent2.genome), sex);
   const phenotype = computePhenotype(genome);
-  phenotype.name = defaultName(sex, communityLangStage);
+  // Name emerges from the civilization's own phonological system, not a pre-written list
+  phenotype.name = phonology ? generateName(phonology, communityLangStage) : null;
   phenotype.height_cm = Math.round(150 + phenotype.height_factor * 45);
   return {
     id: uuidv4(), simulation_id: simulationId,

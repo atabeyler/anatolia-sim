@@ -25,6 +25,10 @@ export function getBiome(latitude, longitude) {
 export function createWorldState(latitude, longitude) {
   const biomeKey = getBiome(latitude, longitude);
   const biome = BIOMES[biomeKey];
+  // Unique phonology seed for this civilization's language (derived from coords)
+  const phonology_seed = Math.abs(
+    (Math.round(latitude * 100) * 31 + Math.round(longitude * 100) * 17 + 1277) % 10000
+  );
   return {
     latitude, longitude, biome: biomeKey,
     temperature: (biome.temp_range[0] + biome.temp_range[1]) / 2,
@@ -34,6 +38,7 @@ export function createWorldState(latitude, longitude) {
     flora: { density: biome.food_base * 0.8 },
     fauna: { prey_density: biome.food_base * 0.6, predator_density: biome.predator_risk },
     human_impact: 0,
+    phonology_seed,
   };
 }
 

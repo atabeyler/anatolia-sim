@@ -3,6 +3,7 @@
 import { rollDeath } from './biology/mortality.js';
 import { checkReproduction, attemptMating } from './biology/reproduction.js';
 import { updateWorldState, computeResourcePressure } from './environment/environmentEngine.js';
+import { buildPhonology } from './language/nameEngine.js';
 import { updateLanguageStage, learnFromTeacher } from './language/languageEngine.js';
 import { tryDiscoverTech } from './technology/technologyEngine.js';
 import { getAge } from './biology/individual.js';
@@ -40,6 +41,9 @@ export class SimulationEngine {
     this.speedMultiplier = simulation.speed_multiplier ?? 1;
     this.onTick = null;
     this.onCheckpoint = null;
+    // Build phonological profile once — unique to this civilization's geography
+    const ws = simulation.world_state ?? {};
+    this.phonology = buildPhonology(ws.phonology_seed ?? 0, ws.biome ?? 'mediterranean');
   }
 
   load(individuals) {
@@ -169,9 +173,9 @@ export class SimulationEngine {
     // 7. Social interactions, mating, bonding, disease spread
     this.processSocialInteractions(alive, day, tickEvents);
 
-    // 8. Reproduction — pass community language stage so newborn names are era-appropriate
-    const communityLangStage = Math.max(0, ...alive.map(i => i.language?.stage ?? 0));
-    const newborns = checkReproduction(this.population, day, this.simId, communityLangStage);
+    // 8. Reproduction — pass community lang stage + phonology for era-appropriate naming
+    const communityLangStage = alive.length ? Math.max(...alive.map(i => i.language?.stage ?? 0)) : 0;
+    const newborns = checkReproduction(this.population, day, this.simId, communityLangStage, this.phonology);
     for (const nb of newborns) {
       nb.inventory = initializeInventory();
       nb.beliefs = new Set(); // must be Set in-memory
