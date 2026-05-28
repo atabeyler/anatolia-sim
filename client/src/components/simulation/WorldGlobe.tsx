@@ -198,8 +198,10 @@ export default function WorldGlobe({ individuals = [] }: { individuals?: any[] }
       camera={{ position: [0, 0.5, 5.5], fov: 42 }}
       style={{ background: 'transparent' }}
       gl={{ antialias: true, alpha: true }}>
-      {/* Ambient fill — low so sun creates contrast */}
-      <ambientLight intensity={0.18} />
+      {/* Low ambient so sun creates contrast */}
+      <ambientLight intensity={0.25} />
+      {/* Fill light from camera — always illuminates the visible face */}
+      <directionalLight position={[0, 1, 8]} intensity={0.7} color="#b8d0ff" />
       <Sun />
       <Moon />
       <Stars radius={200} depth={80} count={6000} factor={5} saturation={0} fade speed={0.3} />

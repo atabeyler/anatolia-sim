@@ -9,19 +9,29 @@ interface Props {
 }
 
 export default function DetailPanel({ panelId, title, titleTr, children }: Props) {
-  const { activePanel, setActivePanel, lang } = useSimStore();
+  const { activePanel, setActivePanel, lang, sidebarExpanded } = useSimStore();
   if (activePanel !== panelId) return null;
 
   const displayTitle = lang === 'en' ? title : titleTr;
+  const leftOffset = sidebarExpanded ? 176 : 48;
 
   return (
-    <div className="fixed left-14 top-12 bottom-0 w-80 z-30 flex flex-col overflow-hidden"
-      style={{
-        background: 'rgba(4,4,15,0.97)',
-        borderRight: '1px solid rgba(79,110,247,0.28)',
-        backdropFilter: 'blur(20px)',
-        boxShadow: '4px 0 40px rgba(79,110,247,0.07)',
-      }}>
+    <>
+      {/* Click-outside backdrop */}
+      <div
+        className="fixed inset-0 z-30"
+        onClick={() => setActivePanel(null)}
+      />
+      <div
+        className="fixed top-12 bottom-0 w-80 z-40 flex flex-col overflow-hidden"
+        style={{
+          left: leftOffset,
+          transition: 'left 0.22s ease',
+          background: 'rgba(4,4,15,0.97)',
+          borderRight: '1px solid rgba(79,110,247,0.28)',
+          backdropFilter: 'blur(20px)',
+          boxShadow: '4px 0 40px rgba(79,110,247,0.12)',
+        }}>
 
       {/* Corner brackets */}
       <span style={{
@@ -78,5 +88,6 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
         </div>
       </div>
     </div>
+    </>
   );
 }
