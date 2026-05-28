@@ -13,7 +13,7 @@ export default function AriaButton() {
     setLoading(true);
     try {
       const text = lang === 'en'
-        ? `ARIA reporting. Year ${stats?.year ?? 0}. Population ${stats?.population ?? 0}. ${stats?.technologies ?? 0} technologies discovered. Season: ${stats?.season ?? 'spring'}. Temperature: ${stats?.temperature ?? 20} degrees. Happiness index at ${((stats?.happiness_index as any ?? 0.5) * 100).toFixed(0)} percent.`
+        ? `ARIA reporting. Year ${stats?.year ?? 0}. Population ${stats?.population ?? 0}. ${stats?.technologies ?? 0} technologies discovered. Season: ${stats?.season ?? 'spring'}. Temperature: ${stats?.temperature ?? 20} degrees. Happiness index at ${((stats?.happiness_index ?? 0.5) * 100).toFixed(0)} percent.`
         : `ARIA rapor veriyor. Yıl ${stats?.year ?? 0}. Nüfus ${stats?.population ?? 0}. ${stats?.technologies ?? 0} teknoloji keşfedildi. Mevsim: ${({ spring: 'ilkbahar', summer: 'yaz', autumn: 'sonbahar', winter: 'kış' } as any)[stats?.season ?? 'spring'] ?? ''}. Sıcaklık ${stats?.temperature ?? 20} derece.`;
       const { data } = await axios.post('/api/aria/speak', { text }, {
         headers: { Authorization: `Bearer ${accessToken}` },

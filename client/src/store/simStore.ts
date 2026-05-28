@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-interface SimStats { day: number; year: number; population: number; avg_age: number; sex_ratio: number; avg_intelligence: number; technologies: number; season: string; temperature: number; food_abundance: number; }
+interface SimStats { day: number; year: number; population: number; avg_age: number; sex_ratio: number; avg_intelligence: number; technologies: number; season: string; temperature: number; food_abundance: number; beliefs: number; art_forms: number; groups: number; gini: number; happiness_index: number; sick_rate: number; mean_wealth: number; total_ever: number; }
 interface SimEvent { sim_day: number; sim_year: number; event_type: string; description: string; importance: number; }
 interface Simulation { id: string; name: string; status: 'running' | 'paused' | 'completed'; current_day: number; current_year: number; start_latitude: number; start_longitude: number; }
 

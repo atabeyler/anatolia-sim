@@ -32,7 +32,7 @@ export default function BiologyPanel() {
         <MetricRow label={lang === 'en' ? 'Avg Age' : 'Ort. Yaş'} value={`${avgAge.toFixed(1)} yr`} />
         <MetricRow label={lang === 'en' ? 'Sex Ratio M:F' : 'Cinsiyet Oranı E:K'} value={`${(sexRatio * 100).toFixed(0)}% / ${((1 - sexRatio) * 100).toFixed(0)}%`} />
         <MetricRow label={lang === 'en' ? 'Avg Intelligence' : 'Ort. Zeka'} value={(avgIntel * 100).toFixed(1) + '%'} />
-        <MetricRow label={lang === 'en' ? 'Sick Rate' : 'Hastalık Oranı'} value={`${((stats as any)?.sick_rate * 100 ?? 0).toFixed(1)}%`} />
+        <MetricRow label={lang === 'en' ? 'Sick Rate' : 'Hastalık Oranı'} value={`${((stats?.sick_rate ?? 0) * 100).toFixed(1)}%`} />
       </Section>
 
       <Section title={lang === 'en' ? 'Genome Activity' : 'Genom Aktivitesi'}>

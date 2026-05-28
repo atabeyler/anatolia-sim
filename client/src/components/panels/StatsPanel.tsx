@@ -84,8 +84,7 @@ export default function StatsPanel() {
                   labelStyle={{ color: '#6070a0' }}
                   itemStyle={{ color: '#4f6ef7' }}
                 />
-                <Line type="monotone" dataKey="pop" stroke="#4f6ef7" dot={false} strokeWidth={1.5}
-                  strokeShadow="0 0 6px #4f6ef7" />
+                <Line type="monotone" dataKey="pop" stroke="#4f6ef7" dot={false} strokeWidth={1.5} />
               </LineChart>
             </ResponsiveContainer>
           </div>
