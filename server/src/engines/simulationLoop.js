@@ -104,6 +104,14 @@ export class SimulationEngine {
       ind.inventory = inv;
       ind.satiation = satiation;
 
+      // Wire satiation → health.calories / hydration (gradual, not instant collapse)
+      if (ind.health) {
+        const targetCal  = Math.min(1, satiation * 1.3);
+        const targetHyd  = Math.min(1, ((inv.water ?? 0) > 0.5 ? 0.95 : 0.4));
+        ind.health.calories   = (ind.health.calories   ?? 1) * 0.97 + targetCal * 0.03;
+        ind.health.hydration  = (ind.health.hydration  ?? 1) * 0.97 + targetHyd * 0.03;
+      }
+
       const { produced, inv: prodInv } = produceGoods(ind, this.discoveredTechs);
       ind.inventory = prodInv;
       for (const [good, qty] of Object.entries(produced)) {
@@ -114,6 +122,21 @@ export class SimulationEngine {
     // 4. Physiology — health, aging
     for (const ind of alive) {
       this.updatePhysiology(ind, resourcePressure);
+    }
+
+    // 4b. Movement — individuals wander on the map
+    for (const ind of alive) {
+      this.moveIndividual(ind);
+    }
+    // Infants travel with their mother
+    for (const ind of alive) {
+      if ((ind.age / 365) < 2 && ind.parent_1_id) {
+        const mother = this.population.get(ind.parent_1_id);
+        if (mother && !mother.is_dead) {
+          ind.x = mother.x + (Math.random() - 0.5) * 0.005;
+          ind.y = mother.y + (Math.random() - 0.5) * 0.005;
+        }
+      }
     }
 
     // 5. Psychology — mental state
@@ -164,6 +187,14 @@ export class SimulationEngine {
         ind.alive = false;
         ind.death_day = day;
         ind.death_cause = cause;
+        // Free the surviving mate so they can re-pair
+        if (ind.social?.mate_id) {
+          const mate = this.population.get(ind.social.mate_id);
+          if (mate && !mate.is_dead) {
+            mate.social.has_mate = false;
+            mate.social.mate_id = null;
+          }
+        }
         tickEvents.push({ type: 'death_of_kin', individual_id: ind.id, day });
         this.logEvent(day, 'death', `Individual died: ${cause}`, { individual_id: ind.id, cause }, 1);
       }
@@ -296,6 +327,30 @@ export class SimulationEngine {
     }
 
     this.currentDay++;
+  }
+
+  moveIndividual(ind) {
+    if (ind.is_dead) return;
+    const ageYears = ind.age / 365;
+    if (ageYears < 2) return; // handled by infant-follow logic
+
+    // Base speed in degrees/day (~0.5–3 km/day depending on age)
+    let speed;
+    if (ageYears < 12)      speed = 0.012;
+    else if (ageYears > 60) speed = 0.004;
+    else                    speed = 0.02;
+
+    // Hungry individuals explore faster; pregnant females slower
+    if ((ind.satiation ?? 0.5) < 0.3)   speed *= 1.6;
+    if (ind.health?.pregnancy)           speed *= 0.4;
+
+    // Persistent direction with slow random drift
+    if (ind._moveAngle === undefined) ind._moveAngle = Math.random() * Math.PI * 2;
+    ind._moveAngle += (Math.random() - 0.5) * 0.4;
+
+    const step = speed * (0.6 + Math.random() * 0.8);
+    ind.x = Math.max(-180, Math.min(180, (ind.x ?? 0) + Math.cos(ind._moveAngle) * step));
+    ind.y = Math.max(-85,  Math.min(85,  (ind.y ?? 0) + Math.sin(ind._moveAngle) * step));
   }
 
   updatePhysiology(individual, resourcePressure) {
