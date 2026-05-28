@@ -6,7 +6,9 @@ export function useSimWebSocket(simId: string | null) {
   const { setStats, addEvent } = useSimStore();
   useEffect(() => {
     if (!simId) return;
-    const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws?simId=${simId}`;
+    const apiBase = import.meta.env.VITE_API_URL ?? `${location.protocol}//${location.host}`;
+    const wsBase = apiBase.replace(/^http/, 'ws');
+    const url = `${wsBase}/ws?simId=${simId}`;
     ws.current = new WebSocket(url);
     ws.current.onmessage = (e) => {
       try {
