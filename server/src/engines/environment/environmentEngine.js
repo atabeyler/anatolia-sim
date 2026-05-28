@@ -57,6 +57,8 @@ export function updateWorldState(worldState, simulationDay) {
 
 export function rollNaturalDisaster(worldState, simulationDay) {
   const events = [];
+  // No disasters in the first 90 days — founding buffer period
+  if (simulationDay < 90) return events;
   const tectonicRisk = getTectonicRisk(worldState.latitude, worldState.longitude);
   if (Math.random() < tectonicRisk * 0.0001) {
     const magnitude = 5 + Math.random() * 3;

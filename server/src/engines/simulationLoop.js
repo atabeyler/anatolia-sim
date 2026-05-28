@@ -27,7 +27,7 @@ export class SimulationEngine {
     this.currentDay = simulation.current_day ?? 0;
     this.population = new Map();
     this.worldState = simulation.world_state;
-    this.discoveredTechs = new Set();
+    this.discoveredTechs = new Set(['foraging', 'stone_tools']);
     this.discoveredBeliefs = new Set();
     this.discoveredArts = new Set();
     this.celestialObservations = new Set();
