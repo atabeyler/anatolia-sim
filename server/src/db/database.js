@@ -14,6 +14,10 @@ const pool = new Pool({
 
 pool.on('error', (err) => console.error('Unexpected error on idle client', err));
 
+pool.on('connect', (client) => {
+  client.query('SET search_path TO antsim, public');
+});
+
 export const query = (text, params) => pool.query(text, params);
 export const getClient = () => pool.connect();
 
