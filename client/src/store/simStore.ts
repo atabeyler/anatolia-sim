@@ -1,20 +1,54 @@
 import { create } from 'zustand';
 
-interface SimStats { day: number; year: number; population: number; avg_age: number; sex_ratio: number; avg_intelligence: number; technologies: number; season: string; temperature: number; food_abundance: number; beliefs: number; art_forms: number; groups: number; gini: number; happiness_index: number; sick_rate: number; mean_wealth: number; total_ever: number; }
-interface SimEvent { sim_day: number; sim_year: number; event_type: string; description: string; importance: number; }
-interface Simulation { id: string; name: string; status: 'running' | 'paused' | 'completed'; current_day: number; current_year: number; start_latitude: number; start_longitude: number; }
+interface SimStats {
+  day: number;
+  year: number;
+  population: number;
+  avg_age: number;
+  sex_ratio: number;
+  avg_intelligence: number;
+  technologies: number;
+  season: string;
+  temperature: number;
+  food_abundance: number;
+}
+
+interface SimEvent {
+  sim_day: number;
+  sim_year: number;
+  event_type: string;
+  description: string;
+  importance: number;
+}
+
+interface Simulation {
+  id: string;
+  name: string;
+  status: 'running' | 'paused' | 'completed';
+  current_day: number;
+  current_year: number;
+  start_latitude: number;
+  start_longitude: number;
+}
 
 interface SimStore {
-  user: { id: string; username: string; email: string; role: string; first_name?: string; last_name?: string } | null;
+  // Auth
+  user: { id: string; username: string; email: string } | null;
   accessToken: string | null;
   setUser: (user: SimStore['user'], token: string) => void;
   logout: () => void;
+
+  // Current simulation
   currentSim: Simulation | null;
   setCurrentSim: (sim: Simulation | null) => void;
+
+  // Live stats from WebSocket
   stats: SimStats | null;
   events: SimEvent[];
   setStats: (stats: SimStats) => void;
   addEvent: (event: SimEvent) => void;
+
+  // UI state
   activePanel: string | null;
   setActivePanel: (panel: string | null) => void;
   lang: 'en' | 'tr';
@@ -23,17 +57,24 @@ interface SimStore {
   toggleTheme: () => void;
   speedMultiplier: number;
   setSpeed: (speed: number) => void;
+  sidebarExpanded: boolean;
+  toggleSidebar: () => void;
 }
 
 export const useSimStore = create<SimStore>((set) => ({
-  user: null, accessToken: null,
+  user: null,
+  accessToken: null,
   setUser: (user, token) => set({ user, accessToken: token }),
   logout: () => set({ user: null, accessToken: null, currentSim: null }),
+
   currentSim: null,
   setCurrentSim: (sim) => set({ currentSim: sim }),
-  stats: null, events: [],
+
+  stats: null,
+  events: [],
   setStats: (stats) => set({ stats }),
   addEvent: (event) => set(s => ({ events: [event, ...s.events].slice(0, 200) })),
+
   activePanel: null,
   setActivePanel: (panel) => set(s => ({ activePanel: s.activePanel === panel ? null : panel })),
   lang: 'en',
@@ -42,4 +83,6 @@ export const useSimStore = create<SimStore>((set) => ({
   toggleTheme: () => set(s => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
   speedMultiplier: 1,
   setSpeed: (speed) => set({ speedMultiplier: speed }),
+  sidebarExpanded: true,
+  toggleSidebar: () => set(s => ({ sidebarExpanded: !s.sidebarExpanded })),
 }));

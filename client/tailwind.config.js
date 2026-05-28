@@ -14,7 +14,7 @@ export default {
           green:   '#4ecb71',
           cyan:    '#00d4ff',
           text:    '#e0e0f0',
-          muted:   '#6070a0',
+          muted:   '#8898c8',
         },
       },
       fontFamily: {
