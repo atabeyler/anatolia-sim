@@ -88,7 +88,7 @@ router.post('/seed-admin', async (req, res) => {
     // Check if admin already exists
     const existing = await query('SELECT id FROM users WHERE user_code=$1 OR email=$2', [adminCode, adminEmail]);
     if (existing.rows.length > 0) {
-      await query(`UPDATE users SET role='admin', is_approved=true, is_banned=false, password_hash=$1 WHERE user_code=$2 OR email=$3`,
+      await query(`UPDATE users SET role='admin', is_approved=true, is_banned=false, password_hash=$1, user_code=$2, username=$2 WHERE user_code=$2 OR email=$3`,
         [hash, adminCode, adminEmail]);
       return res.json({ message: 'Admin güncellendi.' });
     }
