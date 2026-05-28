@@ -1,11 +1,24 @@
+// Main Simulation Loop — each tick = 1 simulation day
+
 import { rollDeath } from './biology/mortality.js';
 import { checkReproduction, attemptMating } from './biology/reproduction.js';
 import { updateWorldState, computeResourcePressure } from './environment/environmentEngine.js';
 import { updateLanguageStage, learnFromTeacher } from './language/languageEngine.js';
 import { tryDiscoverTech } from './technology/technologyEngine.js';
 import { getAge } from './biology/individual.js';
+import { processGroupDynamics, assignGroupRoles } from './social/socialEngine.js';
+import { gatherResources, consumeResources, produceGoods, attemptTrade, computeEconomicStats, initializeInventory } from './economy/economyEngine.js';
+import { tryFormBelief, updateBeliefSpread, checkRitualEmergence } from './belief/beliefEngine.js';
+import { processCultureTick } from './culture/cultureEngine.js';
+import { processArtTick, applyArtEffects } from './art/artEngine.js';
+import { processArchitectureTick, createSettlement } from './architecture/architectureEngine.js';
+import { processLawTick } from './law/lawEngine.js';
+import { processMicrobiomeTick, spreadInfection, updateGutMicrobiome, computeHealthStats } from './microbiome/microbiomeEngine.js';
+import { initializePsychology, updateMentalState, processBonding, computePopulationPsychStats } from './psychology/psychologyEngine.js';
+import { initializeEpigenome, inheritEpigenome, updateEpigenome } from './epigenetics/epigeneticsEngine.js';
+import { processAstronomyTick } from './astronomy/astronomyEngine.js';
 
-const SOCIAL_RADIUS = 50;
+const SOCIAL_INTERACTION_RADIUS = 50;
 const CHECKPOINT_INTERVAL = 100;
 
 export class SimulationEngine {
@@ -15,124 +28,438 @@ export class SimulationEngine {
     this.population = new Map();
     this.worldState = simulation.world_state;
     this.discoveredTechs = new Set();
+    this.discoveredBeliefs = new Set();
+    this.discoveredArts = new Set();
+    this.celestialObservations = new Set();
+    this.astronomyKnowledge = new Set();
+    this.groups = [];
+    this.settlements = [];
     this.events = [];
+    this.generation = 0;
     this.running = false;
     this.speedMultiplier = simulation.speed_multiplier ?? 1;
     this.onTick = null;
     this.onCheckpoint = null;
   }
 
-  load(individuals) { for (const ind of individuals) this.population.set(ind.id, ind); }
-  pause() { this.running = false; }
-  resume() { this.start(); }
-
-  async start() {
-    this.running = true;
-    while (this.running && this.population.size > 0) {
-      await this.tick();
-      if (this.speedMultiplier < 100) await sleep(1000 / this.speedMultiplier);
+  load(individuals) {
+    for (const ind of individuals) {
+      if (!ind.inventory) ind.inventory = initializeInventory();
+      if (!ind.psychology) initializePsychology(ind);
+      if (!ind.epigenome) initializeEpigenome(ind);
+      this.population.set(ind.id, ind);
     }
   }
 
+  async start() {
+    this.running = true;
+    while (this.running) {
+      const alive = [...this.population.values()].filter(i => !i.is_dead);
+      if (alive.length === 0) { this.running = false; break; }
+      await this.tick();
+      if (this.speedMultiplier < 100) {
+        await sleep(1000 / this.speedMultiplier);
+      }
+    }
+  }
+
+  pause() { this.running = false; }
+  resume() { this.start(); }
+
   async tick() {
     const day = this.currentDay;
-    const alive = [...this.population.values()].filter(i => i.alive);
+    const alive = [...this.population.values()].filter(i => !i.is_dead);
+    const tickEvents = [];
+
+    // 1. Update world environment
     updateWorldState(this.worldState, day);
     const resourcePressure = computeResourcePressure(this.worldState, alive.length);
-    for (const ind of alive) this.updatePhysiology(ind, resourcePressure);
-    this.processSocialInteractions(alive, day);
+
+    // 2. Epigenetics & microbiome daily update
+    for (const ind of alive) {
+      updateEpigenome(ind, this.worldState, day);
+      updateGutMicrobiome(ind, this.worldState);
+    }
+
+    // 3. Economy — gather resources, consume, produce goods
+    for (const ind of alive) {
+      const gathered = gatherResources(ind, this.worldState, this.discoveredTechs);
+      if (!ind.inventory) ind.inventory = initializeInventory();
+      for (const [res, qty] of Object.entries(gathered)) {
+        ind.inventory[res] = (ind.inventory[res] ?? 0) + qty;
+      }
+      const { satiation, inv } = consumeResources(ind);
+      ind.inventory = inv;
+      ind.satiation = satiation;
+
+      const { produced, inv: prodInv } = produceGoods(ind, this.discoveredTechs);
+      ind.inventory = prodInv;
+      for (const [good, qty] of Object.entries(produced)) {
+        ind.inventory[good] = (ind.inventory[good] ?? 0) + qty;
+      }
+    }
+
+    // 4. Physiology — health, aging
+    for (const ind of alive) {
+      this.updatePhysiology(ind, resourcePressure);
+    }
+
+    // 5. Psychology — mental state
+    for (const ind of alive) {
+      updateMentalState(ind, tickEvents, this.worldState, day);
+    }
+
+    // 6. Social groups
+    const socialEvents = processGroupDynamics(alive, this.groups, day);
+    tickEvents.push(...socialEvents);
+
+    // Assign roles in each group
+    for (const group of this.groups) {
+      const members = alive.filter(i => group.member_ids.includes(i.id));
+      assignGroupRoles(members, group);
+    }
+
+    // 7. Social interactions, mating, bonding, disease spread
+    this.processSocialInteractions(alive, day, tickEvents);
+
+    // 8. Reproduction
     const newborns = checkReproduction(this.population, day, this.simId);
-    for (const nb of newborns) { this.population.set(nb.id, nb); this.logEvent(day, 'birth', 'New individual born', { individual_id: nb.id }, 1); }
+    for (const nb of newborns) {
+      nb.inventory = initializeInventory();
+      initializePsychology(nb);
+      initializeEpigenome(nb);
+      // Inherit epigenetics from parents
+      const p1 = this.population.get(nb.parent_1_id);
+      const p2 = this.population.get(nb.parent_2_id);
+      if (p1 && p2) inheritEpigenome(nb, p1, p2);
+      this.population.set(nb.id, nb);
+      tickEvents.push({ type: 'birth', individual_id: nb.id, day, importance: 'low' });
+      this.logEvent(day, 'birth', `New individual born`, { individual_id: nb.id }, 1);
+    }
+
+    // 9. Microbiome & disease outbreaks
+    const microEvents = processMicrobiomeTick(alive, this.worldState, day);
+    tickEvents.push(...microEvents);
+    for (const ev of microEvents) {
+      this.logEvent(day, 'epidemic', ev.description, ev, ev.importance === 'high' ? 5 : 3);
+    }
+
+    // 10. Death checks
     for (const ind of alive) {
       const cause = rollDeath(ind, day, this.worldState);
-      if (cause) { ind.alive = false; ind.death_day = day; ind.death_cause = cause; this.logEvent(day, 'death', `Individual died: ${cause}`, { individual_id: ind.id, cause }, 1); }
+      if (cause) {
+        ind.is_dead = true;
+        ind.death_day = day;
+        ind.death_cause = cause;
+        tickEvents.push({ type: 'death_of_kin', individual_id: ind.id, day });
+        this.logEvent(day, 'death', `Individual died: ${cause}`, { individual_id: ind.id, cause }, 1);
+      }
     }
-    if (this.worldState.natural_disaster) this.processDisaster(this.worldState.natural_disaster, alive, day);
+
+    // Handle already-dead from conflict/disease marked earlier
+    for (const ind of alive) {
+      if (ind.is_dead && !ind.death_day) {
+        ind.death_day = day;
+        this.logEvent(day, 'death', `Individual died: ${ind.cause_of_death ?? 'unknown'}`, { individual_id: ind.id }, 1);
+      }
+    }
+
+    // 11. Natural disaster
+    if (this.worldState.natural_disaster) {
+      this.processDisaster(this.worldState.natural_disaster, alive, day);
+    }
+
+    // 12. Language evolution
     const genCount = this.estimateGenerations();
-    for (const ind of alive) updateLanguageStage(ind, alive.length, genCount);
-    this.processLanguageLearning(alive);
-    for (const ind of alive) { const d = tryDiscoverTech(ind, this.discoveredTechs, this.worldState, day); for (const t of d) this.logEvent(day, 'technology', `Technology discovered: ${t.tech_id}`, t, 4); }
-    this.worldState.human_impact = Math.min(1, alive.length / 1000);
-    const stats = this.computeStats(day, alive);
-    if (day % CHECKPOINT_INTERVAL === 0 && this.onCheckpoint) {
-      await this.onCheckpoint({ sim_day: day, sim_year: Math.floor(day/365), population_count: alive.length, population_snapshot: [...this.population.values()].map(compactIndividual), world_state: this.worldState, cultural_state: this.getCulturalState(alive), tech_state: [...this.discoveredTechs], stats });
+    for (const ind of alive) {
+      updateLanguageStage(ind, alive.length, genCount);
     }
-    if (this.onTick) this.onTick({ day, stats, events: this.events.slice(-20) });
+    this.processLanguageLearning(alive);
+
+    // 13. Technology discovery
+    for (const ind of alive) {
+      const discoveries = tryDiscoverTech(ind, this.discoveredTechs, this.worldState, day);
+      for (const tech of discoveries) {
+        tickEvents.push({ ...tech, type: 'discovery', individual_id: tech.discoverer_id });
+        this.logEvent(day, 'technology', `Technology discovered: ${tech.tech_id}`, tech, 4);
+      }
+    }
+
+    // 14. Belief formation & spread
+    for (const ind of alive) {
+      const beliefEvent = tryFormBelief(ind, this.discoveredBeliefs, this.discoveredTechs, this.worldState, day);
+      if (beliefEvent) {
+        tickEvents.push(beliefEvent);
+        this.logEvent(day, 'belief', beliefEvent.description, beliefEvent, beliefEvent.importance === 'high' ? 4 : 2);
+      }
+    }
+    updateBeliefSpread(alive, this.discoveredBeliefs, this.groups, day);
+    for (const group of this.groups) {
+      const ritualEvent = checkRitualEmergence(group, alive, this.discoveredBeliefs, day);
+      if (ritualEvent) {
+        tickEvents.push(ritualEvent);
+        this.logEvent(day, 'ritual', ritualEvent.description ?? 'Ritual emerged', ritualEvent, 3);
+      }
+    }
+
+    // 15. Culture
+    const cultureEvents = processCultureTick(alive, this.groups, this.discoveredTechs, day);
+    for (const ev of cultureEvents) {
+      if (ev.importance !== 'low') this.logEvent(day, 'culture', ev.description ?? ev.meme_id, ev, 2);
+    }
+    tickEvents.push(...cultureEvents);
+
+    // 16. Art
+    const artEvents = processArtTick(alive, this.discoveredArts, this.discoveredTechs, this.worldState, day);
+    for (const ev of artEvents) {
+      tickEvents.push(ev);
+      this.logEvent(day, 'art', ev.description, ev, ev.importance === 'high' ? 4 : 2);
+    }
+    for (const ind of alive) {
+      applyArtEffects(ind, this.groups.find(g => g.member_ids?.includes(ind.id)), this.discoveredArts);
+    }
+
+    // 17. Architecture
+    for (const settlement of this.settlements) {
+      const { events: archEvents } = processArchitectureTick(settlement, alive, this.discoveredTechs, this.worldState, day);
+      for (const ev of archEvents) {
+        tickEvents.push(ev);
+        this.logEvent(day, 'architecture', ev.description, ev, ev.importance === 'high' ? 4 : 2);
+      }
+    }
+    // Create settlement for new groups
+    for (const group of this.groups) {
+      if (!this.settlements.find(s => s.group_id === group.id)) {
+        this.settlements.push(createSettlement(group, this.worldState, day));
+      }
+    }
+
+    // 18. Law & norms
+    for (const group of this.groups) {
+      const lawEvents = processLawTick(group, alive, this.discoveredTechs, day);
+      for (const ev of lawEvents) {
+        if (ev.importance !== 'low') this.logEvent(day, 'law', ev.description ?? ev.norm_id, ev, ev.importance === 'high' ? 4 : 2);
+      }
+      tickEvents.push(...lawEvents);
+    }
+
+    // 19. Astronomy
+    const astroEvents = processAstronomyTick(alive, this.celestialObservations, this.astronomyKnowledge, this.discoveredTechs, day);
+    for (const ev of astroEvents) {
+      if (ev.importance !== 'low') this.logEvent(day, 'astronomy', ev.description, ev, ev.importance === 'high' ? 4 : 2);
+    }
+
+    // 20. Update human environmental impact
+    this.worldState.human_impact = Math.min(1, alive.filter(i => !i.is_dead).length / 1000);
+
+    // 21. Compute stats
+    const currentAlive = [...this.population.values()].filter(i => !i.is_dead);
+    const stats = this.computeStats(day, currentAlive);
+
+    // 22. Checkpoint
+    if (day % CHECKPOINT_INTERVAL === 0 && this.onCheckpoint) {
+      await this.onCheckpoint({
+        sim_day: day,
+        sim_year: Math.floor(day / 365),
+        population_count: currentAlive.length,
+        population_snapshot: currentAlive.map(compactIndividual),
+        world_state: this.worldState,
+        cultural_state: this.getCulturalState(currentAlive),
+        tech_state: [...this.discoveredTechs],
+        belief_state: [...this.discoveredBeliefs],
+        art_state: [...this.discoveredArts],
+        groups: this.groups.map(g => ({
+          ...g,
+          culture: g.culture ? [...g.culture] : [],
+          norms: g.norms ? [...g.norms] : [],
+        })),
+        stats,
+      });
+    }
+
+    // 23. Broadcast
+    if (this.onTick) {
+      this.onTick({ day, stats, events: this.events.slice(-20) });
+    }
+
     this.currentDay++;
   }
 
   updatePhysiology(individual, resourcePressure) {
+    if (!individual.health) individual.health = { hp: 0.8, calories: 0.6, hydration: 0.6 };
     const { health } = individual;
-    health.calories = Math.max(0, health.calories - 0.005);
-    health.hydration = Math.max(0, health.hydration - 0.008 - Math.max(0, (this.worldState.temperature - 20) / 30) * 0.01);
-    const foragingSkill = individual.skills?.find(s => s.id === 'foraging')?.level ?? 0.2;
-    health.calories = Math.min(1, health.calories + (1 - resourcePressure.food_pressure) * foragingSkill * 0.02);
-    health.hydration = Math.min(1, health.hydration + (1 - resourcePressure.water_pressure) * 0.015);
-    if (health.calories > 0.5 && health.hydration > 0.5) health.hp = Math.min(1, health.hp + 0.001);
-    else health.hp = Math.max(0, health.hp - 0.002);
-    if (health.disease) { health.disease.duration--; if (health.disease.duration <= 0) health.disease = null; }
+
+    // Satiation-based health update
+    const satiationScore = individual.satiation ?? 0.5;
+    if (satiationScore > 0.6) {
+      health.hp = Math.min(1, health.hp + 0.001);
+    } else if (satiationScore < 0.2) {
+      health.hp = Math.max(0, health.hp - 0.003);
+    }
+
+    // Infection burden
+    const infectionCount = individual.infections?.length ?? 0;
+    if (infectionCount > 0) health.hp = Math.max(0, health.hp - 0.005 * infectionCount);
+
+    // Psychological state affects physical health
+    const stressLoad = individual.psychology?.stress_level ?? 0.3;
+    health.hp = Math.max(0, health.hp - stressLoad * 0.0005);
+
+    // Age-related decline
+    const ageYears = individual.age / 365;
+    if (ageYears > 50) health.hp = Math.max(0, health.hp - (ageYears - 50) * 0.00005);
+
+    individual.health_score = health.hp;
   }
 
-  processSocialInteractions(alive, day) {
+  processSocialInteractions(alive, day, tickEvents) {
     for (let i = 0; i < alive.length; i++) {
+      const ind = alive[i];
       for (let j = i + 1; j < alive.length; j++) {
-        const [a, b] = [alive[i], alive[j]];
-        if (Math.hypot(a.x - b.x, a.y - b.y) > SOCIAL_RADIUS) continue;
-        if (!a.social.has_mate && !b.social.has_mate) attemptMating(a, b, day);
-        const rel = b.id;
-        if (!a.social.relationships[rel]) a.social.relationships[rel] = { type: 'acquaintance', strength: 0.1, trust: 0.5 };
-        else a.social.relationships[rel].strength = Math.min(1, a.social.relationships[rel].strength + 0.001);
+        const other = alive[j];
+        if (ind.is_dead || other.is_dead) continue;
+        const dist = Math.hypot((ind.x ?? 0) - (other.x ?? 0), (ind.y ?? 0) - (other.y ?? 0));
+        if (dist > SOCIAL_INTERACTION_RADIUS) continue;
+
+        // Mating attempt
+        if (!ind.mate_id && !other.mate_id) {
+          attemptMating(ind, other, day);
+        }
+
+        // Social bonding
+        processBonding(ind, other, 'interaction');
+
+        // Trade
+        if (Math.random() < 0.05) {
+          const tradeEvent = attemptTrade(ind, other, day);
+          if (tradeEvent) tickEvents.push(tradeEvent);
+        }
+
+        // Disease spread
+        if (ind.infections?.length && !other.infections?.length) {
+          for (const inf of ind.infections) {
+            spreadInfection(ind, other, inf.pathogen_id, day);
+          }
+        }
       }
     }
   }
 
   processLanguageLearning(alive) {
     for (const ind of alive) {
-      if (ind.language.stage < 2) continue;
-      const nearby = alive.filter(o => o.id !== ind.id && o.language.stage > ind.language.stage && Math.hypot(ind.x - o.x, ind.y - o.y) < SOCIAL_RADIUS);
-      if (nearby.length > 0) learnFromTeacher(ind, nearby[Math.floor(Math.random() * nearby.length)]);
+      if (!ind.language || ind.language.stage < 2) continue;
+      const nearby = alive.filter(o =>
+        o.id !== ind.id &&
+        o.language?.stage > ind.language.stage &&
+        Math.hypot((ind.x ?? 0) - (o.x ?? 0), (ind.y ?? 0) - (o.y ?? 0)) < SOCIAL_INTERACTION_RADIUS
+      );
+      if (nearby.length > 0) {
+        const teacher = nearby[Math.floor(Math.random() * nearby.length)];
+        learnFromTeacher(ind, teacher);
+      }
     }
   }
 
   processDisaster(disasters, alive, day) {
-    for (const { type, mortality_factor } of disasters) {
+    const disasterList = Array.isArray(disasters) ? disasters : [disasters];
+    for (const disaster of disasterList) {
+      const { type, mortality_factor } = disaster;
       let deaths = 0;
-      for (const ind of alive) { if (Math.random() < mortality_factor) { ind.alive = false; ind.death_day = day; ind.death_cause = type; deaths++; } }
-      if (deaths > 0) this.logEvent(day, 'disaster', `${type} killed ${deaths} individuals`, { type, deaths }, 5);
+      for (const ind of alive) {
+        if (ind.is_dead) continue;
+        if (Math.random() < mortality_factor) {
+          ind.is_dead = true;
+          ind.death_day = day;
+          ind.death_cause = type;
+          deaths++;
+        }
+      }
+      if (deaths > 0) {
+        this.logEvent(day, 'disaster', `${type} killed ${deaths} individuals`, { type, deaths, ...disaster }, 5);
+      }
+      this.worldState.recent_disaster = type;
     }
+    // Clear after processing
+    this.worldState.natural_disaster = null;
+    // recent_disaster fades after a few days
+    if (day % 10 === 0) this.worldState.recent_disaster = null;
   }
 
   estimateGenerations() {
-    const oldest = Math.max(...[...this.population.values()].map(i => this.currentDay - i.birth_day), 0);
+    const oldest = Math.max(...[...this.population.values()].map(i => this.currentDay - (i.birth_day ?? 0)), 0);
     return Math.floor(oldest / (25 * 365));
   }
 
   getCulturalState(alive) {
-    const s = {};
-    for (const ind of alive) { const n = ind.language.stage_name ?? 'pre-linguistic'; s[n] = (s[n] ?? 0) + 1; }
-    return { language_distribution: s };
+    const langStages = {};
+    for (const ind of alive) {
+      const s = ind.language?.stage_name ?? 'pre-linguistic';
+      langStages[s] = (langStages[s] ?? 0) + 1;
+    }
+    return { language_distribution: langStages };
   }
 
   computeStats(day, alive) {
     const ages = alive.map(i => getAge(i, day));
+    const avgAge = ages.length ? ages.reduce((a, b) => a + b, 0) / ages.length : 0;
+    const econStats = computeEconomicStats(alive);
+    const psychStats = computePopulationPsychStats(alive);
+    const healthStats = computeHealthStats(alive);
+
     return {
-      day, year: Math.floor(day / 365), population: alive.length, total_ever: this.population.size,
-      avg_age: ages.length ? ages.reduce((a, b) => a + b, 0) / ages.length : 0,
+      day,
+      year: Math.floor(day / 365),
+      population: alive.length,
+      total_ever: this.population.size,
+      avg_age: Math.round(avgAge * 10) / 10,
       sex_ratio: alive.filter(i => i.sex === 'male').length / Math.max(1, alive.length),
       avg_intelligence: alive.reduce((s, i) => s + (i.phenotype?.fluid_intelligence ?? 0), 0) / Math.max(1, alive.length),
-      technologies: this.discoveredTechs.size, season: this.worldState.season,
-      temperature: Math.round(this.worldState.temperature), food_abundance: Math.round(this.worldState.food_abundance * 100) / 100,
+      technologies: this.discoveredTechs.size,
+      beliefs: this.discoveredBeliefs.size,
+      art_forms: this.discoveredArts.size,
+      groups: this.groups.length,
+      season: this.worldState.season,
+      temperature: Math.round(this.worldState.temperature),
+      food_abundance: Math.round(this.worldState.food_abundance * 100) / 100,
+      mean_wealth: Math.round(econStats.mean_wealth * 100) / 100,
+      gini: Math.round(econStats.gini * 100) / 100,
+      happiness_index: Math.round(psychStats.happiness_index * 100) / 100,
+      sick_rate: Math.round(healthStats.sick_rate * 100) / 100,
     };
   }
 
   logEvent(day, type, description, data = {}, importance = 1) {
-    this.events.push({ simulation_id: this.simId, sim_day: day, sim_year: Math.floor(day/365), event_type: type, description, data, importance, created_at: new Date().toISOString() });
+    this.events.push({
+      simulation_id: this.simId,
+      sim_day: day,
+      sim_year: Math.floor(day / 365),
+      event_type: type,
+      description,
+      data,
+      importance,
+      created_at: new Date().toISOString(),
+    });
     if (this.events.length > 1000) this.events.shift();
   }
 }
 
 function compactIndividual(ind) {
-  return { id: ind.id, alive: ind.alive, sex: ind.sex, birth_day: ind.birth_day, death_day: ind.death_day, x: ind.x, y: ind.y, phenotype: ind.phenotype, language_stage: ind.language?.stage, parent_1_id: ind.parent_1_id, parent_2_id: ind.parent_2_id };
+  return {
+    id: ind.id,
+    is_dead: ind.is_dead,
+    sex: ind.sex,
+    birth_day: ind.birth_day,
+    death_day: ind.death_day,
+    x: ind.x,
+    y: ind.y,
+    phenotype: ind.phenotype,
+    language_stage: ind.language?.stage,
+    group_id: ind.group_id,
+    parent_1_id: ind.parent_1_id,
+    parent_2_id: ind.parent_2_id,
+  };
 }
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}

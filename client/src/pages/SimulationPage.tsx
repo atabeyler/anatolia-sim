@@ -8,6 +8,21 @@ import LeftPanel from '../components/layout/LeftPanel';
 import WorldGlobe from '../components/simulation/WorldGlobe';
 import StatsPanel from '../components/panels/StatsPanel';
 import EventsPanel from '../components/panels/EventsPanel';
+import BiologyPanel from '../components/panels/BiologyPanel';
+import TechnologyPanel from '../components/panels/TechnologyPanel';
+import LanguagePanel from '../components/panels/LanguagePanel';
+import SocialPanel from '../components/panels/SocialPanel';
+import BeliefPanel from '../components/panels/BeliefPanel';
+import EconomyPanel from '../components/panels/EconomyPanel';
+import CulturePanel from '../components/panels/CulturePanel';
+import PsychologyPanel from '../components/panels/PsychologyPanel';
+import MicrobiomePanel from '../components/panels/MicrobiomePanel';
+import EpigeneticsPanel from '../components/panels/EpigeneticsPanel';
+import AstronomyPanel from '../components/panels/AstronomyPanel';
+import ArtPanel from '../components/panels/ArtPanel';
+import LawPanel from '../components/panels/LawPanel';
+import ArchitecturePanel from '../components/panels/ArchitecturePanel';
+import EnvironmentPanel from '../components/panels/EnvironmentPanel';
 
 export default function SimulationPage() {
   const { simId } = useParams<{ simId: string }>();
@@ -17,9 +32,11 @@ export default function SimulationPage() {
 
   useEffect(() => {
     if (!simId || !accessToken) return;
-    axios.get(`/api/simulations/${simId}`, { headers: { Authorization: `Bearer ${accessToken}` } }).then(r => setCurrentSim(r.data));
+    axios.get(`/api/simulations/${simId}`, { headers: { Authorization: `Bearer ${accessToken}` } })
+      .then(r => setCurrentSim(r.data));
     const interval = setInterval(() => {
-      axios.get(`/api/simulations/${simId}/population?alive=true`, { headers: { Authorization: `Bearer ${accessToken}` } }).then(r => setIndividuals(r.data));
+      axios.get(`/api/simulations/${simId}/population?alive=true`, { headers: { Authorization: `Bearer ${accessToken}` } })
+        .then(r => setIndividuals(r.data));
     }, 5000);
     return () => clearInterval(interval);
   }, [simId, accessToken]);
@@ -28,13 +45,40 @@ export default function SimulationPage() {
     <div className="w-screen h-screen bg-sim-bg relative overflow-hidden">
       <TopBar />
       <LeftPanel />
-      <div className="absolute inset-0 pt-12 pl-14"><WorldGlobe individuals={individuals} /></div>
+
+      {/* 3D Globe — full screen background */}
+      <div className="absolute inset-0 pt-12 pl-14">
+        <WorldGlobe individuals={individuals} />
+      </div>
+
+      {/* All detail panels — rendered conditionally by activePanel */}
+      <BiologyPanel />
+      <EnvironmentPanel />
+      <AstronomyPanel />
+      <CulturePanel />
+      <LanguagePanel />
+      <TechnologyPanel />
+      <BeliefPanel />
+      <SocialPanel />
+      <EconomyPanel />
+      <ArtPanel />
+      <ArchitecturePanel />
+      <LawPanel />
+      <MicrobiomePanel />
+      <PsychologyPanel />
+      <EpigeneticsPanel />
+
+      {/* Coordinate overlay */}
       {currentSim && (
         <div className="absolute bottom-4 right-4 panel-glass rounded-lg px-3 py-2 text-xs font-mono text-sim-muted z-30">
           {currentSim.start_latitude?.toFixed(4)}°N {currentSim.start_longitude?.toFixed(4)}°E
         </div>
       )}
+
+      {/* Stats panel */}
       <StatsPanel />
+
+      {/* Events panel */}
       <EventsPanel />
     </div>
   );

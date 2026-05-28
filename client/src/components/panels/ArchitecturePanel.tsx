@@ -1,0 +1,98 @@
+import DetailPanel from './DetailPanel';
+import { useSimStore } from '../../store/simStore';
+import { Building2 } from 'lucide-react';
+
+const STRUCTURE_ICONS: Record<string, string> = {
+  cave_dwelling: '🪨', lean_to: '🏕️', pit_house: '🏠', post_frame_hut: '🛖',
+  storage_pit: '🪣', mud_brick_house: '🧱', granary: '🌾', defensive_wall: '🏰',
+  stone_temple: '⛩️', stone_house: '🏛️', marketplace: '🏪', city_wall: '🗼',
+};
+
+const TIER_LABEL = ['Natural', 'Simple', 'Permanent', 'Urban'];
+
+export default function ArchitecturePanel() {
+  const { events, lang } = useSimStore();
+
+  const archEvents = events.filter(e => e.event_type === 'architecture');
+  const builtStructures = archEvents.map(e => {
+    const match = e.description?.match(/a (.+)$/);
+    return match ? match[1].replace(/ /g, '_') : null;
+  }).filter(Boolean) as string[];
+  const uniqueStructures = [...new Set(builtStructures)];
+
+  return (
+    <DetailPanel panelId="architecture" title="Architecture" titleTr="Mimari">
+      <div className="bg-sim-surface rounded-lg p-3 mb-3 flex items-center gap-3">
+        <Building2 size={24} className="text-orange-400" />
+        <div>
+          <div className="text-orange-400 font-bold text-lg">{uniqueStructures.length}</div>
+          <div className="text-sim-muted text-xs">
+            {lang === 'en' ? 'Structure Types Built' : 'İnşa Edilen Yapı Türleri'}
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-3">
+        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+          {lang === 'en' ? 'Built Structures' : 'İnşa Edilmiş Yapılar'}
+        </h4>
+        {uniqueStructures.length === 0 ? (
+          <p className="text-sim-muted italic text-xs">
+            {lang === 'en' ? 'No structures built yet.' : 'Henüz yapı inşa edilmedi.'}
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-1">
+            {uniqueStructures.map(s => (
+              <div key={s} className="flex items-center gap-1.5 bg-sim-surface rounded p-1.5">
+                <span>{STRUCTURE_ICONS[s] ?? '🏗️'}</span>
+                <span className="text-xs text-sim-text capitalize">{s.replace(/_/g, ' ')}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="mb-3">
+        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+          {lang === 'en' ? 'Available Structures' : 'Mevcut Yapılar'}
+        </h4>
+        <div className="space-y-2">
+          {[0, 1, 2, 3].map(tier => (
+            <div key={tier}>
+              <div className="text-xs text-sim-muted mb-1">Tier {tier}: {TIER_LABEL[tier]}</div>
+              <div className="flex flex-wrap gap-1">
+                {Object.entries(STRUCTURE_ICONS)
+                  .slice(tier * 3, tier * 3 + 3)
+                  .map(([id, icon]) => (
+                    <div key={id} className="text-xs bg-sim-surface/50 rounded px-1.5 py-0.5 text-sim-muted">
+                      {icon} {id.replace(/_/g, ' ')}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+          {lang === 'en' ? 'Construction Log' : 'İnşaat Günlüğü'}
+        </h4>
+        {archEvents.length === 0 ? (
+          <p className="text-sim-muted italic text-xs">
+            {lang === 'en' ? 'No construction yet.' : 'Henüz inşaat yok.'}
+          </p>
+        ) : (
+          <div className="space-y-1 max-h-36 overflow-y-auto">
+            {archEvents.slice(0, 8).map((ev, i) => (
+              <div key={i} className="flex gap-2 py-0.5 border-b border-sim-border/30">
+                <span className="text-orange-400 font-mono text-xs">Y{ev.sim_year}</span>
+                <span className="text-sim-muted text-xs">{ev.description}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </DetailPanel>
+  );
+}
