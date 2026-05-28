@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Globe, Plus, Play, LogOut, ChevronDown, ChevronUp, BarChart2 } from 'lucide-react';
+import { Globe, Plus, Play, LogOut, ChevronDown, ChevronUp, BarChart2, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
 
@@ -126,6 +126,14 @@ export default function DashboardPage() {
 
   function setTrait(setter: any) {
     return (traitId: string, value: number) => setter((prev: any) => ({ ...prev, [traitId]: value }));
+  }
+
+  async function deleteSim(id: string, name: string) {
+    if (!confirm(lang === 'en' ? `Delete "${name}"? This cannot be undone.` : `"${name}" silinsin mi? Bu işlem geri alınamaz.`)) return;
+    try {
+      await axios.delete(`/api/simulations/${id}`, { headers });
+      setSims(s => s.filter(sim => sim.id !== id));
+    } catch { alert(lang === 'en' ? 'Delete failed.' : 'Silme başarısız.'); }
   }
 
   async function createSim() {
@@ -494,6 +502,21 @@ export default function DashboardPage() {
                   {sim.status.toUpperCase()}
                 </div>
 
+                <button
+                  onClick={e => { e.stopPropagation(); deleteSim(sim.id, sim.name); }}
+                  className="flex-shrink-0 p-2 transition-all duration-150"
+                  title={lang === 'en' ? 'Delete' : 'Sil'}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid rgba(224,90,90,0.25)',
+                    color: '#7a3030',
+                    lineHeight: 0,
+                    clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#e05a5a'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(224,90,90,0.6)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#7a3030'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(224,90,90,0.25)'; }}>
+                  <Trash2 size={13} />
+                </button>
                 <button
                   onClick={e => { e.stopPropagation(); navigate(`/simulation/${sim.id}`); }}
                   className="flex-shrink-0 p-2 transition-all duration-150 hover:brightness-125"

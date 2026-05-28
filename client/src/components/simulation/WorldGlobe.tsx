@@ -8,12 +8,7 @@ const EARTH_MAP = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/exampl
 const EARTH_BUMP = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/textures/planets/earth_normal_2048.jpg';
 const EARTH_SPEC = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/textures/planets/earth_specular_2048.jpg';
 
-function Globe() {
-  const meshRef = useRef<THREE.Mesh>(null);
-  useFrame((_, delta) => {
-    if (meshRef.current) meshRef.current.rotation.y += delta * 0.025;
-  });
-
+function GlobeMesh() {
   const [earthTex, bumpTex, specTex] = useMemo(() => {
     const loader = new THREE.TextureLoader();
     return [
@@ -24,21 +19,26 @@ function Globe() {
   }, []);
 
   return (
-    <group>
-      <mesh ref={meshRef}>
-        <sphereGeometry args={[2, 80, 80]} />
-        <meshPhongMaterial
-          map={earthTex}
-          bumpMap={bumpTex}
-          bumpScale={0.18}
-          specularMap={specTex}
-          specular={new THREE.Color(0x226688)}
-          shininess={12}
-          emissive={new THREE.Color(0x1f3355)}
-          emissiveIntensity={0.22}
-        />
-      </mesh>
-      {/* Atmosphere glow */}
+    <mesh>
+      <sphereGeometry args={[2, 80, 80]} />
+      <meshPhongMaterial
+        map={earthTex}
+        bumpMap={bumpTex}
+        bumpScale={0.18}
+        specularMap={specTex}
+        specular={new THREE.Color(0x226688)}
+        shininess={12}
+        emissive={new THREE.Color(0x1f3355)}
+        emissiveIntensity={0.22}
+      />
+    </mesh>
+  );
+}
+
+function Globe() {
+  return (
+    <>
+      {/* Atmosphere glow — stays fixed, not rotating */}
       <mesh scale={1.018}>
         <sphereGeometry args={[2, 32, 32]} />
         <meshStandardMaterial color="#4488ff" transparent opacity={0.10} side={THREE.BackSide} />
@@ -47,7 +47,7 @@ function Globe() {
         <sphereGeometry args={[2, 32, 32]} />
         <meshStandardMaterial color="#1a4090" transparent opacity={0.04} side={THREE.BackSide} />
       </mesh>
-    </group>
+    </>
   );
 }
 
@@ -194,22 +194,14 @@ function PopulationGlow({ individuals }: { individuals: any[] }) {
   );
 }
 
-export default function WorldGlobe({ individuals = [] }: { individuals?: any[] }) {
+function RotatingGroup({ individuals }: { individuals: any[] }) {
+  const groupRef = useRef<THREE.Group>(null);
+  useFrame((_, delta) => {
+    if (groupRef.current) groupRef.current.rotation.y += delta * 0.025;
+  });
   return (
-    <Canvas
-      camera={{ position: [0, 0.5, 5.5], fov: 42 }}
-      style={{ background: 'transparent' }}
-      gl={{ antialias: true, alpha: true }}>
-      {/* Strong ambient — fully lit globe, no dark side */}
-      <ambientLight intensity={2.8} />
-      {/* Multi-direction fills for complete coverage */}
-      <directionalLight position={[5, 3, 6]} intensity={1.8} color="#fff8f0" />
-      <directionalLight position={[-5, 3, -4]} intensity={1.3} color="#d0e8ff" />
-      <directionalLight position={[0, -5, 4]} intensity={1.0} color="#ffffff" />
-      <Sun />
-      <Moon />
-      <Stars radius={200} depth={80} count={6000} factor={5} saturation={0} fade speed={0.3} />
-      <Globe />
+    <group ref={groupRef}>
+      <GlobeMesh />
       <GridLines />
       {individuals.length > 0 && (
         <>
@@ -217,6 +209,25 @@ export default function WorldGlobe({ individuals = [] }: { individuals?: any[] }
           <PopulationDots individuals={individuals} />
         </>
       )}
+    </group>
+  );
+}
+
+export default function WorldGlobe({ individuals = [] }: { individuals?: any[] }) {
+  return (
+    <Canvas
+      camera={{ position: [0, 0.5, 5.5], fov: 42 }}
+      style={{ background: 'transparent' }}
+      gl={{ antialias: true, alpha: true }}>
+      <ambientLight intensity={2.8} />
+      <directionalLight position={[5, 3, 6]} intensity={1.8} color="#fff8f0" />
+      <directionalLight position={[-5, 3, -4]} intensity={1.3} color="#d0e8ff" />
+      <directionalLight position={[0, -5, 4]} intensity={1.0} color="#ffffff" />
+      <Sun />
+      <Moon />
+      <Stars radius={200} depth={80} count={6000} factor={5} saturation={0} fade speed={0.3} />
+      <Globe />
+      <RotatingGroup individuals={individuals} />
       <OrbitControls
         enablePan={false}
         minDistance={2.8}

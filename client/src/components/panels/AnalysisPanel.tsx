@@ -50,7 +50,7 @@ export default function AnalysisPanel() {
         <div className="bg-sim-accent/10 border border-sim-accent/20 rounded-lg p-2 flex items-center gap-2">
           <Bot size={13} className="text-sim-accent flex-shrink-0" />
           <span className="text-xs text-sim-muted">
-            {lang === 'en' ? 'Claude analyzes your civilization using live simulation data.' : 'Claude, canlı simülasyon verilerini kullanarak medeniyetinizi analiz eder.'}
+            {lang === 'en' ? 'BOLD analyzes your civilization using live simulation data.' : 'BOLD, canlı simülasyon verilerini kullanarak medeniyetinizi analiz eder.'}
           </span>
         </div>
 
@@ -86,7 +86,7 @@ export default function AnalysisPanel() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-            placeholder={lang === 'en' ? 'Ask Claude…' : 'Claude\'a sor…'}
+            placeholder={lang === 'en' ? 'Ask BOLD…' : 'BOLD\'a sor…'}
             className="flex-1 bg-sim-bg border border-sim-border rounded-lg px-3 py-1.5 text-xs text-sim-text focus:border-sim-accent focus:outline-none"
           />
           <button onClick={() => send()} disabled={loading || !input.trim()} className="p-1.5 bg-sim-accent hover:bg-sim-accent/80 rounded-lg text-white transition-colors disabled:opacity-50 flex-shrink-0">

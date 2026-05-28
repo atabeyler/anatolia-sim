@@ -110,6 +110,14 @@ export default function SimulationPage() {
     setCurrentSim({ ...currentSim, status: action === 'start' ? 'running' : 'paused' });
   }
 
+  async function changeSpeed(s: number) {
+    setSpeed(s);
+    if (!simId || !accessToken) return;
+    try {
+      await axios.post(`/api/simulations/${simId}/speed`, { speed_multiplier: s }, { headers: { Authorization: `Bearer ${accessToken}` } });
+    } catch { /* optimistic — ignore error */ }
+  }
+
   async function terminateSim() {
     if (!currentSim || !accessToken) return;
     if (!confirm(lang === 'tr' ? 'Simülasyonu sonlandır?' : 'Terminate simulation?')) return;
@@ -191,7 +199,7 @@ export default function SimulationPage() {
         <div className="flex items-center gap-1 px-2 py-1" style={{ borderBottom: '1px solid #0d2018' }}>
           <span style={{ fontSize: 8, color: '#3a6040', letterSpacing: '0.1em', marginRight: 2 }}>HIZ</span>
           {SPEEDS.map(s => (
-            <button key={s} onClick={() => setSpeed(s)}
+            <button key={s} onClick={() => changeSpeed(s)}
               style={{
                 padding: '2px 6px', fontSize: 9, fontFamily: 'Orbitron, monospace',
                 background: speedMultiplier === s ? 'rgba(0,232,135,0.2)' : 'transparent',
@@ -370,7 +378,7 @@ export default function SimulationPage() {
                 <div style={{ fontSize: 8, color: '#3a6040', letterSpacing: '0.15em', marginBottom: 8 }}>SİMÜLASYON HIZI</div>
                 <div className="flex gap-2">
                   {SPEEDS.map(s => (
-                    <button key={s} onClick={() => setSpeed(s)}
+                    <button key={s} onClick={() => changeSpeed(s)}
                       className="flex-1 py-2"
                       style={{
                         fontSize: 12, fontFamily: 'Orbitron, monospace', fontWeight: 700,

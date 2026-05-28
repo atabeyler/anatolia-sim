@@ -157,7 +157,7 @@ router.post('/:id/complete', authenticate, requireSimulationOwner, async (req, r
 router.post('/:id/speed', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const speed = Number(req.body.speed_multiplier);
-    const allowed = new Set([1, 10, 100, 1000]);
+    const allowed = new Set([1, 5, 20, 100]);
     if (!allowed.has(speed)) return res.status(400).json({ error: 'Invalid speed multiplier' });
     simulationManager.setSpeed(req.params.id, speed);
     const { rows } = await query(
@@ -230,6 +230,19 @@ router.post('/:id/restore/:checkpointId', authenticate, requireSimulationOwner, 
     }
     res.json({ message: 'Checkpoint restored', sim_day: cp.sim_day, sim_year: cp.sim_year });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Restore failed' }); }
+});
+
+router.delete('/:id', authenticate, async (req, res) => {
+  try {
+    const { rows } = await query('SELECT id FROM simulations WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Simulation not found' });
+    simulationManager.pause(req.params.id);
+    await query('DELETE FROM simulation_events WHERE simulation_id = $1', [req.params.id]);
+    await query('DELETE FROM checkpoints WHERE simulation_id = $1', [req.params.id]);
+    await query('DELETE FROM individuals WHERE simulation_id = $1', [req.params.id]);
+    await query('DELETE FROM simulations WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Simulation deleted' });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to delete simulation' }); }
 });
 
 export default router;
