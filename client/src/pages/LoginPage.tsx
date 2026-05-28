@@ -147,7 +147,7 @@ function LogoRings() {
 function HudInput({ label, type, value, onChange, placeholder, maxLength }: any) {
   const [focused, setFocused] = useState(false);
   return (
-    <div className="mb-4">
+    <div className="mb-3">
       <div className="flex items-center gap-2 mb-1.5">
         <div className={`w-1 h-3 transition-colors ${focused ? 'bg-sim-accent' : 'bg-sim-border'}`} />
         <label className="text-xs font-share-tech tracking-widest uppercase text-sim-muted">{label}</label>
@@ -224,7 +224,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#030310] scanlines">
+    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-x-hidden bg-[#030310] scanlines">
       {/* Backgrounds */}
       <StarField />
       <HexGrid />
@@ -244,7 +244,7 @@ export default function LoginPage() {
       </button>
 
       {/* System status top-left */}
-      <div className="absolute top-5 left-5 z-20 space-y-1">
+      <div className="absolute top-5 left-5 z-20 space-y-1 hidden sm:block">
         {STATUS.map((s, i) => (
           <div key={s.label} className="flex items-center gap-2 boot-in" style={{ animationDelay: `${i * 120}ms` }}>
             <div className={`w-1.5 h-1.5 rounded-full ${s.ok ? 'bg-sim-green pulse-live' : 'bg-sim-red'}`} />
@@ -255,16 +255,16 @@ export default function LoginPage() {
       </div>
 
       {/* Coordinate display bottom */}
-      <div className="absolute bottom-5 left-5 z-20 font-share-tech text-xs text-sim-muted/50 tracking-widest">
+      <div className="absolute bottom-5 left-5 z-20 font-share-tech text-xs text-sim-muted/50 tracking-widest hidden sm:block">
         <div>LAT: 39.9334°N · LON: 32.8597°E</div>
         <div className="mt-0.5">SYS: ANATOLİA-SIM v1.0 · BUILD 2026</div>
       </div>
 
       {/* Main content */}
       {booted && (
-        <div className="z-10 flex flex-col items-center warp-in">
+        <div className="z-10 flex flex-col items-center warp-in w-full px-4 py-8">
           {/* Logo area with rings */}
-          <div className="relative w-32 h-32 flex items-center justify-center mb-6">
+          <div className="relative w-28 h-28 flex items-center justify-center mb-4">
             <LogoRings />
             {/* Central icon */}
             <div className="relative z-10 w-14 h-14 flex items-center justify-center neon-breathe"
@@ -280,27 +280,27 @@ export default function LoginPage() {
           {/* Title */}
           <div className="text-center mb-2">
             <h1
-              className="glitch-text font-orbitron text-3xl font-bold tracking-[0.2em] text-white flicker"
+              className="glitch-text font-orbitron text-2xl sm:text-3xl font-bold tracking-[0.2em] text-white flicker"
               data-text="ANATOLİA-SİM"
               style={{ textShadow: '0 0 20px rgba(79,110,247,0.6), 0 0 40px rgba(79,110,247,0.3)' }}
             >
               ANATOLİA-SİM
             </h1>
-            <p className="font-share-tech text-xs tracking-[0.4em] text-sim-accent/70 mt-2 text-in"
+            <p className="font-share-tech text-xs tracking-[0.4em] text-sim-accent/70 mt-1 text-in"
               style={{ animationDelay: '200ms' }}>
               {lang === 'en' ? 'CIVILIZATION EMERGENCE SYSTEM' : 'MEDENİYET ORTAYA ÇIKIŞ SİSTEMİ'}
             </p>
           </div>
 
           {/* Separator line */}
-          <div className="flex items-center gap-3 my-5 w-80">
+          <div className="flex items-center gap-3 my-3 w-80 max-w-full">
             <div className="flex-1 h-px bg-gradient-to-r from-transparent to-sim-accent/40" />
             <div className="w-1.5 h-1.5 rotate-45 bg-sim-accent/60" />
             <div className="flex-1 h-px bg-gradient-to-l from-transparent to-sim-accent/40" />
           </div>
 
           {/* Form panel */}
-          <div className="w-80 hud-panel relative boot-in" style={{ animationDelay: '300ms', padding: '28px 24px' }}>
+          <div className="w-80 max-w-full hud-panel relative boot-in" style={{ animationDelay: '300ms', padding: '24px 20px' }}>
             <span className="hud-corner-tr" />
             <span className="hud-corner-bl" />
 
@@ -316,7 +316,7 @@ export default function LoginPage() {
             </div>
 
             {/* Mode toggle */}
-            <div className="flex gap-1 mb-6 mt-2">
+            <div className="flex gap-1 mb-4 mt-2">
               {(['login', 'register'] as const).map(m => (
                 <button key={m} type="button" onClick={() => setMode(m)}
                   className={`flex-1 py-2 text-xs font-share-tech tracking-widest uppercase transition-all border ${
@@ -356,12 +356,12 @@ export default function LoginPage() {
               </>)}
 
               {error && (
-                <div className="mb-4 px-3 py-2 border-l-2 border-sim-red bg-sim-red/10 text-xs font-share-tech text-sim-red tracking-wide">
+                <div className="mb-3 px-3 py-2 border-l-2 border-sim-red bg-sim-red/10 text-xs font-share-tech text-sim-red tracking-wide">
                   ⚠ {error}
                 </div>
               )}
               {success && (
-                <div className="mb-4 px-3 py-2 border-l-2 border-sim-green bg-sim-green/10 text-xs font-share-tech text-sim-green tracking-wide">
+                <div className="mb-3 px-3 py-2 border-l-2 border-sim-green bg-sim-green/10 text-xs font-share-tech text-sim-green tracking-wide">
                   ✓ {success}
                 </div>
               )}
@@ -388,7 +388,7 @@ export default function LoginPage() {
           </div>
 
           {/* Footer */}
-          <p className="font-share-tech text-xs text-sim-muted/40 mt-8 tracking-widest text-in" style={{ animationDelay: '600ms' }}>
+          <p className="font-share-tech text-xs text-sim-muted/40 mt-6 mb-2 tracking-widest text-in" style={{ animationDelay: '600ms' }}>
             BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026
           </p>
         </div>
