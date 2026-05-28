@@ -1,7 +1,8 @@
 import { Router } from 'express';
+import jwt from 'jsonwebtoken';
 import { authenticate } from '../middleware/auth.js';
 import { query } from '../../db/database.js';
-import { sendApprovalEmail, sendRejectionEmail } from '../../utils/email.js';
+import { sendApprovalEmail, sendRejectionEmail, APP_URL } from '../../utils/email.js';
 
 const router = Router();
 
@@ -73,6 +74,28 @@ router.delete('/users/:id', authenticate, requireAdmin, async (req, res) => {
     await query('DELETE FROM users WHERE id=$1', [req.params.id]);
     res.json({ message: 'Kullanıcı silindi.' });
   } catch { res.status(500).json({ error: 'Silme başarısız.' }); }
+});
+
+// One-click approval from email link (no auth — token is the credential)
+router.get('/quick-approve/:token', async (req, res) => {
+  try {
+    const payload = jwt.verify(req.params.token, process.env.JWT_SECRET);
+    if (payload.action !== 'approve') return res.status(400).send('Geçersiz token.');
+
+    const { rows } = await query(
+      `UPDATE users SET is_approved=true, role='user', updated_at=NOW()
+       WHERE id=$1 AND is_approved=false RETURNING id, user_code, first_name, last_name, email`,
+      [payload.userId]
+    );
+    if (!rows[0]) {
+      return res.send('<html><body style="font-family:sans-serif;padding:40px"><h2>Bu kullanıcı zaten onaylanmış veya bulunamadı.</h2><a href="' + APP_URL + '/admin">Yönetim Paneli</a></body></html>');
+    }
+    await sendApprovalEmail(rows[0]);
+    res.send(`<html><body style="font-family:sans-serif;padding:40px"><h2>✅ ${rows[0].first_name} ${rows[0].last_name} onaylandı.</h2><p>Kullanıcı kodu: <strong>${rows[0].user_code}</strong></p><p>Kullanıcıya bildirim e-postası gönderildi.</p><a href="${APP_URL}/admin">Yönetim Paneline Dön</a></body></html>`);
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') return res.status(400).send('Bu onay linki süresi dolmuş. Yönetim panelini kullanın.');
+    res.status(400).send('Geçersiz veya bozuk token.');
+  }
 });
 
 // Seed first admin from env var

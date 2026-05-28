@@ -13,19 +13,26 @@ function getTransport() {
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'info@boldkimya.com.tr';
 const FROM = process.env.SMTP_FROM ?? `"ANATOLİA-SİM" <${process.env.SMTP_USER ?? 'no-reply@anatolia-sim.app'}>`;
+const APP_URL = process.env.RENDER_EXTERNAL_URL ?? process.env.APP_URL ?? 'https://anatolia-sim.onrender.com';
 
-export async function sendAdminRegistrationNotification({ first_name, last_name, tc_no, email, user_code_temp }) {
+export async function sendAdminRegistrationNotification({ first_name, last_name, tc_no, email, user_code_temp, approvalToken }) {
   const transport = getTransport();
+  const approvalLink = `${APP_URL}/api/admin/quick-approve/${approvalToken}`;
   const body = `
 Yeni kayıt talebi — ANATOLİA-SİM MEDENİYET
 
 Ad Soyad : ${first_name} ${last_name}
 TC No     : ${tc_no}
 E-posta   : ${email}
-Geçici Kod: ${user_code_temp}
+Kullanıcı Kodu: ${user_code_temp}
 
-Onaylamak için yönetim paneline giriş yapın:
-${process.env.CLIENT_URL ?? 'https://anatolia-sim-client.onrender.com'}/admin
+▶ TEK TIKLA ONAYLA:
+${approvalLink}
+
+(Link 7 gün geçerlidir. Yönetim panelinden de onaylayabilirsiniz: ${APP_URL}/admin)
+
+Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.
+RST Q-Nation 200120401018
 `;
   if (!transport) {
     console.log('[EMAIL - ADMIN NOTIFY]', body);
@@ -42,7 +49,7 @@ Sayın ${first_name} ${last_name},
 ANATOLİA-SİM MEDENİYET sistemine kaydınız onaylanmıştır.
 
 Kullanıcı Kodunuz : ${user_code}
-Sisteme giriş     : ${process.env.CLIENT_URL ?? 'https://anatolia-sim-client.onrender.com'}/login
+Sisteme giriş     : ${APP_URL}/login
 
 Kullanıcı kodunuz ve kayıt sırasında belirlediğiniz şifrenizle giriş yapabilirsiniz.
 
@@ -55,6 +62,8 @@ RST Q-Nation 200120401018
   }
   await transport.sendMail({ from: FROM, to: email, subject: 'ANATOLİA-SİM — Kaydınız Onaylandı', text: body });
 }
+
+export { APP_URL };
 
 export async function sendRejectionEmail({ first_name, last_name, email }) {
   const transport = getTransport();

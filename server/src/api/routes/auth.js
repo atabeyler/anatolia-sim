@@ -4,6 +4,10 @@ import jwt from 'jsonwebtoken';
 import { query } from '../../db/database.js';
 import { sendAdminRegistrationNotification, sendApprovalEmail } from '../../utils/email.js';
 
+function generateApprovalToken(userId) {
+  return jwt.sign({ action: 'approve', userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+}
+
 const router = Router();
 const BCRYPT_ROUNDS = 12;
 
@@ -44,7 +48,8 @@ router.post('/register', async (req, res) => {
       [first_name.trim(), last_name.trim(), tc_no.trim(), email.toLowerCase().trim(), hash, tempCode]
     );
 
-    await sendAdminRegistrationNotification({ first_name, last_name, tc_no, email, user_code_temp: tempCode });
+    const approvalToken = generateApprovalToken(rows[0].id);
+    await sendAdminRegistrationNotification({ first_name, last_name, tc_no, email, user_code_temp: tempCode, approvalToken });
     res.status(201).json({ message: 'Kayıt talebiniz alındı. Yönetim onayı bekleniyor.' });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'Bu e-posta veya TC No zaten kayıtlı.' });
