@@ -117,4 +117,17 @@ router.post('/logout', (req, res) => {
   res.json({ message: 'Çıkış yapıldı.' });
 });
 
+router.get('/pending-status/:userCode', async (req, res) => {
+  try {
+    const { rows } = await query(
+      'SELECT is_approved, is_banned FROM users WHERE user_code=$1',
+      [req.params.userCode.toUpperCase()]
+    );
+    if (!rows[0]) return res.json({ status: 'not_found' });
+    if (rows[0].is_banned) return res.json({ status: 'banned' });
+    if (rows[0].is_approved) return res.json({ status: 'approved' });
+    res.json({ status: 'pending' });
+  } catch { res.json({ status: 'error' }); }
+});
+
 export default router;

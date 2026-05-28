@@ -195,10 +195,31 @@ export default function LoginPage() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [booted, setBooted] = useState(false);
+  const [pendingCode, setPendingCode] = useState('');
   const contentRef = useRef<HTMLDivElement>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const f = (k: string) => (e: any) => setForm(p => ({ ...p, [k]: e.target.value }));
 
   useEffect(() => { const t = setTimeout(() => setBooted(true), 400); return () => clearTimeout(t); }, []);
+
+  useEffect(() => {
+    if (!pendingCode) return;
+    pollRef.current = setInterval(async () => {
+      try {
+        const { data } = await axios.get(`/api/auth/pending-status/${pendingCode}`);
+        if (data.status === 'approved') {
+          clearInterval(pollRef.current!);
+          setPendingCode('');
+          setSuccess(lang === 'en'
+            ? '✔ Your account has been approved! You can now sign in.'
+            : '✔ Hesabınız onaylandı! Artık giriş yapabilirsiniz.');
+          setMode('login');
+          setForm(p => ({ ...p, user_code: pendingCode }));
+        }
+      } catch {}
+    }, 10000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [pendingCode, lang]);
 
   useEffect(() => {
     function fitToViewport() {
@@ -224,10 +245,12 @@ export default function LoginPage() {
           tc_no: form.tc_no, email: form.email, password: form.password,
           user_code: form.reg_user_code.toUpperCase(),
         });
+        const code = form.reg_user_code.toUpperCase();
         setSuccess(lang === 'en'
-          ? `Registration request received. Your code: ${form.reg_user_code.toUpperCase()} — awaiting admin approval.`
-          : `Kayıt talebiniz alındı. Kullanıcı kodunuz: ${form.reg_user_code.toUpperCase()} — Yönetim onayı bekleniyor.`);
+          ? `Request received. Code: ${code} — waiting for admin approval…`
+          : `Talebiniz alındı. Kodunuz: ${code} — Yönetim onayı bekleniyor…`);
         setMode('login');
+        setPendingCode(code);
         setForm(p => ({ ...p, reg_user_code: '', first_name: '', last_name: '', tc_no: '', email: '', password: '' }));
       } else {
         const { data } = await axios.post('/api/auth/login', { user_code: form.user_code, password: form.password });
