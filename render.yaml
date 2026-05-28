@@ -23,7 +23,7 @@ services:
         fromService:
           type: web
           name: anatolia-sim-client
-          property: host
+          property: url
 
   - type: web
     name: anatolia-sim-client
@@ -35,7 +35,7 @@ services:
         fromService:
           type: web
           name: anatolia-sim-server
-          property: host
+          property: url
     routes:
       - type: rewrite
         source: /*
