@@ -9,10 +9,29 @@ export const LIFE_STAGE = {
   ELDER:      { name: 'elder',      minAge: 45, maxAge: 999 },
 };
 
+const MALE_NAMES = ['Alp', 'Kaan', 'Mete', 'Aras', 'Bora', 'Tuna', 'Eren', 'Baran', 'Deniz', 'Ozan'];
+const FEMALE_NAMES = ['Ayla', 'Asena', 'Defne', 'Elif', 'Mira', 'Sena', 'Lara', 'Ada', 'Nehir', 'Selin'];
+const FAMILY_NAMES = ['Anatol', 'Bozkir', 'Irmak', 'Gunes', 'Toros', 'Mavi', 'Kaya', 'Yildiz'];
+
+function pick(list) {
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function defaultName(sex) {
+  return `${pick(sex === 'female' ? FEMALE_NAMES : MALE_NAMES)} ${pick(FAMILY_NAMES)}`;
+}
+
 export function createFounder(params = {}) {
   const sex = params.sex ?? (Math.random() < 0.5 ? 'male' : 'female');
   const genome = createGenome(params.genome ?? {});
   const phenotype = computePhenotype(genome);
+  const appearance = params.appearance ?? {};
+  phenotype.name = params.name?.trim() || defaultName(sex);
+  phenotype.eye_color = appearance.eye_color ?? phenotype.eye_color;
+  phenotype.hair_color = appearance.hair_color ?? phenotype.hair_color;
+  phenotype.skin_tone = appearance.skin_tone ?? phenotype.skin_tone;
+  phenotype.skin_color = appearance.skin_color ?? appearance.skin_tone ?? phenotype.skin_tone;
+  phenotype.height_cm = Math.round(150 + phenotype.height_factor * 45);
   return {
     id: uuidv4(), simulation_id: null,
     birth_day: -(params.ageYears ?? 20) * 365,
@@ -33,6 +52,8 @@ export function createChild(parent1, parent2, birthDay, simulationId) {
   const sex = Math.random() < 0.5 ? 'male' : 'female';
   const genome = combineGametes(createGamete(parent1.genome), createGamete(parent2.genome), sex);
   const phenotype = computePhenotype(genome);
+  phenotype.name = defaultName(sex);
+  phenotype.height_cm = Math.round(150 + phenotype.height_factor * 45);
   return {
     id: uuidv4(), simulation_id: simulationId,
     birth_day: birthDay, death_day: null, alive: true, sex,

@@ -30,10 +30,12 @@ function Globe() {
         <meshPhongMaterial
           map={earthTex}
           bumpMap={bumpTex}
-          bumpScale={0.35}
+          bumpScale={0.18}
           specularMap={specTex}
           specular={new THREE.Color(0x226688)}
-          shininess={20}
+          shininess={12}
+          emissive={new THREE.Color(0x1f3355)}
+          emissiveIntensity={0.22}
         />
       </mesh>
       {/* Atmosphere glow */}
@@ -199,11 +201,11 @@ export default function WorldGlobe({ individuals = [] }: { individuals?: any[] }
       style={{ background: 'transparent' }}
       gl={{ antialias: true, alpha: true }}>
       {/* Strong ambient — fully lit globe, no dark side */}
-      <ambientLight intensity={1.8} />
+      <ambientLight intensity={2.8} />
       {/* Multi-direction fills for complete coverage */}
-      <directionalLight position={[5, 3, 6]} intensity={1.2} color="#fff8f0" />
-      <directionalLight position={[-5, 3, -4]} intensity={0.8} color="#d0e8ff" />
-      <directionalLight position={[0, -5, 4]} intensity={0.6} color="#ffffff" />
+      <directionalLight position={[5, 3, 6]} intensity={1.8} color="#fff8f0" />
+      <directionalLight position={[-5, 3, -4]} intensity={1.3} color="#d0e8ff" />
+      <directionalLight position={[0, -5, 4]} intensity={1.0} color="#ffffff" />
       <Sun />
       <Moon />
       <Stars radius={200} depth={80} count={6000} factor={5} saturation={0} fade speed={0.3} />

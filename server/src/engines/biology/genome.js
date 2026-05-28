@@ -123,12 +123,17 @@ export function computePhenotype(genome) {
 
   return {
     height_factor: height_base,
+    physical_strength: Math.min(1, height_base * 0.55 + g('METABOLISM_01') * 0.25 + g('TERT_01') * 0.2),
     fluid_intelligence,
     working_memory: g('COMT_01'),
+    conscientiousness: (g('COMT_01') + g('DISC1_01')) / 2,
     language_capacity,
     social_bonding: g('OXTR_01'),
+    empathy: (g('OXTR_01') + g('RELN_01')) / 2,
     aggression: g('MAOA_01'),
+    dominance: (g('MAOA_01') + height_base) / 2,
     curiosity: g('DRD4_01'),
+    artistic_sense: (g('DRD4_01') + g('NRG1_01')) / 2,
     serotonin: g('SLC6A4_01'),
     metabolism: g('METABOLISM_01'),
     immune_strength,

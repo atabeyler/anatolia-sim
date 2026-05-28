@@ -7,6 +7,79 @@ import { simulationManager } from '../simulationManager.js';
 
 const router = Router();
 
+const TRAIT_LOCI = {
+  fluid_intelligence: ['BDNF_01', 'COMT_01', 'DTNBP1_01', 'NRG1_01', 'DISC1_01'],
+  empathy: ['OXTR_01', 'RELN_01'],
+  curiosity: ['DRD4_01'],
+  aggression: ['MAOA_01'],
+  conscientiousness: ['DISC1_01', 'COMT_01'],
+  artistic_sense: ['NRG1_01', 'DRD4_01'],
+  language_capacity: ['FOXP2_01', 'CNTNAP2_01'],
+  immune_strength: ['IMMUNE_01', 'IMMUNE_02'],
+  fertility: ['FSHR_01'],
+  longevity: ['TERT_01', 'APOE_01'],
+  height: ['HEIGHT_01', 'HEIGHT_02', 'HEIGHT_03'],
+  metabolism: ['METABOLISM_01'],
+};
+
+function allele(value) {
+  const v = Math.max(0.05, Math.min(0.95, Number(value) || 0.5));
+  return { a1: v, a2: v };
+}
+
+function buildFounderParams(params = {}, defaults = {}) {
+  const genome = {};
+  for (const [trait, loci] of Object.entries(TRAIT_LOCI)) {
+    if (params[trait] === undefined) continue;
+    for (const locus of loci) genome[locus] = allele(params[trait]);
+  }
+
+  const appearance = {
+    eye_color: params.eye_color ?? defaults.eye_color,
+    hair_color: params.hair_color ?? defaults.hair_color,
+    skin_tone: params.skin_tone ?? defaults.skin_tone,
+    skin_color: params.skin_color ?? defaults.skin_color,
+  };
+
+  const eyeValue = { blue: 0.25, green: 0.42, hazel: 0.55, brown: 0.78 }[appearance.eye_color];
+  const hairValue = { blond: 0.2, light: 0.28, brown: 0.5, dark: 0.72, black: 0.86, red: 0.12 }[appearance.hair_color];
+  const skinValue = { fair: 0.2, light: 0.35, olive: 0.52, tan: 0.68, brown: 0.82, dark: 0.92 }[appearance.skin_tone];
+  if (eyeValue !== undefined) genome.HERC2_01 = allele(eyeValue);
+  if (hairValue !== undefined) genome.MC1R_01 = allele(hairValue);
+  if (skinValue !== undefined) genome.SLC24A5_01 = allele(skinValue);
+
+  return {
+    ...params,
+    name: params.name ?? defaults.name,
+    ageYears: Number(params.ageYears ?? defaults.ageYears ?? 20),
+    appearance,
+    genome: { ...genome, ...(params.genome ?? {}) },
+  };
+}
+
+function serializeIndividual(ind, currentDay) {
+  const age = Math.max(0, (currentDay - (ind.birth_day ?? 0)) / 365);
+  return {
+    id: ind.id,
+    name: ind.phenotype?.name ?? ind.name ?? 'Unnamed',
+    sex: ind.sex,
+    birth_day: ind.birth_day,
+    death_day: ind.death_day,
+    alive: !ind.is_dead,
+    age_years: Math.round(age * 10) / 10,
+    x: ind.x,
+    y: ind.y,
+    genome: ind.genome,
+    phenotype: ind.phenotype,
+    health: ind.health,
+    mind: ind.mind,
+    social: ind.social,
+    skills: ind.skills,
+    beliefs: ind.beliefs,
+    language: ind.language,
+  };
+}
+
 router.get('/', authenticate, async (req, res) => {
   try {
     const { rows } = await query(`SELECT id, name, status, current_day, current_year, start_latitude, start_longitude, created_at FROM simulations WHERE user_id = $1 ORDER BY created_at DESC`, [req.user.id]);
@@ -19,8 +92,10 @@ router.post('/', authenticate, async (req, res) => {
     const { name, latitude, longitude, founder1_params, founder2_params } = req.body;
     if (!name || latitude === undefined || longitude === undefined) return res.status(400).json({ error: 'name, latitude, longitude required' });
     const worldState = createWorldState(parseFloat(latitude), parseFloat(longitude));
-    const f1 = createFounder({ ...founder1_params, sex: 'male', x: parseFloat(longitude), y: parseFloat(latitude) });
-    const f2 = createFounder({ ...founder2_params, sex: 'female', x: parseFloat(longitude) + 0.1, y: parseFloat(latitude) });
+    const f1Params = buildFounderParams(founder1_params, { name: 'Kurucu Erkek', ageYears: 22, eye_color: 'brown', hair_color: 'dark', skin_tone: 'olive' });
+    const f2Params = buildFounderParams(founder2_params, { name: 'Kurucu Kadın', ageYears: 20, eye_color: 'brown', hair_color: 'brown', skin_tone: 'olive' });
+    const f1 = createFounder({ ...f1Params, sex: 'male', x: parseFloat(longitude), y: parseFloat(latitude) });
+    const f2 = createFounder({ ...f2Params, sex: 'female', x: parseFloat(longitude) + 0.1, y: parseFloat(latitude) });
     const { rows } = await query(`INSERT INTO simulations (user_id, name, status, start_latitude, start_longitude, founder_1, founder_2, world_state) VALUES ($1,$2,'paused',$3,$4,$5,$6,$7) RETURNING *`, [req.user.id, name, parseFloat(latitude), parseFloat(longitude), JSON.stringify(f1), JSON.stringify(f2), JSON.stringify(worldState)]);
     const sim = rows[0];
     await query(`INSERT INTO individuals (id,simulation_id,birth_day,sex,x,y,genome,phenotype,health,mind,social,skills,beliefs,language,memory) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15),($16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30)`,
@@ -71,11 +146,20 @@ router.post('/:id/speed', authenticate, requireSimulationOwner, async (req, res)
 
 router.get('/:id/population', authenticate, requireSimulationOwner, async (req, res) => {
   try {
-    let sql = 'SELECT id, sex, birth_day, death_day, alive, x, y, phenotype, language FROM individuals WHERE simulation_id = $1';
+    const engine = simulationManager.getEngine(req.params.id);
+    if (engine) {
+      const individuals = [...engine.population.values()]
+        .filter(ind => req.query.alive !== 'true' || !ind.is_dead)
+        .slice(0, 5000)
+        .map(ind => serializeIndividual(ind, engine.currentDay));
+      return res.json(individuals);
+    }
+
+    let sql = 'SELECT id, sex, birth_day, death_day, alive, x, y, genome, phenotype, health, mind, social, skills, beliefs, language FROM individuals WHERE simulation_id = $1';
     if (req.query.alive === 'true') sql += ' AND alive = true';
     sql += ' LIMIT 5000';
     const { rows } = await query(sql, [req.params.id]);
-    res.json(rows);
+    res.json(rows.map(row => serializeIndividual({ ...row, is_dead: row.alive === false }, req.simulation.current_day ?? 0)));
   } catch { res.status(500).json({ error: 'Failed to fetch population' }); }
 });
 

@@ -14,6 +14,28 @@ const FOUNDER_TRAITS = [
 ];
 
 const DEFAULT_TRAITS = Object.fromEntries(FOUNDER_TRAITS.map(t => [t.id, 0.5]));
+FOUNDER_TRAITS.push(
+  { id: 'language_capacity', label: 'Language', labelTr: 'Dil', color: '#14b8a6' },
+  { id: 'immune_strength', label: 'Immunity', labelTr: 'Bagisiklik', color: '#22c55e' },
+  { id: 'fertility', label: 'Fertility', labelTr: 'Dogurganlik', color: '#f43f5e' },
+  { id: 'longevity', label: 'Longevity', labelTr: 'Uzun Omur', color: '#84cc16' },
+  { id: 'height', label: 'Height', labelTr: 'Boy', color: '#06b6d4' },
+  { id: 'metabolism', label: 'Metabolism', labelTr: 'Metabolizma', color: '#a855f7' },
+);
+
+const EXTRA_DEFAULT_TRAITS = Object.fromEntries(FOUNDER_TRAITS.map(t => [t.id, 0.5]));
+const EYE_OPTIONS = ['brown', 'hazel', 'green', 'blue'];
+const HAIR_OPTIONS = ['black', 'dark', 'brown', 'light', 'blond', 'red'];
+const SKIN_OPTIONS = ['fair', 'light', 'olive', 'tan', 'brown', 'dark'];
+
+const founderDefaults = (sex: 'male' | 'female') => ({
+  name: sex === 'male' ? 'Kurucu Erkek' : 'Kurucu Kadin',
+  ageYears: sex === 'male' ? 22 : 20,
+  eye_color: 'brown',
+  hair_color: sex === 'male' ? 'dark' : 'brown',
+  skin_tone: 'olive',
+  ...EXTRA_DEFAULT_TRAITS,
+});
 
 function TraitSlider({ traitId, label, labelTr, color, value, onChange, lang }: any) {
   return (
@@ -37,7 +59,8 @@ function TraitSlider({ traitId, label, labelTr, color, value, onChange, lang }: 
   );
 }
 
-function FounderConfig({ label, traits, onChange, lang }: any) {
+function FounderConfig({ label, traits, founder, onChange, lang }: any) {
+  const data = founder ?? traits;
   return (
     <div className="relative p-3" style={{
       background: 'rgba(4,4,15,0.9)',
@@ -47,9 +70,41 @@ function FounderConfig({ label, traits, onChange, lang }: any) {
       <div className="font-share-tech text-sim-muted tracking-[0.2em] mb-3" style={{ fontSize: 9 }}>
         {label.toUpperCase()}
       </div>
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="col-span-2">
+          <label className="font-share-tech text-sim-muted tracking-widest block mb-1" style={{ fontSize: 8 }}>
+            {lang === 'en' ? 'NAME' : 'ISIM'}
+          </label>
+          <input value={data.name ?? ''} onChange={e => onChange('name', e.target.value)}
+            className="w-full bg-sim-bg border border-sim-border px-2 py-1.5 text-xs text-sim-text font-share-tech focus:outline-none focus:border-sim-accent" />
+        </div>
+        <div>
+          <label className="font-share-tech text-sim-muted tracking-widest block mb-1" style={{ fontSize: 8 }}>
+            {lang === 'en' ? 'AGE' : 'YAS'}
+          </label>
+          <input type="number" min="15" max="65" value={data.ageYears ?? 20}
+            onChange={e => onChange('ageYears', parseInt(e.target.value || '20', 10))}
+            className="w-full bg-sim-bg border border-sim-border px-2 py-1.5 text-xs text-sim-text font-share-tech focus:outline-none focus:border-sim-accent" />
+        </div>
+        <SelectField label={lang === 'en' ? 'EYE' : 'GOZ'} value={data.eye_color} options={EYE_OPTIONS} onChange={(v: string) => onChange('eye_color', v)} />
+        <SelectField label={lang === 'en' ? 'HAIR' : 'SAC'} value={data.hair_color} options={HAIR_OPTIONS} onChange={(v: string) => onChange('hair_color', v)} />
+        <SelectField label={lang === 'en' ? 'SKIN' : 'TEN'} value={data.skin_tone} options={SKIN_OPTIONS} onChange={(v: string) => onChange('skin_tone', v)} />
+      </div>
       {FOUNDER_TRAITS.map(t => (
-        <TraitSlider key={t.id} {...t} value={traits[t.id] ?? 0.5} onChange={onChange} lang={lang} />
+        <TraitSlider key={t.id} {...t} value={data[t.id] ?? 0.5} onChange={onChange} lang={lang} />
       ))}
+    </div>
+  );
+}
+
+function SelectField({ label, value, options, onChange }: any) {
+  return (
+    <div>
+      <label className="font-share-tech text-sim-muted tracking-widest block mb-1" style={{ fontSize: 8 }}>{label}</label>
+      <select value={value} onChange={e => onChange(e.target.value)}
+        className="w-full bg-sim-bg border border-sim-border px-2 py-1.5 text-xs text-sim-text font-share-tech focus:outline-none focus:border-sim-accent">
+        {options.map((option: string) => <option key={option} value={option}>{option.toUpperCase()}</option>)}
+      </select>
     </div>
   );
 }
@@ -62,8 +117,8 @@ export default function DashboardPage() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [form, setForm] = useState({ name: '', latitude: '39.9334', longitude: '32.8597' });
-  const [founder1, setFounder1] = useState({ ...DEFAULT_TRAITS });
-  const [founder2, setFounder2] = useState({ ...DEFAULT_TRAITS });
+  const [founder1, setFounder1] = useState(founderDefaults('male'));
+  const [founder2, setFounder2] = useState(founderDefaults('female'));
   const [loading, setLoading] = useState(false);
   const headers = { Authorization: `Bearer ${accessToken}` };
 
@@ -80,13 +135,13 @@ export default function DashboardPage() {
         name: form.name,
         latitude: parseFloat(form.latitude),
         longitude: parseFloat(form.longitude),
-        founder1_params: showAdvanced ? founder1 : undefined,
-        founder2_params: showAdvanced ? founder2 : undefined,
+        founder1_params: founder1,
+        founder2_params: founder2,
       }, { headers });
       setSims(s => [data, ...s]);
       setShowNew(false);
-      setFounder1({ ...DEFAULT_TRAITS });
-      setFounder2({ ...DEFAULT_TRAITS });
+      setFounder1(founderDefaults('male'));
+      setFounder2(founderDefaults('female'));
     } finally { setLoading(false); }
   }
 
@@ -282,11 +337,11 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <FounderConfig
                     label={lang === 'en' ? 'Founder 1 — Male' : 'Kurucu 1 — Erkek'}
-                    traits={founder1} onChange={setTrait(setFounder1)} lang={lang}
+                    founder={founder1} onChange={setTrait(setFounder1)} lang={lang}
                   />
                   <FounderConfig
                     label={lang === 'en' ? 'Founder 2 — Female' : 'Kurucu 2 — Kadın'}
-                    traits={founder2} onChange={setTrait(setFounder2)} lang={lang}
+                    founder={founder2} onChange={setTrait(setFounder2)} lang={lang}
                   />
                 </div>
               )}
