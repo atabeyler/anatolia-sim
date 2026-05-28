@@ -23,6 +23,10 @@ import ArtPanel from '../components/panels/ArtPanel';
 import LawPanel from '../components/panels/LawPanel';
 import ArchitecturePanel from '../components/panels/ArchitecturePanel';
 import EnvironmentPanel from '../components/panels/EnvironmentPanel';
+import GodPanel from '../components/panels/GodPanel';
+import TimeMachinePanel from '../components/panels/TimeMachinePanel';
+import AnalysisPanel from '../components/panels/AnalysisPanel';
+import HypothesisPanel from '../components/panels/HypothesisPanel';
 
 export default function SimulationPage() {
   const { simId } = useParams<{ simId: string }>();
@@ -51,7 +55,7 @@ export default function SimulationPage() {
         <WorldGlobe individuals={individuals} />
       </div>
 
-      {/* All detail panels — rendered conditionally by activePanel */}
+      {/* Science panels */}
       <BiologyPanel />
       <EnvironmentPanel />
       <AstronomyPanel />
@@ -67,6 +71,12 @@ export default function SimulationPage() {
       <MicrobiomePanel />
       <PsychologyPanel />
       <EpigeneticsPanel />
+
+      {/* Advanced feature panels */}
+      <GodPanel />
+      <TimeMachinePanel />
+      <AnalysisPanel />
+      <HypothesisPanel />
 
       {/* Coordinate overlay */}
       {currentSim && (

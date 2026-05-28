@@ -1,6 +1,7 @@
 import { Play, Pause, Settings, Globe, Menu } from 'lucide-react';
 import { useSimStore } from '../../store/simStore';
 import axios from 'axios';
+import AriaButton from './AriaButton';
 
 const SPEEDS = [1, 10, 100, 1000];
 
@@ -37,6 +38,7 @@ export default function TopBar() {
         </div>
       )}
       <div className="flex items-center gap-2 ml-4">
+        <AriaButton />
         <button onClick={toggleLang} className="px-2 py-1 text-xs rounded bg-sim-border hover:bg-sim-accent/20 font-mono transition-colors">{lang === 'en' ? 'TR' : 'EN'}</button>
         <button className="p-1.5 rounded hover:bg-sim-border transition-colors text-sim-muted hover:text-sim-text"><Settings size={15} /></button>
         <button className="p-1.5 rounded hover:bg-sim-border transition-colors text-sim-muted hover:text-sim-text"><Menu size={15} /></button>

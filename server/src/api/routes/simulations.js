@@ -83,4 +83,31 @@ router.get('/:id/checkpoints', authenticate, async (req, res) => {
   } catch { res.status(500).json({ error: 'Failed to fetch checkpoints' }); }
 });
 
+router.post('/:id/restore/:checkpointId', authenticate, async (req, res) => {
+  try {
+    const { rows: simRows } = await query('SELECT * FROM simulations WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+    if (!simRows[0]) return res.status(404).json({ error: 'Simulation not found' });
+    const { rows: cpRows } = await query('SELECT * FROM checkpoints WHERE id = $1 AND simulation_id = $2', [req.params.checkpointId, req.params.id]);
+    if (!cpRows[0]) return res.status(404).json({ error: 'Checkpoint not found' });
+    const cp = cpRows[0];
+    // Pause running engine
+    simulationManager.pause(req.params.id);
+    await query("UPDATE simulations SET status='paused', current_day=$1, current_year=$2, world_state=$3 WHERE id=$4",
+      [cp.sim_day, cp.sim_year, JSON.stringify(cp.world_state), req.params.id]);
+    // Restore population snapshot
+    if (cp.population_snapshot) {
+      const snapshot = Array.isArray(cp.population_snapshot) ? cp.population_snapshot : JSON.parse(cp.population_snapshot);
+      await query('DELETE FROM individuals WHERE simulation_id = $1', [req.params.id]);
+      for (const ind of snapshot) {
+        await query(`INSERT INTO individuals (id,simulation_id,birth_day,death_day,alive,sex,x,y,phenotype,language,parent_1_id,parent_2_id)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+          ON CONFLICT (id) DO NOTHING`,
+          [ind.id, req.params.id, ind.birth_day, ind.death_day, !ind.is_dead, ind.sex, ind.x, ind.y,
+           JSON.stringify(ind.phenotype ?? {}), JSON.stringify({ stage: ind.language_stage ?? 0 }), ind.parent_1_id, ind.parent_2_id]);
+      }
+    }
+    res.json({ message: 'Checkpoint restored', sim_day: cp.sim_day, sim_year: cp.sim_year });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Restore failed' }); }
+});
+
 export default router;

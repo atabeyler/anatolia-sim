@@ -10,6 +10,8 @@ import { migrate } from './db/database.js';
 import authRouter from './api/routes/auth.js';
 import simulationsRouter from './api/routes/simulations.js';
 import godRouter from './api/routes/god.js';
+import analysisRouter from './api/routes/analysis.js';
+import ariaRouter from './api/routes/aria.js';
 import { simulationManager } from './api/simulationManager.js';
 
 const app = express();
@@ -25,6 +27,8 @@ app.use(cookieParser());
 app.use('/api/auth', authRouter);
 app.use('/api/simulations', simulationsRouter);
 app.use('/api/god', godRouter);
+app.use('/api/analysis', analysisRouter);
+app.use('/api/aria', ariaRouter);
 app.get('/api/health', (_, res) => res.json({ status: 'ok', version: '1.0.0' }));
 
 const wss = new WebSocketServer({ server, path: '/ws' });
