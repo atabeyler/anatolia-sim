@@ -6,6 +6,9 @@ import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { existsSync } from 'fs';
 import { migrate } from './db/database.js';
 import authRouter from './api/routes/auth.js';
 import simulationsRouter from './api/routes/simulations.js';
@@ -15,21 +18,16 @@ import ariaRouter from './api/routes/aria.js';
 import adminRouter from './api/routes/admin.js';
 import { simulationManager } from './api/simulationManager.js';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const clientDist = join(__dirname, '../../client/dist');
+
 const app = express();
 const server = createServer(app);
 const PORT = process.env.PORT ?? 3001;
 
-app.use(helmet());
-const allowedOrigins = [
-  process.env.CLIENT_URL,
-  'http://localhost:5173',
-  'https://anatolia-sim-client.onrender.com',
-].filter(Boolean);
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-    cb(new Error('CORS: ' + origin + ' not allowed'));
-  },
+  origin: ['http://localhost:5173', 'http://localhost:3001'],
   credentials: true,
 }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 500 }));
@@ -44,6 +42,14 @@ app.use('/api/aria', ariaRouter);
 app.use('/api/admin', adminRouter);
 app.get('/api/health', (_, res) => res.json({ status: 'ok', version: '1.0.0' }));
 
+if (existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/') || req.path.startsWith('/ws')) return next();
+    res.sendFile(join(clientDist, 'index.html'));
+  });
+}
+
 const wss = new WebSocketServer({ server, path: '/ws' });
 wss.on('connection', (ws, req) => {
   const simId = new URL(req.url, 'http://localhost').searchParams.get('simId');
@@ -55,7 +61,7 @@ async function main() {
   try {
     await migrate();
     server.listen(PORT, () => {
-      console.log(`✅ ANTİLİA-SİM Server running on port ${PORT}`);
+      console.log(`✅ ANATOLİA-SİM Server running on port ${PORT}`);
       console.log(`✅ WebSocket server ready`);
     });
   } catch (err) { console.error('Failed to start server:', err); process.exit(1); }
