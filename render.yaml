@@ -2,6 +2,7 @@ services:
   - type: web
     name: anatolia-sim-server
     env: node
+    plan: free
     buildCommand: cd server && npm install
     startCommand: cd server && npm start
     healthCheckPath: /api/health
