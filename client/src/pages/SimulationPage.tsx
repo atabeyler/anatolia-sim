@@ -123,6 +123,7 @@ export default function SimulationPage() {
     if (!confirm(lang === 'tr' ? 'Simülasyonu sonlandır?' : 'Terminate simulation?')) return;
     await axios.post(`/api/simulations/${currentSim.id}/terminate`, {}, { headers: { Authorization: `Bearer ${accessToken}` } });
     setCurrentSim({ ...currentSim, status: 'completed' });
+    navigate('/');
   }
 
   const isRunning = currentSim?.status === 'running';
@@ -216,21 +217,20 @@ export default function SimulationPage() {
             style={{ padding: '2px 6px', fontSize: 8, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.05em' }}>
             SONLANDIR
           </button>
-          <button onClick={() => setActivePanel(activePanel === 'population' ? null : 'population')}
-            style={{ padding: '2px 6px', fontSize: 8, border: '1px solid #3a5020', color: '#8aaa50', background: 'transparent', letterSpacing: '0.05em' }}>
-            KURUCU
-          </button>
-          <button onClick={() => navigate('/')}
-            style={{ display: 'flex', alignItems: 'center', padding: '2px 4px', border: '1px solid #1a3a2a', color: '#4a6a5a', background: 'transparent' }}>
-            <FolderOpen size={10} />
+          <button
+            onClick={() => { navigate('/'); }}
+            style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', border: '1px solid #1a3a2a', color: '#4a7a5a', background: 'transparent', fontSize: 8, letterSpacing: '0.05em', fontFamily: 'Share Tech Mono, monospace' }}>
+            <FolderOpen size={9} />
+            {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
           </button>
           <button
             onClick={() => toggleLang()}
+            title={lang === 'tr' ? 'Switch to English' : 'Türkçeye geç'}
             style={{
-              padding: '2px 6px', fontSize: 8, fontFamily: 'Orbitron, monospace', letterSpacing: '0.1em',
+              padding: '2px 5px', fontSize: 8, fontFamily: 'Orbitron, monospace', letterSpacing: '0.08em',
               border: '1px solid #1a4a2a', color: '#00e887', background: 'rgba(0,232,135,0.08)',
             }}>
-            {lang.toUpperCase()}
+            {lang === 'tr' ? 'TR▸EN' : 'EN▸TR'}
           </button>
         </div>
 
@@ -393,23 +393,11 @@ export default function SimulationPage() {
                 </div>
               </div>
 
-              <div style={{ border: '1px solid #0d2018', padding: 12 }}>
-                <div style={{ fontSize: 8, color: '#3a6040', letterSpacing: '0.15em', marginBottom: 8 }}>DİL</div>
-                <div className="flex gap-2">
-                  {(['tr', 'en'] as const).map(l => (
-                    <button key={l} onClick={() => lang !== l && toggleLang()}
-                      className="flex-1 py-2"
-                      style={{
-                        fontSize: 11, fontFamily: 'Orbitron, monospace',
-                        background: lang === l ? 'rgba(0,232,135,0.2)' : 'transparent',
-                        border: `1px solid ${lang === l ? '#00e887' : '#0d2018'}`,
-                        color: lang === l ? '#00e887' : '#2a5040',
-                      }}>
-                      {l.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <button onClick={toggleLang}
+                className="w-full py-2"
+                style={{ fontSize: 11, fontFamily: 'Orbitron, monospace', letterSpacing: '0.15em', border: '1px solid #1a4a2a', color: '#00e887', background: 'rgba(0,232,135,0.08)' }}>
+                {lang === 'tr' ? 'TR ▸ EN' : 'EN ▸ TR'}
+              </button>
 
               {currentSim && (
                 <div style={{ border: '1px solid #2a0d0d', padding: 12 }}>
