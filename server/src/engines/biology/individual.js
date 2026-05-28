@@ -126,7 +126,7 @@ export function getLifeStage(individual, currentDay) {
 
 export function isFertile(individual, currentDay) {
   const age = getAge(individual, currentDay);
-  if (individual.sex === 'female') return age >= 15 && age <= 45;
+  if (individual.sex === 'female') return age >= 15 && age <= 50;
   if (individual.sex === 'male') return age >= 15 && age <= 65;
   return false;
 }

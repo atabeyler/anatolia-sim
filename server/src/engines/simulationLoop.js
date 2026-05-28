@@ -100,6 +100,7 @@ export class SimulationEngine {
     }
 
     // 1. Update world environment
+    this.worldState.alive_count = alive.length;
     updateWorldState(this.worldState, day);
     const resourcePressure = computeResourcePressure(this.worldState, alive.length);
 
@@ -199,6 +200,8 @@ export class SimulationEngine {
     }
 
     // 10. Death checks
+    // Pass live count so mortality engine can apply small-group protection
+    this.worldState.alive_count = alive.length;
     for (const ind of alive) {
       const cause = rollDeath(ind, day, this.worldState);
       if (cause) {
