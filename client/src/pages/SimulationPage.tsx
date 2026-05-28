@@ -75,7 +75,7 @@ function translateEventDesc(desc: string, type: string): string {
 export default function SimulationPage() {
   const { simId } = useParams<{ simId: string }>();
   const navigate = useNavigate();
-  const { accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, toggleLang, speedMultiplier, setSpeed, resetLiveState } = useSimStore();
+  const { accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, toggleLang, speedMultiplier, setSpeed, resetLiveState, setEvents } = useSimStore();
   const [individuals, setIndividuals] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'harita' | 'durum' | 'kontrol'>('harita');
@@ -99,13 +99,17 @@ export default function SimulationPage() {
 
   useEffect(() => {
     if (!simId || !accessToken) return;
-    // Clear previous simulation's live data immediately
+    // Clear previous sim's live data, then load this sim's persisted history
     resetLiveState();
     setIndividuals([]);
-    axios.get(`/api/simulations/${simId}`, { headers: { Authorization: `Bearer ${accessToken}` } })
-      .then(r => setCurrentSim(r.data));
+    const headers = { Authorization: `Bearer ${accessToken}` };
+    axios.get(`/api/simulations/${simId}`, { headers }).then(r => setCurrentSim(r.data));
+    // Load recent historical events from DB so the event log isn't empty
+    axios.get(`/api/simulations/${simId}/events?limit=100`, { headers })
+      .then(r => setEvents(r.data)) // DB returns newest-first; store keeps same order
+      .catch(() => {});
     const interval = setInterval(() => {
-      axios.get(`/api/simulations/${simId}/population?alive=true&limit=500`, { headers: { Authorization: `Bearer ${accessToken}` } })
+      axios.get(`/api/simulations/${simId}/population?alive=true&limit=500`, { headers })
         .then(r => setIndividuals(r.data));
     }, 8000);
     return () => clearInterval(interval);

@@ -47,6 +47,8 @@ export class SimulationEngine {
       if (!ind.inventory) ind.inventory = initializeInventory();
       if (!ind.psychology) initializePsychology(ind);
       if (!ind.epigenome) initializeEpigenome(ind);
+      // Beliefs must be a Set in-memory; DB stores as array (Set doesn't JSON-serialize)
+      ind.beliefs = new Set(Array.isArray(ind.beliefs) ? ind.beliefs : []);
       this.population.set(ind.id, ind);
     }
   }
@@ -171,6 +173,7 @@ export class SimulationEngine {
     const newborns = checkReproduction(this.population, day, this.simId);
     for (const nb of newborns) {
       nb.inventory = initializeInventory();
+      nb.beliefs = new Set(); // must be Set in-memory
       initializePsychology(nb);
       initializeEpigenome(nb);
       // Inherit epigenetics from parents
@@ -229,6 +232,9 @@ export class SimulationEngine {
       updateLanguageStage(ind, alive.length, genCount);
     }
     this.processLanguageLearning(alive);
+
+    // 12b. Social learning: children near parents learn faster
+    this.processFamilyLearning(alive, day, tickEvents);
 
     // 13. Technology discovery
     for (const ind of alive) {
@@ -348,19 +354,62 @@ export class SimulationEngine {
     const ageYears = ind.age / 365;
     if (ageYears < 2) return; // handled by infant-follow logic
 
-    // Base speed in degrees/day (~0.5–3 km/day depending on age)
+    // Base speed in degrees/day
     let speed;
     if (ageYears < 12)      speed = 0.012;
     else if (ageYears > 60) speed = 0.004;
     else                    speed = 0.02;
 
-    // Hungry individuals explore faster; pregnant females slower
-    if ((ind.satiation ?? 0.5) < 0.3)   speed *= 1.6;
-    if (ind.health?.pregnancy)           speed *= 0.4;
+    if ((ind.satiation ?? 0.5) < 0.3) speed *= 1.6;
+    if (ind.health?.pregnancy)        speed *= 0.4;
 
     // Persistent direction with slow random drift
     if (ind._moveAngle === undefined) ind._moveAngle = Math.random() * Math.PI * 2;
     ind._moveAngle += (Math.random() - 0.5) * 0.4;
+
+    // ── Mate attraction: partners stay together ──────────────────────────────
+    if (ind.social?.mate_id) {
+      const mate = this.population.get(ind.social.mate_id);
+      if (mate && !mate.is_dead) {
+        const dx = (mate.x ?? 0) - (ind.x ?? 0);
+        const dy = (mate.y ?? 0) - (ind.y ?? 0);
+        const dist = Math.hypot(dx, dy);
+        if (dist > 0.3) {
+          const angleToMate = Math.atan2(dy, dx);
+          // Blend current angle toward mate; stronger pull the further apart
+          const pull = Math.min(1, dist / 3) * 0.7;
+          ind._moveAngle = ind._moveAngle * (1 - pull) + angleToMate * pull;
+        }
+      }
+    }
+
+    // ── Child-parent attachment: ages 2–12 follow parent closely ────────────
+    if (ageYears >= 2 && ageYears < 12) {
+      const parent = this.population.get(ind.parent_1_id) ?? this.population.get(ind.parent_2_id);
+      if (parent && !parent.is_dead) {
+        const dx = (parent.x ?? 0) - (ind.x ?? 0);
+        const dy = (parent.y ?? 0) - (ind.y ?? 0);
+        const dist = Math.hypot(dx, dy);
+        if (dist > 0.2) {
+          const pull = Math.min(1, dist / 2) * 0.85;
+          ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
+        }
+      }
+    }
+
+    // ── Adolescents (12–18): loosely attached to parents ────────────────────
+    if (ageYears >= 12 && ageYears < 18) {
+      const parent = this.population.get(ind.parent_1_id) ?? this.population.get(ind.parent_2_id);
+      if (parent && !parent.is_dead) {
+        const dx = (parent.x ?? 0) - (ind.x ?? 0);
+        const dy = (parent.y ?? 0) - (ind.y ?? 0);
+        const dist = Math.hypot(dx, dy);
+        if (dist > 2) {
+          const pull = Math.min(1, dist / 8) * 0.4;
+          ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
+        }
+      }
+    }
 
     const step = speed * (0.6 + Math.random() * 0.8);
     ind.x = Math.max(-180, Math.min(180, (ind.x ?? 0) + Math.cos(ind._moveAngle) * step));
@@ -443,6 +492,31 @@ export class SimulationEngine {
       if (nearby.length > 0) {
         const teacher = nearby[Math.floor(Math.random() * nearby.length)];
         learnFromTeacher(ind, teacher);
+      }
+    }
+  }
+
+  processFamilyLearning(alive, day, tickEvents) {
+    for (const ind of alive) {
+      const ageYears = ind.age / 365;
+      if (ageYears < 3 || ageYears > 20) continue;
+
+      const parent = this.population.get(ind.parent_1_id) ?? this.population.get(ind.parent_2_id);
+      if (!parent || parent.is_dead) continue;
+
+      const dist = Math.hypot((ind.x ?? 0) - (parent.x ?? 0), (ind.y ?? 0) - (parent.y ?? 0));
+      if (dist > 2) continue; // must be physically close (< 2° ≈ 200 km)
+
+      // Language learning from parent (faster than random encounter)
+      if (parent.language?.stage > (ind.language?.stage ?? 0) && Math.random() < 0.1) {
+        learnFromTeacher(ind, parent);
+      }
+
+      // Tech learning: parent's discovered techs boost child's discovery
+      const discoveries = tryDiscoverTech(ind, this.discoveredTechs, this.worldState, day);
+      for (const tech of discoveries) {
+        tickEvents.push({ ...tech, type: 'discovery', individual_id: tech.discoverer_id });
+        this.logEvent(day, 'technology', `Technology discovered: ${tech.tech_id}`, tech, 4);
       }
     }
   }

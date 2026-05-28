@@ -111,6 +111,11 @@ router.post('/', authenticate, async (req, res) => {
     const f2Params = buildFounderParams(founder2_params, { name: 'Kurucu Kadın', ageYears: 20, eye_color: 'brown', hair_color: 'brown', skin_tone: 'olive' });
     const f1 = createFounder({ ...f1Params, sex: 'male', x: parseFloat(longitude), y: parseFloat(latitude) });
     const f2 = createFounder({ ...f2Params, sex: 'female', x: parseFloat(longitude) + 0.1, y: parseFloat(latitude) });
+    // Pre-mate founders so they stay together and parent children from day 1
+    if (!f1.social) f1.social = {};
+    if (!f2.social) f2.social = {};
+    f1.social.has_mate = true;  f1.social.mate_id = f2.id;
+    f2.social.has_mate = true;  f2.social.mate_id = f1.id;
     const { rows } = await query(`INSERT INTO simulations (user_id, name, status, start_latitude, start_longitude, founder_1, founder_2, world_state) VALUES ($1,$2,'paused',$3,$4,$5,$6,$7) RETURNING *`, [req.user.id, name, parseFloat(latitude), parseFloat(longitude), JSON.stringify(f1), JSON.stringify(f2), JSON.stringify(worldState)]);
     const sim = rows[0];
     await query(`INSERT INTO individuals (id,simulation_id,birth_day,sex,x,y,genome,phenotype,health,mind,social,skills,beliefs,language,memory) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15),($16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30)`,
