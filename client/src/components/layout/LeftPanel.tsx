@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Dna, TreePine, Telescope, Brain, MessageSquare, Cpu, Flame, Swords, Coins, Music, Building2, Scale, Microscope, HeartPulse, Zap, Clock, Bot, FlaskConical, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSimStore } from '../../store/simStore';
 
@@ -25,6 +26,12 @@ const MODULES = [
 
 export default function LeftPanel() {
   const { activePanel, setActivePanel, lang, sidebarExpanded, toggleSidebar } = useSimStore();
+
+  // Auto-collapse on mobile
+  useEffect(() => {
+    if (window.innerWidth < 768 && sidebarExpanded) toggleSidebar();
+  }, []);
+
   const W = sidebarExpanded ? 176 : 48;
 
   return (

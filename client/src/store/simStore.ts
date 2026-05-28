@@ -91,6 +91,6 @@ export const useSimStore = create<SimStore>((set) => ({
   toggleTheme: () => set(s => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
   speedMultiplier: 1,
   setSpeed: (speed) => set({ speedMultiplier: speed }),
-  sidebarExpanded: true,
+  sidebarExpanded: typeof window !== 'undefined' ? window.innerWidth >= 768 : true,
   toggleSidebar: () => set(s => ({ sidebarExpanded: !s.sidebarExpanded })),
 }));

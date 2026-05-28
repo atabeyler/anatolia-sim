@@ -41,7 +41,8 @@ function StatBox({ label, value, color, unit }: any) {
 }
 
 export default function StatsPanel() {
-  const { stats } = useSimStore();
+  const { stats, sidebarExpanded } = useSimStore();
+  const leftOffset = sidebarExpanded ? 176 : 48;
   const [history, setHistory] = useState<any[]>([]);
   const lastYear = useRef(-1);
 
@@ -54,7 +55,7 @@ export default function StatsPanel() {
   if (!stats) return null;
 
   return (
-    <div className="absolute left-16 bottom-4 w-76 z-30" style={{ width: 304 }}>
+    <div className="absolute bottom-28 z-30" style={{ left: leftOffset + 8, width: Math.min(304, window.innerWidth - leftOffset - 16) }}>
       <div className="hud-panel relative overflow-hidden" style={{ padding: '12px 14px' }}>
         <span className="hud-corner-tr" />
         <span className="hud-corner-bl" />
