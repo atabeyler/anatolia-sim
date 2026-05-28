@@ -20,10 +20,7 @@ services:
       - key: ELEVENLABS_API_KEY
         sync: false
       - key: CLIENT_URL
-        fromService:
-          type: web
-          name: anatolia-sim-client
-          property: url
+        value: https://anatolia-sim-client.onrender.com
 
   - type: web
     name: anatolia-sim-client
@@ -32,10 +29,7 @@ services:
     staticPublishPath: client/dist
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: anatolia-sim-server
-          property: url
+        value: https://anatolia-sim-server.onrender.com
     routes:
       - type: rewrite
         source: /*
