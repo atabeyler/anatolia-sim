@@ -28,6 +28,7 @@ export const LOCI = {
   HEIGHT_01: { chr: 6,  trait: 'height',               type: 'polygenic' },
   HEIGHT_02: { chr: 2,  trait: 'height',               type: 'polygenic' },
   HEIGHT_03: { chr: 20, trait: 'height',               type: 'polygenic' },
+  STRENGTH_01: { chr: 12, trait: 'physical_strength',  type: 'codominant' },
   METABOLISM_01: { chr: 16, trait: 'metabolism',       type: 'codominant' },
   IMMUNE_01: { chr: 6,  trait: 'immune_strength',      type: 'codominant' },
   IMMUNE_02: { chr: 6,  trait: 'immune_breadth',       type: 'codominant' },
@@ -114,7 +115,7 @@ export function computePhenotype(genome) {
   };
 
   const height_base = (g('HEIGHT_01') + g('HEIGHT_02') + g('HEIGHT_03')) / 3;
-  const language_capacity = (g('FOXP2_01') * 0.6 + g('CNTNAP2_01') * 0.4);
+  const language_capacity = g('FOXP2_01') * 0.6 + g('CNTNAP2_01') * 0.4;
   const fluid_intelligence = (g('BDNF_01') + g('COMT_01') + g('DTNBP1_01') + g('NRG1_01') + g('DISC1_01')) / 5;
   const consciousness_potential = (g('NRXN1_01') + g('SHANK3_01') + g('RELN_01') + g('FOXP2_01')) / 4;
   const belief_capacity = consciousness_potential > 0.55 ? (consciousness_potential - 0.55) / 0.45 : 0;
@@ -122,43 +123,39 @@ export function computePhenotype(genome) {
   const max_lifespan = 50 + g('TERT_01') * 50 + g('APOE_01') * 20;
 
   return {
-    height_factor: height_base,
-    physical_strength: Math.min(1, height_base * 0.55 + g('METABOLISM_01') * 0.25 + g('TERT_01') * 0.2),
+    height_factor:        height_base,
+    physical_strength:    Math.min(1, g('STRENGTH_01') * 0.5 + g('HEIGHT_01') * 0.25 + g('METABOLISM_01') * 0.25),
+    physical_endurance:   g('METABOLISM_01'),
     fluid_intelligence,
-    working_memory: g('COMT_01'),
-    conscientiousness: (g('COMT_01') + g('DISC1_01')) / 2,
+    working_memory:       g('COMT_01'),
+    conscientiousness:    g('DISC1_01'),
     language_capacity,
-    social_bonding: g('OXTR_01'),
-    empathy: (g('OXTR_01') + g('RELN_01')) / 2,
-    aggression: g('MAOA_01'),
-    dominance: (g('MAOA_01') + height_base) / 2,
-    curiosity: g('DRD4_01'),
-    artistic_sense: (g('DRD4_01') + g('NRG1_01')) / 2,
-    serotonin: g('SLC6A4_01'),
-    metabolism: g('METABOLISM_01'),
+    language_learning:    g('CNTNAP2_01'),
+    social_bonding:       g('OXTR_01'),
+    social_drive:         g('OXTR_01'),
+    oxytocin_sensitivity: g('OXTR_01'),
+    empathy:              (g('OXTR_01') + g('RELN_01')) / 2,
+    altruism:             Math.max(0, g('OXTR_01') * 0.7 + (1 - g('MAOA_01')) * 0.3),
+    aggression:           g('MAOA_01'),
+    dominance:            (g('MAOA_01') + g('DISC1_01')) / 2,
+    curiosity:            g('DRD4_01'),
+    artistic_sense:       (consciousness_potential + g('DRD4_01')) / 2,
+    serotonin:            g('SLC6A4_01'),
+    stress_resilience:    g('SLC6A4_01'),
+    anxiety:              Math.max(0, 1 - g('SLC6A4_01')),
+    independence:         (g('DRD4_01') + fluid_intelligence) / 2,
+    xenophobia:           Math.max(0, (1 - g('OXTR_01') + g('MAOA_01')) / 2),
+    metabolism:           g('METABOLISM_01'),
     immune_strength,
-    max_lifespan: Math.round(max_lifespan),
-    fertility: g('FSHR_01'),
+    max_lifespan:         Math.round(max_lifespan),
+    fertility:            g('FSHR_01'),
     consciousness_potential,
     belief_capacity,
-    // Derived traits required by simulation engines
-    empathy:             g('OXTR_01'),
-    oxytocin_sensitivity:g('OXTR_01'),
-    social_drive:        g('OXTR_01'),
-    conscientiousness:   g('DISC1_01'),
-    physical_strength:   (g('HEIGHT_01') + g('METABOLISM_01')) / 2,
-    physical_endurance:  g('METABOLISM_01'),
-    dominance:           (g('MAOA_01') + g('DISC1_01')) / 2,
-    independence:        (g('DRD4_01') + fluid_intelligence) / 2,
-    altruism:            Math.max(0, g('OXTR_01') * 0.7 + (1 - g('MAOA_01')) * 0.3),
-    anxiety:             Math.max(0, 1 - g('SLC6A4_01')),
-    xenophobia:          Math.max(0, (1 - g('OXTR_01') + g('MAOA_01')) / 2),
-    artistic_sense:      (consciousness_potential + g('DRD4_01')) / 2,
-    religiosity:         Math.min(1, belief_capacity * 0.6 + (1 - g('SLC6A4_01')) * 0.4),
-    language_learning:   g('CNTNAP2_01'),
-    eye_color: g('HERC2_01') > 0.5 ? 'brown' : 'blue',
+    religiosity:          Math.min(1, belief_capacity * 0.6 + (1 - g('SLC6A4_01')) * 0.4),
+    self_awareness:       (g('NRXN1_01') + g('SHANK3_01')) / 2,
+    eye_color:  g('HERC2_01') > 0.5 ? 'brown' : 'blue',
     hair_color: g('MC1R_01') > 0.6 ? 'dark' : g('MC1R_01') > 0.3 ? 'medium' : 'light',
-    skin_tone: g('SLC24A5_01'),
+    skin_tone:  g('SLC24A5_01'),
   };
 }
 
