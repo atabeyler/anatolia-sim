@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Play, Pause, Globe, X, Settings, Menu, LogOut, Home, Sliders, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, Globe, X, Settings, Menu, LogOut, Home, Sliders, Square } from 'lucide-react';
 import { useSimStore } from '../../store/simStore';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AriaButton from './AriaButton';
+import { MODULES } from './LeftPanel';
 
 const SPEEDS = [1, 10, 100, 1000];
 
@@ -86,7 +87,7 @@ function SettingsOverlay({ onClose, onSpeedChange }: { onClose: () => void; onSp
 }
 
 function MenuOverlay({ onClose }: { onClose: () => void }) {
-  const { currentSim, user, logout } = useSimStore();
+  const { currentSim, user, logout, lang, activePanel, setActivePanel } = useSimStore();
   const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -129,6 +130,33 @@ function MenuOverlay({ onClose }: { onClose: () => void }) {
             <Sliders size={12} />
             <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>Admin Paneli</span>
           </button>
+        )}
+
+        {currentSim && (
+          <>
+            <div className="h-px mx-2 my-1" style={{ background: 'rgba(79,110,247,0.12)' }} />
+            <div className="px-3 pt-1 pb-1 font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 7 }}>
+              {lang === 'tr' ? 'MODULLER' : 'MODULES'}
+            </div>
+            <div className="max-h-72 overflow-y-auto pr-1">
+              {MODULES.map((mod) => {
+                const Icon = mod.icon;
+                const accent = (mod as any).accent ?? '#4f6ef7';
+                const isActive = activePanel === mod.id;
+                return (
+                  <button key={mod.id}
+                    onClick={() => { setActivePanel(isActive ? null : mod.id); onClose(); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-1.5 text-left transition-colors hover:bg-sim-border/30"
+                    style={{ color: isActive ? accent : '#8898c8' }}>
+                    <Icon size={12} />
+                    <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>
+                      {lang === 'tr' ? mod.labelTr : mod.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
         )}
 
         <div className="h-px mx-2 my-1" style={{ background: 'rgba(79,110,247,0.12)' }} />
@@ -184,6 +212,24 @@ export default function TopBar() {
     }
   }
 
+  async function completeSim() {
+    if (!currentSim || !accessToken) return;
+    if (!window.confirm(lang === 'tr' ? 'Simulasyonu sonlandirmak istiyor musun?' : 'End this simulation?')) return;
+    setSimLoading(true);
+    setSimError('');
+    try {
+      await axios.post(`/api/simulations/${currentSim.id}/complete`, {}, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setCurrentSim({ ...currentSim, status: 'completed' });
+    } catch (err: any) {
+      setSimError(err.response?.data?.error ?? 'Hata');
+      setTimeout(() => setSimError(''), 3000);
+    } finally {
+      setSimLoading(false);
+    }
+  }
+
   async function updateSpeed(speed: number) {
     setSpeed(speed);
     setCurrentSim(currentSim ? { ...currentSim, speed_multiplier: speed } : currentSim);
@@ -199,6 +245,8 @@ export default function TopBar() {
   }
 
   const isRunning = currentSim?.status === 'running';
+  const births = Math.max((stats?.total_ever ?? 0) - 2, 0);
+  const deaths = Math.max((stats?.total_ever ?? 0) - (stats?.population ?? 0), 0);
   const hourStr = stats?.hour !== undefined ? String(stats.hour).padStart(2, '0') + ':00' : '--:--';
 
   return (
@@ -270,6 +318,21 @@ export default function TopBar() {
             </div>
           )}
 
+          {!isMobile && currentSim.status !== 'completed' && (
+            <button onClick={completeSim} disabled={simLoading}
+              className="flex items-center gap-1 transition-all duration-200 disabled:opacity-50"
+              style={{
+                padding: '4px 8px',
+                background: 'rgba(224,90,90,0.12)',
+                border: '1px solid rgba(224,90,90,0.45)',
+                color: '#e05a5a',
+                clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))',
+              }}>
+              <Square size={9} />
+              <span className="font-share-tech" style={{ fontSize: 9 }}>{lang === 'tr' ? 'SONLANDIR' : 'END'}</span>
+            </button>
+          )}
+
           {simError && !isMobile && (
             <span className="font-share-tech text-sim-red" style={{ fontSize: 9 }}>{simError}</span>
           )}
@@ -293,9 +356,9 @@ export default function TopBar() {
             padding: '2px 0',
           }}>
           <Divider />
-          <Seg label={lang === 'tr' ? 'YIL' : 'YEAR'} value={stats.year.toLocaleString()} color="#7090ff" />
+          <Seg label={lang === 'tr' ? 'ZAMAN' : 'TIME'} value={`Y${stats.year.toLocaleString()} D${stats.day.toLocaleString()}`} color="#7090ff" />
           <Divider />
-          <Seg label={lang === 'tr' ? 'GÜN' : 'DAY'} value={stats.day.toLocaleString()} color="#9aabcf" />
+          <Seg label={lang === 'tr' ? 'CANLI' : 'LIVE'} value={stats.population.toLocaleString()} color="#4ecb71" />
           {!isMobile && (
             <>
               <Divider />
@@ -303,7 +366,9 @@ export default function TopBar() {
             </>
           )}
           <Divider />
-          <Seg label={lang === 'tr' ? 'NÜFUS' : 'POP'} value={stats.population.toLocaleString()} color="#d4a838" />
+          <Seg label={lang === 'tr' ? 'DOGUM' : 'BIRTHS'} value={births.toLocaleString()} color="#d4a838" />
+          <Divider />
+          <Seg label={lang === 'tr' ? 'OLUM' : 'DEATHS'} value={deaths.toLocaleString()} color="#e05a5a" />
           {!isMobile && (
             <>
               <Divider />

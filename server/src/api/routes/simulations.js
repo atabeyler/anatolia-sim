@@ -130,6 +130,17 @@ router.post('/:id/pause', authenticate, requireSimulationOwner, async (req, res)
   res.json({ message: 'Simulation paused' });
 });
 
+router.post('/:id/complete', authenticate, requireSimulationOwner, async (req, res) => {
+  try {
+    const engine = simulationManager.getEngine(req.params.id);
+    simulationManager.pause(req.params.id);
+    await simulationManager.persistState(req.params.id, engine);
+    if (engine) await simulationManager.persistPopulation(req.params.id, engine);
+    await query("UPDATE simulations SET status = 'completed', updated_at = NOW() WHERE id = $1", [req.params.id]);
+    res.json({ message: 'Simulation completed' });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to complete simulation' }); }
+});
+
 router.post('/:id/speed', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const speed = Number(req.body.speed_multiplier);
