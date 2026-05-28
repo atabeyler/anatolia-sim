@@ -68,6 +68,7 @@ export class SimulationEngine {
   resume() { this.start(); }
 
   async tick() {
+    try {
     const day = this.currentDay;
     for (const ind of this.population.values()) {
       ind.alive = !ind.is_dead;
@@ -300,9 +301,9 @@ export class SimulationEngine {
     const currentAlive = [...this.population.values()].filter(i => !i.is_dead);
     const stats = this.computeStats(day, currentAlive);
 
-    // 22. Checkpoint
+    // 22. Checkpoint (fire-and-forget — never block the simulation loop)
     if (day % CHECKPOINT_INTERVAL === 0 && this.onCheckpoint) {
-      await this.onCheckpoint({
+      this.onCheckpoint({
         sim_day: day,
         sim_year: Math.floor(day / 365),
         population_count: currentAlive.length,
@@ -318,7 +319,7 @@ export class SimulationEngine {
           norms: g.norms ? [...g.norms] : [],
         })),
         stats,
-      });
+      }).catch(err => console.error('[SimulationEngine] checkpoint error:', err));
     }
 
     // 23. Broadcast
@@ -327,6 +328,10 @@ export class SimulationEngine {
     }
 
     this.currentDay++;
+    } catch (err) {
+      console.error(`[SimulationEngine] tick() error on day ${this.currentDay}:`, err);
+      this.currentDay++;
+    }
   }
 
   moveIndividual(ind) {
