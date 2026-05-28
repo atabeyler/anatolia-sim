@@ -20,6 +20,8 @@ const TRAIT_LOCI = {
   longevity: ['TERT_01', 'APOE_01'],
   height: ['HEIGHT_01', 'HEIGHT_02', 'HEIGHT_03'],
   metabolism: ['METABOLISM_01'],
+  self_awareness:    ['NRXN1_01', 'SHANK3_01'],
+  stress_resilience: ['SLC6A4_01'],
 };
 
 function allele(value) {

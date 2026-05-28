@@ -4,33 +4,58 @@ import { Globe, Plus, Play, LogOut, BarChart2, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
 
+// ── localStorage persistence ──────────────────────────────────────────────────
+const STORAGE_KEY = 'anatolia_founders_v2';
+function saveState(form: any, f1: any, f2: any) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ form, founder1: f1, founder2: f2 })); } catch {}
+}
+function loadState(): { form?: any; founder1?: any; founder2?: any } | null {
+  try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : null; } catch { return null; }
+}
+
+// ── Helpers: height ↔ cm, weight ↔ metabolism ────────────────────────────────
+// Server formula: height_cm = 150 + height_factor * 45  (range 150–195 cm)
+const toCm  = (v: number) => Math.round(150 + Math.max(0, Math.min(1, v)) * 45);
+const fromCm = (cm: number) => Math.max(0, Math.min(1, (cm - 150) / 45));
+// weight_kg = (height_cm/100)^2 * (19 + metabolism * 8)
+const toKg  = (heightVal: number, metabVal: number) => {
+  const h = toCm(heightVal) / 100;
+  return Math.round(h * h * (19 + Math.max(0, Math.min(1, metabVal)) * 8));
+};
+const fromKg = (kg: number, heightVal: number) => {
+  const h = toCm(heightVal) / 100;
+  return Math.max(0, Math.min(1, (kg / (h * h) - 19) / 8));
+};
+
 // ── Trait definitions ────────────────────────────────────────────────────────
 const TRAIT_GROUPS = [
   {
     group: 'Zihin', groupEn: 'Mind',
     traits: [
-      { id: 'fluid_intelligence', label: 'Zeka',          labelEn: 'Intelligence',  color: '#7c3aed' },
-      { id: 'curiosity',          label: 'Merak',          labelEn: 'Curiosity',     color: '#f59e0b' },
-      { id: 'conscientiousness',  label: 'Disiplin',       labelEn: 'Discipline',    color: '#3b82f6' },
-      { id: 'language_capacity',  label: 'Dil Yeteneği',   labelEn: 'Language',      color: '#14b8a6' },
-      { id: 'artistic_sense',     label: 'Sanat Duygusu',  labelEn: 'Art Sense',     color: '#f97316' },
+      { id: 'fluid_intelligence', label: 'Zeka',           labelEn: 'Intelligence',      color: '#7c3aed' },
+      { id: 'curiosity',          label: 'Merak',          labelEn: 'Curiosity',         color: '#f59e0b' },
+      { id: 'conscientiousness',  label: 'Disiplin',       labelEn: 'Discipline',        color: '#3b82f6' },
+      { id: 'language_capacity',  label: 'Dil Yeteneği',   labelEn: 'Language',          color: '#14b8a6' },
+      { id: 'artistic_sense',     label: 'Sanat Duygusu',  labelEn: 'Art Sense',         color: '#f97316' },
+      { id: 'self_awareness',     label: 'Öz Farkındalık', labelEn: 'Self Awareness',    color: '#8b5cf6' },
+      { id: 'stress_resilience',  label: 'Stres Direnci',  labelEn: 'Stress Resilience', color: '#10b981' },
     ],
   },
   {
     group: 'Sosyal', groupEn: 'Social',
     traits: [
-      { id: 'empathy',            label: 'Empati',         labelEn: 'Empathy',       color: '#ec4899' },
-      { id: 'aggression',         label: 'Saldırganlık',   labelEn: 'Aggression',    color: '#ef4444' },
+      { id: 'empathy',            label: 'Empati',         labelEn: 'Empathy',           color: '#ec4899' },
+      { id: 'aggression',         label: 'Saldırganlık',   labelEn: 'Aggression',        color: '#ef4444' },
     ],
   },
   {
     group: 'Beden', groupEn: 'Body',
     traits: [
-      { id: 'height',             label: 'Boy',            labelEn: 'Height',        color: '#06b6d4' },
-      { id: 'metabolism',         label: 'Metabolizma',    labelEn: 'Metabolism',    color: '#a855f7' },
-      { id: 'immune_strength',    label: 'Bağışıklık',     labelEn: 'Immunity',      color: '#22c55e' },
-      { id: 'fertility',          label: 'Doğurganlık',    labelEn: 'Fertility',     color: '#f43f5e' },
-      { id: 'longevity',          label: 'Uzun Ömür',      labelEn: 'Longevity',     color: '#84cc16' },
+      { id: 'height',          label: 'Boy',        labelEn: 'Height',    color: '#06b6d4' },
+      { id: 'metabolism',      label: 'Metabolizma',labelEn: 'Metabolism',color: '#a855f7' },
+      { id: 'immune_strength', label: 'Bağışıklık', labelEn: 'Immunity',  color: '#22c55e' },
+      { id: 'fertility',       label: 'Doğurganlık',labelEn: 'Fertility', color: '#f43f5e' },
+      { id: 'longevity',       label: 'Uzun Ömür',  labelEn: 'Longevity', color: '#84cc16' },
     ],
   },
 ];
@@ -41,23 +66,21 @@ const EYE_OPTIONS: { value: string; label: string; labelTr: string; color: strin
   { value: 'green', label: 'Green',  labelTr: 'Yeşil',      color: '#2d6a2d' },
   { value: 'blue',  label: 'Blue',   labelTr: 'Mavi',       color: '#1a5276' },
 ];
-
 const HAIR_OPTIONS: { value: string; label: string; labelTr: string; color: string }[] = [
-  { value: 'black', label: 'Black', labelTr: 'Siyah',   color: '#111' },
-  { value: 'dark',  label: 'Dark',  labelTr: 'Koyu',    color: '#2c1810' },
-  { value: 'brown', label: 'Brown', labelTr: 'Kahve',   color: '#5c3317' },
-  { value: 'light', label: 'Light', labelTr: 'Açık',    color: '#c68642' },
-  { value: 'blond', label: 'Blond', labelTr: 'Sarı',    color: '#d4a017' },
-  { value: 'red',   label: 'Red',   labelTr: 'Kızıl',   color: '#8b2500' },
+  { value: 'black', label: 'Black', labelTr: 'Siyah', color: '#111' },
+  { value: 'dark',  label: 'Dark',  labelTr: 'Koyu',  color: '#2c1810' },
+  { value: 'brown', label: 'Brown', labelTr: 'Kahve', color: '#5c3317' },
+  { value: 'light', label: 'Light', labelTr: 'Açık',  color: '#c68642' },
+  { value: 'blond', label: 'Blond', labelTr: 'Sarı',  color: '#d4a017' },
+  { value: 'red',   label: 'Red',   labelTr: 'Kızıl', color: '#8b2500' },
 ];
-
 const SKIN_OPTIONS: { value: string; label: string; labelTr: string; color: string }[] = [
-  { value: 'fair',  label: 'Fair',   labelTr: 'Açık',   color: '#fde8d0' },
-  { value: 'light', label: 'Light',  labelTr: 'Bej',    color: '#f5c9a0' },
-  { value: 'olive', label: 'Olive',  labelTr: 'Buğday', color: '#c68642' },
-  { value: 'tan',   label: 'Tan',    labelTr: 'Bronz',  color: '#a0614a' },
-  { value: 'brown', label: 'Brown',  labelTr: 'Esmer',  color: '#7b4a2d' },
-  { value: 'dark',  label: 'Dark',   labelTr: 'Koyu',   color: '#3d1f0d' },
+  { value: 'fair',  label: 'Fair',  labelTr: 'Açık',   color: '#fde8d0' },
+  { value: 'light', label: 'Light', labelTr: 'Bej',    color: '#f5c9a0' },
+  { value: 'olive', label: 'Olive', labelTr: 'Buğday', color: '#c68642' },
+  { value: 'tan',   label: 'Tan',   labelTr: 'Bronz',  color: '#a0614a' },
+  { value: 'brown', label: 'Brown', labelTr: 'Esmer',  color: '#7b4a2d' },
+  { value: 'dark',  label: 'Dark',  labelTr: 'Koyu',   color: '#3d1f0d' },
 ];
 
 const ALL_TRAITS = TRAIT_GROUPS.flatMap(g => g.traits);
@@ -70,10 +93,16 @@ const founderDefaults = (sex: 'male' | 'female') => ({
   hair_color: sex === 'male' ? 'dark' : 'brown',
   skin_tone: 'olive',
   ...TRAIT_DEFAULTS,
+  height: sex === 'male' ? 0.56 : 0.44,    // ~175 cm / ~170 cm
+  metabolism: 0.45,
 });
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 function TraitSlider({ id, label, labelEn, color, value, onChange, lang }: any) {
+  const displayValue = id === 'height'
+    ? `${toCm(value)} cm`
+    : `${(value * 100).toFixed(0)}%`;
+
   return (
     <div className="mb-2">
       <div className="flex justify-between mb-0.5">
@@ -81,7 +110,7 @@ function TraitSlider({ id, label, labelEn, color, value, onChange, lang }: any) 
           {lang === 'tr' ? label : labelEn}
         </span>
         <span style={{ fontSize: 9, color, fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
-          {(value * 100).toFixed(0)}%
+          {displayValue}
         </span>
       </div>
       <div className="relative h-1.5" style={{ background: 'rgba(10,10,30,0.9)', border: `1px solid ${color}30` }}>
@@ -111,8 +140,42 @@ function ColorChips({ options, value, onChange }: { options: typeof EYE_OPTIONS;
   );
 }
 
-function FounderCard({ title, sex, data, onChange, lang }: { title: string; sex: string; data: any; onChange: (k: string, v: any) => void; lang: string }) {
+const inputStyle: React.CSSProperties = {
+  width: '100%', background: 'rgba(5,5,20,0.9)', border: '1px solid rgba(79,110,247,0.2)',
+  padding: '4px 8px', fontSize: 11, color: '#c0d0f0', fontFamily: 'Share Tech Mono, monospace', outline: 'none',
+};
+
+function UnitInput({ label, value, unit, min, max, onChange, color = '#c0d0f0' }: {
+  label: string; value: number; unit: string; min: number; max: number; onChange: (v: number) => void; color?: string;
+}) {
+  return (
+    <div>
+      <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono', letterSpacing: '0.1em' }}>{label}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <input
+          type="number" min={min} max={max} value={value}
+          onChange={e => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) onChange(Math.max(min, Math.min(max, v))); }}
+          style={{ ...inputStyle, flex: 1, color }}
+        />
+        <span style={{ fontSize: 9, color: '#5060a0', fontFamily: 'Share Tech Mono', flexShrink: 0 }}>{unit}</span>
+      </div>
+    </div>
+  );
+}
+
+function FounderCard({ title, sex, data, onChange, lang }: {
+  title: string; sex: string; data: any; onChange: (k: string, v: any) => void; lang: string;
+}) {
   const accentColor = sex === 'male' ? '#4f9ef7' : '#ec4899';
+  const heightCm = toCm(data.height ?? 0.5);
+  const weightKg = toKg(data.height ?? 0.5, data.metabolism ?? 0.5);
+
+  const sec = (label: string) => (
+    <div style={{ fontSize: 8, color: '#3a5070', letterSpacing: '0.2em', marginBottom: 6, fontFamily: 'Share Tech Mono' }}>
+      {label}
+    </div>
+  );
+
   return (
     <div style={{ background: 'rgba(4,4,15,0.95)', border: `1px solid ${accentColor}30` }}>
       {/* Header */}
@@ -124,22 +187,22 @@ function FounderCard({ title, sex, data, onChange, lang }: { title: string; sex:
       </div>
 
       <div className="p-3 space-y-3">
-        {/* Identity */}
+        {/* ── KİMLİK ── */}
         <div>
-          <div style={{ fontSize: 8, color: '#3a5070', letterSpacing: '0.2em', marginBottom: 6, fontFamily: 'Share Tech Mono' }}>
-            {lang === 'tr' ? '── KİMLİK ──' : '── IDENTITY ──'}
-          </div>
+          {sec(lang === 'tr' ? '── KİMLİK ──' : '── IDENTITY ──')}
           <div className="grid grid-cols-2 gap-2">
             <div className="col-span-2">
               <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'İSİM' : 'NAME'}</div>
-              <input value={data.name ?? ''} onChange={e => onChange('name', e.target.value)}
-                style={{ width: '100%', background: 'rgba(5,5,20,0.9)', border: '1px solid rgba(79,110,247,0.2)', padding: '4px 8px', fontSize: 11, color: '#c0d0f0', fontFamily: 'Share Tech Mono', outline: 'none' }} />
+              <input value={data.name ?? ''} onChange={e => onChange('name', e.target.value)} style={inputStyle} />
             </div>
             <div>
               <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'YAŞ' : 'AGE'}</div>
-              <input type="number" min="15" max="65" value={data.ageYears ?? 20}
-                onChange={e => onChange('ageYears', parseInt(e.target.value || '20', 10))}
-                style={{ width: '100%', background: 'rgba(5,5,20,0.9)', border: '1px solid rgba(79,110,247,0.2)', padding: '4px 8px', fontSize: 11, color: '#c0d0f0', fontFamily: 'Share Tech Mono', outline: 'none' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <input type="number" min="15" max="65" value={data.ageYears ?? 20}
+                  onChange={e => onChange('ageYears', parseInt(e.target.value || '20', 10))}
+                  style={{ ...inputStyle, flex: 1 }} />
+                <span style={{ fontSize: 9, color: '#5060a0', fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'yaş' : 'yr'}</span>
+              </div>
             </div>
             <div>
               <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'CİNSİYET' : 'SEX'}</div>
@@ -150,45 +213,80 @@ function FounderCard({ title, sex, data, onChange, lang }: { title: string; sex:
           </div>
         </div>
 
-        {/* Appearance */}
+        {/* ── BEDENSEL ÖLÇÜLER ── */}
         <div>
-          <div style={{ fontSize: 8, color: '#3a5070', letterSpacing: '0.2em', marginBottom: 6, fontFamily: 'Share Tech Mono' }}>
-            {lang === 'tr' ? '── DIŞ GÖRÜNÜŞ ──' : '── APPEARANCE ──'}
+          {sec(lang === 'tr' ? '── BEDENSEL ÖLÇÜLER ──' : '── MEASUREMENTS ──')}
+          <div className="grid grid-cols-2 gap-2">
+            <UnitInput
+              label={lang === 'tr' ? 'BOY' : 'HEIGHT'}
+              value={heightCm} unit="cm" min={145} max={200} color="#06b6d4"
+              onChange={cm => onChange('height', fromCm(cm))}
+            />
+            <UnitInput
+              label={lang === 'tr' ? 'KİLO' : 'WEIGHT'}
+              value={weightKg} unit="kg" min={40} max={130} color="#a855f7"
+              onChange={kg => onChange('metabolism', fromKg(kg, data.height ?? 0.5))}
+            />
           </div>
+          {/* BMI preview */}
+          {(() => {
+            const bmi = weightKg / ((heightCm / 100) ** 2);
+            const bmiLabel = bmi < 18.5 ? (lang === 'tr' ? 'Zayıf' : 'Underweight')
+              : bmi < 25 ? (lang === 'tr' ? 'Normal' : 'Normal')
+              : bmi < 30 ? (lang === 'tr' ? 'Fazla Kilolu' : 'Overweight')
+              : (lang === 'tr' ? 'Obez' : 'Obese');
+            const bmiColor = bmi < 18.5 ? '#7dd3fc' : bmi < 25 ? '#4ecb71' : bmi < 30 ? '#f59e0b' : '#ef4444';
+            return (
+              <div style={{ marginTop: 4, fontSize: 8, color: '#3a5070', fontFamily: 'Share Tech Mono', display: 'flex', gap: 8 }}>
+                <span>BMI: <span style={{ color: bmiColor, fontFamily: 'Orbitron, monospace' }}>{bmi.toFixed(1)}</span></span>
+                <span style={{ color: bmiColor }}>{bmiLabel}</span>
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* ── DIŞ GÖRÜNÜŞ ── */}
+        <div>
+          {sec(lang === 'tr' ? '── DIŞ GÖRÜNÜŞ ──' : '── APPEARANCE ──')}
           <div className="space-y-2">
-            <div>
-              <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 4, fontFamily: 'Share Tech Mono' }}>
-                {lang === 'tr' ? 'GÖZ RENGİ' : 'EYE COLOR'}&nbsp;
-                <span style={{ color: '#8090c0' }}>— {EYE_OPTIONS.find(o => o.value === data.eye_color)?.[lang === 'tr' ? 'labelTr' : 'label']}</span>
+            {[
+              { key: 'eye_color',  label: lang === 'tr' ? 'GÖZ RENGİ'  : 'EYE COLOR',  opts: EYE_OPTIONS  },
+              { key: 'hair_color', label: lang === 'tr' ? 'SAÇ RENGİ'  : 'HAIR COLOR', opts: HAIR_OPTIONS },
+              { key: 'skin_tone',  label: lang === 'tr' ? 'TEN RENGİ'  : 'SKIN TONE',  opts: SKIN_OPTIONS },
+            ].map(({ key, label, opts }) => (
+              <div key={key}>
+                <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 4, fontFamily: 'Share Tech Mono' }}>
+                  {label}&nbsp;
+                  <span style={{ color: '#8090c0' }}>— {opts.find(o => o.value === data[key])?.[lang === 'tr' ? 'labelTr' : 'label']}</span>
+                </div>
+                <ColorChips options={opts} value={data[key]} onChange={v => onChange(key, v)} />
               </div>
-              <ColorChips options={EYE_OPTIONS} value={data.eye_color} onChange={v => onChange('eye_color', v)} />
-            </div>
-            <div>
-              <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 4, fontFamily: 'Share Tech Mono' }}>
-                {lang === 'tr' ? 'SAÇ RENGİ' : 'HAIR COLOR'}&nbsp;
-                <span style={{ color: '#8090c0' }}>— {HAIR_OPTIONS.find(o => o.value === data.hair_color)?.[lang === 'tr' ? 'labelTr' : 'label']}</span>
-              </div>
-              <ColorChips options={HAIR_OPTIONS} value={data.hair_color} onChange={v => onChange('hair_color', v)} />
-            </div>
-            <div>
-              <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 4, fontFamily: 'Share Tech Mono' }}>
-                {lang === 'tr' ? 'TEN RENGİ' : 'SKIN TONE'}&nbsp;
-                <span style={{ color: '#8090c0' }}>— {SKIN_OPTIONS.find(o => o.value === data.skin_tone)?.[lang === 'tr' ? 'labelTr' : 'label']}</span>
-              </div>
-              <ColorChips options={SKIN_OPTIONS} value={data.skin_tone} onChange={v => onChange('skin_tone', v)} />
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* Genetic traits grouped */}
+        {/* ── GENETİK ÖZELLİKLER ── */}
         {TRAIT_GROUPS.map(group => (
           <div key={group.group}>
-            <div style={{ fontSize: 8, color: '#3a5070', letterSpacing: '0.2em', marginBottom: 6, fontFamily: 'Share Tech Mono' }}>
-              {lang === 'tr' ? `── ${group.group.toUpperCase()} ──` : `── ${group.groupEn.toUpperCase()} ──`}
-            </div>
-            {group.traits.map(t => (
-              <TraitSlider key={t.id} {...t} value={data[t.id] ?? 0.5} onChange={onChange} lang={lang} />
-            ))}
+            {sec(lang === 'tr' ? `── ${group.group.toUpperCase()} ──` : `── ${group.groupEn.toUpperCase()} ──`)}
+            {group.traits
+              .filter(t => t.id !== 'height' && t.id !== 'metabolism')
+              .map(t => (
+                <TraitSlider key={t.id} {...t} value={data[t.id] ?? 0.5} onChange={onChange} lang={lang} />
+              ))}
+            {/* Height slider shows cm; metabolism slider stays (weight input is the primary control) */}
+            {group.group === 'Beden' && (
+              <>
+                <TraitSlider
+                  id="height" label="Boy (ince ayar)" labelEn="Height (fine tune)"
+                  color="#06b6d4" value={data.height ?? 0.5} onChange={onChange} lang={lang}
+                />
+                <TraitSlider
+                  id="metabolism" label="Metabolizma" labelEn="Metabolism"
+                  color="#a855f7" value={data.metabolism ?? 0.5} onChange={onChange} lang={lang}
+                />
+              </>
+            )}
           </div>
         ))}
       </div>
@@ -202,11 +300,28 @@ export default function DashboardPage() {
   const [sims, setSims] = useState<any[]>([]);
   const [showNew, setShowNew] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
-  const [form, setForm] = useState({ name: '', latitude: '39.9334', longitude: '32.8597' });
-  const [founder1, setFounder1] = useState(founderDefaults('male'));
-  const [founder2, setFounder2] = useState(founderDefaults('female'));
+
+  // ── State with localStorage persistence ──────────────────────────────────
+  const [form, setForm] = useState<{ name: string; latitude: string; longitude: string }>(() => {
+    const s = loadState();
+    return { name: '', latitude: s?.form?.latitude ?? '39.9334', longitude: s?.form?.longitude ?? '32.8597' };
+  });
+  const [founder1, setFounder1] = useState<any>(() => {
+    const s = loadState();
+    return s?.founder1 ? { ...founderDefaults('male'), ...s.founder1 } : founderDefaults('male');
+  });
+  const [founder2, setFounder2] = useState<any>(() => {
+    const s = loadState();
+    return s?.founder2 ? { ...founderDefaults('female'), ...s.founder2 } : founderDefaults('female');
+  });
+
   const [loading, setLoading] = useState(false);
   const headers = { Authorization: `Bearer ${accessToken}` };
+
+  // Persist to localStorage on any change
+  useEffect(() => {
+    saveState({ latitude: form.latitude, longitude: form.longitude }, founder1, founder2);
+  }, [form.latitude, form.longitude, founder1, founder2]);
 
   useEffect(() => { axios.get('/api/simulations', { headers }).then(r => setSims(r.data)); }, []);
 
@@ -234,8 +349,7 @@ export default function DashboardPage() {
       }, { headers });
       setSims(s => [data, ...s]);
       setShowNew(false);
-      setFounder1(founderDefaults('male'));
-      setFounder2(founderDefaults('female'));
+      setForm(f => ({ ...f, name: '' })); // Only reset name, keep coords + genetics
     } finally { setLoading(false); }
   }
 
@@ -246,9 +360,7 @@ export default function DashboardPage() {
 
       {/* Scanlines overlay */}
       <div className="pointer-events-none fixed inset-0 z-0"
-        style={{
-          background: 'repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px)',
-        }} />
+        style={{ background: 'repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px)' }} />
 
       {/* Header */}
       <div className="sticky top-0 z-10"
@@ -283,8 +395,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 10 }}>{user?.username?.toUpperCase()}</span>
               <button onClick={() => { logout(); navigate('/login'); }}
-                className="p-2 text-sim-muted hover:text-red-400 transition-colors"
-                style={{ lineHeight: 0 }}>
+                className="p-2 text-sim-muted hover:text-red-400 transition-colors" style={{ lineHeight: 0 }}>
                 <LogOut size={14} />
               </button>
             </div>
@@ -313,8 +424,7 @@ export default function DashboardPage() {
               <button onClick={() => setCompareMode(c => !c)}
                 className="flex items-center gap-2 font-share-tech tracking-widest transition-all duration-150"
                 style={{
-                  padding: '6px 12px',
-                  fontSize: 10,
+                  padding: '6px 12px', fontSize: 10,
                   background: compareMode ? 'rgba(79,110,247,0.2)' : 'rgba(22,22,58,0.6)',
                   border: `1px solid ${compareMode ? 'rgba(79,110,247,0.5)' : 'rgba(79,110,247,0.15)'}`,
                   color: compareMode ? '#a0b4ff' : '#6070a0',
@@ -327,8 +437,7 @@ export default function DashboardPage() {
             <button onClick={() => setShowNew(true)}
               className="flex items-center gap-2 font-share-tech tracking-widest transition-all duration-150 hover:brightness-110"
               style={{
-                padding: '6px 14px',
-                fontSize: 10,
+                padding: '6px 14px', fontSize: 10,
                 background: 'rgba(79,110,247,0.2)',
                 border: '1px solid rgba(79,110,247,0.5)',
                 color: '#a0b4ff',
@@ -350,15 +459,19 @@ export default function DashboardPage() {
             animation: 'warp-in 0.4s cubic-bezier(0.2,0.8,0.4,1) both',
           }}>
             {/* Corner brackets */}
-            <span style={{ position:'absolute',top:-1,left:-1,width:12,height:12,borderTop:'2px solid rgba(79,110,247,0.9)',borderLeft:'2px solid rgba(79,110,247,0.9)',zIndex:2 }} />
-            <span style={{ position:'absolute',top:-1,right:-1,width:12,height:12,borderTop:'2px solid rgba(79,110,247,0.9)',borderRight:'2px solid rgba(79,110,247,0.9)',zIndex:2 }} />
-            <span style={{ position:'absolute',bottom:-1,left:-1,width:12,height:12,borderBottom:'2px solid rgba(79,110,247,0.9)',borderLeft:'2px solid rgba(79,110,247,0.9)',zIndex:2 }} />
-            <span style={{ position:'absolute',bottom:-1,right:-1,width:12,height:12,borderBottom:'2px solid rgba(79,110,247,0.9)',borderRight:'2px solid rgba(79,110,247,0.9)',zIndex:2 }} />
+            {[['top','left'],['top','right'],['bottom','left'],['bottom','right']].map(([v,h]) => (
+              <span key={v+h} style={{ position: 'absolute', [v]: -1, [h]: -1, width: 12, height: 12,
+                [`border${v.charAt(0).toUpperCase()+v.slice(1)}`]: '2px solid rgba(79,110,247,0.9)',
+                [`border${h.charAt(0).toUpperCase()+h.slice(1)}`]: '2px solid rgba(79,110,247,0.9)', zIndex: 2 }} />
+            ))}
 
             <div className="p-4 border-b flex items-center gap-2" style={{ borderColor: 'rgba(79,110,247,0.2)' }}>
               <div className="w-1 h-4 bg-sim-accent" style={{ boxShadow: '0 0 6px rgba(79,110,247,0.8)' }} />
               <span className="font-orbitron text-xs font-semibold tracking-[0.2em] text-sim-accent">
                 {lang === 'en' ? 'NEW SIMULATION' : 'YENİ SİMÜLASYON'}
+              </span>
+              <span style={{ marginLeft: 'auto', fontSize: 8, color: '#3a5070', fontFamily: 'Share Tech Mono' }}>
+                {lang === 'tr' ? '// ayarlar otomatik kaydedilir' : '// settings auto-saved'}
               </span>
             </div>
 
@@ -370,56 +483,31 @@ export default function DashboardPage() {
                   </label>
                   <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                     className="w-full text-sm focus:outline-none font-share-tech"
-                    style={{
-                      background: 'rgba(7,7,26,0.9)',
-                      border: '1px solid rgba(79,110,247,0.25)',
-                      padding: '8px 12px',
-                      color: '#c0c8e8',
-                      clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
-                    }}
+                    style={{ background: 'rgba(7,7,26,0.9)', border: '1px solid rgba(79,110,247,0.25)', padding: '8px 12px', color: '#c0c8e8',
+                      clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))' }}
                     onFocus={e => e.target.style.borderColor = 'rgba(79,110,247,0.7)'}
                     onBlur={e => e.target.style.borderColor = 'rgba(79,110,247,0.25)'}
                   />
                 </div>
-                <div>
-                  <label className="font-share-tech text-sim-muted tracking-widest block mb-1.5" style={{ fontSize: 9 }}>
-                    {lang === 'en' ? 'LATITUDE' : 'ENLEM'}
-                  </label>
-                  <input type="number" step="0.0001" value={form.latitude}
-                    onChange={e => setForm(f => ({ ...f, latitude: e.target.value }))}
-                    className="w-full text-sm focus:outline-none font-share-tech"
-                    style={{
-                      background: 'rgba(7,7,26,0.9)',
-                      border: '1px solid rgba(79,110,247,0.25)',
-                      padding: '8px 12px',
-                      color: '#c0c8e8',
-                      clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
-                    }}
-                    onFocus={e => e.target.style.borderColor = 'rgba(79,110,247,0.7)'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(79,110,247,0.25)'}
-                  />
-                </div>
-                <div>
-                  <label className="font-share-tech text-sim-muted tracking-widest block mb-1.5" style={{ fontSize: 9 }}>
-                    {lang === 'en' ? 'LONGITUDE' : 'BOYLAM'}
-                  </label>
-                  <input type="number" step="0.0001" value={form.longitude}
-                    onChange={e => setForm(f => ({ ...f, longitude: e.target.value }))}
-                    className="w-full text-sm focus:outline-none font-share-tech"
-                    style={{
-                      background: 'rgba(7,7,26,0.9)',
-                      border: '1px solid rgba(79,110,247,0.25)',
-                      padding: '8px 12px',
-                      color: '#c0c8e8',
-                      clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
-                    }}
-                    onFocus={e => e.target.style.borderColor = 'rgba(79,110,247,0.7)'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(79,110,247,0.25)'}
-                  />
-                </div>
+                {[
+                  { key: 'latitude',  label: lang === 'en' ? 'LATITUDE'  : 'ENLEM'  },
+                  { key: 'longitude', label: lang === 'en' ? 'LONGITUDE' : 'BOYLAM' },
+                ].map(({ key, label }) => (
+                  <div key={key}>
+                    <label className="font-share-tech text-sim-muted tracking-widest block mb-1.5" style={{ fontSize: 9 }}>{label}</label>
+                    <input type="number" step="0.0001" value={(form as any)[key]}
+                      onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                      className="w-full text-sm focus:outline-none font-share-tech"
+                      style={{ background: 'rgba(7,7,26,0.9)', border: '1px solid rgba(79,110,247,0.25)', padding: '8px 12px', color: '#c0c8e8',
+                        clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))' }}
+                      onFocus={e => e.target.style.borderColor = 'rgba(79,110,247,0.7)'}
+                      onBlur={e => e.target.style.borderColor = 'rgba(79,110,247,0.25)'}
+                    />
+                  </div>
+                ))}
               </div>
 
-              {/* Founder genetics — always visible */}
+              {/* Founder genetics */}
               <div style={{ fontSize: 9, color: '#3a5070', letterSpacing: '0.2em', fontFamily: 'Share Tech Mono', marginBottom: 10 }}>
                 {lang === 'tr' ? '// KURUCU GENETİĞİ' : '// FOUNDER GENETICS'}
               </div>
@@ -438,23 +526,18 @@ export default function DashboardPage() {
                 <button onClick={createSim} disabled={loading || !form.name}
                   className="font-share-tech tracking-widest transition-all duration-150 disabled:opacity-40"
                   style={{
-                    padding: '7px 16px',
-                    fontSize: 10,
-                    background: 'rgba(79,110,247,0.25)',
-                    border: '1px solid rgba(79,110,247,0.5)',
-                    color: '#a0b4ff',
+                    padding: '7px 16px', fontSize: 10,
+                    background: 'rgba(79,110,247,0.25)', border: '1px solid rgba(79,110,247,0.5)', color: '#a0b4ff',
                     clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
                     boxShadow: '0 0 15px rgba(79,110,247,0.2)',
                   }}>
                   {loading ? (lang === 'en' ? 'INITIALIZING…' : 'BAŞLATILIYOR…') : (lang === 'en' ? 'INITIALIZE' : 'BAŞLAT')}
                 </button>
-                <button onClick={() => { setShowNew(false); }}
+                <button onClick={() => setShowNew(false)}
                   className="font-share-tech tracking-widest text-sim-muted hover:text-sim-text transition-colors"
                   style={{
-                    padding: '7px 16px',
-                    fontSize: 10,
-                    background: 'rgba(22,22,58,0.5)',
-                    border: '1px solid rgba(79,110,247,0.15)',
+                    padding: '7px 16px', fontSize: 10,
+                    background: 'rgba(22,22,58,0.5)', border: '1px solid rgba(79,110,247,0.15)',
                     clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
                   }}>
                   {lang === 'en' ? 'ABORT' : 'İPTAL'}
@@ -467,9 +550,7 @@ export default function DashboardPage() {
         {/* Compare mode */}
         {compareMode && sims.length >= 2 && (
           <div className="mb-6 relative" style={{
-            background: 'rgba(4,4,15,0.97)',
-            border: '1px solid rgba(79,110,247,0.2)',
-            animation: 'boot-in 0.4s ease-out both',
+            background: 'rgba(4,4,15,0.97)', border: '1px solid rgba(79,110,247,0.2)', animation: 'boot-in 0.4s ease-out both',
           }}>
             <div className="px-4 py-2.5 border-b flex items-center gap-2" style={{ borderColor: 'rgba(79,110,247,0.15)' }}>
               <BarChart2 size={13} className="text-sim-accent" />
@@ -482,9 +563,7 @@ export default function DashboardPage() {
                 <thead>
                   <tr>
                     <th className="text-left pb-2 pr-4">
-                      <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 9 }}>
-                        {lang === 'en' ? 'METRIC' : 'METRİK'}
-                      </span>
+                      <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 9 }}>{lang === 'en' ? 'METRIC' : 'METRİK'}</span>
                     </th>
                     {sims.slice(0, 4).map(s => (
                       <th key={s.id} className="text-left pb-2 pr-4">
@@ -523,10 +602,8 @@ export default function DashboardPage() {
 
         {/* Simulation list */}
         {sims.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20" style={{
-            border: '1px solid rgba(79,110,247,0.1)',
-            background: 'rgba(4,4,15,0.6)',
-          }}>
+          <div className="flex flex-col items-center justify-center py-20"
+            style={{ border: '1px solid rgba(79,110,247,0.1)', background: 'rgba(4,4,15,0.6)' }}>
             <div className="relative w-12 h-12 flex items-center justify-center mb-4">
               <div className="absolute inset-0 rounded-full border border-sim-accent/20" style={{ animation: 'ring-expand 3s ease-out infinite' }} />
               <Globe size={22} className="text-sim-muted/50" />
@@ -541,9 +618,7 @@ export default function DashboardPage() {
               <div key={sim.id}
                 className="relative flex items-center gap-4 cursor-pointer transition-all duration-200"
                 style={{
-                  background: 'rgba(4,4,15,0.9)',
-                  border: '1px solid rgba(79,110,247,0.18)',
-                  padding: '14px 16px',
+                  background: 'rgba(4,4,15,0.9)', border: '1px solid rgba(79,110,247,0.18)', padding: '14px 16px',
                   clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
                   animation: `boot-in 0.4s ease-out ${i * 60}ms both`,
                 }}
@@ -551,17 +626,13 @@ export default function DashboardPage() {
                 onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(79,110,247,0.18)'}
                 onClick={() => navigate(`/simulation/${sim.id}`)}>
 
-                {/* Status indicator */}
                 <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center"
                   style={{
                     background: sim.status === 'running' ? 'rgba(78,203,113,0.1)' : 'rgba(79,110,247,0.1)',
                     border: `1px solid ${sim.status === 'running' ? 'rgba(78,203,113,0.3)' : 'rgba(79,110,247,0.2)'}`,
                     clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))',
                   }}>
-                  {sim.status === 'running'
-                    ? <div className="w-2 h-2 rounded-full bg-sim-green pulse-live" />
-                    : <Globe size={14} className="text-sim-accent/60" />
-                  }
+                  {sim.status === 'running' ? <div className="w-2 h-2 rounded-full bg-sim-green pulse-live" /> : <Globe size={14} className="text-sim-accent/60" />}
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -586,13 +657,8 @@ export default function DashboardPage() {
                   onClick={e => { e.stopPropagation(); deleteSim(sim.id, sim.name); }}
                   className="flex-shrink-0 p-2 transition-all duration-150"
                   title={lang === 'en' ? 'Delete' : 'Sil'}
-                  style={{
-                    background: 'transparent',
-                    border: '1px solid rgba(224,90,90,0.25)',
-                    color: '#7a3030',
-                    lineHeight: 0,
-                    clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))',
-                  }}
+                  style={{ background: 'transparent', border: '1px solid rgba(224,90,90,0.25)', color: '#7a3030', lineHeight: 0,
+                    clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#e05a5a'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(224,90,90,0.6)'; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#7a3030'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(224,90,90,0.25)'; }}>
                   <Trash2 size={13} />
@@ -600,13 +666,8 @@ export default function DashboardPage() {
                 <button
                   onClick={e => { e.stopPropagation(); navigate(`/simulation/${sim.id}`); }}
                   className="flex-shrink-0 p-2 transition-all duration-150 hover:brightness-125"
-                  style={{
-                    background: 'rgba(79,110,247,0.15)',
-                    border: '1px solid rgba(79,110,247,0.35)',
-                    color: '#4f6ef7',
-                    lineHeight: 0,
-                    clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))',
-                  }}>
+                  style={{ background: 'rgba(79,110,247,0.15)', border: '1px solid rgba(79,110,247,0.35)', color: '#4f6ef7', lineHeight: 0,
+                    clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}>
                   <Play size={13} />
                 </button>
               </div>
