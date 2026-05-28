@@ -335,7 +335,7 @@ export class SimulationEngine {
         if (dist > SOCIAL_INTERACTION_RADIUS) continue;
 
         // Mating attempt
-        if (!ind.mate_id && !other.mate_id) {
+        if (!ind.social?.mate_id && !other.social?.mate_id) {
           attemptMating(ind, other, day);
         }
 

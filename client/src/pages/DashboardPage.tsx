@@ -1,110 +1,197 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Globe, Plus, Play, LogOut, ChevronDown, ChevronUp, BarChart2, Trash2 } from 'lucide-react';
+import { Globe, Plus, Play, LogOut, BarChart2, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
 
-const FOUNDER_TRAITS = [
-  { id: 'fluid_intelligence', label: 'Intelligence', labelTr: 'Zeka',          color: '#7c3aed' },
-  { id: 'empathy',            label: 'Empathy',      labelTr: 'Empati',         color: '#ec4899' },
-  { id: 'curiosity',          label: 'Curiosity',    labelTr: 'Merak',          color: '#f59e0b' },
-  { id: 'aggression',         label: 'Aggression',   labelTr: 'Saldırganlık',   color: '#ef4444' },
-  { id: 'conscientiousness',  label: 'Discipline',   labelTr: 'Disiplin',       color: '#3b82f6' },
-  { id: 'artistic_sense',     label: 'Art Sense',    labelTr: 'Sanat Duygusu',  color: '#f97316' },
+// ── Trait definitions ────────────────────────────────────────────────────────
+const TRAIT_GROUPS = [
+  {
+    group: 'Zihin', groupEn: 'Mind',
+    traits: [
+      { id: 'fluid_intelligence', label: 'Zeka',          labelEn: 'Intelligence',  color: '#7c3aed' },
+      { id: 'curiosity',          label: 'Merak',          labelEn: 'Curiosity',     color: '#f59e0b' },
+      { id: 'conscientiousness',  label: 'Disiplin',       labelEn: 'Discipline',    color: '#3b82f6' },
+      { id: 'language_capacity',  label: 'Dil Yeteneği',   labelEn: 'Language',      color: '#14b8a6' },
+      { id: 'artistic_sense',     label: 'Sanat Duygusu',  labelEn: 'Art Sense',     color: '#f97316' },
+    ],
+  },
+  {
+    group: 'Sosyal', groupEn: 'Social',
+    traits: [
+      { id: 'empathy',            label: 'Empati',         labelEn: 'Empathy',       color: '#ec4899' },
+      { id: 'aggression',         label: 'Saldırganlık',   labelEn: 'Aggression',    color: '#ef4444' },
+    ],
+  },
+  {
+    group: 'Beden', groupEn: 'Body',
+    traits: [
+      { id: 'height',             label: 'Boy',            labelEn: 'Height',        color: '#06b6d4' },
+      { id: 'metabolism',         label: 'Metabolizma',    labelEn: 'Metabolism',    color: '#a855f7' },
+      { id: 'immune_strength',    label: 'Bağışıklık',     labelEn: 'Immunity',      color: '#22c55e' },
+      { id: 'fertility',          label: 'Doğurganlık',    labelEn: 'Fertility',     color: '#f43f5e' },
+      { id: 'longevity',          label: 'Uzun Ömür',      labelEn: 'Longevity',     color: '#84cc16' },
+    ],
+  },
 ];
 
-const DEFAULT_TRAITS = Object.fromEntries(FOUNDER_TRAITS.map(t => [t.id, 0.5]));
-FOUNDER_TRAITS.push(
-  { id: 'language_capacity', label: 'Language', labelTr: 'Dil', color: '#14b8a6' },
-  { id: 'immune_strength', label: 'Immunity', labelTr: 'Bagisiklik', color: '#22c55e' },
-  { id: 'fertility', label: 'Fertility', labelTr: 'Dogurganlik', color: '#f43f5e' },
-  { id: 'longevity', label: 'Longevity', labelTr: 'Uzun Omur', color: '#84cc16' },
-  { id: 'height', label: 'Height', labelTr: 'Boy', color: '#06b6d4' },
-  { id: 'metabolism', label: 'Metabolism', labelTr: 'Metabolizma', color: '#a855f7' },
-);
+const EYE_OPTIONS: { value: string; label: string; labelTr: string; color: string }[] = [
+  { value: 'brown', label: 'Brown',  labelTr: 'Kahverengi', color: '#6b3a1f' },
+  { value: 'hazel', label: 'Hazel',  labelTr: 'Ela',        color: '#8b6914' },
+  { value: 'green', label: 'Green',  labelTr: 'Yeşil',      color: '#2d6a2d' },
+  { value: 'blue',  label: 'Blue',   labelTr: 'Mavi',       color: '#1a5276' },
+];
 
-const EXTRA_DEFAULT_TRAITS = Object.fromEntries(FOUNDER_TRAITS.map(t => [t.id, 0.5]));
-const EYE_OPTIONS = ['brown', 'hazel', 'green', 'blue'];
-const HAIR_OPTIONS = ['black', 'dark', 'brown', 'light', 'blond', 'red'];
-const SKIN_OPTIONS = ['fair', 'light', 'olive', 'tan', 'brown', 'dark'];
+const HAIR_OPTIONS: { value: string; label: string; labelTr: string; color: string }[] = [
+  { value: 'black', label: 'Black', labelTr: 'Siyah',   color: '#111' },
+  { value: 'dark',  label: 'Dark',  labelTr: 'Koyu',    color: '#2c1810' },
+  { value: 'brown', label: 'Brown', labelTr: 'Kahve',   color: '#5c3317' },
+  { value: 'light', label: 'Light', labelTr: 'Açık',    color: '#c68642' },
+  { value: 'blond', label: 'Blond', labelTr: 'Sarı',    color: '#d4a017' },
+  { value: 'red',   label: 'Red',   labelTr: 'Kızıl',   color: '#8b2500' },
+];
+
+const SKIN_OPTIONS: { value: string; label: string; labelTr: string; color: string }[] = [
+  { value: 'fair',  label: 'Fair',   labelTr: 'Açık',   color: '#fde8d0' },
+  { value: 'light', label: 'Light',  labelTr: 'Bej',    color: '#f5c9a0' },
+  { value: 'olive', label: 'Olive',  labelTr: 'Buğday', color: '#c68642' },
+  { value: 'tan',   label: 'Tan',    labelTr: 'Bronz',  color: '#a0614a' },
+  { value: 'brown', label: 'Brown',  labelTr: 'Esmer',  color: '#7b4a2d' },
+  { value: 'dark',  label: 'Dark',   labelTr: 'Koyu',   color: '#3d1f0d' },
+];
+
+const ALL_TRAITS = TRAIT_GROUPS.flatMap(g => g.traits);
+const TRAIT_DEFAULTS = Object.fromEntries(ALL_TRAITS.map(t => [t.id, 0.5]));
 
 const founderDefaults = (sex: 'male' | 'female') => ({
-  name: sex === 'male' ? 'Kurucu Erkek' : 'Kurucu Kadin',
+  name: sex === 'male' ? 'Alp Anatol' : 'Ayla Anatol',
   ageYears: sex === 'male' ? 22 : 20,
   eye_color: 'brown',
   hair_color: sex === 'male' ? 'dark' : 'brown',
   skin_tone: 'olive',
-  ...EXTRA_DEFAULT_TRAITS,
+  ...TRAIT_DEFAULTS,
 });
 
-function TraitSlider({ traitId, label, labelTr, color, value, onChange, lang }: any) {
+// ── Sub-components ────────────────────────────────────────────────────────────
+function TraitSlider({ id, label, labelEn, color, value, onChange, lang }: any) {
   return (
-    <div className="mb-2.5">
-      <div className="flex justify-between mb-1">
-        <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 10 }}>
-          {lang === 'en' ? label : labelTr}
+    <div className="mb-2">
+      <div className="flex justify-between mb-0.5">
+        <span style={{ fontSize: 9, color: '#7080a0', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.08em' }}>
+          {lang === 'tr' ? label : labelEn}
         </span>
-        <span className="font-orbitron font-bold" style={{ color, fontSize: 10, textShadow: `0 0 6px ${color}80` }}>
+        <span style={{ fontSize: 9, color, fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
           {(value * 100).toFixed(0)}%
         </span>
       </div>
-      <div className="relative h-1.5" style={{ background: 'rgba(22,22,58,0.8)', border: '1px solid rgba(79,110,247,0.15)' }}>
-        <div className="absolute top-0 left-0 h-full transition-all duration-300"
-          style={{ width: `${value * 100}%`, background: `linear-gradient(90deg, ${color}60, ${color})`, boxShadow: `0 0 6px ${color}60` }} />
+      <div className="relative h-1.5" style={{ background: 'rgba(10,10,30,0.9)', border: `1px solid ${color}30` }}>
+        <div className="absolute inset-y-0 left-0 transition-all duration-200"
+          style={{ width: `${value * 100}%`, background: `linear-gradient(90deg, ${color}50, ${color})`, boxShadow: `0 0 6px ${color}50` }} />
         <input type="range" min="0" max="1" step="0.01" value={value}
-          onChange={e => onChange(traitId, parseFloat(e.target.value))}
-          className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" />
+          onChange={e => onChange(id, parseFloat(e.target.value))}
+          className="absolute inset-0 w-full opacity-0 cursor-pointer" style={{ height: '100%' }} />
       </div>
     </div>
   );
 }
 
-function FounderConfig({ label, traits, founder, onChange, lang }: any) {
-  const data = founder ?? traits;
+function ColorChips({ options, value, onChange }: { options: typeof EYE_OPTIONS; value: string; onChange: (v: string) => void }) {
   return (
-    <div className="relative p-3" style={{
-      background: 'rgba(4,4,15,0.9)',
-      border: '1px solid rgba(79,110,247,0.2)',
-      clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
-    }}>
-      <div className="font-share-tech text-sim-muted tracking-[0.2em] mb-3" style={{ fontSize: 9 }}>
-        {label.toUpperCase()}
-      </div>
-      <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className="col-span-2">
-          <label className="font-share-tech text-sim-muted tracking-widest block mb-1" style={{ fontSize: 8 }}>
-            {lang === 'en' ? 'NAME' : 'ISIM'}
-          </label>
-          <input value={data.name ?? ''} onChange={e => onChange('name', e.target.value)}
-            className="w-full bg-sim-bg border border-sim-border px-2 py-1.5 text-xs text-sim-text font-share-tech focus:outline-none focus:border-sim-accent" />
-        </div>
-        <div>
-          <label className="font-share-tech text-sim-muted tracking-widest block mb-1" style={{ fontSize: 8 }}>
-            {lang === 'en' ? 'AGE' : 'YAS'}
-          </label>
-          <input type="number" min="15" max="65" value={data.ageYears ?? 20}
-            onChange={e => onChange('ageYears', parseInt(e.target.value || '20', 10))}
-            className="w-full bg-sim-bg border border-sim-border px-2 py-1.5 text-xs text-sim-text font-share-tech focus:outline-none focus:border-sim-accent" />
-        </div>
-        <SelectField label={lang === 'en' ? 'EYE' : 'GOZ'} value={data.eye_color} options={EYE_OPTIONS} onChange={(v: string) => onChange('eye_color', v)} />
-        <SelectField label={lang === 'en' ? 'HAIR' : 'SAC'} value={data.hair_color} options={HAIR_OPTIONS} onChange={(v: string) => onChange('hair_color', v)} />
-        <SelectField label={lang === 'en' ? 'SKIN' : 'TEN'} value={data.skin_tone} options={SKIN_OPTIONS} onChange={(v: string) => onChange('skin_tone', v)} />
-      </div>
-      {FOUNDER_TRAITS.map(t => (
-        <TraitSlider key={t.id} {...t} value={data[t.id] ?? 0.5} onChange={onChange} lang={lang} />
+    <div className="flex flex-wrap gap-1">
+      {options.map(opt => (
+        <button key={opt.value} onClick={() => onChange(opt.value)} title={opt.label}
+          style={{
+            width: 20, height: 20, borderRadius: 2, background: opt.color,
+            border: value === opt.value ? '2px solid #a0b4ff' : '2px solid transparent',
+            boxShadow: value === opt.value ? '0 0 6px #a0b4ff80' : 'none',
+            flexShrink: 0,
+          }} />
       ))}
     </div>
   );
 }
 
-function SelectField({ label, value, options, onChange }: any) {
+function FounderCard({ title, sex, data, onChange, lang }: { title: string; sex: string; data: any; onChange: (k: string, v: any) => void; lang: string }) {
+  const accentColor = sex === 'male' ? '#4f9ef7' : '#ec4899';
   return (
-    <div>
-      <label className="font-share-tech text-sim-muted tracking-widest block mb-1" style={{ fontSize: 8 }}>{label}</label>
-      <select value={value} onChange={e => onChange(e.target.value)}
-        className="w-full bg-sim-bg border border-sim-border px-2 py-1.5 text-xs text-sim-text font-share-tech focus:outline-none focus:border-sim-accent">
-        {options.map((option: string) => <option key={option} value={option}>{option.toUpperCase()}</option>)}
-      </select>
+    <div style={{ background: 'rgba(4,4,15,0.95)', border: `1px solid ${accentColor}30` }}>
+      {/* Header */}
+      <div className="px-3 py-2 flex items-center gap-2" style={{ borderBottom: `1px solid ${accentColor}20`, background: `${accentColor}08` }}>
+        <div className="w-1.5 h-4" style={{ background: accentColor, boxShadow: `0 0 6px ${accentColor}` }} />
+        <span style={{ fontSize: 10, color: accentColor, fontFamily: 'Orbitron, monospace', fontWeight: 700, letterSpacing: '0.15em' }}>
+          {title}
+        </span>
+      </div>
+
+      <div className="p-3 space-y-3">
+        {/* Identity */}
+        <div>
+          <div style={{ fontSize: 8, color: '#3a5070', letterSpacing: '0.2em', marginBottom: 6, fontFamily: 'Share Tech Mono' }}>
+            {lang === 'tr' ? '── KİMLİK ──' : '── IDENTITY ──'}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="col-span-2">
+              <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'İSİM' : 'NAME'}</div>
+              <input value={data.name ?? ''} onChange={e => onChange('name', e.target.value)}
+                style={{ width: '100%', background: 'rgba(5,5,20,0.9)', border: '1px solid rgba(79,110,247,0.2)', padding: '4px 8px', fontSize: 11, color: '#c0d0f0', fontFamily: 'Share Tech Mono', outline: 'none' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'YAŞ' : 'AGE'}</div>
+              <input type="number" min="15" max="65" value={data.ageYears ?? 20}
+                onChange={e => onChange('ageYears', parseInt(e.target.value || '20', 10))}
+                style={{ width: '100%', background: 'rgba(5,5,20,0.9)', border: '1px solid rgba(79,110,247,0.2)', padding: '4px 8px', fontSize: 11, color: '#c0d0f0', fontFamily: 'Share Tech Mono', outline: 'none' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'CİNSİYET' : 'SEX'}</div>
+              <div style={{ padding: '4px 8px', fontSize: 11, color: accentColor, fontFamily: 'Share Tech Mono', border: `1px solid ${accentColor}30`, background: `${accentColor}08` }}>
+                {sex === 'male' ? (lang === 'tr' ? 'ERKEK' : 'MALE') : (lang === 'tr' ? 'KADIN' : 'FEMALE')}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Appearance */}
+        <div>
+          <div style={{ fontSize: 8, color: '#3a5070', letterSpacing: '0.2em', marginBottom: 6, fontFamily: 'Share Tech Mono' }}>
+            {lang === 'tr' ? '── DIŞ GÖRÜNÜŞ ──' : '── APPEARANCE ──'}
+          </div>
+          <div className="space-y-2">
+            <div>
+              <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 4, fontFamily: 'Share Tech Mono' }}>
+                {lang === 'tr' ? 'GÖZ RENGİ' : 'EYE COLOR'}&nbsp;
+                <span style={{ color: '#8090c0' }}>— {EYE_OPTIONS.find(o => o.value === data.eye_color)?.[lang === 'tr' ? 'labelTr' : 'label']}</span>
+              </div>
+              <ColorChips options={EYE_OPTIONS} value={data.eye_color} onChange={v => onChange('eye_color', v)} />
+            </div>
+            <div>
+              <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 4, fontFamily: 'Share Tech Mono' }}>
+                {lang === 'tr' ? 'SAÇ RENGİ' : 'HAIR COLOR'}&nbsp;
+                <span style={{ color: '#8090c0' }}>— {HAIR_OPTIONS.find(o => o.value === data.hair_color)?.[lang === 'tr' ? 'labelTr' : 'label']}</span>
+              </div>
+              <ColorChips options={HAIR_OPTIONS} value={data.hair_color} onChange={v => onChange('hair_color', v)} />
+            </div>
+            <div>
+              <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 4, fontFamily: 'Share Tech Mono' }}>
+                {lang === 'tr' ? 'TEN RENGİ' : 'SKIN TONE'}&nbsp;
+                <span style={{ color: '#8090c0' }}>— {SKIN_OPTIONS.find(o => o.value === data.skin_tone)?.[lang === 'tr' ? 'labelTr' : 'label']}</span>
+              </div>
+              <ColorChips options={SKIN_OPTIONS} value={data.skin_tone} onChange={v => onChange('skin_tone', v)} />
+            </div>
+          </div>
+        </div>
+
+        {/* Genetic traits grouped */}
+        {TRAIT_GROUPS.map(group => (
+          <div key={group.group}>
+            <div style={{ fontSize: 8, color: '#3a5070', letterSpacing: '0.2em', marginBottom: 6, fontFamily: 'Share Tech Mono' }}>
+              {lang === 'tr' ? `── ${group.group.toUpperCase()} ──` : `── ${group.groupEn.toUpperCase()} ──`}
+            </div>
+            {group.traits.map(t => (
+              <TraitSlider key={t.id} {...t} value={data[t.id] ?? 0.5} onChange={onChange} lang={lang} />
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -114,7 +201,6 @@ export default function DashboardPage() {
   const { user, accessToken, logout, lang } = useSimStore();
   const [sims, setSims] = useState<any[]>([]);
   const [showNew, setShowNew] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [form, setForm] = useState({ name: '', latitude: '39.9334', longitude: '32.8597' });
   const [founder1, setFounder1] = useState(founderDefaults('male'));
@@ -124,8 +210,8 @@ export default function DashboardPage() {
 
   useEffect(() => { axios.get('/api/simulations', { headers }).then(r => setSims(r.data)); }, []);
 
-  function setTrait(setter: any) {
-    return (traitId: string, value: number) => setter((prev: any) => ({ ...prev, [traitId]: value }));
+  function makeSetter(setter: any) {
+    return (key: string, value: any) => setter((prev: any) => ({ ...prev, [key]: value }));
   }
 
   async function deleteSim(id: string, name: string) {
@@ -333,26 +419,20 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Advanced founder config toggle */}
-              <button onClick={() => setShowAdvanced(a => !a)}
-                className="flex items-center gap-2 font-share-tech tracking-widest text-sim-muted hover:text-sim-accent transition-colors mb-4"
-                style={{ fontSize: 10 }}>
-                {showAdvanced ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                {lang === 'en' ? '// FOUNDER GENETICS (ADVANCED)' : '// KURUCU GENETİĞİ (GELİŞMİŞ)'}
-              </button>
-
-              {showAdvanced && (
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <FounderConfig
-                    label={lang === 'en' ? 'Founder 1 — Male' : 'Kurucu 1 — Erkek'}
-                    founder={founder1} onChange={setTrait(setFounder1)} lang={lang}
-                  />
-                  <FounderConfig
-                    label={lang === 'en' ? 'Founder 2 — Female' : 'Kurucu 2 — Kadın'}
-                    founder={founder2} onChange={setTrait(setFounder2)} lang={lang}
-                  />
-                </div>
-              )}
+              {/* Founder genetics — always visible */}
+              <div style={{ fontSize: 9, color: '#3a5070', letterSpacing: '0.2em', fontFamily: 'Share Tech Mono', marginBottom: 10 }}>
+                {lang === 'tr' ? '// KURUCU GENETİĞİ' : '// FOUNDER GENETICS'}
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <FounderCard
+                  title={lang === 'tr' ? 'KURUCU 1 — ERKEK' : 'FOUNDER 1 — MALE'}
+                  sex="male" data={founder1} onChange={makeSetter(setFounder1)} lang={lang}
+                />
+                <FounderCard
+                  title={lang === 'tr' ? 'KURUCU 2 — KADIN' : 'FOUNDER 2 — FEMALE'}
+                  sex="female" data={founder2} onChange={makeSetter(setFounder2)} lang={lang}
+                />
+              </div>
 
               <div className="flex gap-3">
                 <button onClick={createSim} disabled={loading || !form.name}
@@ -368,7 +448,7 @@ export default function DashboardPage() {
                   }}>
                   {loading ? (lang === 'en' ? 'INITIALIZING…' : 'BAŞLATILIYOR…') : (lang === 'en' ? 'INITIALIZE' : 'BAŞLAT')}
                 </button>
-                <button onClick={() => { setShowNew(false); setShowAdvanced(false); }}
+                <button onClick={() => { setShowNew(false); }}
                   className="font-share-tech tracking-widest text-sim-muted hover:text-sim-text transition-colors"
                   style={{
                     padding: '7px 16px',

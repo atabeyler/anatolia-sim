@@ -25,6 +25,7 @@ export function checkReproduction(population, currentDay, simulationId) {
     if (currentDay >= preg.due_day) {
       const father = population.get(preg.father_id);
       if (father) {
+        if (!female.social.children_ids) female.social.children_ids = [];
         const { child, motherSurvives } = deliverBirth(female, father, currentDay, simulationId);
         newborns.push(child);
         if (!motherSurvives) { female.alive = false; female.is_dead = true; female.death_day = currentDay; female.death_cause = 'birth_complications'; }
@@ -43,7 +44,7 @@ function conceptionProbability(female, male, currentDay) {
   else if (age > 35) ageFactor = 0.6;
   else if (age > 40) ageFactor = 0.2;
   const mhcBonus = Math.abs((female.genome.IMMUNE_01?.allele1.value ?? 0.5) - (male.genome.IMMUNE_01?.allele1.value ?? 0.5)) * 0.2;
-  const p = (female.phenotype.fertility * ageFactor + mhcBonus - female.inbreeding_coeff * 0.5) * 0.002;
+  const p = (female.phenotype.fertility * ageFactor + mhcBonus - (female.inbreeding_coeff ?? 0) * 0.5) * 0.012;
   return Math.max(0, Math.min(0.1, p));
 }
 

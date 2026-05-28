@@ -1,6 +1,13 @@
 import { useSimStore } from '../../store/simStore';
 import { useEffect, useRef } from 'react';
 
+const EVENT_TYPE_TR: Record<string, string> = {
+  birth: 'DOĞUM', death: 'ÖLÜM', technology: 'TEKNOLOJİ', disaster: 'AFET',
+  language: 'DİL', belief: 'İNANÇ', art: 'SANAT', culture: 'KÜLTÜR',
+  trade: 'TİCARET', epidemic: 'SALGIN', architecture: 'MİMARİ', law: 'HUKUK',
+  astronomy: 'ASTRONOMİ', social: 'SOSYAL',
+};
+
 const IMPORTANCE_COLOR: Record<number, string> = {
   1: '#4a5578',
   2: '#7080b0',
@@ -16,7 +23,7 @@ const EVENT_ICONS: Record<string, string> = {
 };
 
 export default function EventsPanel() {
-  const { events, sidebarExpanded } = useSimStore();
+  const { events, sidebarExpanded, lang } = useSimStore();
   const listRef = useRef<HTMLDivElement>(null);
   const prevLen = useRef(0);
 
@@ -45,12 +52,16 @@ export default function EventsPanel() {
       <div className="flex items-center gap-2 px-3 flex-shrink-0"
         style={{ height: 22, borderBottom: '1px solid rgba(79,110,247,0.15)' }}>
         <div className="w-1 h-3 bg-sim-accent" style={{ boxShadow: '0 0 5px rgba(79,110,247,0.8)' }} />
-        <span className="font-orbitron tracking-[0.25em] text-sim-accent" style={{ fontSize: 8 }}>EVENT LOG</span>
+        <span className="font-orbitron tracking-[0.25em] text-sim-accent" style={{ fontSize: 8 }}>
+          {lang === 'tr' ? 'OLAY KAYDI' : 'EVENT LOG'}
+        </span>
         <div className="w-1 h-1 rounded-full bg-sim-green pulse-live ml-1" />
-        <span className="font-share-tech text-sim-green tracking-widest" style={{ fontSize: 8 }}>LIVE</span>
+        <span className="font-share-tech text-sim-green tracking-widest" style={{ fontSize: 8 }}>
+          {lang === 'tr' ? 'CANLI' : 'LIVE'}
+        </span>
         <div className="flex-1" />
         <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 8 }}>
-          {events.length.toString().padStart(4, '0')} EVENTS
+          {events.length.toString().padStart(4, '0')} {lang === 'tr' ? 'OLAY' : 'EVENTS'}
         </span>
       </div>
 
@@ -59,7 +70,7 @@ export default function EventsPanel() {
         {events.length === 0 ? (
           <div className="flex items-center h-full">
             <span className="font-share-tech text-sim-muted/40 tracking-widest animate-pulse" style={{ fontSize: 9 }}>
-              AWAITING EVENTS...
+              {lang === 'tr' ? 'OLAY BEKLENİYOR...' : 'AWAITING EVENTS...'}
             </span>
           </div>
         ) : (

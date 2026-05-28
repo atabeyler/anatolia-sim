@@ -35,31 +35,31 @@ const TECH_TIERS = [
   },
 ];
 
-const TECH_NAMES: Record<string, string> = {
-  fire_making: 'Fire Making',
-  stone_tools: 'Stone Tools',
-  foraging: 'Foraging',
-  hunting_spear: 'Hunting Spear',
-  shelter_basic: 'Basic Shelter',
-  water_container: 'Water Container',
-  animal_trap: 'Animal Trap',
-  clothing_basic: 'Clothing',
-  fishing: 'Fishing',
-  plant_cultivation: 'Plant Cultivation',
-  animal_herding: 'Animal Herding',
-  food_preservation: 'Food Preservation',
-  bow_arrow: 'Bow & Arrow',
-  pottery: 'Pottery',
-  weaving: 'Weaving',
-  metallurgy_copper: 'Copper Metallurgy',
-  writing_system: 'Writing System',
-  calendar: 'Calendar',
-  mathematics_basic: 'Basic Mathematics',
-  architecture_stone: 'Stone Architecture',
-  wheel: 'The Wheel',
-  irrigation: 'Irrigation',
-  sailing: 'Sailing',
-  metallurgy_iron: 'Iron Metallurgy',
+const TECH_NAMES: Record<string, { en: string; tr: string }> = {
+  fire_making:        { en: 'Fire Making',        tr: 'Ateş Yakma' },
+  stone_tools:        { en: 'Stone Tools',        tr: 'Taş Aletler' },
+  foraging:           { en: 'Foraging',           tr: 'Toplayıcılık' },
+  hunting_spear:      { en: 'Hunting Spear',      tr: 'Av Mızrağı' },
+  shelter_basic:      { en: 'Basic Shelter',      tr: 'Temel Barınak' },
+  water_container:    { en: 'Water Container',    tr: 'Su Kabı' },
+  animal_trap:        { en: 'Animal Trap',        tr: 'Hayvan Tuzağı' },
+  clothing_basic:     { en: 'Clothing',           tr: 'Giysi' },
+  fishing:            { en: 'Fishing',            tr: 'Balıkçılık' },
+  plant_cultivation:  { en: 'Plant Cultivation',  tr: 'Tarım' },
+  animal_herding:     { en: 'Animal Herding',     tr: 'Hayvancılık' },
+  food_preservation:  { en: 'Food Preservation',  tr: 'Gıda Saklama' },
+  bow_arrow:          { en: 'Bow & Arrow',        tr: 'Yay ve Ok' },
+  pottery:            { en: 'Pottery',            tr: 'Çömlekçilik' },
+  weaving:            { en: 'Weaving',            tr: 'Dokumacılık' },
+  metallurgy_copper:  { en: 'Copper Metallurgy',  tr: 'Bakır İşleme' },
+  writing_system:     { en: 'Writing System',     tr: 'Yazı Sistemi' },
+  calendar:           { en: 'Calendar',           tr: 'Takvim' },
+  mathematics_basic:  { en: 'Basic Mathematics',  tr: 'Temel Matematik' },
+  architecture_stone: { en: 'Stone Architecture', tr: 'Taş Mimari' },
+  wheel:              { en: 'The Wheel',          tr: 'Tekerlek' },
+  irrigation:         { en: 'Irrigation',         tr: 'Sulama' },
+  sailing:            { en: 'Sailing',            tr: 'Denizcilik' },
+  metallurgy_iron:    { en: 'Iron Metallurgy',    tr: 'Demir İşleme' },
 };
 
 const TIER_COLORS = ['text-sim-muted', 'text-green-400', 'text-yellow-400', 'text-orange-400', 'text-red-400'];
@@ -98,7 +98,7 @@ export default function TechnologyPanel() {
                     : <Lock size={10} className="text-sim-muted flex-shrink-0" />
                   }
                   <span className={isDiscovered ? 'text-sim-text' : 'text-sim-muted'}>
-                    {TECH_NAMES[techId] ?? techId}
+                    {TECH_NAMES[techId]?.[lang === 'tr' ? 'tr' : 'en'] ?? techId}
                   </span>
                 </div>
               );
