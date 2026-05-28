@@ -2,7 +2,7 @@ import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import { authenticate } from '../middleware/auth.js';
 import { query } from '../../db/database.js';
-import { sendApprovalEmail, sendRejectionEmail, APP_URL } from '../../utils/email.js';
+import { sendApprovalEmail, sendRejectionEmail, sendTestEmail, APP_URL } from '../../utils/email.js';
 
 const router = Router();
 
@@ -95,6 +95,16 @@ router.get('/quick-approve/:token', async (req, res) => {
   } catch (err) {
     if (err.name === 'TokenExpiredError') return res.status(400).send('Bu onay linki süresi dolmuş. Yönetim panelini kullanın.');
     res.status(400).send('Geçersiz veya bozuk token.');
+  }
+});
+
+// SMTP test — GET /api/admin/test-email (no auth, for debugging only)
+router.get('/test-email', async (req, res) => {
+  try {
+    await sendTestEmail();
+    res.json({ message: `Test maili ${process.env.ADMIN_EMAIL ?? 'info@boldkimya.com.tr'} adresine gönderildi.` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
