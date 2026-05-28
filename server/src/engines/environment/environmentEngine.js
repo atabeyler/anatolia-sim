@@ -56,34 +56,9 @@ export function updateWorldState(worldState, simulationDay) {
   const foodBase = biome.food_base;
   const seasonMultiplier = { summer: 1.3, winter: 0.4, spring: 0.9, autumn: 1.1 }[worldState.season] ?? 1;
   worldState.food_abundance = Math.max(0.05, foodBase * seasonMultiplier - worldState.human_impact * 0.1);
-  worldState.natural_disaster = rollNaturalDisaster(worldState, simulationDay);
+  // Natural disasters are disabled — triggered manually via god mode only
+  worldState.natural_disaster = null;
   return worldState;
-}
-
-export function rollNaturalDisaster(worldState, simulationDay) {
-  const events = [];
-  // No disasters in the first 365 days — allow population to establish
-  if (simulationDay < 365) return events;
-  // Disasters on tiny groups are disproportionately lethal; scale mortality down
-  const popFactor = Math.min(1, (worldState.alive_count ?? 50) / 20);
-  const tectonicRisk = getTectonicRisk(worldState.latitude, worldState.longitude);
-  if (Math.random() < tectonicRisk * 0.0001) {
-    const magnitude = 5 + Math.random() * 3;
-    events.push({ type: 'earthquake', magnitude, mortality_factor: (magnitude > 7 ? 0.3 : 0.05) * popFactor });
-  }
-  if (worldState.season === 'summer' && ['desert','grassland','tropical_savanna'].includes(worldState.biome) && Math.random() < 0.0003)
-    events.push({ type: 'drought', duration_days: 30 + Math.floor(Math.random() * 60), mortality_factor: 0.1 * popFactor });
-  if (worldState.season === 'spring' && worldState.food_abundance > 0.7 && Math.random() < 0.0002)
-    events.push({ type: 'flood', severity: Math.random(), mortality_factor: 0.05 * popFactor });
-  if (Math.random() < worldState.disease_pressure * 0.0005)
-    events.push({ type: 'epidemic', pathogen: ['respiratory_virus','gastrointestinal','hemorrhagic_fever','skin_disease'][Math.floor(Math.random()*4)], mortality_factor: (0.1 + Math.random() * 0.3) * popFactor });
-  return events.length > 0 ? events : null;
-}
-
-function getTectonicRisk(lat, lon) {
-  if ((Math.abs(lat) < 60 && (lon > 130 || lon < -60)) || (lat > 25 && lat < 40 && lon > 65 && lon < 100)) return 3;
-  if (lat > 30 && lat < 45 && lon > -10 && lon < 40) return 2;
-  return 1;
 }
 
 export function computeResourcePressure(worldState, populationSize) {

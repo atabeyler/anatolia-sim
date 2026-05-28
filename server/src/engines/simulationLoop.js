@@ -230,10 +230,7 @@ export class SimulationEngine {
       }
     }
 
-    // 11. Natural disaster
-    if (this.worldState.natural_disaster) {
-      this.processDisaster(this.worldState.natural_disaster, alive, day);
-    }
+    // 11. Natural disaster — disabled; triggered via god mode only
 
     // 12. Language evolution
     const genCount = this.estimateGenerations();
