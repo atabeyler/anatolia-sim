@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
-import { Dna, TreePine, Telescope, Brain, MessageSquare, Cpu, Flame, Swords, Coins, Music, Building2, Scale, Microscope, HeartPulse, Zap, Clock, Bot, FlaskConical, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Dna, TreePine, Telescope, Brain, MessageSquare, Cpu, Flame, Swords, Coins, Music, Building2, Scale, Microscope, HeartPulse, Zap, Clock, Bot, FlaskConical, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSimStore } from '../../store/simStore';
 
 const MODULES = [
+  { id: 'population',  icon: Users,          label: 'Population',     labelTr: 'Nüfus' },
   { id: 'biology',      icon: Dna,           label: 'Biology',        labelTr: 'Biyoloji' },
   { id: 'environment',  icon: TreePine,       label: 'Environment',    labelTr: 'Çevre' },
   { id: 'astronomy',    icon: Telescope,      label: 'Astronomy',      labelTr: 'Astronomi' },

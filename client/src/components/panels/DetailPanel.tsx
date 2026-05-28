@@ -9,11 +9,10 @@ interface Props {
 }
 
 export default function DetailPanel({ panelId, title, titleTr, children }: Props) {
-  const { activePanel, setActivePanel, lang, sidebarExpanded } = useSimStore();
+  const { activePanel, setActivePanel, lang } = useSimStore();
   if (activePanel !== panelId) return null;
 
   const displayTitle = lang === 'en' ? title : titleTr;
-  const leftOffset = sidebarExpanded ? 176 : 48;
 
   return (
     <>
@@ -23,14 +22,12 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
         onClick={() => setActivePanel(null)}
       />
       <div
-        className="fixed top-12 bottom-0 w-80 z-40 flex flex-col overflow-hidden"
+        className="fixed top-0 left-0 bottom-0 w-80 z-40 flex flex-col overflow-hidden"
         style={{
-          left: leftOffset,
-          transition: 'left 0.22s ease',
-          background: 'rgba(4,4,15,0.97)',
-          borderRight: '1px solid rgba(79,110,247,0.28)',
+          background: 'rgba(2,8,4,0.98)',
+          borderRight: '1px solid #0d2018',
           backdropFilter: 'blur(20px)',
-          boxShadow: '4px 0 40px rgba(79,110,247,0.12)',
+          boxShadow: '4px 0 40px rgba(0,80,40,0.2)',
         }}>
 
       {/* Corner brackets */}
@@ -46,46 +43,30 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
       }} />
 
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2.5 flex-shrink-0"
-        style={{
-          background: 'rgba(4,4,15,0.95)',
-          borderBottom: '1px solid rgba(79,110,247,0.25)',
-          boxShadow: '0 1px 0 rgba(79,110,247,0.08)',
-        }}>
-        <div className="w-1 h-4 bg-sim-accent flex-shrink-0" style={{ boxShadow: '0 0 6px rgba(79,110,247,0.8)' }} />
-        <span className="font-orbitron text-xs font-semibold tracking-[0.2em] text-sim-accent" style={{ textShadow: '0 0 8px rgba(79,110,247,0.4)' }}>
+      <div className="flex items-center gap-2 px-3 py-2 flex-shrink-0"
+        style={{ background: 'rgba(0,10,5,0.95)', borderBottom: '1px solid #0d2018' }}>
+        <div className="w-1 h-4 flex-shrink-0" style={{ background: '#00e887', boxShadow: '0 0 6px #00e887' }} />
+        <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', color: '#00e887' }}>
           {displayTitle.toUpperCase()}
         </span>
         <div className="flex-1" />
-        <button
-          onClick={() => setActivePanel(null)}
-          className="text-sim-muted hover:text-sim-accent transition-colors p-0.5"
-          style={{ lineHeight: 0 }}>
+        <button onClick={() => setActivePanel(null)} style={{ color: '#3a6040', lineHeight: 0 }}>
           <X size={13} />
         </button>
       </div>
 
-      {/* Scan line */}
-      <div className="relative overflow-hidden flex-shrink-0 h-px">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-sim-accent/20 to-transparent"
-          style={{ animation: 'hud-scan 6s ease-in-out infinite' }} />
-      </div>
-
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs"
-        style={{ color: '#c0c8e8' }}>
+      <div className="flex-1 overflow-y-auto p-3 space-y-3 text-xs"
+        style={{ color: '#a0c8b0' }}>
         {children}
       </div>
 
       {/* Footer bar */}
-      <div className="px-3 py-1.5 flex-shrink-0"
-        style={{ borderTop: '1px solid rgba(79,110,247,0.15)', background: 'rgba(4,4,15,0.9)' }}>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 h-px bg-gradient-to-r from-sim-accent/20 to-transparent" />
-          <span className="font-share-tech text-sim-muted/40 tracking-widest" style={{ fontSize: 8 }}>
-            MODULE/{displayTitle.toUpperCase().replace(/ /g, '_')}
-          </span>
-        </div>
+      <div className="px-3 py-1 flex-shrink-0"
+        style={{ borderTop: '1px solid #0d2018', background: 'rgba(0,8,4,0.9)' }}>
+        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: '#1a3a2a', letterSpacing: '0.15em' }}>
+          MODULE/{displayTitle.toUpperCase().replace(/ /g, '_')}
+        </span>
       </div>
     </div>
     </>

@@ -20,6 +20,13 @@ interface SimStats {
   sick_rate: number;
   mean_wealth: number;
   total_ever: number;
+  water_abundance?: number;
+  biome?: string;
+  has_disaster?: boolean;
+  births?: number;
+  deaths?: number;
+  word_count?: number;
+  max_language_stage?: number;
 }
 
 interface SimEvent {

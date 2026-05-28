@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Play, Pause, Globe, X, Settings, Menu, LogOut, Home, Sliders, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, Globe, X, Settings, Menu, LogOut, Home, Sliders, Power } from 'lucide-react';
 import { useSimStore } from '../../store/simStore';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -85,7 +85,7 @@ function SettingsOverlay({ onClose }: { onClose: () => void }) {
   );
 }
 
-function MenuOverlay({ onClose }: { onClose: () => void }) {
+function MenuOverlay({ onClose, onTerminate }: { onClose: () => void; onTerminate: () => void }) {
   const { currentSim, user, logout } = useSimStore();
   const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
@@ -131,13 +131,25 @@ function MenuOverlay({ onClose }: { onClose: () => void }) {
           </button>
         )}
 
+        {currentSim && currentSim.status !== 'completed' && (
+          <>
+            <div className="h-px mx-2 my-1" style={{ background: 'rgba(249,115,22,0.2)' }} />
+            <button onClick={() => { onTerminate(); onClose(); }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-orange-900/20"
+              style={{ color: '#f97316' }}>
+              <Power size={12} />
+              <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>Simülasyonu Sonlandır</span>
+            </button>
+          </>
+        )}
+
         <div className="h-px mx-2 my-1" style={{ background: 'rgba(79,110,247,0.12)' }} />
 
         <button onClick={() => { logout(); navigate('/'); onClose(); }}
           className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-red-900/20"
           style={{ color: '#e05a5a' }}>
           <LogOut size={12} />
-          <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>Çıkış Yap</span>
+          <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>Çıkış Yap / Uygulamadan Çık</span>
         </button>
       </div>
 
@@ -159,6 +171,22 @@ export default function TopBar() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showSettings, setShowSettings] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+
+  async function handleTerminate() {
+    if (!currentSim || !accessToken) return;
+    const confirmed = window.confirm(
+      lang === 'tr'
+        ? `"${currentSim.name}" simülasyonunu kalıcı olarak sonlandırmak istiyor musunuz?`
+        : `Permanently terminate simulation "${currentSim.name}"?`
+    );
+    if (!confirmed) return;
+    try {
+      await axios.post(`/api/simulations/${currentSim.id}/terminate`, {}, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setCurrentSim({ ...currentSim, status: 'completed' });
+    } catch {}
+  }
 
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth < 768);
@@ -346,7 +374,7 @@ export default function TopBar() {
         </button>
 
         {showSettings && <SettingsOverlay onClose={() => setShowSettings(false)} />}
-        {showMenu && <MenuOverlay onClose={() => setShowMenu(false)} />}
+        {showMenu && <MenuOverlay onClose={() => setShowMenu(false)} onTerminate={handleTerminate} />}
       </div>
     </div>
   );

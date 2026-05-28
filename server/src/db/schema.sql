@@ -200,6 +200,9 @@ CREATE TABLE IF NOT EXISTS publications (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Individual name column for founder-assigned names
+ALTER TABLE individuals ADD COLUMN IF NOT EXISTS name VARCHAR(100);
+
 CREATE INDEX IF NOT EXISTS idx_individuals_simulation ON individuals(simulation_id);
 CREATE INDEX IF NOT EXISTS idx_individuals_alive ON individuals(simulation_id, alive);
 CREATE INDEX IF NOT EXISTS idx_checkpoints_simulation ON checkpoints(simulation_id, sim_day);

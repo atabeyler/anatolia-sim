@@ -23,9 +23,9 @@ router.post('/', authenticate, async (req, res) => {
     const f2 = createFounder({ ...founder2_params, sex: 'female', x: parseFloat(longitude) + 0.1, y: parseFloat(latitude) });
     const { rows } = await query(`INSERT INTO simulations (user_id, name, status, start_latitude, start_longitude, founder_1, founder_2, world_state) VALUES ($1,$2,'paused',$3,$4,$5,$6,$7) RETURNING *`, [req.user.id, name, parseFloat(latitude), parseFloat(longitude), JSON.stringify(f1), JSON.stringify(f2), JSON.stringify(worldState)]);
     const sim = rows[0];
-    await query(`INSERT INTO individuals (id,simulation_id,birth_day,sex,x,y,genome,phenotype,health,mind,social,skills,beliefs,language,memory) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15),($16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30)`,
-      [f1.id,sim.id,f1.birth_day,f1.sex,f1.x,f1.y,JSON.stringify(f1.genome),JSON.stringify(f1.phenotype),JSON.stringify(f1.health),JSON.stringify(f1.mind),JSON.stringify(f1.social),JSON.stringify(f1.skills),JSON.stringify(f1.beliefs),JSON.stringify(f1.language),JSON.stringify(f1.memory),
-       f2.id,sim.id,f2.birth_day,f2.sex,f2.x,f2.y,JSON.stringify(f2.genome),JSON.stringify(f2.phenotype),JSON.stringify(f2.health),JSON.stringify(f2.mind),JSON.stringify(f2.social),JSON.stringify(f2.skills),JSON.stringify(f2.beliefs),JSON.stringify(f2.language),JSON.stringify(f2.memory)]);
+    await query(`INSERT INTO individuals (id,simulation_id,birth_day,sex,x,y,name,genome,phenotype,health,mind,social,skills,beliefs,language,memory) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16),($17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32)`,
+      [f1.id,sim.id,f1.birth_day,f1.sex,f1.x,f1.y,f1.name,JSON.stringify(f1.genome),JSON.stringify(f1.phenotype),JSON.stringify(f1.health),JSON.stringify(f1.mind),JSON.stringify(f1.social),JSON.stringify(f1.skills),JSON.stringify(f1.beliefs),JSON.stringify(f1.language),JSON.stringify(f1.memory),
+       f2.id,sim.id,f2.birth_day,f2.sex,f2.x,f2.y,f2.name,JSON.stringify(f2.genome),JSON.stringify(f2.phenotype),JSON.stringify(f2.health),JSON.stringify(f2.mind),JSON.stringify(f2.social),JSON.stringify(f2.skills),JSON.stringify(f2.beliefs),JSON.stringify(f2.language),JSON.stringify(f2.memory)]);
     res.status(201).json(sim);
   } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to create simulation' }); }
 });
@@ -56,12 +56,42 @@ router.post('/:id/pause', authenticate, async (req, res) => {
 
 router.get('/:id/population', authenticate, async (req, res) => {
   try {
-    let sql = 'SELECT id, sex, birth_day, death_day, alive, x, y, phenotype, language FROM individuals WHERE simulation_id = $1';
-    if (req.query.alive === 'true') sql += ' AND alive = true';
-    sql += ' LIMIT 5000';
+    const alive = req.query.alive === 'true';
+    const limit = Math.min(parseInt(req.query.limit || '500'), 5000);
+    let sql = `
+      SELECT i.id, i.name, i.sex, i.birth_day, i.death_day, i.alive, i.x, i.y,
+             i.phenotype, i.language, i.social, i.health,
+             i.parent_1_id, i.parent_2_id,
+             ROUND((s.current_day - i.birth_day) / 365.0, 1) AS age_years
+      FROM individuals i
+      JOIN simulations s ON s.id = i.simulation_id
+      WHERE i.simulation_id = $1`;
+    if (alive) sql += ' AND i.alive = true';
+    sql += ` ORDER BY i.birth_day ASC LIMIT ${limit}`;
     const { rows } = await query(sql, [req.params.id]);
     res.json(rows);
   } catch { res.status(500).json({ error: 'Failed to fetch population' }); }
+});
+
+router.get('/:id/individuals/:indId', authenticate, async (req, res) => {
+  try {
+    const { rows } = await query(`
+      SELECT i.*, ROUND((s.current_day - i.birth_day) / 365.0, 1) AS age_years
+      FROM individuals i JOIN simulations s ON s.id = i.simulation_id
+      WHERE i.id = $1 AND i.simulation_id = $2`, [req.params.indId, req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Individual not found' });
+    res.json(rows[0]);
+  } catch { res.status(500).json({ error: 'Failed to fetch individual' }); }
+});
+
+router.post('/:id/terminate', authenticate, async (req, res) => {
+  try {
+    const { rows } = await query('SELECT * FROM simulations WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Simulation not found' });
+    simulationManager.pause(req.params.id);
+    await query("UPDATE simulations SET status = 'completed' WHERE id = $1", [req.params.id]);
+    res.json({ message: 'Simulation terminated' });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to terminate simulation' }); }
 });
 
 router.get('/:id/events', authenticate, async (req, res) => {

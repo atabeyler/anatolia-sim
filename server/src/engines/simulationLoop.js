@@ -71,6 +71,13 @@ export class SimulationEngine {
     const alive = [...this.population.values()].filter(i => !i.is_dead);
     const tickEvents = [];
 
+    // 0. Set age & life_stage on every individual (required by all engines)
+    for (const ind of alive) {
+      ind.age = day - ind.birth_day;
+      const ay = ind.age / 365;
+      ind.life_stage = ay < 2 ? 'INFANT' : ay < 12 ? 'CHILD' : ay < 18 ? 'ADOLESCENT' : ay < 45 ? 'ADULT' : 'ELDER';
+    }
+
     // 1. Update world environment
     updateWorldState(this.worldState, day);
     const resourcePressure = computeResourcePressure(this.worldState, alive.length);
@@ -421,6 +428,13 @@ export class SimulationEngine {
       season: this.worldState.season,
       temperature: Math.round(this.worldState.temperature),
       food_abundance: Math.round(this.worldState.food_abundance * 100) / 100,
+      water_abundance: Math.round((this.worldState.water_abundance ?? 0.7) * 100) / 100,
+      biome: this.worldState.biome ?? 'mediterranean',
+      has_disaster: !!(this.worldState.recent_disaster),
+      births: Math.max(0, this.population.size - 2),
+      deaths: Math.max(0, this.population.size - alive.length),
+      word_count: new Set(alive.flatMap(i => Object.keys(i.language?.vocabulary ?? {}))).size,
+      max_language_stage: Math.max(0, ...alive.map(i => i.language?.stage ?? 0)),
       mean_wealth: Math.round(econStats.mean_wealth * 100) / 100,
       gini: Math.round(econStats.gini * 100) / 100,
       happiness_index: Math.round(psychStats.happiness_index * 100) / 100,

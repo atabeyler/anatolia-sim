@@ -9,12 +9,33 @@ export const LIFE_STAGE = {
   ELDER:      { name: 'elder',      minAge: 45, maxAge: 999 },
 };
 
+function traitToGenomeOverrides(params) {
+  const overrides = {};
+  const set = (locus, v) => { overrides[locus] = { a1: v, a2: v }; };
+  if (params.fluid_intelligence != null) ['DTNBP1_01','BDNF_01','COMT_01','NRG1_01','DISC1_01'].forEach(l => set(l, params.fluid_intelligence));
+  if (params.curiosity        != null) set('DRD4_01', params.curiosity);
+  if (params.aggression       != null) set('MAOA_01', params.aggression);
+  if (params.empathy          != null) set('OXTR_01', params.empathy);
+  if (params.conscientiousness!= null) set('DISC1_01', params.conscientiousness);
+  if (params.artistic_sense   != null) { set('NRXN1_01', params.artistic_sense); set('SHANK3_01', params.artistic_sense); }
+  if (params.immune_strength  != null) { set('IMMUNE_01', params.immune_strength); set('IMMUNE_02', params.immune_strength); }
+  if (params.fertility        != null) set('FSHR_01', params.fertility);
+  if (params.longevity        != null) { set('TERT_01', params.longevity); set('APOE_01', params.longevity); }
+  if (params.language_capacity!= null) { set('FOXP2_01', params.language_capacity); set('CNTNAP2_01', params.language_capacity); }
+  if (params.physical_strength!= null) { set('HEIGHT_01', params.physical_strength); set('METABOLISM_01', params.physical_strength); }
+  if (params.eye_color        != null) set('HERC2_01', params.eye_color);
+  if (params.hair_color       != null) set('MC1R_01', params.hair_color);
+  if (params.skin_tone        != null) set('SLC24A5_01', params.skin_tone);
+  return { ...overrides, ...(params.genome ?? {}) };
+}
+
 export function createFounder(params = {}) {
   const sex = params.sex ?? (Math.random() < 0.5 ? 'male' : 'female');
-  const genome = createGenome(params.genome ?? {});
+  const genome = createGenome(traitToGenomeOverrides(params));
   const phenotype = computePhenotype(genome);
   return {
     id: uuidv4(), simulation_id: null,
+    name: params.name ?? null,
     birth_day: -(params.ageYears ?? 20) * 365,
     death_day: null, alive: true, sex,
     x: params.x ?? 0, y: params.y ?? 0,
