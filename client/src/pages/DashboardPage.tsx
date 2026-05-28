@@ -93,7 +93,17 @@ const founderDefaults = (sex: 'male' | 'female') => ({
   hair_color: sex === 'male' ? 'dark' : 'brown',
   skin_tone: 'olive',
   ...TRAIT_DEFAULTS,
-  height: sex === 'male' ? 0.56 : 0.44,    // ~175 cm / ~170 cm
+  // Founding pair must be exceptional — these drive early survival
+  physical_strength:  0.72,  // gathering efficiency + mortality resistance
+  conscientiousness:  0.72,  // gathering discipline, tool use
+  fluid_intelligence: 0.68,  // tech discovery speed
+  immune_strength:    0.74,  // disease survival
+  fertility:          0.74,  // reproductive success
+  longevity:          0.68,  // lifespan → more offspring
+  empathy:            0.60,  // social cohesion
+  social_bonding:     0.72,  // partnership stability
+  stress_resilience:  0.65,  // psychological stability under pressure
+  height: sex === 'male' ? 0.56 : 0.44,
   metabolism: 0.45,
 });
 
