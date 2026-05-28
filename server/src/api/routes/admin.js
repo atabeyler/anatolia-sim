@@ -76,7 +76,7 @@ router.delete('/users/:id', authenticate, requireAdmin, async (req, res) => {
   } catch { res.status(500).json({ error: 'Silme başarısız.' }); }
 });
 
-const reviewHtml = (token, user, msg) => `<!DOCTYPE html>
+const pageHtml = (user, token, msg) => `<!DOCTYPE html>
 <html lang="tr">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ANATOLİA-SİM — Kayıt İnceleme</title>
@@ -90,17 +90,15 @@ const reviewHtml = (token, user, msg) => `<!DOCTYPE html>
   .val{color:#e0e8ff;font-weight:bold;word-break:break-all}
   .divider{border:none;border-top:1px solid rgba(79,110,247,0.15);margin:24px 0}
   .btns{display:flex;gap:12px}
-  form{flex:1}
-  button{width:100%;padding:12px;font-family:inherit;font-size:12px;letter-spacing:.15em;cursor:pointer;border:1px solid;transition:.2s}
-  .approve{background:rgba(78,203,113,0.15);border-color:rgba(78,203,113,0.5);color:#4ecb71}
-  .approve:hover{background:rgba(78,203,113,0.28)}
-  .reject{background:rgba(224,90,90,0.15);border-color:rgba(224,90,90,0.5);color:#e05a5a}
-  .reject:hover{background:rgba(224,90,90,0.28)}
+  a.btn{flex:1;display:block;padding:12px;font-family:inherit;font-size:13px;letter-spacing:.15em;text-align:center;text-decoration:none;border:1px solid;transition:.2s}
+  a.approve{background:rgba(78,203,113,0.15);border-color:rgba(78,203,113,0.5);color:#4ecb71}
+  a.approve:hover{background:rgba(78,203,113,0.28)}
+  a.reject{background:rgba(224,90,90,0.15);border-color:rgba(224,90,90,0.5);color:#e05a5a}
+  a.reject:hover{background:rgba(224,90,90,0.28)}
   .msg{padding:14px;border-left:3px solid;font-size:13px;margin-bottom:20px}
   .msg.ok{border-color:#4ecb71;background:rgba(78,203,113,0.08);color:#4ecb71}
   .msg.err{border-color:#e05a5a;background:rgba(224,90,90,0.08);color:#e05a5a}
   .back{display:block;margin-top:20px;text-align:center;font-size:11px;letter-spacing:.2em;color:#4f6ef7;text-decoration:none}
-  .back:hover{color:#a0b4ff}
 </style></head>
 <body><div class="card">
   <h1>⬡ ANATOLİA-SİM — Kayıt Talebi</h1>
@@ -113,70 +111,66 @@ const reviewHtml = (token, user, msg) => `<!DOCTYPE html>
   <div class="row"><span class="label">Kayıt Tarihi</span><span class="val">${new Date(user.created_at).toLocaleString('tr-TR')}</span></div>
   <hr class="divider">
   <div class="btns">
-    <form method="POST" action="/api/admin/quick-approve/${token}">
-      <button class="approve" type="submit">✔ ONAYLA</button>
-    </form>
-    <form method="POST" action="/api/admin/quick-reject/${token}">
-      <button class="reject" type="submit">✘ REDDET</button>
-    </form>
+    <a class="btn approve" href="/api/admin/quick-approve/${token}">✔ ONAYLA</a>
+    <a class="btn reject" href="/api/admin/quick-reject/${token}">✘ REDDET</a>
   </div>` : ''}
   <a class="back" href="${APP_URL}/admin">← YÖNETİM PANELİ</a>
 </div></body></html>`;
 
-// Review page — GET shows user info with approve/reject buttons
-router.get('/quick-approve/:token', async (req, res) => {
+// Review page — shows user info with approve/reject links
+router.get('/review/:token', async (req, res) => {
   try {
     const payload = jwt.verify(req.params.token, process.env.JWT_SECRET);
-    if (payload.action !== 'approve') return res.status(400).send(reviewHtml('', null, { ok: false, text: 'Geçersiz token türü.' }));
+    if (payload.action !== 'approve') return res.status(400).send(pageHtml(null, '', { ok: false, text: 'Geçersiz token türü.' }));
     const { rows } = await query(
       `SELECT id, user_code, first_name, last_name, tc_no, email, is_approved, created_at FROM users WHERE id=$1`,
       [payload.userId]
     );
-    if (!rows[0]) return res.send(reviewHtml('', null, { ok: false, text: 'Kullanıcı bulunamadı.' }));
-    if (rows[0].is_approved) return res.send(reviewHtml('', null, { ok: true, text: `${rows[0].first_name} ${rows[0].last_name} zaten onaylanmış.` }));
-    res.send(reviewHtml(req.params.token, rows[0], null));
+    if (!rows[0]) return res.send(pageHtml(null, '', { ok: false, text: 'Kullanıcı bulunamadı.' }));
+    if (rows[0].is_approved) return res.send(pageHtml(null, '', { ok: true, text: `${rows[0].first_name} ${rows[0].last_name} zaten onaylanmış.` }));
+    res.send(pageHtml(rows[0], req.params.token, null));
   } catch (err) {
     const msg = err.name === 'TokenExpiredError'
       ? 'Bu onay linkinin süresi dolmuş (7 gün). Yönetim panelini kullanın.'
       : 'Geçersiz link. Yönetim panelinden onaylayın.';
-    res.status(400).send(reviewHtml('', null, { ok: false, text: msg }));
+    res.status(400).send(pageHtml(null, '', { ok: false, text: msg }));
   }
 });
 
-// Approve action — POST from review page
-router.post('/quick-approve/:token', async (req, res) => {
+// Approve — GET link from review page
+router.get('/quick-approve/:token', async (req, res) => {
   try {
     const payload = jwt.verify(req.params.token, process.env.JWT_SECRET);
-    if (payload.action !== 'approve') throw new Error('bad action');
+    if (payload.action !== 'approve') throw new Error('bad');
     const { rows } = await query(
       `UPDATE users SET is_approved=true, role='user', updated_at=NOW()
        WHERE id=$1 AND is_approved=false RETURNING id, user_code, first_name, last_name, email`,
       [payload.userId]
     );
-    if (!rows[0]) return res.send(reviewHtml('', null, { ok: true, text: 'Bu kullanıcı zaten onaylanmış.' }));
+    if (!rows[0]) return res.send(pageHtml(null, '', { ok: true, text: 'Bu kullanıcı zaten onaylanmış.' }));
     await sendApprovalEmail(rows[0]);
-    res.send(reviewHtml('', null, { ok: true, text: `✔ ${rows[0].first_name} ${rows[0].last_name} onaylandı. Kullanıcı kodu: ${rows[0].user_code} — bildirim maili gönderildi.` }));
+    res.send(pageHtml(null, '', { ok: true, text: `✔ ${rows[0].first_name} ${rows[0].last_name} onaylandı — kullanıcı kodu: ${rows[0].user_code}. Bildirim maili gönderildi.` }));
   } catch (err) {
     const msg = err.name === 'TokenExpiredError' ? 'Link süresi dolmuş.' : 'Geçersiz link.';
-    res.status(400).send(reviewHtml('', null, { ok: false, text: msg }));
+    res.status(400).send(pageHtml(null, '', { ok: false, text: msg }));
   }
 });
 
-// Reject action — POST from review page
-router.post('/quick-reject/:token', async (req, res) => {
+// Reject — GET link from review page
+router.get('/quick-reject/:token', async (req, res) => {
   try {
     const payload = jwt.verify(req.params.token, process.env.JWT_SECRET);
-    if (payload.action !== 'approve') throw new Error('bad action');
+    if (payload.action !== 'approve') throw new Error('bad');
     const { rows } = await query(
       `DELETE FROM users WHERE id=$1 AND is_approved=false RETURNING first_name, last_name, email`,
       [payload.userId]
     );
-    if (!rows[0]) return res.send(reviewHtml('', null, { ok: false, text: 'Kullanıcı bulunamadı veya zaten onaylı.' }));
+    if (!rows[0]) return res.send(pageHtml(null, '', { ok: false, text: 'Kullanıcı bulunamadı veya zaten onaylı.' }));
     await sendRejectionEmail(rows[0]);
-    res.send(reviewHtml('', null, { ok: false, text: `✘ ${rows[0].first_name} ${rows[0].last_name} reddedildi. Bildirim maili gönderildi.` }));
+    res.send(pageHtml(null, '', { ok: true, text: `✘ ${rows[0].first_name} ${rows[0].last_name} reddedildi. Bildirim maili gönderildi.` }));
   } catch (err) {
     const msg = err.name === 'TokenExpiredError' ? 'Link süresi dolmuş.' : 'Geçersiz link.';
-    res.status(400).send(reviewHtml('', null, { ok: false, text: msg }));
+    res.status(400).send(pageHtml(null, '', { ok: false, text: msg }));
   }
 });
 
