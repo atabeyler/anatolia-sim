@@ -116,7 +116,7 @@ export default function DashboardPage() {
               <Globe size={14} className="text-sim-accent" style={{ filter: 'drop-shadow(0 0 4px rgba(79,110,247,0.8))' }} />
             </div>
             <div className="flex flex-col leading-none gap-0.5">
-              <span className="font-orbitron text-sim-accent font-bold tracking-[0.25em]" style={{ fontSize: 12, textShadow: '0 0 10px rgba(79,110,247,0.6)' }}>ANTİLİA-SİM</span>
+              <span className="font-orbitron text-sim-accent font-bold tracking-[0.25em]" style={{ fontSize: 12, textShadow: '0 0 10px rgba(79,110,247,0.6)' }}>ANATOLİA-SİM</span>
               <span className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 8 }}>MEDENİYET SIMÜLATÖRÜ</span>
             </div>
           </div>

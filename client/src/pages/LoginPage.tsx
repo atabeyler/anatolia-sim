@@ -272,10 +272,10 @@ export default function LoginPage() {
           <div className="text-center mb-2">
             <h1
               className="glitch-text font-orbitron text-3xl font-bold tracking-[0.2em] text-white flicker"
-              data-text="ANTİLİA-SİM"
+              data-text="ANATOLİA-SİM"
               style={{ textShadow: '0 0 20px rgba(79,110,247,0.6), 0 0 40px rgba(79,110,247,0.3)' }}
             >
-              ANTİLİA-SİM
+              ANATOLİA-SİM
             </h1>
             <p className="font-share-tech text-xs tracking-[0.4em] text-sim-accent/70 mt-2 text-in"
               style={{ animationDelay: '200ms' }}>
