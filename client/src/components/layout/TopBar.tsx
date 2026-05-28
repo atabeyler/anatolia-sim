@@ -20,8 +20,8 @@ function Divider() {
   return <div className="w-px h-6 flex-shrink-0" style={{ background: 'rgba(79,110,247,0.25)' }} />;
 }
 
-function SettingsOverlay({ onClose }: { onClose: () => void }) {
-  const { lang, toggleLang, speedMultiplier, setSpeed } = useSimStore();
+function SettingsOverlay({ onClose, onSpeedChange }: { onClose: () => void; onSpeedChange: (speed: number) => void }) {
+  const { lang, toggleLang, speedMultiplier } = useSimStore();
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -67,7 +67,7 @@ function SettingsOverlay({ onClose }: { onClose: () => void }) {
           <div className="font-share-tech text-sim-muted tracking-widest mb-1.5" style={{ fontSize: 8 }}>SİMÜLASYON HIZI</div>
           <div className="flex gap-1">
             {SPEEDS.map(s => (
-              <button key={s} onClick={() => setSpeed(s)}
+              <button key={s} onClick={() => onSpeedChange(s)}
                 className="flex-1 font-share-tech tracking-widest transition-all"
                 style={{
                   padding: '4px 0', fontSize: 10,
@@ -184,6 +184,20 @@ export default function TopBar() {
     }
   }
 
+  async function updateSpeed(speed: number) {
+    setSpeed(speed);
+    setCurrentSim(currentSim ? { ...currentSim, speed_multiplier: speed } : currentSim);
+    if (!currentSim || !accessToken) return;
+    try {
+      await axios.post(`/api/simulations/${currentSim.id}/speed`, { speed_multiplier: speed }, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    } catch (err: any) {
+      setSimError(err.response?.data?.error ?? 'Hata');
+      setTimeout(() => setSimError(''), 3000);
+    }
+  }
+
   const isRunning = currentSim?.status === 'running';
   const hourStr = stats?.hour !== undefined ? String(stats.hour).padStart(2, '0') + ':00' : '--:--';
 
@@ -235,7 +249,7 @@ export default function TopBar() {
           {!isMobile && (
             <div className="flex gap-0.5">
               {SPEEDS.map(s => (
-                <button key={s} onClick={() => setSpeed(s)}
+                <button key={s} onClick={() => updateSpeed(s)}
                   className="font-share-tech transition-all"
                   style={{
                     padding: '2px 5px', fontSize: 9,
@@ -345,7 +359,7 @@ export default function TopBar() {
           <Menu size={13} />
         </button>
 
-        {showSettings && <SettingsOverlay onClose={() => setShowSettings(false)} />}
+        {showSettings && <SettingsOverlay onClose={() => setShowSettings(false)} onSpeedChange={updateSpeed} />}
         {showMenu && <MenuOverlay onClose={() => setShowMenu(false)} />}
       </div>
     </div>

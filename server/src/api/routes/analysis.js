@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, requireSimulationOwner } from '../middleware/auth.js';
 import Anthropic from '@anthropic-ai/sdk';
 
 const router = Router();
@@ -13,7 +13,7 @@ function buildContext(stats, events) {
     `Recent events:\n${(events ?? []).slice(0, 12).map(e => `- Y${e.sim_year} [${e.event_type}] ${e.description}`).join('\n')}`;
 }
 
-router.post('/:simId', authenticate, async (req, res) => {
+router.post('/:simId', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const { message, stats, events } = req.body;
     const response = await anthropic.messages.create({
@@ -25,7 +25,7 @@ router.post('/:simId', authenticate, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ error: 'Analysis failed' }); }
 });
 
-router.post('/:simId/hypothesis', authenticate, async (req, res) => {
+router.post('/:simId/hypothesis', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const { hypothesis, stats, events } = req.body;
     const response = await anthropic.messages.create({

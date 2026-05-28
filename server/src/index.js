@@ -19,6 +19,8 @@ import analysisRouter from './api/routes/analysis.js';
 import ariaRouter from './api/routes/aria.js';
 import adminRouter from './api/routes/admin.js';
 import { simulationManager } from './api/simulationManager.js';
+import { query } from './db/database.js';
+import { verifyAccessToken } from './api/middleware/auth.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const clientDist = join(__dirname, '../../client/dist');
@@ -53,9 +55,19 @@ if (existsSync(clientDist)) {
 }
 
 const wss = new WebSocketServer({ server, path: '/ws' });
-wss.on('connection', (ws, req) => {
-  const simId = new URL(req.url, 'http://localhost').searchParams.get('simId');
-  if (simId) simulationManager.registerWs(simId, ws);
+wss.on('connection', async (ws, req) => {
+  try {
+    const params = new URL(req.url, 'http://localhost').searchParams;
+    const simId = params.get('simId');
+    const token = params.get('token');
+    if (!simId || !token) return ws.close(1008, 'Authentication required');
+    const user = verifyAccessToken(token);
+    const { rows } = await query('SELECT id FROM simulations WHERE id = $1 AND user_id = $2', [simId, user.id]);
+    if (!rows[0]) return ws.close(1008, 'Simulation not found');
+    simulationManager.registerWs(simId, ws);
+  } catch {
+    ws.close(1008, 'Invalid token');
+  }
   ws.on('error', console.error);
 });
 

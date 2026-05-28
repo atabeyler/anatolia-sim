@@ -38,6 +38,7 @@ interface Simulation {
   current_year: number;
   start_latitude: number;
   start_longitude: number;
+  speed_multiplier?: number;
 }
 
 interface SimStore {

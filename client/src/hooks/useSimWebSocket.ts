@@ -3,11 +3,11 @@ import { useSimStore } from '../store/simStore';
 
 export function useSimWebSocket(simId: string | null) {
   const ws = useRef<WebSocket | null>(null);
-  const { setStats, addEvent } = useSimStore();
+  const { accessToken, setStats, addEvent } = useSimStore();
   useEffect(() => {
-    if (!simId) return;
+    if (!simId || !accessToken) return;
     const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const url = `${wsProto}//${location.host}/ws?simId=${simId}`;
+    const url = `${wsProto}//${location.host}/ws?simId=${encodeURIComponent(simId)}&token=${encodeURIComponent(accessToken)}`;
     ws.current = new WebSocket(url);
     ws.current.onmessage = (e) => {
       try {
@@ -20,6 +20,6 @@ export function useSimWebSocket(simId: string | null) {
     };
     ws.current.onerror = console.error;
     return () => ws.current?.close();
-  }, [simId]);
+  }, [simId, accessToken]);
   return ws;
 }

@@ -30,7 +30,7 @@ import HypothesisPanel from '../components/panels/HypothesisPanel';
 
 export default function SimulationPage() {
   const { simId } = useParams<{ simId: string }>();
-  const { accessToken, setCurrentSim, currentSim, sidebarExpanded } = useSimStore();
+  const { accessToken, setCurrentSim, currentSim, sidebarExpanded, setSpeed } = useSimStore();
   const leftPad = sidebarExpanded ? 176 : 48;
   const [individuals, setIndividuals] = useState([]);
   useSimWebSocket(simId ?? null);
@@ -38,13 +38,16 @@ export default function SimulationPage() {
   useEffect(() => {
     if (!simId || !accessToken) return;
     axios.get(`/api/simulations/${simId}`, { headers: { Authorization: `Bearer ${accessToken}` } })
-      .then(r => setCurrentSim(r.data));
+      .then(r => {
+        setCurrentSim(r.data);
+        if (r.data.speed_multiplier) setSpeed(r.data.speed_multiplier);
+      });
     const interval = setInterval(() => {
       axios.get(`/api/simulations/${simId}/population?alive=true`, { headers: { Authorization: `Bearer ${accessToken}` } })
         .then(r => setIndividuals(r.data));
     }, 5000);
     return () => clearInterval(interval);
-  }, [simId, accessToken]);
+  }, [simId, accessToken, setCurrentSim, setSpeed]);
 
   return (
     <div className="w-screen h-screen bg-sim-bg relative overflow-hidden">

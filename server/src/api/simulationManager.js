@@ -13,6 +13,7 @@ class SimulationManager {
     engine.onCheckpoint = async (cp) => {
       await query(`INSERT INTO checkpoints (simulation_id, sim_day, sim_year, population_count, population_snapshot, world_state, cultural_state, tech_state, stats) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
         [simulation.id, cp.sim_day, cp.sim_year, cp.population_count, JSON.stringify(cp.population_snapshot), JSON.stringify(cp.world_state), JSON.stringify(cp.cultural_state), JSON.stringify(cp.tech_state), JSON.stringify(cp.stats)]);
+      await this.persistState(simulation.id, engine);
       await this.persistPopulation(simulation.id, engine);
     };
     this.engines.set(simulation.id, engine);
@@ -21,6 +22,14 @@ class SimulationManager {
 
   pause(simId) { this.engines.get(simId)?.pause(); }
   getEngine(simId) { return this.engines.get(simId); }
+  setSpeed(simId, speed) { const engine = this.engines.get(simId); if (engine) engine.speedMultiplier = speed; }
+  async persistState(simId, engine = this.engines.get(simId)) {
+    if (!engine) return;
+    await query(
+      'UPDATE simulations SET current_day = $1, current_year = $2, world_state = $3, updated_at = NOW() WHERE id = $4',
+      [engine.currentDay, Math.floor(engine.currentDay / 365), JSON.stringify(engine.worldState), simId]
+    );
+  }
 
   registerWs(simId, ws) {
     if (!this.wsClients.has(simId)) this.wsClients.set(simId, new Set());
@@ -38,13 +47,22 @@ class SimulationManager {
   async persistPopulation(simId, engine) {
     for (const ind of engine.population.values()) {
       await query(`INSERT INTO individuals (id,simulation_id,birth_day,death_day,alive,sex,x,y,genome,phenotype,epigenome,health,mind,social,skills,beliefs,language,memory,parent_1_id,parent_2_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) ON CONFLICT (id) DO UPDATE SET death_day=EXCLUDED.death_day,alive=EXCLUDED.alive,x=EXCLUDED.x,y=EXCLUDED.y,phenotype=EXCLUDED.phenotype,epigenome=EXCLUDED.epigenome,health=EXCLUDED.health,mind=EXCLUDED.mind,social=EXCLUDED.social,skills=EXCLUDED.skills,beliefs=EXCLUDED.beliefs,language=EXCLUDED.language,memory=EXCLUDED.memory`,
-        [ind.id,simId,ind.birth_day,ind.death_day,ind.alive,ind.sex,ind.x,ind.y,JSON.stringify(ind.genome),JSON.stringify(ind.phenotype),JSON.stringify(ind.epigenome),JSON.stringify(ind.health),JSON.stringify(ind.mind),JSON.stringify(ind.social),JSON.stringify(ind.skills),JSON.stringify(ind.beliefs),JSON.stringify(ind.language),JSON.stringify(ind.memory),ind.parent_1_id,ind.parent_2_id]);
+        [ind.id,simId,ind.birth_day,ind.death_day,!ind.is_dead,ind.sex,ind.x,ind.y,JSON.stringify(ind.genome),JSON.stringify(ind.phenotype),JSON.stringify(ind.epigenome),JSON.stringify(ind.health),JSON.stringify(ind.mind),JSON.stringify(ind.social),JSON.stringify(ind.skills),JSON.stringify(ind.beliefs),JSON.stringify(ind.language),JSON.stringify(ind.memory),ind.parent_1_id,ind.parent_2_id]);
     }
   }
 }
 
 function parseIndividual(row) {
-  return { ...row, epigenome: row.epigenome ?? {}, skills: row.skills ?? [], beliefs: row.beliefs ?? {}, memory: row.memory ?? { social: [], events: [], knowledge: [] } };
+  const isDead = row.is_dead ?? row.alive === false;
+  return {
+    ...row,
+    is_dead: isDead,
+    alive: !isDead,
+    epigenome: row.epigenome ?? {},
+    skills: row.skills ?? [],
+    beliefs: row.beliefs ?? {},
+    memory: row.memory ?? { social: [], events: [], knowledge: [] },
+  };
 }
 
 export const simulationManager = new SimulationManager();

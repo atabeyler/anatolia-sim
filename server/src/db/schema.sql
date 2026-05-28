@@ -1,6 +1,7 @@
 -- ANTOLİA-SİM MEDENİYET — PostgreSQL Schema
 -- RST Q-Nation 200120401018
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE SCHEMA IF NOT EXISTS antsim;
 SET search_path TO antsim;
 

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, requireSimulationOwner } from '../middleware/auth.js';
 import { query } from '../../db/database.js';
 import { createWorldState } from '../../engines/environment/environmentEngine.js';
 import { createFounder } from '../../engines/biology/individual.js';
@@ -38,23 +38,38 @@ router.get('/:id', authenticate, async (req, res) => {
   } catch { res.status(500).json({ error: 'Failed to fetch simulation' }); }
 });
 
-router.post('/:id/start', authenticate, async (req, res) => {
+router.post('/:id/start', authenticate, requireSimulationOwner, async (req, res) => {
   try {
-    const { rows } = await query('SELECT * FROM simulations WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
-    if (!rows[0]) return res.status(404).json({ error: 'Simulation not found' });
-    await simulationManager.start(rows[0]);
+    await simulationManager.start(req.simulation);
     await query("UPDATE simulations SET status = 'running' WHERE id = $1", [req.params.id]);
     res.json({ message: 'Simulation started' });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to start simulation' }); }
 });
 
-router.post('/:id/pause', authenticate, async (req, res) => {
+router.post('/:id/pause', authenticate, requireSimulationOwner, async (req, res) => {
   simulationManager.pause(req.params.id);
+  const engine = simulationManager.getEngine(req.params.id);
+  await simulationManager.persistState(req.params.id, engine);
+  if (engine) await simulationManager.persistPopulation(req.params.id, engine);
   await query("UPDATE simulations SET status = 'paused' WHERE id = $1", [req.params.id]);
   res.json({ message: 'Simulation paused' });
 });
 
-router.get('/:id/population', authenticate, async (req, res) => {
+router.post('/:id/speed', authenticate, requireSimulationOwner, async (req, res) => {
+  try {
+    const speed = Number(req.body.speed_multiplier);
+    const allowed = new Set([1, 10, 100, 1000]);
+    if (!allowed.has(speed)) return res.status(400).json({ error: 'Invalid speed multiplier' });
+    simulationManager.setSpeed(req.params.id, speed);
+    const { rows } = await query(
+      'UPDATE simulations SET speed_multiplier = $1, updated_at = NOW() WHERE id = $2 RETURNING speed_multiplier',
+      [speed, req.params.id]
+    );
+    res.json({ speed_multiplier: rows[0].speed_multiplier });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to update speed' }); }
+});
+
+router.get('/:id/population', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     let sql = 'SELECT id, sex, birth_day, death_day, alive, x, y, phenotype, language FROM individuals WHERE simulation_id = $1';
     if (req.query.alive === 'true') sql += ' AND alive = true';
@@ -64,29 +79,28 @@ router.get('/:id/population', authenticate, async (req, res) => {
   } catch { res.status(500).json({ error: 'Failed to fetch population' }); }
 });
 
-router.get('/:id/events', authenticate, async (req, res) => {
+router.get('/:id/events', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const { limit = 50, importance } = req.query;
+    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
     let sql = 'SELECT * FROM simulation_events WHERE simulation_id = $1';
     const params = [req.params.id];
-    if (importance) { sql += ` AND importance >= $2`; params.push(parseInt(importance)); }
-    sql += ` ORDER BY sim_day DESC LIMIT ${parseInt(limit)}`;
+    if (importance) { sql += ` AND importance >= $2`; params.push(parseInt(importance, 10) || 1); }
+    sql += ` ORDER BY sim_day DESC LIMIT ${safeLimit}`;
     const { rows } = await query(sql, params);
     res.json(rows);
   } catch { res.status(500).json({ error: 'Failed to fetch events' }); }
 });
 
-router.get('/:id/checkpoints', authenticate, async (req, res) => {
+router.get('/:id/checkpoints', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const { rows } = await query('SELECT id, sim_day, sim_year, population_count, stats, created_at FROM checkpoints WHERE simulation_id = $1 ORDER BY sim_day DESC', [req.params.id]);
     res.json(rows);
   } catch { res.status(500).json({ error: 'Failed to fetch checkpoints' }); }
 });
 
-router.post('/:id/restore/:checkpointId', authenticate, async (req, res) => {
+router.post('/:id/restore/:checkpointId', authenticate, requireSimulationOwner, async (req, res) => {
   try {
-    const { rows: simRows } = await query('SELECT * FROM simulations WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
-    if (!simRows[0]) return res.status(404).json({ error: 'Simulation not found' });
     const { rows: cpRows } = await query('SELECT * FROM checkpoints WHERE id = $1 AND simulation_id = $2', [req.params.checkpointId, req.params.id]);
     if (!cpRows[0]) return res.status(404).json({ error: 'Checkpoint not found' });
     const cp = cpRows[0];
@@ -99,11 +113,11 @@ router.post('/:id/restore/:checkpointId', authenticate, async (req, res) => {
       const snapshot = Array.isArray(cp.population_snapshot) ? cp.population_snapshot : JSON.parse(cp.population_snapshot);
       await query('DELETE FROM individuals WHERE simulation_id = $1', [req.params.id]);
       for (const ind of snapshot) {
-        await query(`INSERT INTO individuals (id,simulation_id,birth_day,death_day,alive,sex,x,y,phenotype,language,parent_1_id,parent_2_id)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+        await query(`INSERT INTO individuals (id,simulation_id,birth_day,death_day,alive,sex,x,y,genome,phenotype,language,parent_1_id,parent_2_id)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
           ON CONFLICT (id) DO NOTHING`,
           [ind.id, req.params.id, ind.birth_day, ind.death_day, !ind.is_dead, ind.sex, ind.x, ind.y,
-           JSON.stringify(ind.phenotype ?? {}), JSON.stringify({ stage: ind.language_stage ?? 0 }), ind.parent_1_id, ind.parent_2_id]);
+           JSON.stringify(ind.genome ?? {}), JSON.stringify(ind.phenotype ?? {}), JSON.stringify({ stage: ind.language_stage ?? 0 }), ind.parent_1_id, ind.parent_2_id]);
       }
     }
     res.json({ message: 'Checkpoint restored', sim_day: cp.sim_day, sim_year: cp.sim_year });
