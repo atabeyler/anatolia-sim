@@ -82,6 +82,7 @@ export default function SimulationPage() {
   const [realTime, setRealTime] = useState('');
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [selectedInd, setSelectedInd] = useState<any>(null);
+  const [globeCoord, setGlobeCoord] = useState<{ lat: number; lon: number } | null>(null);
   const eventsRef = useRef<HTMLDivElement>(null);
   useSimWebSocket(simId ?? null);
 
@@ -463,15 +464,34 @@ export default function SimulationPage() {
               <>
                 {/* Globe */}
                 <div style={{ position: 'absolute', inset: 0 }}>
-                  <WorldGlobe individuals={individuals} onSelect={setSelectedInd} />
+                  <WorldGlobe
+                    individuals={individuals}
+                    onSelect={(ind) => { setSelectedInd(ind); setGlobeCoord(null); }}
+                    onGlobeClick={(lat, lon) => { setGlobeCoord({ lat, lon }); setSelectedInd(null); }}
+                  />
                 </div>
 
-                {/* Coordinates overlay */}
+                {/* Sim start coord (bottom-left) */}
                 {currentSim && (
-                  <div style={{ position: 'absolute', bottom: 8, right: 8, zIndex: 10, background: 'rgba(0,0,0,0.7)', border: '1px solid #0d2018', padding: '3px 8px' }}>
-                    <span style={{ fontSize: 8, color: '#3a6040', fontFamily: 'Share Tech Mono, monospace' }}>
-                      {currentSim.start_latitude?.toFixed(3)}°N {currentSim.start_longitude?.toFixed(3)}°E
+                  <div style={{ position: 'absolute', bottom: 8, left: 8, zIndex: 10, background: 'rgba(0,0,0,0.7)', border: '1px solid #0d2018', padding: '3px 8px' }}>
+                    <span style={{ fontSize: 7, color: '#3a6040', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.05em' }}>
+                      {lang === 'tr' ? 'BAŞLANGIÇ' : 'ORIGIN'}: {currentSim.start_latitude?.toFixed(3)}°{(currentSim.start_latitude ?? 0) >= 0 ? 'K' : 'G'}  {currentSim.start_longitude?.toFixed(3)}°{(currentSim.start_longitude ?? 0) >= 0 ? 'D' : 'B'}
                     </span>
+                  </div>
+                )}
+
+                {/* Globe click coordinate overlay (bottom-right) */}
+                {globeCoord && (
+                  <div style={{ position: 'absolute', bottom: 8, right: 8, zIndex: 20, background: 'rgba(0,5,2,0.92)', border: '1px solid #1a4a2a', padding: '5px 10px', fontFamily: 'Share Tech Mono, monospace' }}>
+                    <div style={{ fontSize: 7, color: '#3a6040', letterSpacing: '0.1em', marginBottom: 2 }}>
+                      {lang === 'tr' ? '// KONUM' : '// COORDS'}
+                    </div>
+                    <div style={{ fontSize: 10, color: '#00e887', letterSpacing: '0.06em' }}>
+                      {Math.abs(globeCoord.lat).toFixed(3)}°{globeCoord.lat >= 0 ? (lang === 'tr' ? 'K' : 'N') : (lang === 'tr' ? 'G' : 'S')}
+                      {'  '}
+                      {Math.abs(globeCoord.lon).toFixed(3)}°{globeCoord.lon >= 0 ? (lang === 'tr' ? 'D' : 'E') : (lang === 'tr' ? 'B' : 'W')}
+                    </div>
+                    <button onClick={() => setGlobeCoord(null)} style={{ marginTop: 3, fontSize: 7, color: '#2a5040', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}>✕</button>
                   </div>
                 )}
 

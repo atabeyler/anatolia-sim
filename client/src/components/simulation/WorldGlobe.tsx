@@ -232,7 +232,32 @@ function PopulationGlow({ individuals }: { individuals: any[] }) {
   );
 }
 
-function RotatingGroup({ individuals, onSelect }: { individuals: any[]; onSelect?: (ind: any) => void }) {
+function GlobeClickCatcher({
+  groupRef,
+  onGlobeClick,
+}: {
+  groupRef: React.RefObject<THREE.Group | null>;
+  onGlobeClick: (lat: number, lon: number) => void;
+}) {
+  return (
+    <mesh
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!groupRef.current) return;
+        const local = groupRef.current.worldToLocal(e.point.clone());
+        const r = local.length();
+        const lat = (Math.asin(local.y / r) * 180) / Math.PI;
+        const lon = (Math.atan2(local.x, local.z) * 180) / Math.PI;
+        onGlobeClick(Math.round(lat * 1000) / 1000, Math.round(lon * 1000) / 1000);
+      }}
+    >
+      <sphereGeometry args={[2.01, 32, 32]} />
+      <meshBasicMaterial transparent opacity={0.001} depthWrite={false} />
+    </mesh>
+  );
+}
+
+function RotatingGroup({ individuals, onSelect, onGlobeClick }: { individuals: any[]; onSelect?: (ind: any) => void; onGlobeClick?: (lat: number, lon: number) => void }) {
   const groupRef = useRef<THREE.Group>(null);
   useFrame((_, delta) => {
     if (groupRef.current) groupRef.current.rotation.y += delta * 0.025;
@@ -241,6 +266,7 @@ function RotatingGroup({ individuals, onSelect }: { individuals: any[]; onSelect
     <group ref={groupRef}>
       <GlobeMesh />
       <GridLines />
+      {onGlobeClick && <GlobeClickCatcher groupRef={groupRef} onGlobeClick={onGlobeClick} />}
       {individuals.length > 0 && (
         <>
           <PopulationGlow individuals={individuals} />
@@ -251,7 +277,7 @@ function RotatingGroup({ individuals, onSelect }: { individuals: any[]; onSelect
   );
 }
 
-export default function WorldGlobe({ individuals = [], onSelect }: { individuals?: any[]; onSelect?: (ind: any) => void }) {
+export default function WorldGlobe({ individuals = [], onSelect, onGlobeClick }: { individuals?: any[]; onSelect?: (ind: any) => void; onGlobeClick?: (lat: number, lon: number) => void }) {
   return (
     <Canvas
       camera={{ position: [0, 0.5, 5.5], fov: 42 }}
@@ -265,7 +291,7 @@ export default function WorldGlobe({ individuals = [], onSelect }: { individuals
       <Moon />
       <Stars radius={200} depth={80} count={6000} factor={5} saturation={0} fade speed={0.3} />
       <Globe />
-      <RotatingGroup individuals={individuals} onSelect={onSelect} />
+      <RotatingGroup individuals={individuals} onSelect={onSelect} onGlobeClick={onGlobeClick} />
       <OrbitControls
         enablePan={false}
         minDistance={2.8}
