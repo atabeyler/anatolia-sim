@@ -164,16 +164,16 @@ export default function SimulationPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', overflow: 'hidden', background: '#000', color: '#fff', fontFamily: 'Share Tech Mono, monospace' }}>
 
-      {/* ═══ HEADER (2 rows) ═══ */}
+      {/* ═══ HEADER (3 rows) ═══ */}
       <div style={{ flexShrink: 0, background: 'rgba(0,0,0,0.97)', borderBottom: '1px solid #1a3a2a' }}>
 
         {/* Row 1: Logo | SIM time | Real clock | BAŞLAT/DURDUR */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 8px', borderBottom: '1px solid #0d2018' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px', borderBottom: '1px solid #0d2018' }}>
           <span style={{ fontSize: 13, fontFamily: 'Orbitron, monospace', fontWeight: 900, color: '#00e887', letterSpacing: '0.15em', flexShrink: 0 }}>
             ANATOLIA-SIM
           </span>
 
-          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: 8 }}>
+          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: 6 }}>
             <span style={{ fontSize: 7, color: '#3a6040', letterSpacing: '0.1em' }}>SİM</span>
             <span style={{ fontSize: 9, color: '#00e887', letterSpacing: '0.05em', fontFamily: 'Orbitron, monospace' }}>
               Y{String(simYear).padStart(4, '0')} G{String(simDay % 365).padStart(3, '0')} {simHour}
@@ -182,7 +182,7 @@ export default function SimulationPage() {
 
           <div style={{ flex: 1 }} />
 
-          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: 6 }}>
             <span style={{ fontSize: 7, color: '#3a6040', letterSpacing: '0.1em' }}>GERÇEK</span>
             <span style={{ fontSize: 9, color: '#a0c8b0', letterSpacing: '0.05em' }}>{realTime}</span>
           </div>
@@ -190,24 +190,52 @@ export default function SimulationPage() {
           <button
             onClick={toggleSim}
             style={{
-              display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
-              padding: '3px 10px', fontSize: 10, fontFamily: 'Share Tech Mono, monospace',
-              background: isRunning ? 'rgba(212,56,56,0.15)' : 'rgba(0,232,135,0.15)',
+              display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
+              padding: '5px 16px', fontSize: 11, fontFamily: 'Orbitron, monospace', fontWeight: 700, letterSpacing: '0.1em',
+              background: isRunning ? 'rgba(212,56,56,0.18)' : 'rgba(0,232,135,0.18)',
               border: `1px solid ${isRunning ? '#c03030' : '#00e887'}`,
               color: isRunning ? '#e05a5a' : '#00e887',
+              boxShadow: isRunning ? '0 0 10px rgba(200,50,50,0.3)' : '0 0 10px rgba(0,232,135,0.25)',
               cursor: 'pointer',
             }}>
-            {isRunning ? <Pause size={9} /> : <Play size={9} />}
+            {isRunning ? <Pause size={11} /> : <Play size={11} />}
             {isRunning ? (lang === 'tr' ? 'DURDUR' : 'PAUSE') : (lang === 'tr' ? 'BAŞLAT' : 'START')}
           </button>
 
           {isRunning && (
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00e887', boxShadow: '0 0 6px #00e887', flexShrink: 0, animation: 'pulse 1.5s infinite' }} />
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#00e887', boxShadow: '0 0 8px #00e887', flexShrink: 0, animation: 'pulse 1.5s infinite' }} />
           )}
         </div>
 
-        {/* Row 2: HIZ buttons | SONLANDIR | ÇIKIŞ | TR▸EN */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px' }}>
+        {/* Row 2: Stats | TR▸EN */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 0, padding: '3px 10px', borderBottom: '1px solid #0d2018' }}>
+          {[
+            { key: 'pop',  label: lang === 'tr' ? 'NÜFUS'  : 'POP',   value: stats?.population ?? '—',   color: '#00e887' },
+            { key: 'bir',  label: lang === 'tr' ? 'DOĞUM'  : 'BIRTH', value: births,                      color: '#4ecb71' },
+            { key: 'dth',  label: lang === 'tr' ? 'ÖLÜM'   : 'DEATH', value: deaths,                      color: '#e05a5a' },
+            { key: 'yr',   label: lang === 'tr' ? 'YIL'    : 'YEAR',  value: stats?.year ?? '—',          color: '#7dd3fc' },
+            { key: 'tech', label: lang === 'tr' ? 'TEKNOLOJİ' : 'TECH', value: stats?.technologies ?? '—', color: '#d4a838' },
+            { key: 'temp', label: lang === 'tr' ? 'SICAKLIK' : 'TEMP', value: stats?.temperature !== undefined ? `${stats.temperature}°` : '—', color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
+          ].map(({ key, label, value, color }, i) => (
+            <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2px 10px', borderRight: '1px solid #0d2018', minWidth: 52 }}>
+              <span style={{ fontSize: 6.5, color: '#3a6040', letterSpacing: '0.1em' }}>{label}</span>
+              <span style={{ fontSize: 11, color, fontFamily: 'Orbitron, monospace', fontWeight: 700, lineHeight: 1.2 }}>{value}</span>
+            </div>
+          ))}
+          <div style={{ flex: 1 }} />
+          <button
+            onClick={() => toggleLang()}
+            title={lang === 'tr' ? 'Switch to English' : 'Türkçeye geç'}
+            style={{
+              padding: '3px 8px', fontSize: 9, fontFamily: 'Orbitron, monospace', letterSpacing: '0.1em', cursor: 'pointer',
+              border: '1px solid #1a4a2a', color: '#00e887', background: 'rgba(0,232,135,0.08)',
+            }}>
+            {lang === 'tr' ? 'TR▸EN' : 'EN▸TR'}
+          </button>
+        </div>
+
+        {/* Row 3: HIZ buttons | SONLANDIR | ÇIKIŞ */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 10px' }}>
           <span style={{ fontSize: 8, color: '#3a6040', letterSpacing: '0.1em', marginRight: 2, flexShrink: 0 }}>HIZ</span>
           {SPEEDS.map(s => (
             <button key={s} onClick={() => changeSpeed(s)}
@@ -225,22 +253,13 @@ export default function SimulationPage() {
 
           <button onClick={terminateSim}
             style={{ padding: '2px 6px', fontSize: 8, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.05em', cursor: 'pointer' }}>
-            SONLANDIR
+            {lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
           </button>
           <button
             onClick={() => navigate('/')}
             style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', border: '1px solid #1a3a2a', color: '#4a7a5a', background: 'transparent', fontSize: 8, letterSpacing: '0.05em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
             <FolderOpen size={9} />
             {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
-          </button>
-          <button
-            onClick={() => toggleLang()}
-            title={lang === 'tr' ? 'Switch to English' : 'Türkçeye geç'}
-            style={{
-              padding: '2px 5px', fontSize: 8, fontFamily: 'Orbitron, monospace', letterSpacing: '0.08em', cursor: 'pointer',
-              border: '1px solid #1a4a2a', color: '#00e887', background: 'rgba(0,232,135,0.08)',
-            }}>
-            {lang === 'tr' ? 'TR▸EN' : 'EN▸TR'}
           </button>
         </div>
       </div>
