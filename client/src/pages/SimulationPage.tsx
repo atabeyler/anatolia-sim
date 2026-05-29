@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Play, Pause, FolderOpen, ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { Play, Pause, FolderOpen, ChevronLeft, ChevronRight, Users, X } from 'lucide-react';
 import { useSimStore } from '../store/simStore';
 import { useSimWebSocket } from '../hooks/useSimWebSocket';
+import AriaButton from '../components/layout/AriaButton';
 import WorldGlobe from '../components/simulation/WorldGlobe';
 import PopulationPanel from '../components/panels/PopulationPanel';
 import BiologyPanel from '../components/panels/BiologyPanel';
@@ -155,6 +156,8 @@ export default function SimulationPage() {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [selectedInd, setSelectedInd] = useState<any>(null);
   const [globeCoord, setGlobeCoord] = useState<{ lat: number; lon: number } | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPage, setMenuPage] = useState<'about' | 'mission' | 'contact' | null>(null);
   useSimWebSocket(simId ?? null);
 
   // Real clock
@@ -256,6 +259,8 @@ export default function SimulationPage() {
 
           <div style={{ flex: 1 }} />
 
+          <AriaButton />
+
           <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: 6 }}>
             <span style={{ fontSize: 7, color: '#3a6040', letterSpacing: '0.1em' }}>GERÇEK</span>
             <span style={{ fontSize: 9, color: '#a0c8b0', letterSpacing: '0.05em' }}>{realTime}</span>
@@ -334,6 +339,11 @@ export default function SimulationPage() {
             style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', border: '1px solid #1a3a2a', color: '#4a7a5a', background: 'transparent', fontSize: 8, letterSpacing: '0.05em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
             <FolderOpen size={9} />
             {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
+          </button>
+          <button
+            onClick={() => { setMenuOpen(true); setMenuPage(null); }}
+            style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid #1a3a2a', color: '#4a7a5a', background: 'transparent', fontSize: 8, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
+            ☰ {lang === 'tr' ? 'MENÜ' : 'MENU'}
           </button>
         </div>
       </div>
@@ -617,6 +627,76 @@ export default function SimulationPage() {
           Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026 Tüm hakları saklıdır. · RST Q-Nation 200120401018 · Yalçın Atabey
         </span>
       </div>
+
+      {/* ═══ MENU OVERLAY ═══ */}
+      {menuOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => { setMenuOpen(false); setMenuPage(null); }}>
+          <div style={{ background: 'rgba(0,4,2,0.98)', border: '1px solid #1a4a2a', minWidth: 340, maxWidth: 480, padding: 0, fontFamily: 'Share Tech Mono, monospace', boxShadow: '0 8px 40px rgba(0,0,0,0.8)' }}
+            onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderBottom: '1px solid #0d2018', background: 'rgba(0,20,10,0.9)' }}>
+              <div style={{ width: 3, height: 14, background: '#00e887', boxShadow: '0 0 6px #00e887', flexShrink: 0 }} />
+              <span style={{ fontSize: 10, color: '#00e887', letterSpacing: '0.2em', flex: 1 }}>
+                {menuPage === null ? 'ANATOLIA-SIM' : menuPage === 'about' ? (lang === 'tr' ? 'HAKKIMIZDA' : 'ABOUT') : menuPage === 'mission' ? (lang === 'tr' ? 'MİSYON & VİZYON' : 'MISSION & VISION') : (lang === 'tr' ? 'İLETİŞİM' : 'CONTACT')}
+              </span>
+              <button onClick={() => { if (menuPage) { setMenuPage(null); } else { setMenuOpen(false); } }}
+                style={{ background: 'transparent', border: 'none', color: '#3a6040', cursor: 'pointer', fontSize: 9, letterSpacing: '0.1em', padding: '2px 6px' }}>
+                {menuPage ? '← GERİ' : <X size={12} />}
+              </button>
+            </div>
+
+            {/* Main menu */}
+            {menuPage === null && (
+              <div style={{ padding: '6px 0' }}>
+                {[
+                  { id: 'about', labelTr: 'Hakkımızda', labelEn: 'About' },
+                  { id: 'mission', labelTr: 'Misyon & Vizyon', labelEn: 'Mission & Vision' },
+                  { id: 'contact', labelTr: 'İletişim', labelEn: 'Contact' },
+                ].map(item => (
+                  <button key={item.id} onClick={() => setMenuPage(item.id as any)}
+                    style={{ display: 'block', width: '100%', padding: '9px 14px', background: 'transparent', border: 'none', borderBottom: '1px solid #0a1a10', color: '#a0c8b0', fontSize: 11, textAlign: 'left', cursor: 'pointer', letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace' }}>
+                    › {lang === 'tr' ? item.labelTr : item.labelEn}
+                  </button>
+                ))}
+                <div style={{ padding: '8px 14px', borderTop: '1px solid #0a1a10', marginTop: 4 }}>
+                  <div style={{ fontSize: 7.5, color: '#1e3a28', letterSpacing: '0.08em' }}>
+                    RST Q-Nation 200120401018 · Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Sub-page content */}
+            {menuPage !== null && (() => {
+              const pages: Record<string, { tr: string; en: string }> = {
+                about: {
+                  tr: 'ANATOLİA-SİM, Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. bünyesinde Yalçın Atabey tarafından geliştirilen, simülasyon hipotezini deneysel olarak test etmeye yönelik ileri düzey bir medeniyet simülasyon platformudur.\n\nGerçek biyolojik, genetik, çevresel ve sosyal mekanizmaları temel alarak iki bireyden başlayan bir nüfusun binlerce yıl boyunca nasıl evrildiğini, dil, inanç, teknoloji ve devlet yapılarını nasıl geliştirdiğini müdahalesiz biçimde gözlemlemeyi sağlar.\n\nProje Kodu: RST Q-Nation 200120401018',
+                  en: 'ANATOLİA-SİM is an advanced civilization simulation platform developed by Yalçın Atabey under Bold Askeri Teknoloji ve Savunma Sanayi A.Ş., designed to experimentally test the simulation hypothesis.\n\nIt models real biological, genetic, environmental and social mechanisms — observing a population that starts from two individuals, evolving over thousands of years into language, belief, technology and governance.\n\nProject Code: RST Q-Nation 200120401018',
+                },
+                mission: {
+                  tr: 'MİSYON\nSimülasyon hipotezini bilimsel ve deneysel zeminlerde test etmek; insan medeniyetinin evrensel örüntülerini ortaya çıkarmak.\n\nVİZYON\nDünyanın en kapsamlı yapay yaşam ve medeniyet simülasyon platformu olmak; insanlığın kökeni, bilinci ve geleceği hakkında nesnel veriler üretmek.',
+                  en: 'MISSION\nTest the simulation hypothesis on scientific and experimental grounds; reveal the universal patterns of human civilization.\n\nVISION\nBecome the world\'s most comprehensive artificial life and civilization simulation platform; produce objective data about the origin, consciousness and future of humanity.',
+                },
+                contact: {
+                  tr: 'Proje Sahibi: Yalçın Atabey\nKuruluş: Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.\nE-posta: info@boldkimya.com.tr\nTelefon: +90 532 217 07 76\nORCID: 0009-0004-9037-5750\n\n© 2026 Tüm hakları saklıdır.',
+                  en: 'Project Owner: Yalçın Atabey\nOrganization: Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.\nE-mail: info@boldkimya.com.tr\nPhone: +90 532 217 07 76\nORCID: 0009-0004-9037-5750\n\n© 2026 All rights reserved.',
+                },
+              };
+              const text = (lang === 'tr' ? pages[menuPage].tr : pages[menuPage].en);
+              return (
+                <div style={{ padding: '12px 14px', maxHeight: 320, overflowY: 'auto' }}>
+                  {text.split('\n').map((line, i) => (
+                    <p key={i} style={{ fontSize: line === line.toUpperCase() && line.length > 2 ? 8.5 : 9, color: line === line.toUpperCase() && line.length > 2 ? '#00e887' : '#7aaa90', margin: '0 0 5px 0', letterSpacing: '0.05em', lineHeight: 1.6 }}>
+                      {line || <br />}
+                    </p>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* ═══ OVERLAY PANELS ═══ */}
       <PopulationPanel />
