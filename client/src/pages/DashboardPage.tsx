@@ -404,7 +404,7 @@ export default function DashboardPage() {
   const runningCount = sims.filter(s => s.status === 'running').length;
 
   return (
-    <div className="min-h-screen text-sim-text overflow-auto" style={{ background: '#030310' }}>
+    <div className="min-h-screen text-sim-text" style={{ background: '#030310' }}>
 
       {/* Scanlines overlay */}
       <div className="pointer-events-none fixed inset-0 z-0"
@@ -556,17 +556,15 @@ export default function DashboardPage() {
               <div style={{ fontSize: 9, color: '#3a5070', letterSpacing: '0.2em', fontFamily: 'Share Tech Mono', marginBottom: 10 }}>
                 {lang === 'tr' ? '// KURUCU GENETİĞİ' : '// FOUNDER GENETICS'}
               </div>
-              <div style={{ maxHeight: 'calc(100vh - 320px)', overflowY: 'auto', marginBottom: 12, paddingRight: 2 }}>
-                <div className="grid grid-cols-2 gap-3">
-                  <FounderCard
-                    title={lang === 'tr' ? 'KURUCU 1 — ERKEK' : 'FOUNDER 1 — MALE'}
-                    sex="male" data={founder1} onChange={makeSetter(setFounder1)} lang={lang}
-                  />
-                  <FounderCard
-                    title={lang === 'tr' ? 'KURUCU 2 — KADIN' : 'FOUNDER 2 — FEMALE'}
-                    sex="female" data={founder2} onChange={makeSetter(setFounder2)} lang={lang}
-                  />
-                </div>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <FounderCard
+                  title={lang === 'tr' ? 'KURUCU 1 — ERKEK' : 'FOUNDER 1 — MALE'}
+                  sex="male" data={founder1} onChange={makeSetter(setFounder1)} lang={lang}
+                />
+                <FounderCard
+                  title={lang === 'tr' ? 'KURUCU 2 — KADIN' : 'FOUNDER 2 — FEMALE'}
+                  sex="female" data={founder2} onChange={makeSetter(setFounder2)} lang={lang}
+                />
               </div>
 
               <div className="flex gap-3">
