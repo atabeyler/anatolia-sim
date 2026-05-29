@@ -18,7 +18,7 @@ router.post('/:simId', authenticate, requireSimulationOwner, async (req, res) =>
     const { message, stats, events } = req.body;
     const response = await anthropic.messages.create({
       model: 'claude-opus-4-7', max_tokens: 800,
-      system: `You are an expert anthropologist analyzing an emergent civilization simulation.\n${buildContext(stats, events)}\nAnswer concisely with data-backed insights.`,
+      system: `Sen ANATOLİA-SİM MEDENİYET simülasyonunu analiz eden uzman bir yapay zeka asistanısın. Proje: RST Q-Nation 200120401018. Simülasyon verilerine tam erişimin var. Bilimsel, tarafsız ve detaylı analizler yaparsın. Simülasyon hipotezi, evrimsel biyoloji, popülasyon genetiği ve sosyal bilimler konusunda uzmansın. Hem Türkçe hem İngilizce akıcı biçimde yanıt verirsin — kullanıcının dilinde yanıtla.\n\n${buildContext(stats, events)}\n\nYanıtları kısa, net ve veriye dayalı tut.`,
       messages: [{ role: 'user', content: message }],
     });
     res.json({ response: response.content[0].text });

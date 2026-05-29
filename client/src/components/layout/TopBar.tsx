@@ -85,10 +85,27 @@ function SettingsOverlay({ onClose }: { onClose: () => void }) {
   );
 }
 
+const INFO_PAGES: Record<string, { titleEn: string; titleTr: string; content: string }> = {
+  about: {
+    titleEn: 'About', titleTr: 'Hakkımızda',
+    content: 'ANATOLİA-SİM, Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. bünyesinde Yalçın Atabey tarafından geliştirilen, simülasyon hipotezini deneysel olarak test etmeye yönelik ileri düzey bir medeniyet simülasyon platformudur.\n\nGerçek biyolojik, genetik, çevresel ve sosyal mekanizmaları temel alarak iki bireyden başlayan bir nüfusun binlerce yıl boyunca nasıl evrildiğini, dil, inanç, teknoloji ve devlet yapılarını nasıl geliştirdiğini müdahalesiz biçimde gözlemlemeyi sağlar.\n\nProje Kodu: RST Q-Nation 200120401018',
+  },
+  mission: {
+    titleEn: 'Mission & Vision', titleTr: 'Misyon & Vizyon',
+    content: 'MİSYON\nSimülasyon hipotezini bilimsel ve deneysel zeminlerde test etmek; insan medeniyetinin evrensel örüntülerini ortaya çıkarmak.\n\nVİZYON\nDünyanın en kapsamlı yapay yaşam ve medeniyet simülasyon platformu olmak; insanlığın kökeni, bilinci ve geleceği hakkında nesnel veriler üretmek.',
+  },
+  contact: {
+    titleEn: 'Contact', titleTr: 'İletişim',
+    content: 'Proje Sahibi: Yalçın Atabey\nKuruluş: Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.\nE-posta: info@boldkimya.com.tr\nTelefon: +90 532 217 07 76\nORCID: 0009-0004-9037-5750\n\n© 2026 Tüm hakları saklıdır.',
+  },
+};
+
 function MenuOverlay({ onClose, onTerminate }: { onClose: () => void; onTerminate: () => void }) {
-  const { currentSim, user, logout } = useSimStore();
+  const { currentSim, user, logout, lang } = useSimStore();
   const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
+  const [subPage, setSubPage] = useState<string | null>(null);
+
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
@@ -97,68 +114,110 @@ function MenuOverlay({ onClose, onTerminate }: { onClose: () => void; onTerminat
     return () => document.removeEventListener('mousedown', handler);
   }, [onClose]);
 
+  const infoPage = subPage ? INFO_PAGES[subPage] : null;
+
   return (
-    <div ref={ref} className="absolute right-4 top-14 z-50 w-56 flex flex-col"
-      style={{ background: 'rgba(4,4,18,0.98)', border: '1px solid rgba(79,110,247,0.35)', backdropFilter: 'blur(20px)', boxShadow: '0 8px 40px rgba(0,0,0,0.6)' }}>
+    <div ref={ref} className="absolute right-4 top-14 z-50 flex flex-col"
+      style={{ width: infoPage ? 280 : 224, background: 'rgba(4,4,18,0.98)', border: '1px solid rgba(79,110,247,0.35)', backdropFilter: 'blur(20px)', boxShadow: '0 8px 40px rgba(0,0,0,0.6)' }}>
       <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: 'rgba(79,110,247,0.2)' }}>
-        <Menu size={11} className="text-sim-accent" />
-        <span className="font-orbitron text-sim-accent tracking-[0.2em]" style={{ fontSize: 9 }}>MENÜ</span>
+        {infoPage ? (
+          <button onClick={() => setSubPage(null)} className="text-sim-muted hover:text-sim-accent mr-1">←</button>
+        ) : (
+          <Menu size={11} className="text-sim-accent" />
+        )}
+        <span className="font-orbitron text-sim-accent tracking-[0.2em]" style={{ fontSize: 9 }}>
+          {infoPage ? (lang === 'en' ? infoPage.titleEn : infoPage.titleTr) : 'MENÜ'}
+        </span>
         <div className="flex-1" />
         <button onClick={onClose} className="text-sim-muted hover:text-sim-accent"><X size={11} /></button>
       </div>
 
-      {currentSim && (
-        <div className="px-3 py-2 border-b" style={{ borderColor: 'rgba(79,110,247,0.1)', background: 'rgba(79,110,247,0.05)' }}>
-          <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 7 }}>AKTİF SİMÜLASYON</div>
-          <div className="font-orbitron text-sim-accent font-bold tracking-wider mt-0.5" style={{ fontSize: 10 }}>{currentSim.name}</div>
+      {infoPage ? (
+        <div className="p-3 max-h-72 overflow-y-auto">
+          {infoPage.content.split('\n').map((line, i) => (
+            <p key={i} className={`font-share-tech tracking-wide leading-relaxed ${line === '' ? 'mb-1' : 'mb-0'}`}
+              style={{ fontSize: 9, color: line.match(/^[A-ZÇŞĞÜÖİ\s]{3,}$/) ? '#7090ff' : '#8898c8' }}>
+              {line || ' '}
+            </p>
+          ))}
         </div>
-      )}
+      ) : (
+        <>
+          {currentSim && (
+            <div className="px-3 py-2 border-b" style={{ borderColor: 'rgba(79,110,247,0.1)', background: 'rgba(79,110,247,0.05)' }}>
+              <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 7 }}>AKTİF SİMÜLASYON</div>
+              <div className="font-orbitron text-sim-accent font-bold tracking-wider mt-0.5" style={{ fontSize: 10 }}>{currentSim.name}</div>
+            </div>
+          )}
 
-      <div className="p-1.5 space-y-0.5">
-        <button onClick={() => { onClose(); navigate('/'); }}
-          className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-sim-border/30"
-          style={{ color: '#8898c8' }}>
-          <Home size={12} />
-          <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>Ana Sayfa</span>
-        </button>
-
-        {user?.role === 'admin' && (
-          <button onClick={() => { onClose(); navigate('/admin'); }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-sim-border/30"
-            style={{ color: '#f97316' }}>
-            <Sliders size={12} />
-            <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>Admin Paneli</span>
-          </button>
-        )}
-
-        {currentSim && currentSim.status !== 'completed' && (
-          <>
-            <div className="h-px mx-2 my-1" style={{ background: 'rgba(249,115,22,0.2)' }} />
-            <button onClick={() => { onTerminate(); onClose(); }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-orange-900/20"
-              style={{ color: '#f97316' }}>
-              <Power size={12} />
-              <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>Simülasyonu Sonlandır</span>
+          <div className="p-1.5 space-y-0.5">
+            <button onClick={() => { onClose(); navigate('/'); }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-sim-border/30"
+              style={{ color: '#8898c8' }}>
+              <Home size={12} />
+              <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>{lang === 'en' ? 'Home' : 'Ana Sayfa'}</span>
             </button>
-          </>
-        )}
 
-        <div className="h-px mx-2 my-1" style={{ background: 'rgba(79,110,247,0.12)' }} />
+            <button onClick={() => setSubPage('about')}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-sim-border/30"
+              style={{ color: '#8898c8' }}>
+              <span style={{ fontSize: 11 }}>ℹ</span>
+              <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>{lang === 'en' ? 'About' : 'Hakkımızda'}</span>
+            </button>
 
-        <button onClick={() => { logout(); navigate('/'); onClose(); }}
-          className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-red-900/20"
-          style={{ color: '#e05a5a' }}>
-          <LogOut size={12} />
-          <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>Çıkış Yap / Uygulamadan Çık</span>
-        </button>
-      </div>
+            <button onClick={() => setSubPage('mission')}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-sim-border/30"
+              style={{ color: '#8898c8' }}>
+              <span style={{ fontSize: 11 }}>◎</span>
+              <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>{lang === 'en' ? 'Mission & Vision' : 'Misyon & Vizyon'}</span>
+            </button>
 
-      {user && (
-        <div className="px-3 py-1.5 border-t" style={{ borderColor: 'rgba(79,110,247,0.1)' }}>
-          <div className="font-share-tech text-sim-muted/50 tracking-widest" style={{ fontSize: 7 }}>
-            {user.username} · {user.role?.toUpperCase()}
+            <button onClick={() => setSubPage('contact')}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-sim-border/30"
+              style={{ color: '#8898c8' }}>
+              <span style={{ fontSize: 11 }}>✉</span>
+              <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>{lang === 'en' ? 'Contact' : 'İletişim'}</span>
+            </button>
+
+            {user?.role === 'admin' && (
+              <button onClick={() => { onClose(); navigate('/admin'); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-sim-border/30"
+                style={{ color: '#f97316' }}>
+                <Sliders size={12} />
+                <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>Admin Paneli</span>
+              </button>
+            )}
+
+            {currentSim && currentSim.status !== 'completed' && (
+              <>
+                <div className="h-px mx-2 my-1" style={{ background: 'rgba(249,115,22,0.2)' }} />
+                <button onClick={() => { onTerminate(); onClose(); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-orange-900/20"
+                  style={{ color: '#f97316' }}>
+                  <Power size={12} />
+                  <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>Simülasyonu Sonlandır</span>
+                </button>
+              </>
+            )}
+
+            <div className="h-px mx-2 my-1" style={{ background: 'rgba(79,110,247,0.12)' }} />
+
+            <button onClick={() => { logout(); navigate('/'); onClose(); }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-red-900/20"
+              style={{ color: '#e05a5a' }}>
+              <LogOut size={12} />
+              <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>{lang === 'en' ? 'Sign Out' : 'Çıkış Yap'}</span>
+            </button>
           </div>
-        </div>
+
+          {user && (
+            <div className="px-3 py-1.5 border-t" style={{ borderColor: 'rgba(79,110,247,0.1)' }}>
+              <div className="font-share-tech text-sim-muted/50 tracking-widest" style={{ fontSize: 7 }}>
+                {user.username} · {user.role?.toUpperCase()}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

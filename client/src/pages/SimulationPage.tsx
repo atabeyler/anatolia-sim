@@ -611,6 +611,13 @@ export default function SimulationPage() {
         </div>
       </div>
 
+      {/* ── FOOTER ── */}
+      <div style={{ flexShrink: 0, textAlign: 'center', padding: '2px 10px', background: 'rgba(0,0,0,0.97)', borderTop: '1px solid #0a1a10' }}>
+        <span style={{ fontSize: 7, color: '#1e3a28', letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace' }}>
+          Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026 Tüm hakları saklıdır. · RST Q-Nation 200120401018 · Yalçın Atabey
+        </span>
+      </div>
+
       {/* ═══ OVERLAY PANELS ═══ */}
       <PopulationPanel />
       <BiologyPanel />
