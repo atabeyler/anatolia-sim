@@ -20,7 +20,7 @@ import { initializeEpigenome, inheritEpigenome, updateEpigenome } from './epigen
 import { processAstronomyTick } from './astronomy/astronomyEngine.js';
 
 const SOCIAL_INTERACTION_RADIUS = 5;  // degrees (~500 km) — was 50 (causes O(n²) explosion)
-const CHECKPOINT_INTERVAL = 100;
+const CHECKPOINT_INTERVAL = 365;
 
 export class SimulationEngine {
   constructor(simulation) {

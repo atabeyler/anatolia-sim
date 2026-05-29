@@ -1,21 +1,56 @@
 import { SimulationEngine } from '../engines/simulationLoop.js';
 import { query } from '../db/database.js';
 
+const BATCH_SIZE = 200; // max individuals per bulk upsert
+
+async function withRetry(fn, retries = 3, baseDelayMs = 2000) {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try { return await fn(); }
+    catch (err) {
+      if (attempt === retries - 1) throw err;
+      await new Promise(r => setTimeout(r, baseDelayMs * (attempt + 1)));
+    }
+  }
+}
+
 class SimulationManager {
-  constructor() { this.engines = new Map(); this.wsClients = new Map(); }
+  constructor() {
+    this.engines = new Map();
+    this.wsClients = new Map();
+    this._checkpointLocks = new Map(); // per-sim lock to prevent overlapping checkpoints
+  }
 
   async start(simulation) {
-    if (this.engines.has(simulation.id)) { this.runEngine(simulation.id, this.engines.get(simulation.id)); return; }
+    if (this.engines.has(simulation.id)) {
+      this.runEngine(simulation.id, this.engines.get(simulation.id));
+      return;
+    }
     const { rows: individuals } = await query('SELECT * FROM individuals WHERE simulation_id = $1', [simulation.id]);
     const engine = new SimulationEngine(simulation);
     engine.load(individuals.map(parseIndividual));
     engine.onTick = (data) => this.broadcast(simulation.id, { type: 'tick', ...data });
+
     engine.onCheckpoint = async (cp) => {
-      await query(`INSERT INTO checkpoints (simulation_id, sim_day, sim_year, population_count, population_snapshot, world_state, cultural_state, tech_state, stats) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-        [simulation.id, cp.sim_day, cp.sim_year, cp.population_count, JSON.stringify(cp.population_snapshot), JSON.stringify(cp.world_state), JSON.stringify(cp.cultural_state), JSON.stringify(cp.tech_state), JSON.stringify(cp.stats)]);
-      await this.persistState(simulation.id, engine);
-      await this.persistPopulation(simulation.id, engine);
+      // Skip if a checkpoint is already in progress for this simulation
+      if (this._checkpointLocks.get(simulation.id)) return;
+      this._checkpointLocks.set(simulation.id, true);
+      try {
+        await withRetry(() => query(
+          `INSERT INTO checkpoints (simulation_id, sim_day, sim_year, population_count, population_snapshot, world_state, cultural_state, tech_state, stats)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+          [simulation.id, cp.sim_day, cp.sim_year, cp.population_count,
+           JSON.stringify(cp.population_snapshot), JSON.stringify(cp.world_state),
+           JSON.stringify(cp.cultural_state), JSON.stringify(cp.tech_state), JSON.stringify(cp.stats)]
+        ));
+        await withRetry(() => this.persistState(simulation.id, engine));
+        await withRetry(() => this.persistPopulation(simulation.id, engine));
+      } catch (err) {
+        console.error(`[SimulationEngine] checkpoint error: ${err.message}`);
+      } finally {
+        this._checkpointLocks.set(simulation.id, false);
+      }
     };
+
     this.engines.set(simulation.id, engine);
     this.runEngine(simulation.id, engine);
   }
@@ -33,12 +68,61 @@ class SimulationManager {
   pause(simId) { this.engines.get(simId)?.pause(); }
   getEngine(simId) { return this.engines.get(simId); }
   setSpeed(simId, speed) { const engine = this.engines.get(simId); if (engine) engine.speedMultiplier = speed; }
+
   async persistState(simId, engine = this.engines.get(simId)) {
     if (!engine) return;
     await query(
-      'UPDATE simulations SET current_day = $1, current_year = $2, world_state = $3, updated_at = NOW() WHERE id = $4',
+      'UPDATE simulations SET current_day=$1, current_year=$2, world_state=$3, updated_at=NOW() WHERE id=$4',
       [engine.currentDay, Math.floor(engine.currentDay / 365), JSON.stringify(engine.worldState), simId]
     );
+  }
+
+  // Bulk UPSERT — one query per BATCH_SIZE individuals instead of N sequential queries
+  async persistPopulation(simId, engine) {
+    const all = [...engine.population.values()];
+    if (all.length === 0) return;
+
+    for (let start = 0; start < all.length; start += BATCH_SIZE) {
+      const chunk = all.slice(start, start + BATCH_SIZE);
+      const placeholders = [];
+      const params = [];
+      let p = 1;
+
+      for (const ind of chunk) {
+        placeholders.push(`($${p},$${p+1},$${p+2},$${p+3},$${p+4},$${p+5},$${p+6},$${p+7},$${p+8},$${p+9},$${p+10},$${p+11},$${p+12},$${p+13},$${p+14},$${p+15},$${p+16},$${p+17},$${p+18},$${p+19})`);
+        params.push(
+          ind.id, simId, ind.birth_day, ind.death_day, !ind.is_dead, ind.sex,
+          ind.x, ind.y,
+          JSON.stringify(ind.genome),
+          JSON.stringify(ind.phenotype),
+          JSON.stringify(ind.epigenome ?? {}),
+          JSON.stringify(ind.health),
+          JSON.stringify(ind.mind),
+          JSON.stringify(ind.social),
+          JSON.stringify(ind.skills ?? []),
+          JSON.stringify(ind.beliefs instanceof Set ? [...ind.beliefs] : (Array.isArray(ind.beliefs) ? ind.beliefs : [])),
+          JSON.stringify(ind.language),
+          JSON.stringify(ind.memory ?? {}),
+          ind.parent_1_id ?? null,
+          ind.parent_2_id ?? null
+        );
+        p += 20;
+      }
+
+      await query(
+        `INSERT INTO individuals
+           (id,simulation_id,birth_day,death_day,alive,sex,x,y,genome,phenotype,epigenome,health,mind,social,skills,beliefs,language,memory,parent_1_id,parent_2_id)
+         VALUES ${placeholders.join(',')}
+         ON CONFLICT (id) DO UPDATE SET
+           death_day=EXCLUDED.death_day, alive=EXCLUDED.alive,
+           x=EXCLUDED.x, y=EXCLUDED.y,
+           phenotype=EXCLUDED.phenotype, epigenome=EXCLUDED.epigenome,
+           health=EXCLUDED.health, mind=EXCLUDED.mind, social=EXCLUDED.social,
+           skills=EXCLUDED.skills, beliefs=EXCLUDED.beliefs,
+           language=EXCLUDED.language, memory=EXCLUDED.memory`,
+        params
+      );
+    }
   }
 
   registerWs(simId, ws) {
@@ -52,13 +136,6 @@ class SimulationManager {
     if (!clients) return;
     const msg = JSON.stringify(data);
     for (const ws of clients) if (ws.readyState === 1) ws.send(msg);
-  }
-
-  async persistPopulation(simId, engine) {
-    for (const ind of engine.population.values()) {
-      await query(`INSERT INTO individuals (id,simulation_id,birth_day,death_day,alive,sex,x,y,genome,phenotype,epigenome,health,mind,social,skills,beliefs,language,memory,parent_1_id,parent_2_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) ON CONFLICT (id) DO UPDATE SET death_day=EXCLUDED.death_day,alive=EXCLUDED.alive,x=EXCLUDED.x,y=EXCLUDED.y,phenotype=EXCLUDED.phenotype,epigenome=EXCLUDED.epigenome,health=EXCLUDED.health,mind=EXCLUDED.mind,social=EXCLUDED.social,skills=EXCLUDED.skills,beliefs=EXCLUDED.beliefs,language=EXCLUDED.language,memory=EXCLUDED.memory`,
-        [ind.id,simId,ind.birth_day,ind.death_day,!ind.is_dead,ind.sex,ind.x,ind.y,JSON.stringify(ind.genome),JSON.stringify(ind.phenotype),JSON.stringify(ind.epigenome),JSON.stringify(ind.health),JSON.stringify(ind.mind),JSON.stringify(ind.social),JSON.stringify(ind.skills),JSON.stringify(ind.beliefs instanceof Set?[...ind.beliefs]:(Array.isArray(ind.beliefs)?ind.beliefs:[])),JSON.stringify(ind.language),JSON.stringify(ind.memory),ind.parent_1_id,ind.parent_2_id]);
-    }
   }
 }
 
