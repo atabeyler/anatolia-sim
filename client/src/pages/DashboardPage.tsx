@@ -164,13 +164,33 @@ const inputStyle: React.CSSProperties = {
 function UnitInput({ label, value, unit, min, max, onChange, color = '#c0d0f0' }: {
   label: string; value: number; unit: string; min: number; max: number; onChange: (v: number) => void; color?: string;
 }) {
+  // Local raw string while user is typing — only committed on blur
+  const [raw, setRaw] = useState(String(value));
+
+  // Sync when parent value changes (e.g., linked slider moves)
+  useEffect(() => { setRaw(String(value)); }, [value]);
+
+  function commit(str: string) {
+    const v = parseInt(str, 10);
+    if (!isNaN(v)) {
+      const clamped = Math.max(min, Math.min(max, v));
+      onChange(clamped);
+      setRaw(String(clamped));
+    } else {
+      setRaw(String(value)); // revert to last valid value
+    }
+  }
+
   return (
     <div>
       <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono', letterSpacing: '0.1em' }}>{label}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
         <input
-          type="number" min={min} max={max} value={value}
-          onChange={e => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) onChange(Math.max(min, Math.min(max, v))); }}
+          type="number" min={min} max={max}
+          value={raw}
+          onChange={e => setRaw(e.target.value)}
+          onBlur={() => commit(raw)}
+          onKeyDown={e => { if (e.key === 'Enter') commit((e.target as HTMLInputElement).value); }}
           style={{ ...inputStyle, flex: 1, color }}
         />
         <span style={{ fontSize: 9, color: '#5060a0', fontFamily: 'Share Tech Mono', flexShrink: 0 }}>{unit}</span>

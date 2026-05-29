@@ -366,6 +366,9 @@ export class SimulationEngine {
     else if (ageYears > 60) speed = 0.004;
     else                    speed = 0.02;
 
+    // Founders move very slowly — food and water are at their home site
+    if (ind.is_founder) speed *= 0.25;
+
     if ((ind.satiation ?? 0.5) < 0.3) speed *= 1.6;
     if (ind.health?.pregnancy)        speed *= 0.4;
 
@@ -373,13 +376,14 @@ export class SimulationEngine {
     if (ind._moveAngle === undefined) ind._moveAngle = Math.random() * Math.PI * 2;
     ind._moveAngle += (Math.random() - 0.5) * 0.4;
 
-    // ── Founders: stay near starting territory (food/water is here) ─────────
+    // ── Founders: angle bias toward home territory ───────────────────────────
     if (ind.is_founder && ind.home_x !== undefined) {
       const dx = ind.home_x - (ind.x ?? 0);
       const dy = ind.home_y - (ind.y ?? 0);
       const distFromHome = Math.hypot(dx, dy);
-      if (distFromHome > 0.3) {
-        const pull = Math.min(1, distFromHome / 1.5) * 0.9;
+      if (distFromHome > 0.2) {
+        // Strong pull back toward home whenever any distance away
+        const pull = Math.min(1, distFromHome / 0.5) * 0.95;
         ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
       }
     }
@@ -431,6 +435,17 @@ export class SimulationEngine {
     const step = speed * (0.6 + Math.random() * 0.8);
     ind.x = Math.max(-180, Math.min(180, (ind.x ?? 0) + Math.cos(ind._moveAngle) * step));
     ind.y = Math.max(-85,  Math.min(85,  (ind.y ?? 0) + Math.sin(ind._moveAngle) * step));
+
+    // ── Founders: hard position clamp — never stray more than 1° from home ──
+    if (ind.is_founder && ind.home_x !== undefined) {
+      const dx = ind.x - ind.home_x;
+      const dy = ind.y - ind.home_y;
+      const dist = Math.hypot(dx, dy);
+      if (dist > 1.0) {
+        ind.x = ind.home_x + (dx / dist);
+        ind.y = ind.home_y + (dy / dist);
+      }
+    }
   }
 
   updatePhysiology(individual, resourcePressure) {
