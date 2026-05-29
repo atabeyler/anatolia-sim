@@ -51,8 +51,8 @@ export function createChild(parent1, parent2, birthDay, simulationId, communityL
   return {
     id: uuidv4(), simulation_id: simulationId,
     birth_day: birthDay, death_day: null, alive: true, sex,
-    x: parent1.x + (Math.random() - 0.5) * 2,
-    y: parent1.y + (Math.random() - 0.5) * 2,
+    x: parent1.x + (Math.random() - 0.5) * 0.04,
+    y: parent1.y + (Math.random() - 0.5) * 0.04,
     genome, phenotype,
     epigenome: inheritEpigenome(parent1, parent2),
     health: createInitialHealth(phenotype, true),

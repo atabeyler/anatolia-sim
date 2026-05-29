@@ -362,29 +362,42 @@ export class SimulationEngine {
 
     // Base speed in degrees/day
     let speed;
-    if (ageYears < 12)      speed = 0.012;
-    else if (ageYears > 60) speed = 0.004;
-    else                    speed = 0.02;
+    if (ageYears < 12)      speed = 0.008;
+    else if (ageYears > 60) speed = 0.002;
+    else                    speed = 0.012;
 
-    // Founders move very slowly — food and water are at their home site
-    if (ind.is_founder) speed *= 0.25;
+    // Founders are fully sedentary — food and water are at their home site
+    if (ind.is_founder) speed *= 0.1;
 
-    if ((ind.satiation ?? 0.5) < 0.3) speed *= 1.6;
-    if (ind.health?.pregnancy)        speed *= 0.4;
+    if ((ind.satiation ?? 0.5) < 0.3 && !ind.is_founder) speed *= 1.4;
+    if (ind.health?.pregnancy)                            speed *= 0.4;
 
     // Persistent direction with slow random drift
     if (ind._moveAngle === undefined) ind._moveAngle = Math.random() * Math.PI * 2;
-    ind._moveAngle += (Math.random() - 0.5) * 0.4;
+    ind._moveAngle += (Math.random() - 0.5) * 0.3;
 
-    // ── Founders: angle bias toward home territory ───────────────────────────
+    // ── Founders: strong pull back toward home ───────────────────────────────
     if (ind.is_founder && ind.home_x !== undefined) {
       const dx = ind.home_x - (ind.x ?? 0);
       const dy = ind.home_y - (ind.y ?? 0);
       const distFromHome = Math.hypot(dx, dy);
-      if (distFromHome > 0.2) {
-        // Strong pull back toward home whenever any distance away
-        const pull = Math.min(1, distFromHome / 0.5) * 0.95;
-        ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
+      if (distFromHome > 0.01) {
+        ind._moveAngle = Math.atan2(dy, dx) * 0.98 + ind._moveAngle * 0.02;
+      }
+    }
+
+    // ── Group territory anchor — all members stay near territory center ──────
+    if (ind.group_id && !ind.is_founder) {
+      const grp = this.groups.find(g => g.id === ind.group_id);
+      if (grp?.territory) {
+        const dx = grp.territory.x - (ind.x ?? 0);
+        const dy = grp.territory.y - (ind.y ?? 0);
+        const dist = Math.hypot(dx, dy);
+        const pullRadius = grp.territory.radius ?? 1;
+        if (dist > pullRadius * 0.5) {
+          const pull = Math.min(1, (dist - pullRadius * 0.5) / pullRadius) * 0.75;
+          ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
+        }
       }
     }
 
@@ -395,11 +408,9 @@ export class SimulationEngine {
         const dx = (mate.x ?? 0) - (ind.x ?? 0);
         const dy = (mate.y ?? 0) - (ind.y ?? 0);
         const dist = Math.hypot(dx, dy);
-        if (dist > 0.3) {
-          const angleToMate = Math.atan2(dy, dx);
-          // Blend current angle toward mate; stronger pull the further apart
-          const pull = Math.min(1, dist / 3) * 0.7;
-          ind._moveAngle = ind._moveAngle * (1 - pull) + angleToMate * pull;
+        if (dist > 0.1) {
+          const pull = Math.min(1, dist / 2) * 0.7;
+          ind._moveAngle = ind._moveAngle * (1 - pull) + Math.atan2(dy, dx) * pull;
         }
       }
     }
@@ -411,22 +422,22 @@ export class SimulationEngine {
         const dx = (parent.x ?? 0) - (ind.x ?? 0);
         const dy = (parent.y ?? 0) - (ind.y ?? 0);
         const dist = Math.hypot(dx, dy);
-        if (dist > 0.2) {
-          const pull = Math.min(1, dist / 2) * 0.85;
+        if (dist > 0.05) {
+          const pull = Math.min(1, dist / 0.5) * 0.9;
           ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
         }
       }
     }
 
-    // ── Adolescents (12–18): loosely attached to parents ────────────────────
+    // ── Adolescents (12–18): stay reasonably close to parents ───────────────
     if (ageYears >= 12 && ageYears < 18) {
       const parent = this.population.get(ind.parent_1_id) ?? this.population.get(ind.parent_2_id);
       if (parent && !parent.is_dead) {
         const dx = (parent.x ?? 0) - (ind.x ?? 0);
         const dy = (parent.y ?? 0) - (ind.y ?? 0);
         const dist = Math.hypot(dx, dy);
-        if (dist > 2) {
-          const pull = Math.min(1, dist / 8) * 0.4;
+        if (dist > 0.3) {
+          const pull = Math.min(1, dist / 2) * 0.5;
           ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
         }
       }
@@ -436,14 +447,14 @@ export class SimulationEngine {
     ind.x = Math.max(-180, Math.min(180, (ind.x ?? 0) + Math.cos(ind._moveAngle) * step));
     ind.y = Math.max(-85,  Math.min(85,  (ind.y ?? 0) + Math.sin(ind._moveAngle) * step));
 
-    // ── Founders: hard position clamp — never stray more than 1° from home ──
+    // ── Founders: hard position clamp — essentially stationary ───────────────
     if (ind.is_founder && ind.home_x !== undefined) {
       const dx = ind.x - ind.home_x;
       const dy = ind.y - ind.home_y;
       const dist = Math.hypot(dx, dy);
-      if (dist > 1.0) {
-        ind.x = ind.home_x + (dx / dist);
-        ind.y = ind.home_y + (dy / dist);
+      if (dist > 0.02) {
+        ind.x = ind.home_x + (dx / dist) * 0.02;
+        ind.y = ind.home_y + (dy / dist) * 0.02;
       }
     }
   }
