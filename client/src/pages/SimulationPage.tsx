@@ -26,6 +26,7 @@ import GodPanel from '../components/panels/GodPanel';
 import TimeMachinePanel from '../components/panels/TimeMachinePanel';
 import AnalysisPanel from '../components/panels/AnalysisPanel';
 import HypothesisPanel from '../components/panels/HypothesisPanel';
+import EventsPanel from '../components/panels/EventsPanel';
 
 const SPEEDS = [1, 5, 20, 100];
 
@@ -97,7 +98,7 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
 
   const filtered = events
     .filter(ev => IMPORTANT_TYPES.some(t => ev.event_type?.toLowerCase().includes(t)))
-    .slice(0, 12);
+    .slice(0, 3);
 
   return (
     <div style={{
@@ -742,6 +743,7 @@ export default function SimulationPage() {
       )}
 
       {/* ═══ OVERLAY PANELS ═══ */}
+      <EventsPanel />
       <PopulationPanel />
       <BiologyPanel />
       <EnvironmentPanel />

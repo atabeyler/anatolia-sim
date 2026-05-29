@@ -1,97 +1,141 @@
+import { useState } from 'react';
+import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
-import { useEffect, useRef } from 'react';
 
-const EVENT_TYPE_TR: Record<string, string> = {
-  birth: 'DOĞUM', death: 'ÖLÜM', technology: 'TEKNOLOJİ', disaster: 'AFET',
-  language: 'DİL', belief: 'İNANÇ', art: 'SANAT', culture: 'KÜLTÜR',
-  trade: 'TİCARET', epidemic: 'SALGIN', architecture: 'MİMARİ', law: 'HUKUK',
-  astronomy: 'ASTRONOMİ', social: 'SOSYAL',
-};
+const FILTERS = [
+  { id: 'all',        labelTr: 'Tümü',     labelEn: 'All',       color: '#a0c8b0' },
+  { id: 'birth',      labelTr: 'Doğum',    labelEn: 'Birth',     color: '#7aff9a' },
+  { id: 'death',      labelTr: 'Ölüm',     labelEn: 'Death',     color: '#e08080' },
+  { id: 'technology', labelTr: 'Teknoloji',labelEn: 'Tech',      color: '#7dd3fc' },
+  { id: 'language',   labelTr: 'Dil',      labelEn: 'Language',  color: '#a0b4ff' },
+  { id: 'discovery',  labelTr: 'Keşif',    labelEn: 'Discovery', color: '#d4a838' },
+  { id: 'disaster',   labelTr: 'Afet',     labelEn: 'Disaster',  color: '#f97316' },
+  { id: 'belief',     labelTr: 'İnanç',    labelEn: 'Belief',    color: '#a855f7' },
+];
 
-const IMPORTANCE_COLOR: Record<number, string> = {
-  1: '#4a5578',
-  2: '#7080b0',
-  3: '#4f6ef7',
-  4: '#d4a838',
-  5: '#e05a5a',
-};
+function evColor(type: string) {
+  if (type?.includes('birth'))      return '#7aff9a';
+  if (type?.includes('death'))      return '#e08080';
+  if (type?.includes('technology')) return '#7dd3fc';
+  if (type?.includes('language') || type?.includes('word')) return '#a0b4ff';
+  if (type?.includes('discovery'))  return '#d4a838';
+  if (type?.includes('disaster'))   return '#f97316';
+  if (type?.includes('belief'))     return '#a855f7';
+  return '#4a7060';
+}
 
-const EVENT_ICONS: Record<string, string> = {
-  birth: '◈', death: '✦', technology: '⟁', disaster: '⚠', language: '◉',
-  belief: '✧', art: '◆', culture: '◇', trade: '⟐', epidemic: '⊗',
-  architecture: '⊞', law: '⊜', astronomy: '○', social: '⊕', default: '▸',
-};
+function evIcon(type: string) {
+  if (type?.includes('birth'))      return '+';
+  if (type?.includes('death'))      return '†';
+  if (type?.includes('technology')) return '⚙';
+  if (type?.includes('language') || type?.includes('word')) return '🔤';
+  if (type?.includes('discovery'))  return '◆';
+  if (type?.includes('disaster'))   return '⚠';
+  if (type?.includes('belief'))     return '☽';
+  return '·';
+}
+
+function trTr(desc: string, type: string): string {
+  if (!desc) return type;
+  return desc
+    .replace('New individual born', 'Yeni birey doğdu')
+    .replace('Individual died: starvation', 'Birey açlıktan öldü')
+    .replace('Individual died: dehydration', 'Birey susuzluktan öldü')
+    .replace('Individual died: old_age', 'Birey yaşlılıktan öldü')
+    .replace('Individual died: predator', 'Birey yırtıcı tarafından öldürüldü')
+    .replace(/Individual died: (.+)/, (_: string, c: string) => `Birey öldü: ${c}`)
+    .replace(/Technology discovered: (.+)/, (_: string, t: string) => `Teknoloji: ${t.replace(/_/g, ' ')}`)
+    .replace(/killed (\d+) individuals/, (_: string, n: string) => `${n} bireyi öldürdü`);
+}
 
 export default function EventsPanel() {
-  const { events, sidebarExpanded, lang } = useSimStore();
-  const listRef = useRef<HTMLDivElement>(null);
-  const prevLen = useRef(0);
+  const { events, lang } = useSimStore();
+  const [filter, setFilter] = useState('all');
 
-  useEffect(() => {
-    if (events.length > prevLen.current && listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
-    }
-    prevLen.current = events.length;
-  }, [events.length]);
+  const visible = filter === 'all'
+    ? events
+    : events.filter(ev => ev.event_type?.toLowerCase().includes(filter));
 
-  const leftPad = sidebarExpanded ? 176 : 48;
+  const counts: Record<string, number> = {};
+  for (const f of FILTERS.slice(1)) {
+    counts[f.id] = events.filter(ev => ev.event_type?.toLowerCase().includes(f.id)).length;
+  }
 
   return (
-    <div
-      className="absolute bottom-0 right-0 z-30 flex flex-col"
-      style={{
-        left: leftPad,
-        height: 110,
-        background: 'rgba(2,2,12,0.88)',
-        borderTop: '1px solid rgba(79,110,247,0.25)',
-        backdropFilter: 'blur(12px)',
-        transition: 'left 0.22s ease',
-      }}>
+    <DetailPanel panelId="olaylar" title="Event Log" titleTr="Olay Kaydı">
 
-      {/* Header strip */}
-      <div className="flex items-center gap-2 px-3 flex-shrink-0"
-        style={{ height: 22, borderBottom: '1px solid rgba(79,110,247,0.15)' }}>
-        <div className="w-1 h-3 bg-sim-accent" style={{ boxShadow: '0 0 5px rgba(79,110,247,0.8)' }} />
-        <span className="font-orbitron tracking-[0.25em] text-sim-accent" style={{ fontSize: 8 }}>
-          {lang === 'tr' ? 'OLAY KAYDI' : 'EVENT LOG'}
-        </span>
-        <div className="w-1 h-1 rounded-full bg-sim-green pulse-live ml-1" />
-        <span className="font-share-tech text-sim-green tracking-widest" style={{ fontSize: 8 }}>
-          {lang === 'tr' ? 'CANLI' : 'LIVE'}
-        </span>
-        <div className="flex-1" />
-        <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 8 }}>
-          {events.length.toString().padStart(4, '0')} {lang === 'tr' ? 'OLAY' : 'EVENTS'}
-        </span>
+      {/* Summary row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 3, marginBottom: 8 }}>
+        {FILTERS.slice(1).map(f => (
+          <div key={f.id} style={{ background: 'rgba(0,15,8,0.7)', border: `1px solid ${f.color}22`, padding: '3px 5px' }}>
+            <div style={{ fontSize: 6, color: f.color, letterSpacing: '0.08em', opacity: 0.7, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+              {lang === 'tr' ? f.labelTr.toUpperCase() : f.labelEn.toUpperCase()}
+            </div>
+            <div style={{ fontSize: 14, color: f.color, fontFamily: 'Orbitron, monospace', fontWeight: 700, lineHeight: 1 }}>
+              {counts[f.id] ?? 0}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Log stream */}
-      <div ref={listRef} className="flex-1 overflow-y-auto px-2 py-1" style={{ scrollbarWidth: 'none' }}>
-        {events.length === 0 ? (
-          <div className="flex items-center h-full">
-            <span className="font-share-tech text-sim-muted/40 tracking-widest animate-pulse" style={{ fontSize: 9 }}>
-              {lang === 'tr' ? 'OLAY BEKLENİYOR...' : 'AWAITING EVENTS...'}
-            </span>
-          </div>
-        ) : (
-          [...events].reverse().map((ev, i) => {
-            const color = IMPORTANCE_COLOR[ev.importance] ?? IMPORTANCE_COLOR[1];
-            const icon = EVENT_ICONS[ev.event_type] ?? EVENT_ICONS.default;
-            return (
-              <div key={i} className="flex items-baseline gap-1.5 py-0.5"
-                style={{ borderBottom: '1px solid rgba(79,110,247,0.06)', opacity: i === 0 ? 1 : Math.max(0.35, 1 - i * 0.07) }}>
-                <span className="font-share-tech flex-shrink-0" style={{ fontSize: 8, color: '#3a4060' }}>
-                  Y{ev.sim_year}·{ev.sim_day}
+      {/* Filter chips */}
+      <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginBottom: 8 }}>
+        {FILTERS.map(f => (
+          <button key={f.id} onClick={() => setFilter(f.id)}
+            style={{
+              padding: '2px 6px', fontSize: 7.5,
+              border: `1px solid ${filter === f.id ? f.color : '#1a3a2a'}`,
+              color: filter === f.id ? f.color : '#3a6040',
+              background: filter === f.id ? `${f.color}14` : 'transparent',
+              fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer',
+            }}>
+            {lang === 'tr' ? f.labelTr : f.labelEn}
+            {f.id !== 'all' && ` ${counts[f.id] ?? 0}`}
+          </button>
+        ))}
+      </div>
+
+      {/* Total */}
+      <div style={{ fontSize: 7.5, color: '#2a5040', marginBottom: 6, letterSpacing: '0.06em' }}>
+        {visible.length} / {events.length} {lang === 'tr' ? 'olay' : 'events'}
+      </div>
+
+      {/* Event list */}
+      {visible.length === 0 ? (
+        <div style={{ fontSize: 9, color: '#2a4a3a', textAlign: 'center', padding: '24px 0', fontStyle: 'italic' }}>
+          {lang === 'tr' ? 'Olay bulunamadı.' : 'No events found.'}
+        </div>
+      ) : visible.map((ev, i) => {
+        const color = evColor(ev.event_type);
+        const icon = evIcon(ev.event_type);
+        const desc = lang === 'tr'
+          ? trTr(ev.description ?? ev.event_type, ev.event_type)
+          : (ev.description ?? ev.event_type);
+        return (
+          <div key={i} style={{
+            display: 'flex', gap: 6, alignItems: 'flex-start',
+            padding: '5px 6px', marginBottom: 2,
+            background: i === 0 ? `${color}0c` : 'transparent',
+            border: `1px solid ${i < 3 ? color + '28' : '#0a1a0f'}`,
+            opacity: Math.max(0.35, 1 - i * 0.012),
+          }}>
+            <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1.1, color, marginTop: 1 }}>{icon}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 2, alignItems: 'center' }}>
+                <span style={{ fontSize: 7, color: '#3a6040', fontFamily: 'Orbitron, monospace', flexShrink: 0 }}>
+                  Y{String(ev.sim_year).padStart(4, '0')} G{String(ev.sim_day % 365).padStart(3, '0')}
                 </span>
-                <span style={{ color, fontSize: 10, flexShrink: 0 }}>{icon}</span>
-                <span className="font-share-tech truncate" style={{ fontSize: 9, color: i < 2 ? '#b0c0e0' : color }}>
-                  {ev.description}
+                <span style={{ fontSize: 6.5, color: `${color}88`, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  {ev.event_type?.replace(/_/g, ' ')}
                 </span>
               </div>
-            );
-          })
-        )}
-      </div>
-    </div>
+              <div style={{ fontSize: 8.5, color: i < 5 ? color : '#6a9a7a', lineHeight: 1.45, wordBreak: 'break-word' }}>
+                {desc}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </DetailPanel>
   );
 }
