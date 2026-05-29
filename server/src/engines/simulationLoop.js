@@ -461,7 +461,6 @@ export class SimulationEngine {
     health.hp = Math.max(0, health.hp - stressLoad * 0.0005);
 
     // Age-related decline
-    const ageYears = individual.age / 365;
     if (ageYears > 50) health.hp = Math.max(0, health.hp - (ageYears - 50) * 0.00005);
 
     individual.health_score = health.hp;
