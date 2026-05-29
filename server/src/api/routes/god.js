@@ -73,6 +73,44 @@ router.post('/:simId/intervene', authenticate, requireSimulationOwner, async (re
         affected = alive.length;
         break;
       }
+      case 'volcano': {
+        const { power = 7, lat = 0, lon = 0, radius = 200 } = params;
+        for (const ind of alive) {
+          const dist = Math.hypot(ind.x - lon, ind.y - lat);
+          if (dist < radius) {
+            const risk = (power / 10) * Math.exp(-dist / (radius * 0.4));
+            if (Math.random() < risk * 0.5) { markDead(ind, engine.currentDay, 'volcano'); deaths++; }
+            else ind.health.hp = Math.max(0.1, ind.health.hp - risk * 0.4);
+            affected++;
+          }
+        }
+        engine.worldState.food_abundance = Math.max(0.05, engine.worldState.food_abundance * (1 - power / 25));
+        engine.worldState.temperature = (engine.worldState.temperature ?? 20) - power * 0.4;
+        break;
+      }
+      case 'meteor': {
+        const { size = 3, lat = 0, lon = 0 } = params;
+        const radius = size * 40;
+        for (const ind of alive) {
+          const dist = Math.hypot(ind.x - lon, ind.y - lat);
+          if (dist < radius) {
+            const killProb = Math.exp(-dist / (radius * 0.3)) * 0.95;
+            if (Math.random() < killProb) { markDead(ind, engine.currentDay, 'meteor'); deaths++; }
+            affected++;
+          }
+        }
+        engine.worldState.food_abundance = Math.max(0.02, engine.worldState.food_abundance * (0.6 - size * 0.1));
+        engine.worldState.temperature = (engine.worldState.temperature ?? 20) - size * 1.5;
+        break;
+      }
+      case 'longevity': {
+        const ind = engine.population.get(params.individual_id);
+        if (ind) {
+          ind.phenotype.max_lifespan = Math.min(200, ind.phenotype.max_lifespan + (params.extra_years ?? 50));
+          affected = 1;
+        }
+        break;
+      }
     }
     await query(`INSERT INTO god_interventions (simulation_id,sim_day,sim_year,type,params,affected_individuals,deaths,user_note) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
       [simId, engine.currentDay, Math.floor(engine.currentDay/365), type, JSON.stringify(params), affected, deaths, user_note]);
