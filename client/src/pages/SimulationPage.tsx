@@ -158,6 +158,16 @@ export default function SimulationPage() {
   const [globeCoord, setGlobeCoord] = useState<{ lat: number; lon: number } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPage, setMenuPage] = useState<'about' | 'mission' | 'contact' | null>(null);
+
+  // ARIA tab-switching command listener
+  useEffect(() => {
+    function onAriaTab(e: Event) {
+      const tab = (e as CustomEvent).detail;
+      if (tab === 'harita' || tab === 'durum' || tab === 'kontrol') setActiveTab(tab);
+    }
+    window.addEventListener('aria-set-tab', onAriaTab);
+    return () => window.removeEventListener('aria-set-tab', onAriaTab);
+  }, []);
   useSimWebSocket(simId ?? null);
 
   // Real clock

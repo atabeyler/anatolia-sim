@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Globe, Plus, Play, LogOut, BarChart2, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
+import AriaButton from '../components/layout/AriaButton';
 
 // ── localStorage persistence ──────────────────────────────────────────────────
 const STORAGE_KEY = 'anatolia_founders_v4';
@@ -440,6 +441,7 @@ export default function DashboardPage() {
                 </span>
               </div>
             )}
+            <AriaButton />
             <div className="flex items-center gap-2">
               <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 10 }}>{user?.username?.toUpperCase()}</span>
               <button onClick={() => { logout(); navigate('/login'); }}

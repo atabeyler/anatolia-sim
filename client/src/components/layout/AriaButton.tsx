@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSimStore } from '../../store/simStore';
 import axios from 'axios';
 import { Mic, MicOff, Volume2, Loader2, Radio } from 'lucide-react';
@@ -8,10 +9,10 @@ type AriaState = 'idle' | 'wake' | 'command' | 'processing' | 'speaking';
 const WAKE_WORDS = ['antolia', 'anatolia', 'anatolya', 'antolya', 'antoli'];
 
 export default function AriaButton() {
-  const { currentSim, accessToken, stats, events, lang, setActivePanel, setSpeed } = useSimStore();
+  const { currentSim, accessToken, stats, events, lang, setActivePanel, setSpeed, toggleLang } = useSimStore();
+  const navigate = useNavigate();
   const [state, setState] = useState<AriaState>('idle');
   const [transcript, setTranscript] = useState('');
-  const [lastResponse, setLastResponse] = useState('');
   const [showTooltip, setShowTooltip] = useState(false);
   const recRef = useRef<any>(null);
   const hasSR = typeof window !== 'undefined' && !!(
@@ -65,30 +66,50 @@ export default function AriaButton() {
     rec.onend = () => { if (state === 'command') setState('idle'); };
     rec.start();
     recRef.current = rec;
-    // auto-stop after 8s
-    setTimeout(() => { if (recRef.current === rec) { stopRec(); setState('idle'); } }, 8000);
+    setTimeout(() => { if (recRef.current === rec) { stopRec(); setState('idle'); } }, 10000);
   }
 
   function startCommandDirect() {
-    // No Speech Recognition — speak current status
-    const text = lang === 'tr'
-      ? `ARIA rapor veriyor. Yıl ${stats?.year ?? 0}. Nüfus ${stats?.population ?? 0}. ${stats?.technologies ?? 0} teknoloji keşfedildi.`
-      : `ARIA reporting. Year ${stats?.year ?? 0}. Population ${stats?.population ?? 0}. ${stats?.technologies ?? 0} technologies discovered.`;
-    speakTTS(text);
+    if (!stats) {
+      speakTTS(lang === 'tr' ? 'Aktif simülasyon yok.' : 'No active simulation.');
+      return;
+    }
+    speakTTS(buildSummary());
+  }
+
+  function buildSummary(): string {
+    if (!stats) return lang === 'tr' ? 'Simülasyon verisi yok.' : 'No simulation data.';
+    if (lang === 'tr') {
+      return `ARIA rapor veriyor. Yıl ${stats.year}, nüfus ${stats.population}. ` +
+        `${stats.technologies} teknoloji keşfedildi. ` +
+        `Ortalama mutluluk yüzde ${Math.round((stats.happiness_index ?? 0.5) * 100)}. ` +
+        `Mevsim ${stats.season ?? 'bilinmiyor'}, sıcaklık ${stats.temperature ?? 20} derece. ` +
+        `${stats.beliefs ?? 0} inanç sistemi, ${stats.groups ?? 0} sosyal grup mevcut.`;
+    }
+    return `ARIA reporting. Year ${stats.year}, population ${stats.population}. ` +
+      `${stats.technologies} technologies discovered. ` +
+      `Average happiness ${Math.round((stats.happiness_index ?? 0.5) * 100)} percent. ` +
+      `Season ${stats.season ?? 'unknown'}, temperature ${stats.temperature ?? 20} degrees. ` +
+      `${stats.beliefs ?? 0} belief systems, ${stats.groups ?? 0} social groups active.`;
   }
 
   async function processCommand(cmd: string) {
     setState('processing');
     try {
       const { data } = await axios.post('/api/aria/command', {
-        message: cmd, lang,
-        stats: { year: stats?.year, population: stats?.population, technologies: stats?.technologies, season: stats?.season },
-        events: events.slice(0, 5),
+        message: cmd,
+        lang,
+        stats,
+        events: events.slice(0, 8),
+        context: {
+          simStatus: currentSim?.status ?? 'none',
+          simId: currentSim?.id ?? null,
+          hasActiveSim: !!currentSim,
+        },
       }, { headers: { Authorization: `Bearer ${accessToken}` } });
 
       if (data.action) executeAction(data.action);
-      setLastResponse(data.text ?? '');
-      await speakTTS(data.text ?? 'Done.');
+      await speakTTS(data.text ?? (lang === 'tr' ? 'Tamam.' : 'Done.'));
     } catch {
       await speakTTS(lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.');
     }
@@ -99,26 +120,66 @@ export default function AriaButton() {
   function executeAction(action: any) {
     if (!action?.type) return;
     switch (action.type) {
+
       case 'navigate_panel':
+      case 'open_panel':
         setActivePanel(action.panel ?? null);
         break;
+
+      case 'close_panel':
+        setActivePanel(null);
+        break;
+
       case 'change_speed':
-        setSpeed(Number(action.speed) || 1);
+      case 'set_speed': {
+        const speed = Number(action.speed) || 1;
+        setSpeed(speed);
         if (currentSim && accessToken)
-          axios.post(`/api/simulations/${currentSim.id}/speed`, { speed_multiplier: action.speed },
+          axios.post(`/api/simulations/${currentSim.id}/speed`, { speed_multiplier: speed },
             { headers: { Authorization: `Bearer ${accessToken}` } }).catch(() => {});
         break;
+      }
+
       case 'toggle_simulation':
         if (currentSim && accessToken) {
           const a = currentSim.status === 'running' ? 'pause' : 'start';
           axios.post(`/api/simulations/${currentSim.id}/${a}`, {}, { headers: { Authorization: `Bearer ${accessToken}` } }).catch(() => {});
         }
         break;
+
+      case 'start_simulation':
+        if (currentSim && accessToken && currentSim.status !== 'running')
+          axios.post(`/api/simulations/${currentSim.id}/start`, {}, { headers: { Authorization: `Bearer ${accessToken}` } }).catch(() => {});
+        break;
+
+      case 'pause_simulation':
+        if (currentSim && accessToken && currentSim.status === 'running')
+          axios.post(`/api/simulations/${currentSim.id}/pause`, {}, { headers: { Authorization: `Bearer ${accessToken}` } }).catch(() => {});
+        break;
+
       case 'apply_disaster':
-        if (currentSim && accessToken)
+        if (currentSim && accessToken) {
+          const disasterParams = action.params ?? {};
           axios.post(`/api/god/${currentSim.id}/intervene`,
-            { type: action.disaster, params: {}, user_note: 'ARIA command' },
+            { type: action.disaster, params: disasterParams, user_note: 'ARIA sesli komut' },
             { headers: { Authorization: `Bearer ${accessToken}` } }).catch(() => {});
+        }
+        break;
+
+      case 'navigate_to':
+        if (action.route) navigate(action.route);
+        break;
+
+      case 'set_tab':
+        window.dispatchEvent(new CustomEvent('aria-set-tab', { detail: action.tab }));
+        break;
+
+      case 'toggle_lang':
+        toggleLang();
+        break;
+
+      case 'god_mode':
+        setActivePanel('god');
         break;
     }
   }
@@ -136,11 +197,10 @@ export default function AriaButton() {
       src.start();
       await new Promise<void>(res => { src.onended = () => { ctx.close(); res(); }; });
     } catch {
-      // browser TTS fallback
       const utt = new SpeechSynthesisUtterance(text);
       utt.lang = lang === 'tr' ? 'tr-TR' : 'en-US';
       window.speechSynthesis.speak(utt);
-      await new Promise<void>(res => { utt.onend = () => res(); setTimeout(res, 8000); });
+      await new Promise<void>(res => { utt.onend = () => res(); setTimeout(res, 10000); });
     }
   }
 
@@ -161,7 +221,7 @@ export default function AriaButton() {
 
   const labelTr: Record<AriaState, string> = {
     idle: 'ARIA — tıkla',
-    wake: 'Uyandırma bekleniyor…',
+    wake: '"Antolia" deyin…',
     command: 'Komut dinleniyor…',
     processing: 'İşleniyor…',
     speaking: 'ARIA konuşuyor…',
@@ -169,7 +229,7 @@ export default function AriaButton() {
   const labelEn: Record<AriaState, string> = {
     idle: 'ARIA — click',
     wake: 'Say "Antolia"…',
-    command: 'Listening for command…',
+    command: 'Listening…',
     processing: 'Processing…',
     speaking: 'ARIA speaking…',
   };
@@ -197,7 +257,6 @@ export default function AriaButton() {
         )}
       </button>
 
-      {/* Tooltip / status */}
       {(showTooltip || state !== 'idle') && (
         <div style={{
           position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)',
