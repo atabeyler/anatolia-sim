@@ -31,24 +31,27 @@ import EventsPanel from '../components/panels/EventsPanel';
 const SPEEDS = [1, 5, 20, 100];
 
 const MODULES = [
-  { id: 'population',   label: 'NÜFUS',    labelEn: 'POPUL.',   icon: '👥' },
-  { id: 'olaylar',      label: 'OLAYLAR',  labelEn: 'EVENTS',   icon: '📋', special: true },
-  { id: 'language',     label: 'DİL',      labelEn: 'LANG.',    icon: '🔤' },
-  { id: 'timemachine',  label: 'GEÇMİŞ',   labelEn: 'HISTORY',  icon: '⏳' },
-  { id: 'analysis',     label: 'ANALİZ',   labelEn: 'ANALYS.',  icon: '📊' },
-  { id: 'biology',      label: 'MUTASYON', labelEn: 'MUTAT.',   icon: '🧬' },
-  { id: 'god',          label: 'TANRI',    labelEn: 'GOD',      icon: '✦',  accent: '#f97316' },
-  { id: 'psychology',   label: 'AKIL',     labelEn: 'MIND',     icon: '🧠' },
-  { id: 'environment',  label: 'ÇEVRE',    labelEn: 'ENV.',     icon: '🌿' },
-  { id: 'technology',   label: 'TEKNOLOJİ',labelEn: 'TECH',     icon: '⚙' },
-  { id: 'belief',       label: 'İNANÇ',    labelEn: 'BELIEF',   icon: '☽' },
-  { id: 'social',       label: 'SOSYAL',   labelEn: 'SOCIAL',   icon: '🤝' },
-  { id: 'economy',      label: 'EKONOMİ',  labelEn: 'ECON.',    icon: '💰' },
-  { id: 'culture',      label: 'KÜLTÜR',   labelEn: 'CULT.',    icon: '🎭' },
-  { id: 'art',          label: 'SANAT',    labelEn: 'ART',      icon: '🎨' },
-  { id: 'astronomy',    label: 'ASTRONOMİ',labelEn: 'ASTRO.',   icon: '🌙' },
-  { id: 'hypothesis',   label: 'HİPOTEZ',  labelEn: 'HYPOTH.',  icon: '💡' },
-  { id: 'epigenetics',  label: 'EPİGEN.',  labelEn: 'EPIGEN.',  icon: '🔬' },
+  { id: 'population',   label: 'NÜFUS',      labelEn: 'POPUL.',   icon: '👥' },
+  { id: 'olaylar',      label: 'OLAYLAR',    labelEn: 'EVENTS',   icon: '📋', special: true },
+  { id: 'language',     label: 'DİL',        labelEn: 'LANG.',    icon: '🔤' },
+  { id: 'timemachine',  label: 'GEÇMİŞ',     labelEn: 'HISTORY',  icon: '⏳' },
+  { id: 'analysis',     label: 'ANALİZ',     labelEn: 'ANALYS.',  icon: '📊' },
+  { id: 'biology',      label: 'MUTASYON',   labelEn: 'MUTAT.',   icon: '🧬' },
+  { id: 'god',          label: 'TANRI',      labelEn: 'GOD',      icon: '✦',  accent: '#f97316' },
+  { id: 'psychology',   label: 'AKIL',       labelEn: 'MIND',     icon: '🧠' },
+  { id: 'environment',  label: 'ÇEVRE',      labelEn: 'ENV.',     icon: '🌿' },
+  { id: 'technology',   label: 'TEKNOLOJİ',  labelEn: 'TECH',     icon: '⚙' },
+  { id: 'belief',       label: 'İNANÇ',      labelEn: 'BELIEF',   icon: '☽' },
+  { id: 'social',       label: 'SOSYAL',     labelEn: 'SOCIAL',   icon: '🤝' },
+  { id: 'economy',      label: 'EKONOMİ',    labelEn: 'ECON.',    icon: '💰' },
+  { id: 'culture',      label: 'KÜLTÜR',     labelEn: 'CULT.',    icon: '🎭' },
+  { id: 'art',          label: 'SANAT',      labelEn: 'ART',      icon: '🎨' },
+  { id: 'astronomy',    label: 'ASTRONOMİ',  labelEn: 'ASTRO.',   icon: '🌙' },
+  { id: 'hypothesis',   label: 'HİPOTEZ',    labelEn: 'HYPOTH.',  icon: '💡' },
+  { id: 'epigenetics',  label: 'EPİGEN.',    labelEn: 'EPIGEN.',  icon: '🔬' },
+  { id: 'architecture', label: 'MİMARİ',     labelEn: 'ARCH.',    icon: '🏛️' },
+  { id: 'law',          label: 'HUKUK',      labelEn: 'LAW',      icon: '⚖️' },
+  { id: 'microbiome',   label: 'MİKROBİYOM', labelEn: 'MICROB.',  icon: '🦠' },
 ];
 
 const TABS = [
@@ -79,42 +82,54 @@ const IMPORTANT_TYPES = ['birth', 'death', 'language', 'belief', 'technology', '
 function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
   events: any[]; lang: string; fmtEvent: (ev: any) => string; eventColor: (ev: any, i: number) => string;
 }) {
+  const isMob = typeof window !== 'undefined' && window.innerWidth < 640;
   const [pos, setPos] = useState({ x: 8, y: 8 });
   const [dragging, setDragging] = useState(false);
-  const dragStart = useRef({ mouseX: 0, mouseY: 0, panelX: 0, panelY: 0 });
+  const dragStart = useRef({ clientX: 0, clientY: 0, panelX: 0, panelY: 0 });
 
   useEffect(() => {
     if (!dragging) return;
-    function onMove(e: MouseEvent) {
-      const dx = e.clientX - dragStart.current.mouseX;
-      const dy = e.clientY - dragStart.current.mouseY;
-      setPos({ x: dragStart.current.panelX + dx, y: dragStart.current.panelY + dy });
+    function onMove(e: MouseEvent | TouchEvent) {
+      const cx = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+      const cy = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
+      setPos({ x: dragStart.current.panelX + cx - dragStart.current.clientX, y: dragStart.current.panelY + cy - dragStart.current.clientY });
     }
     function onUp() { setDragging(false); }
-    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mousemove', onMove as any);
     window.addEventListener('mouseup', onUp);
-    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+    window.addEventListener('touchmove', onMove as any, { passive: false });
+    window.addEventListener('touchend', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove as any);
+      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchmove', onMove as any);
+      window.removeEventListener('touchend', onUp);
+    };
   }, [dragging]);
+
+  function startDrag(clientX: number, clientY: number) {
+    setDragging(true);
+    dragStart.current = { clientX, clientY, panelX: pos.x, panelY: pos.y };
+  }
 
   const filtered = events
     .filter(ev => IMPORTANT_TYPES.some(t => ev.event_type?.toLowerCase().includes(t)))
     .slice(0, 3);
 
+  const panelW = isMob ? Math.min(200, window.innerWidth - 60) : 250;
+
   return (
     <div style={{
       position: 'absolute', left: pos.x, top: pos.y, zIndex: 30,
-      width: 270, background: 'rgba(0,4,2,0.93)', border: '1px solid #1a4a2a',
+      width: panelW, background: 'rgba(0,4,2,0.93)', border: '1px solid #1a4a2a',
       userSelect: 'none', cursor: dragging ? 'grabbing' : 'default',
       boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
     }}>
-      {/* Drag handle */}
+      {/* Drag handle — mouse + touch */}
       <div
-        onMouseDown={e => {
-          setDragging(true);
-          dragStart.current = { mouseX: e.clientX, mouseY: e.clientY, panelX: pos.x, panelY: pos.y };
-          e.preventDefault();
-        }}
-        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderBottom: '1px solid #0d2018', cursor: 'grab', background: 'rgba(0,20,10,0.9)' }}>
+        onMouseDown={e => { startDrag(e.clientX, e.clientY); e.preventDefault(); }}
+        onTouchStart={e => { startDrag(e.touches[0].clientX, e.touches[0].clientY); }}
+        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderBottom: '1px solid #0d2018', cursor: 'grab', background: 'rgba(0,20,10,0.9)', touchAction: 'none' }}>
         <div style={{ width: 3, height: 12, background: '#00e887', boxShadow: '0 0 4px #00e887', flexShrink: 0 }} />
         <span style={{ fontSize: 7, color: '#00e887', letterSpacing: '0.2em', fontFamily: 'Share Tech Mono, monospace', flex: 1 }}>
           {lang === 'tr' ? 'OLAY KAYDI' : 'EVENT LOG'}
@@ -124,19 +139,19 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
           {lang === 'tr' ? 'CANLI' : 'LIVE'}
         </span>
       </div>
-      {/* Events */}
-      <div style={{ padding: '3px 6px', maxHeight: 200, overflowY: 'auto' }}>
+      {/* Events — 3 rows max */}
+      <div style={{ padding: '2px 6px' }}>
         {filtered.length === 0 ? (
           <div style={{ fontSize: 7, color: '#2a4a3a', padding: '4px 0', fontFamily: 'Share Tech Mono, monospace', fontStyle: 'italic' }}>
-            {lang === 'tr' ? 'Önemli olay bekleniyor...' : 'Awaiting important events...'}
+            {lang === 'tr' ? 'Olay bekleniyor...' : 'Awaiting events...'}
           </div>
         ) : filtered.map((ev, i) => (
           <div key={i} style={{
-            fontSize: 7.5, color: eventColor(ev, i), lineHeight: '1.6',
+            fontSize: isMob ? 7 : 7.5, color: eventColor(ev, i), lineHeight: '1.55',
             fontFamily: 'Share Tech Mono, monospace',
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-            borderBottom: '1px solid rgba(0,50,20,0.3)',
-            opacity: Math.max(0.4, 1 - i * 0.07),
+            borderBottom: i < filtered.length - 1 ? '1px solid rgba(0,50,20,0.3)' : 'none',
+            opacity: Math.max(0.5, 1 - i * 0.15),
           }}>
             {fmtEvent(ev)}
           </div>
