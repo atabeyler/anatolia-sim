@@ -141,10 +141,20 @@ class SimulationManager {
 
 function parseIndividual(row) {
   const isDead = row.is_dead ?? row.alive === false;
+  // Founders always have birth_day < 0 (born before simulation day 0).
+  // is_founder / home_x / home_y are never DB columns, so reconstruct here.
+  const isFounder = (row.birth_day ?? 0) < 0;
+  const social = row.social ?? {};
   return {
     ...row,
     is_dead: isDead,
     alive: !isDead,
+    is_founder: isFounder,
+    home_x: isFounder ? (row.x ?? 0) : undefined,
+    home_y: isFounder ? (row.y ?? 0) : undefined,
+    // group_id is set directly on the individual by processGroupDynamics;
+    // it is also mirrored into social.group_id so it survives persistence.
+    group_id: social.group_id ?? undefined,
     epigenome: row.epigenome ?? {},
     skills: row.skills ?? [],
     beliefs: Array.isArray(row.beliefs) ? row.beliefs : [],

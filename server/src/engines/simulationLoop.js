@@ -47,6 +47,7 @@ export class SimulationEngine {
   }
 
   load(individuals) {
+    const groupMap = new Map();
     for (const ind of individuals) {
       if (!ind.inventory) ind.inventory = initializeInventory();
       if (!ind.psychology) initializePsychology(ind);
@@ -54,7 +55,21 @@ export class SimulationEngine {
       // Beliefs must be a Set in-memory; DB stores as array (Set doesn't JSON-serialize)
       ind.beliefs = new Set(Array.isArray(ind.beliefs) ? ind.beliefs : []);
       this.population.set(ind.id, ind);
+      // Reconstruct groups from persisted social.group_id
+      if (ind.group_id && !ind.is_dead) {
+        if (!groupMap.has(ind.group_id)) {
+          groupMap.set(ind.group_id, {
+            id: ind.group_id, name: null, founder_id: null, leader_id: null,
+            member_ids: [],
+            territory: { x: ind.x ?? 0, y: ind.y ?? 0, radius: 0.3 },
+            alliances: [], rival_ids: [],
+            internal_tension: 0, prestige: 0.1, founded_day: 0,
+          });
+        }
+        groupMap.get(ind.group_id).member_ids.push(ind.id);
+      }
     }
+    this.groups = [...groupMap.values()];
   }
 
   async start() {
