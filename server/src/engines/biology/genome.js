@@ -37,6 +37,21 @@ export const LOCI = {
   TERT_01:   { chr: 5,  trait: 'telomere_length',      type: 'codominant' },
   APOE_01:   { chr: 19, trait: 'longevity',            type: 'codominant' },
 
+  // Motivation & leadership (dopamine D2 pathway)
+  DRD2_01:    { chr: 11, trait: 'motivation',              type: 'codominant' },
+
+  // Pair bonding & cooperation (arginine vasopressin receptor)
+  AVPR1A_01:  { chr: 12, trait: 'pair_bonding',            type: 'codominant' },
+
+  // Muscle power & endurance (actinin alpha-3)
+  ACTN3_01:   { chr: 11, trait: 'muscle_fiber_type',       type: 'codominant' },
+
+  // Memory consolidation & learning speed (adrenergic receptor 2B)
+  ADRA2B_01:  { chr: 2,  trait: 'memory_consolidation',    type: 'codominant' },
+
+  // Novelty seeking & risk tolerance (voltage-gated calcium channel)
+  CACNA1C_01: { chr: 12, trait: 'novelty_seeking',         type: 'codominant' },
+
   // Reproduction
   FSHR_01:   { chr: 2,  trait: 'fertility',            type: 'codominant' },
 
@@ -126,19 +141,24 @@ export function computePhenotype(genome) {
     height_factor:        height_base,
     physical_strength:    Math.min(1, g('STRENGTH_01') * 0.5 + g('HEIGHT_01') * 0.25 + g('METABOLISM_01') * 0.25),
     physical_endurance:   g('METABOLISM_01'),
+    endurance:            Math.min(1, g('ACTN3_01') * 0.5 + g('METABOLISM_01') * 0.3 + g('STRENGTH_01') * 0.2),
     fluid_intelligence,
     working_memory:       g('COMT_01'),
     conscientiousness:    g('DISC1_01'),
+    learning_rate:        Math.min(1, g('ADRA2B_01') * 0.4 + g('BDNF_01') * 0.35 + g('COMT_01') * 0.25),
     language_capacity,
     language_learning:    g('CNTNAP2_01'),
     social_bonding:       g('OXTR_01'),
     social_drive:         g('OXTR_01'),
     oxytocin_sensitivity: g('OXTR_01'),
     empathy:              (g('OXTR_01') + g('RELN_01')) / 2,
+    cooperation:          Math.min(1, g('AVPR1A_01') * 0.5 + g('OXTR_01') * 0.35 + (1 - g('MAOA_01')) * 0.15),
     altruism:             Math.max(0, g('OXTR_01') * 0.7 + (1 - g('MAOA_01')) * 0.3),
     aggression:           g('MAOA_01'),
-    dominance:            (g('MAOA_01') + g('DISC1_01')) / 2,
+    dominance:            Math.min(1, g('DRD2_01') * 0.5 + g('MAOA_01') * 0.3 + g('DISC1_01') * 0.2),
     curiosity:            g('DRD4_01'),
+    risk_tolerance:       Math.min(1, g('CACNA1C_01') * 0.55 + g('DRD4_01') * 0.35 + (1 - g('SLC6A4_01')) * 0.1),
+    innovation:           Math.min(1, (g('CACNA1C_01') + fluid_intelligence + g('DRD4_01')) / 3),
     artistic_sense:       (consciousness_potential + g('DRD4_01')) / 2,
     serotonin:            g('SLC6A4_01'),
     stress_resilience:    g('SLC6A4_01'),

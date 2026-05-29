@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useSimStore } from '../store/simStore';
 
 // ── localStorage persistence ──────────────────────────────────────────────────
-const STORAGE_KEY = 'anatolia_founders_v3';
+const STORAGE_KEY = 'anatolia_founders_v4';
 function saveState(form: any, f1: any, f2: any) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ form, founder1: f1, founder2: f2 })); } catch {}
 }
@@ -32,21 +32,26 @@ const TRAIT_GROUPS = [
   {
     group: 'Zihin', groupEn: 'Mind',
     traits: [
-      { id: 'fluid_intelligence', label: 'Zeka',           labelEn: 'Intelligence',      color: '#7c3aed' },
-      { id: 'curiosity',          label: 'Merak',          labelEn: 'Curiosity',         color: '#f59e0b' },
-      { id: 'conscientiousness',  label: 'Disiplin',       labelEn: 'Discipline',        color: '#3b82f6' },
-      { id: 'language_capacity',  label: 'Dil Yeteneği',   labelEn: 'Language',          color: '#14b8a6' },
-      { id: 'artistic_sense',     label: 'Sanat Duygusu',  labelEn: 'Art Sense',         color: '#f97316' },
-      { id: 'self_awareness',     label: 'Öz Farkındalık', labelEn: 'Self Awareness',    color: '#8b5cf6' },
-      { id: 'stress_resilience',  label: 'Stres Direnci',  labelEn: 'Stress Resilience', color: '#10b981' },
+      { id: 'fluid_intelligence', label: 'Zeka',            labelEn: 'Intelligence',      color: '#7c3aed' },
+      { id: 'curiosity',          label: 'Merak',           labelEn: 'Curiosity',         color: '#f59e0b' },
+      { id: 'conscientiousness',  label: 'Disiplin',        labelEn: 'Discipline',        color: '#3b82f6' },
+      { id: 'language_capacity',  label: 'Dil Yeteneği',    labelEn: 'Language',          color: '#14b8a6' },
+      { id: 'artistic_sense',     label: 'Sanat Duygusu',   labelEn: 'Art Sense',         color: '#f97316' },
+      { id: 'self_awareness',     label: 'Öz Farkındalık',  labelEn: 'Self Awareness',    color: '#8b5cf6' },
+      { id: 'stress_resilience',  label: 'Stres Direnci',   labelEn: 'Stress Resilience', color: '#10b981' },
+      { id: 'learning_rate',      label: 'Öğrenme Hızı',    labelEn: 'Learning Rate',     color: '#818cf8' },
+      { id: 'risk_tolerance',     label: 'Risk Toleransı',  labelEn: 'Risk Tolerance',    color: '#fb7185' },
+      { id: 'innovation',         label: 'İnovasyon',       labelEn: 'Innovation',        color: '#e879f9' },
     ],
   },
   {
     group: 'Sosyal', groupEn: 'Social',
     traits: [
-      { id: 'empathy',        label: 'Empati',       labelEn: 'Empathy',        color: '#ec4899' },
-      { id: 'social_bonding', label: 'Sosyal Bağ',   labelEn: 'Social Bonding', color: '#f472b6' },
-      { id: 'aggression',     label: 'Saldırganlık', labelEn: 'Aggression',     color: '#ef4444' },
+      { id: 'empathy',        label: 'Empati',           labelEn: 'Empathy',           color: '#ec4899' },
+      { id: 'social_bonding', label: 'Sosyal Bağ',       labelEn: 'Social Bonding',    color: '#f472b6' },
+      { id: 'aggression',     label: 'Saldırganlık',     labelEn: 'Aggression',        color: '#ef4444' },
+      { id: 'cooperation',    label: 'İşbirliği',        labelEn: 'Cooperation',       color: '#34d399' },
+      { id: 'dominance',      label: 'Liderlik Eğilimi', labelEn: 'Leadership Drive',  color: '#fb923c' },
     ],
   },
   {
@@ -55,6 +60,7 @@ const TRAIT_GROUPS = [
       { id: 'height',            label: 'Boy',             labelEn: 'Height',           color: '#06b6d4' },
       { id: 'metabolism',        label: 'Metabolizma',     labelEn: 'Metabolism',       color: '#a855f7' },
       { id: 'physical_strength', label: 'Fiziksel Güç',    labelEn: 'Physical Strength',color: '#fb923c' },
+      { id: 'endurance',         label: 'Dayanıklılık',    labelEn: 'Endurance',        color: '#fbbf24' },
       { id: 'immune_strength',   label: 'Bağışıklık',      labelEn: 'Immunity',         color: '#22c55e' },
       { id: 'fertility',         label: 'Üreme Dürtüsü',   labelEn: 'Fertility Drive',  color: '#f43f5e' },
       { id: 'longevity',         label: 'Uzun Ömür',       labelEn: 'Longevity',        color: '#84cc16' },
@@ -105,10 +111,16 @@ const founderDefaults = (sex: 'male' | 'female') => ({
   empathy:            0.60,
   social_bonding:     0.75,
   aggression:         0.35,
+  cooperation:        0.72,
+  dominance:          0.50,
   physical_strength:  0.72,
+  endurance:          0.70,
   immune_strength:    0.74,
   fertility:          0.80,
   longevity:          0.68,
+  learning_rate:      0.65,
+  risk_tolerance:     0.45,
+  innovation:         0.55,
   height: sex === 'male' ? 0.56 : 0.44,
   metabolism: 0.45,
 });
@@ -508,7 +520,7 @@ export default function DashboardPage() {
               </span>
             </div>
 
-            <div className="p-5" style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }}>
+            <div className="p-5">
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="col-span-3">
                   <label className="font-share-tech text-sim-muted tracking-widest block mb-1.5" style={{ fontSize: 9 }}>
@@ -540,19 +552,21 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              {/* Founder genetics */}
+              {/* Founder genetics — scrollable section */}
               <div style={{ fontSize: 9, color: '#3a5070', letterSpacing: '0.2em', fontFamily: 'Share Tech Mono', marginBottom: 10 }}>
                 {lang === 'tr' ? '// KURUCU GENETİĞİ' : '// FOUNDER GENETICS'}
               </div>
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <FounderCard
-                  title={lang === 'tr' ? 'KURUCU 1 — ERKEK' : 'FOUNDER 1 — MALE'}
-                  sex="male" data={founder1} onChange={makeSetter(setFounder1)} lang={lang}
-                />
-                <FounderCard
-                  title={lang === 'tr' ? 'KURUCU 2 — KADIN' : 'FOUNDER 2 — FEMALE'}
-                  sex="female" data={founder2} onChange={makeSetter(setFounder2)} lang={lang}
-                />
+              <div style={{ maxHeight: 'calc(100vh - 320px)', overflowY: 'auto', marginBottom: 12, paddingRight: 2 }}>
+                <div className="grid grid-cols-2 gap-3">
+                  <FounderCard
+                    title={lang === 'tr' ? 'KURUCU 1 — ERKEK' : 'FOUNDER 1 — MALE'}
+                    sex="male" data={founder1} onChange={makeSetter(setFounder1)} lang={lang}
+                  />
+                  <FounderCard
+                    title={lang === 'tr' ? 'KURUCU 2 — KADIN' : 'FOUNDER 2 — FEMALE'}
+                    sex="female" data={founder2} onChange={makeSetter(setFounder2)} lang={lang}
+                  />
+                </div>
               </div>
 
               <div className="flex gap-3">

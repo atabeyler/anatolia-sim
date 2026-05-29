@@ -8,22 +8,31 @@ import { simulationManager } from '../simulationManager.js';
 const router = Router();
 
 const TRAIT_LOCI = {
+  // ── Zihin / Mind ──────────────────────────────────────────────────────────
   fluid_intelligence: ['BDNF_01', 'COMT_01', 'DTNBP1_01', 'NRG1_01', 'DISC1_01'],
+  curiosity:          ['DRD4_01'],
+  conscientiousness:  ['DISC1_01', 'COMT_01'],
+  language_capacity:  ['FOXP2_01', 'CNTNAP2_01'],
+  artistic_sense:     ['NRG1_01', 'DRD4_01'],
+  self_awareness:     ['NRXN1_01', 'SHANK3_01'],
+  stress_resilience:  ['SLC6A4_01'],
+  learning_rate:      ['ADRA2B_01', 'BDNF_01', 'COMT_01'],
+  risk_tolerance:     ['CACNA1C_01', 'DRD4_01'],
+  innovation:         ['CACNA1C_01', 'NRG1_01', 'BDNF_01'],
+  // ── Sosyal / Social ───────────────────────────────────────────────────────
   empathy:            ['OXTR_01', 'RELN_01'],
   social_bonding:     ['OXTR_01'],
-  curiosity:          ['DRD4_01'],
   aggression:         ['MAOA_01'],
-  conscientiousness:  ['DISC1_01', 'COMT_01'],
-  artistic_sense:     ['NRG1_01', 'DRD4_01'],
-  language_capacity:  ['FOXP2_01', 'CNTNAP2_01'],
+  cooperation:        ['AVPR1A_01', 'OXTR_01'],
+  dominance:          ['DRD2_01', 'MAOA_01', 'DISC1_01'],
+  // ── Beden / Body ──────────────────────────────────────────────────────────
+  height:             ['HEIGHT_01', 'HEIGHT_02', 'HEIGHT_03'],
+  metabolism:         ['METABOLISM_01'],
+  physical_strength:  ['STRENGTH_01'],
+  endurance:          ['ACTN3_01', 'METABOLISM_01', 'STRENGTH_01'],
   immune_strength:    ['IMMUNE_01', 'IMMUNE_02'],
   fertility:          ['FSHR_01'],
   longevity:          ['TERT_01', 'APOE_01'],
-  height:             ['HEIGHT_01', 'HEIGHT_02', 'HEIGHT_03'],
-  physical_strength:  ['STRENGTH_01'],
-  metabolism:         ['METABOLISM_01'],
-  self_awareness:     ['NRXN1_01', 'SHANK3_01'],
-  stress_resilience:  ['SLC6A4_01'],
 };
 
 function allele(value) {
