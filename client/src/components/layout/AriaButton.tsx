@@ -14,8 +14,6 @@ export default function AriaButton() {
   const store = useSimStore();
   const navigate = useNavigate();
 
-  // Mirror the whole store into a ref so every async callback always reads
-  // the LATEST values — eliminates all stale-closure bugs in one shot.
   const storeRef = useRef(store);
   storeRef.current = store;
 
@@ -23,81 +21,116 @@ export default function AriaButton() {
   const [transcript, setTranscript] = useState('');
   const [tooltip, setTooltip]     = useState(false);
 
-  const uiRef    = useRef<AriaState>('idle');
-  const activeRef = useRef(false);   // true = loop is running
-  const recRef   = useRef<any>(null);
+  const uiRef         = useRef<AriaState>('idle');
+  const activeRef     = useRef(false);
+  const processingRef = useRef(false); // true while awaiting API / speaking
+  const recRef        = useRef<any>(null);
+  const audioCtxRef   = useRef<any>(null); // pre-warmed AudioContext
 
   function setUI(s: AriaState) { uiRef.current = s; setUiState(s); }
-  function abortRec() { try { recRef.current?.abort(); } catch {} recRef.current = null; }
 
-  // ── Public toggle ────────────────────────────────────────────────────────
+  // ── Public toggle ──────────────────────────────────────────────────────────
   function toggle() {
     if (activeRef.current) {
-      activeRef.current = false;
-      abortRec();
+      activeRef.current   = false;
+      processingRef.current = false;
+      try { recRef.current?.stop(); } catch {}
+      recRef.current = null;
       window.speechSynthesis?.cancel();
+      try { audioCtxRef.current?.close(); } catch {}
+      audioCtxRef.current = null;
       setUI('idle');
       setTranscript('');
     } else {
+      // Pre-warm inside user-gesture so AudioContext + TTS are unlocked
+      try {
+        const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (Ctx) {
+          const ctx = new Ctx();
+          ctx.resume().catch(() => {});
+          audioCtxRef.current = ctx;
+        }
+      } catch {}
+      try {
+        const synth = window.speechSynthesis;
+        if (synth) {
+          synth.getVoices();                           // trigger voice list load
+          const dummy = new SpeechSynthesisUtterance('');
+          synth.speak(dummy);
+          synth.cancel();
+        }
+      } catch {}
+
       activeRef.current = true;
-      listen();
+      startRecognition();
     }
   }
 
-  // ── Step 1: Start recognition ────────────────────────────────────────────
-  function listen() {
+  // ── Step 1: Start / restart recognition ───────────────────────────────────
+  function startRecognition() {
     if (!activeRef.current) return;
     if (!SR) { processCommand('__summary__'); return; }
 
     setUI('command');
     setTranscript('');
-    let handled = false;
 
     const rec = new SR();
     rec.continuous     = true;
     rec.interimResults = true;
     rec.lang = storeRef.current.lang === 'tr' ? 'tr-TR' : 'en-US';
 
+    let resultIdx = 0; // index of the next result to process
+
     rec.onresult = (e: any) => {
-      if (handled) return;
+      if (!activeRef.current || processingRef.current) return;
+
       const results: any[] = Array.from(e.results);
-      // Show live interim text
-      setTranscript(results.map((r: any) => r[0].transcript).join(' '));
-      // Process first final result
-      const finals = results.filter((r: any) => r.isFinal);
-      if (finals.length) {
-        const cmd: string = finals[finals.length - 1][0].transcript.trim();
-        if (!cmd) return;
-        handled = true;
-        abortRec();
-        processCommand(cmd);
+      // Live transcript from unprocessed results
+      const live = results.slice(resultIdx).map((r: any) => r[0].transcript).join(' ');
+      if (live) setTranscript(live);
+
+      for (let i = resultIdx; i < results.length; i++) {
+        if (results[i].isFinal) {
+          const cmd = results[i][0].transcript.trim();
+          if (!cmd) continue;
+          resultIdx = i + 1;
+          processingRef.current = true;
+          try { rec.stop(); } catch {} // triggers onend; processingRef guards restart
+          processCommand(cmd);
+          return;
+        }
       }
     };
 
     rec.onerror = (e: any) => {
-      if (e.error === 'aborted' || handled || !activeRef.current) return;
-      // no-speech: browser auto-stopped — restart quietly
-      setTimeout(listen, 600);
+      if (!activeRef.current) return;
+      if (e.error === 'aborted' || e.error === 'not-allowed') return;
+      recRef.current = null;
+      if (!processingRef.current) setTimeout(startRecognition, 800);
     };
 
     rec.onend = () => {
-      if (handled || !activeRef.current) return;
-      if (uiRef.current === 'command') setTimeout(listen, 300);
+      recRef.current = null;
+      // If we stopped it intentionally for processing, don't restart here —
+      // processCommand() will call startRecognition() after it finishes.
+      if (!activeRef.current || processingRef.current) return;
+      setTimeout(startRecognition, 200);
     };
 
     try { rec.start(); recRef.current = rec; }
-    catch { setTimeout(listen, 1000); }
+    catch { setTimeout(startRecognition, 1000); }
   }
 
-  // ── Step 2: Process command via backend ──────────────────────────────────
+  // ── Step 2: Send command to backend ───────────────────────────────────────
   async function processCommand(cmd: string) {
     if (!activeRef.current) return;
     setUI('processing');
 
     const { currentSim, accessToken, stats, events, lang } = storeRef.current;
+    let responseText: string;
 
     if (cmd === '__summary__') {
-      await speak(buildSummary(stats, lang));
+      responseText = buildSummary(stats, lang);
     } else {
       try {
         const { data } = await axios.post('/api/aria/command', {
@@ -111,39 +144,40 @@ export default function AriaButton() {
         }, { headers: { Authorization: `Bearer ${accessToken}` } });
 
         if (data.action) executeAction(data.action);
-        await speak(data.text ?? (lang === 'tr' ? 'Tamam.' : 'Done.'));
+        responseText = data.text ?? (lang === 'tr' ? 'Tamam.' : 'Done.');
       } catch {
-        await speak(lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.');
+        responseText = lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.';
       }
     }
 
     setTranscript('');
-    // ── Loop back to listening ─────────────────────────────────────────────
-    if (activeRef.current) listen(); else setUI('idle');
+    await speakText(responseText);
+
+    processingRef.current = false;
+    if (activeRef.current) startRecognition(); else setUI('idle');
   }
 
-  // ── Step 3: Speak response ───────────────────────────────────────────────
-  async function speak(text: string) {
+  // ── Step 3: Speak response ─────────────────────────────────────────────────
+  async function speakText(text: string) {
     setUI('speaking');
     const { accessToken } = storeRef.current;
 
-    // A. Try ElevenLabs
+    // A. Try ElevenLabs via pre-warmed AudioContext
     try {
       const resp = await axios.post('/api/aria/speak', { text },
         { headers: { Authorization: `Bearer ${accessToken}` }, responseType: 'arraybuffer', timeout: 9000 });
       const ab = resp.data as ArrayBuffer;
-      // A real MP3 is > 1 KB; an error JSON is tiny
-      if (ab.byteLength > 800) {
-        const Ctx = window.AudioContext || (window as any).webkitAudioContext;
-        const ctx = new Ctx();
-        await ctx.resume(); // required on mobile / auto-suspended contexts
+      // A real MP3 is >800 bytes; error JSON is tiny
+      if (ab.byteLength > 800 && audioCtxRef.current) {
+        const ctx = audioCtxRef.current as AudioContext;
+        await ctx.resume();
         const buf = await ctx.decodeAudioData(ab);
         const src = ctx.createBufferSource();
         src.buffer = buf;
         src.connect(ctx.destination);
         src.start();
-        await new Promise<void>(res => { src.onended = () => { ctx.close(); res(); }; });
-        return; // ✓ ElevenLabs worked
+        await new Promise<void>(res => { src.onended = () => res(); });
+        return;
       }
     } catch { /* fall through */ }
 
@@ -154,42 +188,41 @@ export default function AriaButton() {
   function browserSpeak(text: string): Promise<void> {
     return new Promise(res => {
       const synth = window.speechSynthesis;
-      if (!synth) { setTimeout(res, 500); return; }
+      if (!synth) { setTimeout(res, 800); return; }
 
-      synth.cancel(); // flush any queued speech
+      synth.cancel();
 
-      const utt      = new SpeechSynthesisUtterance(text);
-      utt.lang       = storeRef.current.lang === 'tr' ? 'tr-TR' : 'en-US';
-      utt.volume     = 1.0;
-      utt.rate       = 0.93;
-      utt.onend      = () => res();
-      utt.onerror    = () => res();
-      // Safety timeout: ~70 ms per char, min 4 s
-      const guard = setTimeout(res, Math.max(4000, text.length * 70));
-      utt.onend = () => { clearTimeout(guard); res(); };
+      const utt  = new SpeechSynthesisUtterance(text);
+      utt.lang   = storeRef.current.lang === 'tr' ? 'tr-TR' : 'en-US';
+      utt.volume = 1.0;
+      utt.rate   = 0.92;
+
+      let done = false;
+      const finish = () => { if (!done) { done = true; res(); } };
+      const guard = setTimeout(finish, Math.max(5000, text.length * 80));
+      utt.onend  = () => { clearTimeout(guard); finish(); };
+      utt.onerror = () => { clearTimeout(guard); finish(); };
 
       const go = () => {
+        if (done) return;
         const voices = synth.getVoices();
-        if (voices.length) {
-          const match = voices.find(v =>
-            v.lang.startsWith(utt.lang.split('-')[0]) && !v.name.includes('Whisper')
-          );
-          if (match) utt.voice = match;
-        }
+        const lang   = utt.lang.split('-')[0];
+        const match  = voices.find(v => v.lang.startsWith(lang) && !v.name.toLowerCase().includes('whisper'));
+        if (match) utt.voice = match;
         synth.speak(utt);
       };
 
-      // getVoices() may be empty on first call (async load)
       if (synth.getVoices().length > 0) {
         go();
       } else {
-        synth.onvoiceschanged = go;
-        setTimeout(go, 400); // fallback if event never fires
+        let called = false;
+        synth.onvoiceschanged = () => { if (!called) { called = true; go(); } };
+        setTimeout(() => { if (!called) { called = true; go(); } }, 500);
       }
     });
   }
 
-  // ── Execute action returned by backend ────────────────────────────────────
+  // ── Execute action returned by backend ─────────────────────────────────────
   function executeAction(action: any) {
     const { currentSim, accessToken, setActivePanel, setSpeed, toggleLang, setCurrentSim } = storeRef.current;
     if (!action?.type) return;
@@ -248,7 +281,7 @@ export default function AriaButton() {
     }
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // ── Summary helper ─────────────────────────────────────────────────────────
   function buildSummary(stats: any, lang: string): string {
     if (!stats) return lang === 'tr' ? 'Simülasyon verisi yok.' : 'No simulation data.';
     if (lang === 'tr')
@@ -264,19 +297,19 @@ export default function AriaButton() {
       `${stats.beliefs ?? 0} belief systems, ${stats.groups ?? 0} social groups active.`;
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────────────────────────
   const COLORS: Record<AriaState, string> = {
     idle: '#4a6a7a', command: '#f97316', processing: '#a855f7', speaking: '#4ecb71',
   };
   const color = COLORS[uiState];
-  const Icon  = uiState === 'idle' ? MicOff
+  const Icon  = uiState === 'idle'       ? MicOff
     : uiState === 'command'    ? Mic
     : uiState === 'processing' ? Loader2
     : Volume2;
 
   const label = {
     tr: { idle: 'ARIA', command: '🎙 Konuşun…', processing: 'İşleniyor…', speaking: 'Konuşuyor…' },
-    en: { idle: 'ARIA', command: '🎙 Speak…',   processing: 'Processing…', speaking: 'Speaking…' },
+    en: { idle: 'ARIA', command: '🎙 Speak…',   processing: 'Processing…', speaking: 'Speaking…'  },
   }[store.lang][uiState];
 
   return (
