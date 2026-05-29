@@ -153,11 +153,19 @@ export default function SimulationPage() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'harita' | 'durum' | 'kontrol'>('harita');
   const [realTime, setRealTime] = useState('');
-  const [sidebarExpanded, setSidebarExpanded] = useState(true);
+  const [sidebarExpanded, setSidebarExpanded] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 640);
   const [selectedInd, setSelectedInd] = useState<any>(null);
   const [globeCoord, setGlobeCoord] = useState<{ lat: number; lon: number } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPage, setMenuPage] = useState<'about' | 'mission' | 'contact' | null>(null);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
+
+  // Responsive breakpoint
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   // ARIA tab-switching command listener
   useEffect(() => {
@@ -254,33 +262,37 @@ export default function SimulationPage() {
       {/* ═══ HEADER (3 rows) ═══ */}
       <div style={{ flexShrink: 0, background: 'rgba(0,0,0,0.97)', borderBottom: '1px solid #1a3a2a' }}>
 
-        {/* Row 1: Logo | SIM time | Real clock | BAŞLAT/DURDUR */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px', borderBottom: '1px solid #0d2018' }}>
-          <span style={{ fontSize: 13, fontFamily: 'Orbitron, monospace', fontWeight: 900, color: '#00e887', letterSpacing: '0.15em', flexShrink: 0 }}>
+        {/* Row 1: Logo | SIM time | [ARIA desktop] | [clock desktop] | BAŞLAT/DURDUR */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 8, padding: isMobile ? '4px 8px' : '5px 10px', borderBottom: '1px solid #0d2018' }}>
+          <span style={{ fontSize: isMobile ? 10 : 13, fontFamily: 'Orbitron, monospace', fontWeight: 900, color: '#00e887', letterSpacing: isMobile ? '0.08em' : '0.15em', flexShrink: 0 }}>
             ANATOLIA-SIM
           </span>
 
-          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: 6 }}>
-            <span style={{ fontSize: 7, color: '#3a6040', letterSpacing: '0.1em' }}>SİM</span>
-            <span style={{ fontSize: 9, color: '#00e887', letterSpacing: '0.05em', fontFamily: 'Orbitron, monospace' }}>
-              Y{String(simYear).padStart(4, '0')} G{String(simDay % 365).padStart(3, '0')} {simHour}
+          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: isMobile ? 3 : 6 }}>
+            <span style={{ fontSize: 6.5, color: '#3a6040', letterSpacing: '0.1em' }}>SİM</span>
+            <span style={{ fontSize: isMobile ? 8 : 9, color: '#00e887', letterSpacing: '0.04em', fontFamily: 'Orbitron, monospace' }}>
+              Y{String(simYear).padStart(4, '0')} G{String(simDay % 365).padStart(3, '0')}
             </span>
           </div>
 
           <div style={{ flex: 1 }} />
 
-          <AriaButton />
+          {!isMobile && <AriaButton />}
 
-          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: 6 }}>
-            <span style={{ fontSize: 7, color: '#3a6040', letterSpacing: '0.1em' }}>GERÇEK</span>
-            <span style={{ fontSize: 9, color: '#a0c8b0', letterSpacing: '0.05em' }}>{realTime}</span>
-          </div>
+          {!isMobile && (
+            <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: 6 }}>
+              <span style={{ fontSize: 7, color: '#3a6040', letterSpacing: '0.1em' }}>GERÇEK</span>
+              <span style={{ fontSize: 9, color: '#a0c8b0', letterSpacing: '0.05em' }}>{realTime}</span>
+            </div>
+          )}
 
           <button
             onClick={toggleSim}
             style={{
               display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
-              padding: '5px 16px', fontSize: 11, fontFamily: 'Orbitron, monospace', fontWeight: 700, letterSpacing: '0.1em',
+              padding: isMobile ? '5px 12px' : '5px 16px',
+              fontSize: isMobile ? 10 : 11,
+              fontFamily: 'Orbitron, monospace', fontWeight: 700, letterSpacing: '0.1em',
               background: isRunning ? 'rgba(212,56,56,0.18)' : 'rgba(0,232,135,0.18)',
               border: `1px solid ${isRunning ? '#c03030' : '#00e887'}`,
               color: isRunning ? '#e05a5a' : '#00e887',
@@ -292,47 +304,50 @@ export default function SimulationPage() {
           </button>
 
           {isRunning && (
-            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#00e887', boxShadow: '0 0 8px #00e887', flexShrink: 0, animation: 'pulse 1.5s infinite' }} />
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00e887', boxShadow: '0 0 8px #00e887', flexShrink: 0, animation: 'pulse 1.5s infinite' }} />
           )}
         </div>
 
-        {/* Row 2: Stats | TR▸EN */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 0, padding: '3px 10px', borderBottom: '1px solid #0d2018' }}>
-          {[
-            { key: 'pop',  label: lang === 'tr' ? 'NÜFUS'  : 'POP',   value: stats?.population ?? '—',   color: '#00e887' },
-            { key: 'bir',  label: lang === 'tr' ? 'DOĞUM'  : 'BIRTH', value: births,                      color: '#4ecb71' },
-            { key: 'dth',  label: lang === 'tr' ? 'ÖLÜM'   : 'DEATH', value: deaths,                      color: '#e05a5a' },
-            { key: 'yr',   label: lang === 'tr' ? 'YIL'    : 'YEAR',  value: stats?.year ?? '—',          color: '#7dd3fc' },
-            { key: 'tech', label: lang === 'tr' ? 'TEKNOLOJİ' : 'TECH', value: stats?.technologies ?? '—', color: '#d4a838' },
-            { key: 'temp', label: lang === 'tr' ? 'SICAKLIK' : 'TEMP', value: stats?.temperature !== undefined ? `${stats.temperature}°` : '—', color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
-          ].map(({ key, label, value, color }, i) => (
-            <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2px 10px', borderRight: '1px solid #0d2018', minWidth: 52 }}>
-              <span style={{ fontSize: 6.5, color: '#3a6040', letterSpacing: '0.1em' }}>{label}</span>
-              <span style={{ fontSize: 11, color, fontFamily: 'Orbitron, monospace', fontWeight: 700, lineHeight: 1.2 }}>{value}</span>
-            </div>
-          ))}
-          <div style={{ flex: 1 }} />
+        {/* Row 2: Stats (scrollable on mobile) | TR▸EN */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 0, padding: '0 10px', borderBottom: '1px solid #0d2018', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', overflowX: isMobile ? 'auto' : 'visible', flex: 1, scrollbarWidth: 'none' }}>
+            {[
+              { key: 'pop',  label: lang === 'tr' ? 'NÜFUS'  : 'POP',   value: stats?.population ?? '—',   color: '#00e887' },
+              { key: 'bir',  label: lang === 'tr' ? 'DOĞUM'  : 'BIRTH', value: births,                      color: '#4ecb71' },
+              { key: 'dth',  label: lang === 'tr' ? 'ÖLÜM'   : 'DEATH', value: deaths,                      color: '#e05a5a' },
+              { key: 'yr',   label: lang === 'tr' ? 'YIL'    : 'YEAR',  value: stats?.year ?? '—',          color: '#7dd3fc' },
+              { key: 'tech', label: lang === 'tr' ? 'TECH' : 'TECH',    value: stats?.technologies ?? '—',  color: '#d4a838' },
+              { key: 'temp', label: lang === 'tr' ? 'SICAK' : 'TEMP',   value: stats?.temperature !== undefined ? `${stats.temperature}°` : '—', color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
+            ].map(({ key, label, value, color }) => (
+              <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '2px 7px' : '2px 10px', borderRight: '1px solid #0d2018', flexShrink: 0, minWidth: isMobile ? 42 : 52 }}>
+                <span style={{ fontSize: 6, color: '#3a6040', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{label}</span>
+                <span style={{ fontSize: isMobile ? 10 : 11, color, fontFamily: 'Orbitron, monospace', fontWeight: 700, lineHeight: 1.2 }}>{value}</span>
+              </div>
+            ))}
+          </div>
           <button
             onClick={() => toggleLang()}
             title={lang === 'tr' ? 'Switch to English' : 'Türkçeye geç'}
             style={{
-              padding: '3px 8px', fontSize: 9, fontFamily: 'Orbitron, monospace', letterSpacing: '0.1em', cursor: 'pointer',
+              flexShrink: 0, padding: '3px 8px', fontSize: 9, fontFamily: 'Orbitron, monospace', letterSpacing: '0.1em', cursor: 'pointer',
               border: '1px solid #1a4a2a', color: '#00e887', background: 'rgba(0,232,135,0.08)',
             }}>
             {lang === 'tr' ? 'TR▸EN' : 'EN▸TR'}
           </button>
         </div>
 
-        {/* Row 3: HIZ buttons | SONLANDIR | ÇIKIŞ */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 10px' }}>
-          <span style={{ fontSize: 8, color: '#3a6040', letterSpacing: '0.1em', marginRight: 2, flexShrink: 0 }}>HIZ</span>
+        {/* Row 3: HIZ buttons | [ARIA mobile] | SONLANDIR | ÇIKIŞ | MENÜ */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 3 : 4, padding: isMobile ? '3px 8px' : '3px 10px' }}>
+          {!isMobile && <span style={{ fontSize: 8, color: '#3a6040', letterSpacing: '0.1em', marginRight: 2, flexShrink: 0 }}>HIZ</span>}
           {SPEEDS.map(s => (
             <button key={s} onClick={() => changeSpeed(s)}
               style={{
-                padding: '2px 6px', fontSize: 9, fontFamily: 'Orbitron, monospace', cursor: 'pointer',
+                padding: isMobile ? '2px 5px' : '2px 6px', fontSize: isMobile ? 8 : 9,
+                fontFamily: 'Orbitron, monospace', cursor: 'pointer',
                 background: speedMultiplier === s ? 'rgba(0,232,135,0.2)' : 'transparent',
                 border: `1px solid ${speedMultiplier === s ? '#00e887' : '#1a3a2a'}`,
                 color: speedMultiplier === s ? '#00e887' : '#4a6a5a',
+                flexShrink: 0,
               }}>
               {s}×
             </button>
@@ -340,20 +355,26 @@ export default function SimulationPage() {
 
           <div style={{ flex: 1 }} />
 
-          <button onClick={terminateSim}
-            style={{ padding: '2px 6px', fontSize: 8, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.05em', cursor: 'pointer' }}>
-            {lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
-          </button>
-          <button
-            onClick={() => navigate('/')}
-            style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', border: '1px solid #1a3a2a', color: '#4a7a5a', background: 'transparent', fontSize: 8, letterSpacing: '0.05em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
-            <FolderOpen size={9} />
-            {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
-          </button>
+          {isMobile && <AriaButton />}
+
+          {!isMobile && (
+            <button onClick={terminateSim}
+              style={{ padding: '2px 6px', fontSize: 8, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.05em', cursor: 'pointer', flexShrink: 0 }}>
+              {lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
+            </button>
+          )}
+          {!isMobile && (
+            <button
+              onClick={() => navigate('/')}
+              style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', border: '1px solid #1a3a2a', color: '#4a7a5a', background: 'transparent', fontSize: 8, letterSpacing: '0.05em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
+              <FolderOpen size={9} />
+              {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
+            </button>
+          )}
           <button
             onClick={() => { setMenuOpen(true); setMenuPage(null); }}
-            style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid #1a3a2a', color: '#4a7a5a', background: 'transparent', fontSize: 8, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
-            ☰ {lang === 'tr' ? 'MENÜ' : 'MENU'}
+            style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid #1a3a2a', color: '#4a7a5a', background: 'transparent', fontSize: 8, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
+            ☰ {!isMobile && (lang === 'tr' ? 'MENÜ' : 'MENU')}
           </button>
         </div>
       </div>
@@ -669,7 +690,19 @@ export default function SimulationPage() {
                     › {lang === 'tr' ? item.labelTr : item.labelEn}
                   </button>
                 ))}
-                <div style={{ padding: '8px 14px', borderTop: '1px solid #0a1a10', marginTop: 4 }}>
+                {isMobile && (
+                  <div style={{ padding: '8px 14px', borderTop: '1px solid #0d2018', display: 'flex', gap: 8 }}>
+                    <button onClick={() => { setMenuOpen(false); navigate('/'); }}
+                      style={{ flex: 1, padding: '7px 0', fontSize: 9, border: '1px solid #1a3a2a', color: '#4a7a5a', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
+                      ← {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
+                    </button>
+                    <button onClick={() => { setMenuOpen(false); terminateSim(); }}
+                      style={{ flex: 1, padding: '7px 0', fontSize: 9, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
+                      {lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
+                    </button>
+                  </div>
+                )}
+                <div style={{ padding: '8px 14px', borderTop: '1px solid #0a1a10', marginTop: isMobile ? 0 : 4 }}>
                   <div style={{ fontSize: 7.5, color: '#1e3a28', letterSpacing: '0.08em' }}>
                     RST Q-Nation 200120401018 · Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026
                   </div>
