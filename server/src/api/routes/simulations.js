@@ -113,6 +113,9 @@ router.post('/', authenticate, async (req, res) => {
     const f2Params = buildFounderParams(founder2_params, { name: 'Kurucu Kadın', ageYears: 20, eye_color: 'brown', hair_color: 'brown', skin_tone: 'olive' });
     const f1 = createFounder({ ...f1Params, sex: 'male', x: parseFloat(longitude), y: parseFloat(latitude) });
     const f2 = createFounder({ ...f2Params, sex: 'female', x: parseFloat(longitude) + 0.1, y: parseFloat(latitude) });
+    // Mark as founders: immune to random death/disease until age 60, anchored to home
+    f1.is_founder = true; f1.home_x = f1.x; f1.home_y = f1.y;
+    f2.is_founder = true; f2.home_x = f2.x; f2.home_y = f2.y;
     // Pre-mate founders so they stay together and parent children from day 1
     if (!f1.social) f1.social = {};
     if (!f2.social) f2.social = {};

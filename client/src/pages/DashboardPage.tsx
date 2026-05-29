@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useSimStore } from '../store/simStore';
 
 // ── localStorage persistence ──────────────────────────────────────────────────
-const STORAGE_KEY = 'anatolia_founders_v2';
+const STORAGE_KEY = 'anatolia_founders_v3';
 function saveState(form: any, f1: any, f2: any) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ form, founder1: f1, founder2: f2 })); } catch {}
 }
@@ -44,18 +44,20 @@ const TRAIT_GROUPS = [
   {
     group: 'Sosyal', groupEn: 'Social',
     traits: [
-      { id: 'empathy',            label: 'Empati',         labelEn: 'Empathy',           color: '#ec4899' },
-      { id: 'aggression',         label: 'Saldırganlık',   labelEn: 'Aggression',        color: '#ef4444' },
+      { id: 'empathy',        label: 'Empati',       labelEn: 'Empathy',        color: '#ec4899' },
+      { id: 'social_bonding', label: 'Sosyal Bağ',   labelEn: 'Social Bonding', color: '#f472b6' },
+      { id: 'aggression',     label: 'Saldırganlık', labelEn: 'Aggression',     color: '#ef4444' },
     ],
   },
   {
     group: 'Beden', groupEn: 'Body',
     traits: [
-      { id: 'height',          label: 'Boy',        labelEn: 'Height',    color: '#06b6d4' },
-      { id: 'metabolism',      label: 'Metabolizma',labelEn: 'Metabolism',color: '#a855f7' },
-      { id: 'immune_strength', label: 'Bağışıklık', labelEn: 'Immunity',  color: '#22c55e' },
-      { id: 'fertility',       label: 'Doğurganlık',labelEn: 'Fertility', color: '#f43f5e' },
-      { id: 'longevity',       label: 'Uzun Ömür',  labelEn: 'Longevity', color: '#84cc16' },
+      { id: 'height',            label: 'Boy',             labelEn: 'Height',           color: '#06b6d4' },
+      { id: 'metabolism',        label: 'Metabolizma',     labelEn: 'Metabolism',       color: '#a855f7' },
+      { id: 'physical_strength', label: 'Fiziksel Güç',    labelEn: 'Physical Strength',color: '#fb923c' },
+      { id: 'immune_strength',   label: 'Bağışıklık',      labelEn: 'Immunity',         color: '#22c55e' },
+      { id: 'fertility',         label: 'Üreme Dürtüsü',   labelEn: 'Fertility Drive',  color: '#f43f5e' },
+      { id: 'longevity',         label: 'Uzun Ömür',       labelEn: 'Longevity',        color: '#84cc16' },
     ],
   },
 ];
@@ -93,16 +95,20 @@ const founderDefaults = (sex: 'male' | 'female') => ({
   hair_color: sex === 'male' ? 'dark' : 'brown',
   skin_tone: 'olive',
   ...TRAIT_DEFAULTS,
-  // Founding pair must be exceptional — these drive early survival
-  physical_strength:  0.72,  // gathering efficiency + mortality resistance
-  conscientiousness:  0.72,  // gathering discipline, tool use
-  fluid_intelligence: 0.68,  // tech discovery speed
-  immune_strength:    0.74,  // disease survival
-  fertility:          0.74,  // reproductive success
-  longevity:          0.68,  // lifespan → more offspring
-  empathy:            0.60,  // social cohesion
-  social_bonding:     0.72,  // partnership stability
-  stress_resilience:  0.65,  // psychological stability under pressure
+  fluid_intelligence: 0.68,
+  curiosity:          0.60,
+  conscientiousness:  0.72,
+  language_capacity:  0.55,
+  artistic_sense:     0.50,
+  self_awareness:     0.55,
+  stress_resilience:  0.65,
+  empathy:            0.60,
+  social_bonding:     0.75,
+  aggression:         0.35,
+  physical_strength:  0.72,
+  immune_strength:    0.74,
+  fertility:          0.80,
+  longevity:          0.68,
   height: sex === 'male' ? 0.56 : 0.44,
   metabolism: 0.45,
 });

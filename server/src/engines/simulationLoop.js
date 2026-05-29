@@ -373,6 +373,17 @@ export class SimulationEngine {
     if (ind._moveAngle === undefined) ind._moveAngle = Math.random() * Math.PI * 2;
     ind._moveAngle += (Math.random() - 0.5) * 0.4;
 
+    // ── Founders: stay near starting territory (food/water is here) ─────────
+    if (ind.is_founder && ind.home_x !== undefined) {
+      const dx = ind.home_x - (ind.x ?? 0);
+      const dy = ind.home_y - (ind.y ?? 0);
+      const distFromHome = Math.hypot(dx, dy);
+      if (distFromHome > 0.3) {
+        const pull = Math.min(1, distFromHome / 1.5) * 0.9;
+        ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
+      }
+    }
+
     // ── Mate attraction: partners stay together ──────────────────────────────
     if (ind.social?.mate_id) {
       const mate = this.population.get(ind.social.mate_id);
@@ -425,6 +436,13 @@ export class SimulationEngine {
   updatePhysiology(individual, resourcePressure) {
     if (!individual.health) individual.health = { hp: 0.8, calories: 0.6, hydration: 0.6 };
     const { health } = individual;
+    // Founders stay perfectly healthy until age 60 — no sickness, injuries, hunger damage
+    const ageYears = individual.age / 365;
+    if (individual.is_founder && ageYears < 60) {
+      health.hp = 1.0; health.calories = 1.0; health.hydration = 1.0;
+      individual.health_score = 1.0; individual.satiation = 1.0;
+      return;
+    }
 
     // Satiation-based health update
     const satiationScore = individual.satiation ?? 0.5;

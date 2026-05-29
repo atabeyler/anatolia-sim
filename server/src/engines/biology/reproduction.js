@@ -45,8 +45,8 @@ function conceptionProbability(female, male, currentDay) {
   else if (age > 40)  ageFactor = 0.2;  // checked before > 35 to avoid dead branch
   else if (age > 35)  ageFactor = 0.6;
   const mhcBonus = Math.abs((female.genome?.IMMUNE_01?.allele1?.value ?? 0.5) - (male.genome?.IMMUNE_01?.allele1?.value ?? 0.5)) * 0.2;
-  const p = (( female.phenotype?.fertility ?? 0.5) * ageFactor + mhcBonus - (female.inbreeding_coeff ?? 0) * 0.5) * 0.035;
-  return Math.max(0, Math.min(0.15, p));
+  const p = ((female.phenotype?.fertility ?? 0.5) * ageFactor + mhcBonus - (female.inbreeding_coeff ?? 0) * 0.5) * 0.07;
+  return Math.max(0, Math.min(0.30, p));
 }
 
 function deliverBirth(mother, father, birthDay, simulationId, communityLangStage = 0, phonology = null) {
@@ -65,7 +65,7 @@ export function attemptMating(individual1, individual2, currentDay) {
   const age2 = getAge(individual2, currentDay);
   if (Math.abs(age1 - age2) > 20) return false;
   const bondStrength = ((individual1.phenotype?.social_bonding ?? 0.5) + (individual2.phenotype?.social_bonding ?? 0.5)) / 2;
-  if (Math.random() < bondStrength * 0.5) {
+  if (Math.random() < bondStrength * 0.9) {
     const male   = individual1.sex === 'male'   ? individual1 : individual2;
     const female = individual1.sex === 'female' ? individual1 : individual2;
     if (!male.social)   male.social   = {};

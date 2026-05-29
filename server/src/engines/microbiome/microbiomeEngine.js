@@ -57,6 +57,8 @@ function triggerOB(pathId,path,population,simDay){
 }
 
 export function spreadInfection(infected,susceptible,pathId,simDay){
+  // Founders don't get infected before age 60
+  if(susceptible.is_founder&&(susceptible.age??0)/365<60)return false;
   if(!infected.infections?.some(i=>i.pathogen_id===pathId)||susceptible.immunities?.[pathId]>simDay)return false;
   const path=PATHOGEN_TYPES[pathId];
   if(!path)return false;

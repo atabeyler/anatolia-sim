@@ -17,6 +17,8 @@ const DEATH_CAUSES = {
 // Disease outbreaks, starvation, disasters layer on top via multipliers.
 export function computeDailyDeathRisk(individual, currentDay, environment) {
   const age = getAge(individual, currentDay);
+  // Founders are completely protected from random death until age 60
+  if (individual.is_founder && age < 60) return 0;
   const { health, phenotype } = individual;
   let baseRisk = 0;
   if      (age < 1)  baseRisk = 0.00061;
