@@ -35,15 +35,30 @@ function evIcon(type: string) {
   return '·';
 }
 
+const CAUSE_TR: Record<string, string> = {
+  starvation: 'açlık', dehydration: 'susuzluk', old_age: 'yaşlılık',
+  predator: 'yırtıcı hayvan', genetic_disease: 'genetik hastalık',
+  infection: 'enfeksiyon', trauma: 'travma', birth_complications: 'doğum komplikasyonu',
+  conflict: 'çatışma', unknown: 'bilinmeyen neden',
+};
+
 function trTr(desc: string, type: string): string {
   if (!desc) return type;
   return desc
+    // New format: "NAME died: cause" → "NAME öldü: türkçe_sebep"
+    .replace(/^(.+) died: (.+)$/, (_: string, name: string, cause: string) =>
+      `${name} öldü: ${CAUSE_TR[cause] ?? cause.replace(/_/g, ' ')}`)
+    // New format: "Born: NAME (father & mother)" → "Doğdu: NAME (baba & anne)"
+    .replace(/^Born: (.+) \((.+) & (.+)\)$/, (_: string, name: string, p1: string, p2: string) =>
+      `Doğdu: ${name} (${p1} & ${p2})`)
+    // Old format fallbacks
+    .replace(/^Born: (.+)$/, (_: string, name: string) => `Doğdu: ${name}`)
     .replace('New individual born', 'Yeni birey doğdu')
     .replace('Individual died: starvation', 'Birey açlıktan öldü')
     .replace('Individual died: dehydration', 'Birey susuzluktan öldü')
     .replace('Individual died: old_age', 'Birey yaşlılıktan öldü')
     .replace('Individual died: predator', 'Birey yırtıcı tarafından öldürüldü')
-    .replace(/Individual died: (.+)/, (_: string, c: string) => `Birey öldü: ${c}`)
+    .replace(/Individual died: (.+)/, (_: string, c: string) => `Birey öldü: ${CAUSE_TR[c] ?? c.replace(/_/g, ' ')}`)
     .replace(/Technology discovered: (.+)/, (_: string, t: string) => `Teknoloji: ${t.replace(/_/g, ' ')}`)
     .replace(/killed (\d+) individuals/, (_: string, n: string) => `${n} bireyi öldürdü`);
 }

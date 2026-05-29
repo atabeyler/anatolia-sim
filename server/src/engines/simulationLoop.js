@@ -204,7 +204,9 @@ export class SimulationEngine {
       this.population.set(nb.id, nb);
       tickEvents.push({ type: 'birth', individual_id: nb.id, day, importance: 'low' });
       const nbLabel = nb.phenotype?.name ?? `${nb.sex === 'male' ? '♂' : '♀'}-${nb.id.slice(-4).toUpperCase()}`;
-      this.logEvent(day, 'birth', `Born: ${nbLabel}`, { individual_id: nb.id }, 1);
+      const p1Name = p1?.phenotype?.name ?? (p1 ? `${p1.sex === 'male' ? '♂' : '♀'}-${p1.id.slice(-4).toUpperCase()}` : '?');
+      const p2Name = p2?.phenotype?.name ?? (p2 ? `${p2.sex === 'male' ? '♂' : '♀'}-${p2.id.slice(-4).toUpperCase()}` : '?');
+      this.logEvent(day, 'birth', `Born: ${nbLabel} (${p1Name} & ${p2Name})`, { individual_id: nb.id, name: nbLabel, parent_1_name: p1Name, parent_2_name: p2Name }, 1);
     }
 
     // 9. Microbiome & disease outbreaks
@@ -233,7 +235,8 @@ export class SimulationEngine {
           }
         }
         tickEvents.push({ type: 'death_of_kin', individual_id: ind.id, day });
-        this.logEvent(day, 'death', `Individual died: ${cause}`, { individual_id: ind.id, cause }, 1);
+        const deadName = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
+        this.logEvent(day, 'death', `${deadName} died: ${cause}`, { individual_id: ind.id, cause, name: deadName }, 1);
       }
     }
 
@@ -241,7 +244,8 @@ export class SimulationEngine {
     for (const ind of alive) {
       if (ind.is_dead && !ind.death_day) {
         ind.death_day = day;
-        this.logEvent(day, 'death', `Individual died: ${ind.cause_of_death ?? 'unknown'}`, { individual_id: ind.id }, 1);
+        const deadName2 = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
+        this.logEvent(day, 'death', `${deadName2} died: ${ind.cause_of_death ?? 'unknown'}`, { individual_id: ind.id, name: deadName2 }, 1);
       }
     }
 

@@ -37,14 +37,27 @@ function traitBar(value: number, color: string) {
   );
 }
 
-function IndividualDetail({ ind, onClose }: { ind: any; onClose: () => void }) {
+function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndividuals: any[]; onClose: () => void }) {
   const { lang } = useSimStore();
-  const name = nameFromId(ind.id, ind.sex, ind.name);
+  const name = nameFromId(ind.id, ind.sex, ind.phenotype?.name ?? ind.name);
   const age = parseFloat(ind.age_years ?? 0);
   const stage = lifeStage(age);
   const ph = ind.phenotype ?? {};
   const soc = ind.social ?? {};
   const health = ind.health ?? {};
+
+  // Resolve family from allIndividuals
+  const parent1 = allIndividuals.find(i => i.id === ind.parent_1_id);
+  const parent2 = allIndividuals.find(i => i.id === ind.parent_2_id);
+  const children = allIndividuals.filter(i =>
+    i.parent_1_id === ind.id || i.parent_2_id === ind.id
+  );
+  const siblings = allIndividuals.filter(i =>
+    i.id !== ind.id &&
+    ((ind.parent_1_id && i.parent_1_id === ind.parent_1_id) ||
+     (ind.parent_2_id && i.parent_2_id === ind.parent_2_id))
+  );
+  const isFounder = !ind.parent_1_id && !ind.parent_2_id;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
@@ -137,16 +150,120 @@ function IndividualDetail({ ind, onClose }: { ind: any; onClose: () => void }) {
             </div>
           </div>
 
-          {/* Parents */}
-          {(ind.parent_1_id || ind.parent_2_id) && (
-            <div>
-              <div className="font-share-tech text-sim-muted tracking-widest mb-1" style={{ fontSize: 8 }}>EBEVEYNLER</div>
-              <div className="font-share-tech space-y-0.5" style={{ fontSize: 9, color: '#6878a8' }}>
-                {ind.parent_1_id && <div><span style={{ color: '#6090ff' }}>Baba: </span>{nameFromId(ind.parent_1_id, 'male')}</div>}
-                {ind.parent_2_id && <div><span style={{ color: '#ff8ab0' }}>Anne: </span>{nameFromId(ind.parent_2_id, 'female')}</div>}
-              </div>
+          {/* Family tree */}
+          <div>
+            <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 8 }}>
+              {lang === 'tr' ? 'SOYAĞACI' : 'FAMILY TREE'}
             </div>
-          )}
+
+            {isFounder && (
+              <div className="font-share-tech px-2 py-1 mb-2" style={{ fontSize: 8, color: '#d4a838', border: '1px solid rgba(212,168,56,0.3)', background: 'rgba(212,168,56,0.06)' }}>
+                ★ {lang === 'tr' ? 'Kurucu Birey — Medeniyetin Atası' : 'Founding Individual — Ancestor of Civilization'}
+              </div>
+            )}
+
+            {/* Parents */}
+            {(parent1 || parent2 || ind.parent_1_id || ind.parent_2_id) && (
+              <div className="mb-2">
+                <div style={{ fontSize: 7.5, color: '#3a5a48', letterSpacing: '0.08em', marginBottom: 4 }}>
+                  {lang === 'tr' ? 'EBEVEYNLER' : 'PARENTS'}
+                </div>
+                {(parent1 ?? ind.parent_1_id) && (
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: '#6090ff' }} />
+                    <div className="font-share-tech" style={{ fontSize: 9 }}>
+                      <span style={{ color: '#5070c0' }}>{lang === 'tr' ? 'Baba' : 'Father'}: </span>
+                      <span style={{ color: parent1 ? '#8ab0ff' : '#3a5a78' }}>
+                        {parent1 ? nameFromId(parent1.id, parent1.sex, parent1.phenotype?.name ?? parent1.name) : `ID:${ind.parent_1_id?.slice(-6)}`}
+                      </span>
+                      {parent1 && (
+                        <span style={{ color: '#3a5a48', marginLeft: 4 }}>
+                          {parseFloat(parent1.age_years ?? 0).toFixed(0)}{lang === 'tr' ? ' yaş' : ' yr'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {(parent2 ?? ind.parent_2_id) && (
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: '#ff8ab0' }} />
+                    <div className="font-share-tech" style={{ fontSize: 9 }}>
+                      <span style={{ color: '#c06080' }}>{lang === 'tr' ? 'Anne' : 'Mother'}: </span>
+                      <span style={{ color: parent2 ? '#ffaac8' : '#7a3a58' }}>
+                        {parent2 ? nameFromId(parent2.id, parent2.sex, parent2.phenotype?.name ?? parent2.name) : `ID:${ind.parent_2_id?.slice(-6)}`}
+                      </span>
+                      {parent2 && (
+                        <span style={{ color: '#3a5a48', marginLeft: 4 }}>
+                          {parseFloat(parent2.age_years ?? 0).toFixed(0)}{lang === 'tr' ? ' yaş' : ' yr'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Children */}
+            {children.length > 0 && (
+              <div className="mb-2">
+                <div style={{ fontSize: 7.5, color: '#3a5a48', letterSpacing: '0.08em', marginBottom: 4 }}>
+                  {lang === 'tr' ? `ÇOCUKLAR (${children.length})` : `CHILDREN (${children.length})`}
+                </div>
+                {children.slice(0, 8).map(c => (
+                  <div key={c.id} className="flex items-center gap-2 mb-0.5">
+                    <div className="w-1 h-1 rounded-full flex-shrink-0"
+                      style={{ background: c.sex === 'male' ? '#6090ff' : '#ff8ab0' }} />
+                    <span className="font-share-tech" style={{ fontSize: 8.5, color: c.sex === 'male' ? '#8ab0ff' : '#ffaac8' }}>
+                      {nameFromId(c.id, c.sex, c.phenotype?.name ?? c.name)}
+                    </span>
+                    <span className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>
+                      {parseFloat(c.age_years ?? 0).toFixed(0)}{lang === 'tr' ? ' yaş' : ' yr'}
+                    </span>
+                    <span style={{ fontSize: 7.5, color: lifeStage(parseFloat(c.age_years ?? 0)).color }}>
+                      {lifeStage(parseFloat(c.age_years ?? 0)).label}
+                    </span>
+                  </div>
+                ))}
+                {children.length > 8 && (
+                  <div className="font-share-tech text-sim-muted/40" style={{ fontSize: 7.5, marginLeft: 12 }}>
+                    +{children.length - 8} {lang === 'tr' ? 'çocuk daha' : 'more'}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Siblings */}
+            {siblings.length > 0 && (
+              <div>
+                <div style={{ fontSize: 7.5, color: '#3a5a48', letterSpacing: '0.08em', marginBottom: 4 }}>
+                  {lang === 'tr' ? `KARDEŞLER (${siblings.length})` : `SIBLINGS (${siblings.length})`}
+                </div>
+                {siblings.slice(0, 5).map(s => (
+                  <div key={s.id} className="flex items-center gap-2 mb-0.5">
+                    <div className="w-1 h-1 rounded-full flex-shrink-0"
+                      style={{ background: s.sex === 'male' ? '#6090ff' : '#ff8ab0' }} />
+                    <span className="font-share-tech" style={{ fontSize: 8.5, color: '#6878a8' }}>
+                      {nameFromId(s.id, s.sex, s.phenotype?.name ?? s.name)}
+                    </span>
+                    <span className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>
+                      {parseFloat(s.age_years ?? 0).toFixed(0)}{lang === 'tr' ? ' yaş' : ' yr'}
+                    </span>
+                  </div>
+                ))}
+                {siblings.length > 5 && (
+                  <div className="font-share-tech text-sim-muted/40" style={{ fontSize: 7.5, marginLeft: 12 }}>
+                    +{siblings.length - 5} {lang === 'tr' ? 'kardeş daha' : 'more'}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {isFounder && children.length === 0 && (
+              <div className="font-share-tech text-sim-muted/30" style={{ fontSize: 8 }}>
+                {lang === 'tr' ? 'Henüz çocuk yok.' : 'No children yet.'}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -183,7 +300,7 @@ export default function PopulationPanel() {
 
   return (
     <DetailPanel panelId="population" title="Population" titleTr="Nüfus">
-      {selected && <IndividualDetail ind={selected} onClose={() => setSelected(null)} />}
+      {selected && <IndividualDetail ind={selected} allIndividuals={individuals} onClose={() => setSelected(null)} />}
 
       {/* Summary bar */}
       <div className="flex gap-2 mb-3">

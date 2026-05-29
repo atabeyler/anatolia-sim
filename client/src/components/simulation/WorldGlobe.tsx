@@ -8,6 +8,23 @@ const EARTH_MAP = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/exampl
 const EARTH_BUMP = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/textures/planets/earth_normal_2048.jpg';
 const EARTH_SPEC = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/textures/planets/earth_specular_2048.jpg';
 
+/** Build a round soft-glow sprite texture via the Canvas 2D API. */
+function makeSpriteTexture(): THREE.CanvasTexture {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const half = size / 2;
+  const grad = ctx.createRadialGradient(half, half, 0, half, half, half);
+  grad.addColorStop(0, 'rgba(255,255,255,1)');
+  grad.addColorStop(0.4, 'rgba(255,255,255,0.8)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  return new THREE.CanvasTexture(canvas);
+}
+
 function GlobeMesh() {
   const [earthTex, bumpTex, specTex] = useMemo(() => {
     const loader = new THREE.TextureLoader();
@@ -20,7 +37,7 @@ function GlobeMesh() {
 
   return (
     <mesh>
-      <sphereGeometry args={[2, 80, 80]} />
+      <sphereGeometry args={[2, 128, 128]} />
       <meshPhongMaterial
         map={earthTex}
         bumpMap={bumpTex}
@@ -38,14 +55,15 @@ function GlobeMesh() {
 function Globe() {
   return (
     <>
-      {/* Atmosphere glow — stays fixed, not rotating */}
-      <mesh scale={1.018}>
+      {/* Inner atmosphere glow */}
+      <mesh scale={1.015}>
         <sphereGeometry args={[2, 32, 32]} />
-        <meshStandardMaterial color="#4488ff" transparent opacity={0.10} side={THREE.BackSide} />
+        <meshStandardMaterial color="#88aaff" transparent opacity={0.12} side={THREE.BackSide} />
       </mesh>
-      <mesh scale={1.04}>
+      {/* Outer atmosphere glow */}
+      <mesh scale={1.045}>
         <sphereGeometry args={[2, 32, 32]} />
-        <meshStandardMaterial color="#1a4090" transparent opacity={0.04} side={THREE.BackSide} />
+        <meshStandardMaterial color="#2255bb" transparent opacity={0.06} side={THREE.BackSide} />
       </mesh>
     </>
   );
@@ -128,9 +146,9 @@ function GridLines() {
         pts.push(r * Math.cos(phi) * Math.sin(theta), r * Math.sin(phi), r * Math.cos(phi) * Math.cos(theta));
       }
     }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-    return geo;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    return g;
   }, []);
 
   return (
@@ -138,6 +156,23 @@ function GridLines() {
       <lineBasicMaterial color="#1a2a5a" transparent opacity={0.25} />
     </lineSegments>
   );
+}
+
+/** Build positions array for a subset of individuals at a given radius. */
+function buildPositions(individuals: any[], r: number): THREE.BufferGeometry {
+  const positions: number[] = [];
+  for (const ind of individuals) {
+    const lat = ((ind.y ?? 0) * Math.PI) / 180;
+    const lon = ((ind.x ?? 0) * Math.PI) / 180;
+    positions.push(
+      r * Math.cos(lat) * Math.sin(lon),
+      r * Math.sin(lat),
+      r * Math.cos(lat) * Math.cos(lon),
+    );
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  return g;
 }
 
 function PopulationDots({
@@ -149,86 +184,124 @@ function PopulationDots({
   groupRef: React.RefObject<THREE.Group | null>;
   onSelect?: (ind: any) => void;
 }) {
-  const meshRef = useRef<THREE.Points>(null);
-  useFrame(({ clock }) => {
-    if (meshRef.current) {
-      (meshRef.current.material as THREE.PointsMaterial).size =
-        0.12 + Math.sin(clock.elapsedTime * 1.5) * 0.02;
-    }
-  });
+  const spriteTex = useMemo(() => makeSpriteTexture(), []);
 
-  const geo = useMemo(() => {
-    const g = new THREE.BufferGeometry();
-    const positions: number[] = [];
-    const colors: number[] = [];
-    const r = 2.025;
+  const { founders, males, females } = useMemo(() => {
+    const founders: any[] = [];
+    const males: any[] = [];
+    const females: any[] = [];
     for (const ind of individuals) {
-      const lat = (ind.y ?? 0) * Math.PI / 180;
-      const lon = (ind.x ?? 0) * Math.PI / 180;
-      positions.push(
-        r * Math.cos(lat) * Math.sin(lon),
-        r * Math.sin(lat),
-        r * Math.cos(lat) * Math.cos(lon),
-      );
-      if (ind.sex === 'male') colors.push(0.35, 0.6, 1.0);
-      else                    colors.push(1.0, 0.45, 0.65);
+      if (!ind.parent_1_id && !ind.parent_2_id) {
+        founders.push(ind);
+      } else if (ind.sex === 'male') {
+        males.push(ind);
+      } else {
+        females.push(ind);
+      }
     }
-    g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    return g;
+    return { founders, males, females };
   }, [individuals]);
 
+  const founderGeo = useMemo(() => buildPositions(founders, 2.025), [founders]);
+  const maleGeo    = useMemo(() => buildPositions(males,    2.025), [males]);
+  const femaleGeo  = useMemo(() => buildPositions(females,  2.025), [females]);
+
+  // Click handler shared across all three layers — finds nearest individual in world space.
+  const handleClick = (e: import('@react-three/fiber').ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    if (!onSelect || individuals.length === 0) return;
+    const r = 2.025;
+    let minDist = Infinity;
+    let minIdx = -1;
+    const ry = groupRef.current?.rotation.y ?? 0;
+    individuals.forEach((ind, i) => {
+      const lat = ((ind.y ?? 0) * Math.PI) / 180;
+      const lon = ((ind.x ?? 0) * Math.PI) / 180;
+      const px = r * Math.cos(lat) * Math.sin(lon);
+      const py = r * Math.sin(lat);
+      const pz = r * Math.cos(lat) * Math.cos(lon);
+      // Rotate local point into world space (y-axis rotation only)
+      const wx = px * Math.cos(ry) + pz * Math.sin(ry);
+      const wz = -px * Math.sin(ry) + pz * Math.cos(ry);
+      const d = Math.hypot(wx - e.point.x, py - e.point.y, wz - e.point.z);
+      if (d < minDist) { minDist = d; minIdx = i; }
+    });
+    if (minIdx >= 0 && minDist < 0.3) onSelect(individuals[minIdx]);
+  };
+
   return (
-    <points
-      ref={meshRef}
-      geometry={geo}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (!onSelect || individuals.length === 0) return;
-        const r = 2.025;
-        let minDist = Infinity, minIdx = -1;
-        individuals.forEach((ind, i) => {
-          const lat = ((ind.y ?? 0) * Math.PI) / 180;
-          const lon = ((ind.x ?? 0) * Math.PI) / 180;
-          const px = r * Math.cos(lat) * Math.sin(lon);
-          const py = r * Math.sin(lat);
-          const pz = r * Math.cos(lat) * Math.cos(lon);
-          const ry = groupRef.current?.rotation.y ?? 0;
-          const wx = px * Math.cos(ry) + pz * Math.sin(ry);
-          const wz = -px * Math.sin(ry) + pz * Math.cos(ry);
-          const d = Math.hypot(wx - e.point.x, py - e.point.y, wz - e.point.z);
-          if (d < minDist) { minDist = d; minIdx = i; }
-        });
-        if (minIdx >= 0 && minDist < 0.3) onSelect(individuals[minIdx]);
-      }}
-    >
-      <pointsMaterial size={0.12} vertexColors sizeAttenuation transparent opacity={1.0} />
-    </points>
+    <>
+      {/* Founders — gold */}
+      <points geometry={founderGeo} onClick={handleClick}>
+        <pointsMaterial
+          map={spriteTex}
+          size={0.22}
+          color="#ffd700"
+          sizeAttenuation
+          transparent
+          opacity={1.0}
+          depthWrite={false}
+          alphaTest={0.01}
+        />
+      </points>
+      {/* Males — blue */}
+      <points geometry={maleGeo} onClick={handleClick}>
+        <pointsMaterial
+          map={spriteTex}
+          size={0.14}
+          color="#6090ff"
+          sizeAttenuation
+          transparent
+          opacity={1.0}
+          depthWrite={false}
+          alphaTest={0.01}
+        />
+      </points>
+      {/* Females — pink */}
+      <points geometry={femaleGeo} onClick={handleClick}>
+        <pointsMaterial
+          map={spriteTex}
+          size={0.14}
+          color="#ff8ab0"
+          sizeAttenuation
+          transparent
+          opacity={1.0}
+          depthWrite={false}
+          alphaTest={0.01}
+        />
+      </points>
+    </>
   );
 }
 
 function PopulationGlow({ individuals }: { individuals: any[] }) {
-  const geo = useMemo(() => {
-    const g = new THREE.BufferGeometry();
-    const positions: number[] = [];
-    const r = 2.04;
+  const { founders, others } = useMemo(() => {
+    const founders: any[] = [];
+    const others: any[] = [];
     for (const ind of individuals) {
-      const lat = (ind.y ?? 0) * Math.PI / 180;
-      const lon = (ind.x ?? 0) * Math.PI / 180;
-      positions.push(
-        r * Math.cos(lat) * Math.sin(lon),
-        r * Math.sin(lat),
-        r * Math.cos(lat) * Math.cos(lon),
-      );
+      if (!ind.parent_1_id && !ind.parent_2_id) {
+        founders.push(ind);
+      } else {
+        others.push(ind);
+      }
     }
-    g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    return g;
+    return { founders, others };
   }, [individuals]);
 
+  const founderGeo = useMemo(() => buildPositions(founders, 2.05), [founders]);
+  const othersGeo  = useMemo(() => buildPositions(others,   2.05), [others]);
+
   return (
-    <points geometry={geo}>
-      <pointsMaterial size={0.28} color="#6090ff" sizeAttenuation transparent opacity={0.18} />
-    </points>
+    <>
+      {/* Gold glow layer for founders */}
+      <points geometry={founderGeo}>
+        <pointsMaterial size={0.6} color="#ffd700" sizeAttenuation transparent opacity={0.15} depthWrite={false} />
+      </points>
+      {/* Blue/pink mixed glow layer for all other individuals */}
+      <points geometry={othersGeo}>
+        <pointsMaterial size={0.4} color="#8899ff" sizeAttenuation transparent opacity={0.12} depthWrite={false} />
+      </points>
+    </>
   );
 }
 
@@ -257,11 +330,61 @@ function GlobeClickCatcher({
   );
 }
 
-function RotatingGroup({ individuals, onSelect, onGlobeClick }: { individuals: any[]; onSelect?: (ind: any) => void; onGlobeClick?: (lat: number, lon: number) => void }) {
+/** Transparent sphere that catches population-dot clicks and finds the nearest individual. */
+function PopClickCatcher({
+  individuals,
+  groupRef,
+  onSelect,
+}: {
+  individuals: any[];
+  groupRef: React.RefObject<THREE.Group | null>;
+  onSelect?: (ind: any) => void;
+}) {
+  if (!onSelect || individuals.length === 0) return null;
+
+  return (
+    <mesh
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!onSelect || individuals.length === 0) return;
+        const r = 2.025;
+        let minDist = Infinity;
+        let minIdx = -1;
+        const ry = groupRef.current?.rotation.y ?? 0;
+        individuals.forEach((ind, i) => {
+          const lat = ((ind.y ?? 0) * Math.PI) / 180;
+          const lon = ((ind.x ?? 0) * Math.PI) / 180;
+          const px = r * Math.cos(lat) * Math.sin(lon);
+          const py = r * Math.sin(lat);
+          const pz = r * Math.cos(lat) * Math.cos(lon);
+          const wx = px * Math.cos(ry) + pz * Math.sin(ry);
+          const wz = -px * Math.sin(ry) + pz * Math.cos(ry);
+          const d = Math.hypot(wx - e.point.x, py - e.point.y, wz - e.point.z);
+          if (d < minDist) { minDist = d; minIdx = i; }
+        });
+        if (minIdx >= 0 && minDist < 0.3) onSelect(individuals[minIdx]);
+      }}
+    >
+      <sphereGeometry args={[2.03, 32, 32]} />
+      <meshBasicMaterial transparent opacity={0.001} depthWrite={false} />
+    </mesh>
+  );
+}
+
+function RotatingGroup({
+  individuals,
+  onSelect,
+  onGlobeClick,
+}: {
+  individuals: any[];
+  onSelect?: (ind: any) => void;
+  onGlobeClick?: (lat: number, lon: number) => void;
+}) {
   const groupRef = useRef<THREE.Group>(null);
   useFrame((_, delta) => {
     if (groupRef.current) groupRef.current.rotation.y += delta * 0.025;
   });
+
   return (
     <group ref={groupRef}>
       <GlobeMesh />
@@ -271,18 +394,29 @@ function RotatingGroup({ individuals, onSelect, onGlobeClick }: { individuals: a
         <>
           <PopulationGlow individuals={individuals} />
           <PopulationDots individuals={individuals} groupRef={groupRef} onSelect={onSelect} />
+          <PopClickCatcher individuals={individuals} groupRef={groupRef} onSelect={onSelect} />
         </>
       )}
     </group>
   );
 }
 
-export default function WorldGlobe({ individuals = [], onSelect, onGlobeClick }: { individuals?: any[]; onSelect?: (ind: any) => void; onGlobeClick?: (lat: number, lon: number) => void }) {
+export default function WorldGlobe({
+  individuals = [],
+  onSelect,
+  onGlobeClick,
+}: {
+  individuals?: any[];
+  onSelect?: (ind: any) => void;
+  onGlobeClick?: (lat: number, lon: number) => void;
+}) {
   return (
     <Canvas
       camera={{ position: [0, 0.5, 5.5], fov: 42 }}
       style={{ background: 'transparent' }}
-      gl={{ antialias: true, alpha: true }}>
+      dpr={[1, 2]}
+      gl={{ antialias: true, alpha: true, logarithmicDepthBuffer: true }}
+    >
       <ambientLight intensity={2.8} />
       <directionalLight position={[5, 3, 6]} intensity={1.8} color="#fff8f0" />
       <directionalLight position={[-5, 3, -4]} intensity={1.3} color="#d0e8ff" />
