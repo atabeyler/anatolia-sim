@@ -394,7 +394,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex flex-col leading-none gap-0.5">
               <span className="font-orbitron text-sim-accent font-bold tracking-[0.25em]" style={{ fontSize: 12, textShadow: '0 0 10px rgba(79,110,247,0.6)' }}>ANATOLİA-SİM</span>
-              <span className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 8 }}>MEDENİYET SIMÜLATÖRÜ</span>
+              <span className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 8 }}>MEDENİYET</span>
             </div>
           </div>
 
@@ -430,9 +430,6 @@ export default function DashboardPage() {
                 {lang === 'en' ? 'SIMULATION REGISTRY' : 'SİMÜLASYON KAYITLARI'}
               </h2>
             </div>
-            <p className="font-share-tech text-sim-muted tracking-widest ml-3" style={{ fontSize: 10 }}>
-              {lang === 'en' ? '// EMERGENT CIVILIZATION ENGINE — START FROM 2 INDIVIDUALS' : '// ORTAYA ÇIKAN MEDENİYET — 2 BİREYDEN BAŞLAT'}
-            </p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -491,7 +488,7 @@ export default function DashboardPage() {
               </span>
             </div>
 
-            <div className="p-5">
+            <div className="p-5" style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }}>
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="col-span-3">
                   <label className="font-share-tech text-sim-muted tracking-widest block mb-1.5" style={{ fontSize: 9 }}>

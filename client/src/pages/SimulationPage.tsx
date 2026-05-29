@@ -72,6 +72,78 @@ function translateEventDesc(desc: string, type: string): string {
     .replace(/killed (\d+) individuals/, (_: string, n: string) => `${n} bireyi öldürdü`);
 }
 
+const IMPORTANT_TYPES = ['birth', 'death', 'language', 'belief', 'technology', 'word', 'discovery'];
+
+function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
+  events: any[]; lang: string; fmtEvent: (ev: any) => string; eventColor: (ev: any, i: number) => string;
+}) {
+  const [pos, setPos] = useState({ x: 8, y: 8 });
+  const [dragging, setDragging] = useState(false);
+  const dragStart = useRef({ mouseX: 0, mouseY: 0, panelX: 0, panelY: 0 });
+
+  useEffect(() => {
+    if (!dragging) return;
+    function onMove(e: MouseEvent) {
+      const dx = e.clientX - dragStart.current.mouseX;
+      const dy = e.clientY - dragStart.current.mouseY;
+      setPos({ x: dragStart.current.panelX + dx, y: dragStart.current.panelY + dy });
+    }
+    function onUp() { setDragging(false); }
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, [dragging]);
+
+  const filtered = events
+    .filter(ev => IMPORTANT_TYPES.some(t => ev.event_type?.toLowerCase().includes(t)))
+    .slice(0, 12);
+
+  return (
+    <div style={{
+      position: 'absolute', left: pos.x, top: pos.y, zIndex: 30,
+      width: 270, background: 'rgba(0,4,2,0.93)', border: '1px solid #1a4a2a',
+      userSelect: 'none', cursor: dragging ? 'grabbing' : 'default',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
+    }}>
+      {/* Drag handle */}
+      <div
+        onMouseDown={e => {
+          setDragging(true);
+          dragStart.current = { mouseX: e.clientX, mouseY: e.clientY, panelX: pos.x, panelY: pos.y };
+          e.preventDefault();
+        }}
+        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderBottom: '1px solid #0d2018', cursor: 'grab', background: 'rgba(0,20,10,0.9)' }}>
+        <div style={{ width: 3, height: 12, background: '#00e887', boxShadow: '0 0 4px #00e887', flexShrink: 0 }} />
+        <span style={{ fontSize: 7, color: '#00e887', letterSpacing: '0.2em', fontFamily: 'Share Tech Mono, monospace', flex: 1 }}>
+          {lang === 'tr' ? 'OLAY KAYDI' : 'EVENT LOG'}
+        </span>
+        <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#00e887', flexShrink: 0, animation: 'pulse 1.5s infinite' }} />
+        <span style={{ fontSize: 7, color: '#4ecb71', letterSpacing: '0.1em', fontFamily: 'Share Tech Mono, monospace' }}>
+          {lang === 'tr' ? 'CANLI' : 'LIVE'}
+        </span>
+      </div>
+      {/* Events */}
+      <div style={{ padding: '3px 6px', maxHeight: 200, overflowY: 'auto' }}>
+        {filtered.length === 0 ? (
+          <div style={{ fontSize: 7, color: '#2a4a3a', padding: '4px 0', fontFamily: 'Share Tech Mono, monospace', fontStyle: 'italic' }}>
+            {lang === 'tr' ? 'Önemli olay bekleniyor...' : 'Awaiting important events...'}
+          </div>
+        ) : filtered.map((ev, i) => (
+          <div key={i} style={{
+            fontSize: 7.5, color: eventColor(ev, i), lineHeight: '1.6',
+            fontFamily: 'Share Tech Mono, monospace',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            borderBottom: '1px solid rgba(0,50,20,0.3)',
+            opacity: Math.max(0.4, 1 - i * 0.07),
+          }}>
+            {fmtEvent(ev)}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function SimulationPage() {
   const { simId } = useParams<{ simId: string }>();
   const navigate = useNavigate();
@@ -83,7 +155,6 @@ export default function SimulationPage() {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [selectedInd, setSelectedInd] = useState<any>(null);
   const [globeCoord, setGlobeCoord] = useState<{ lat: number; lon: number } | null>(null);
-  const eventsRef = useRef<HTMLDivElement>(null);
   useSimWebSocket(simId ?? null);
 
   // Real clock
@@ -114,11 +185,6 @@ export default function SimulationPage() {
     }, 8000);
     return () => clearInterval(interval);
   }, [simId, accessToken]);
-
-  // Auto-scroll events
-  useEffect(() => {
-    if (eventsRef.current) eventsRef.current.scrollTop = eventsRef.current.scrollHeight;
-  }, [events.length]);
 
   async function toggleSim() {
     if (!currentSim || !accessToken) return;
@@ -331,41 +397,6 @@ export default function SimulationPage() {
             })}
           </div>
 
-          {/* Mini stats (expanded only) */}
-          {sidebarExpanded && (
-            <div style={{ padding: '8px 10px', borderTop: '1px solid #0d2018', borderBottom: '1px solid #0d2018', flexShrink: 0 }}>
-              <div style={{ fontSize: 7, color: '#3a6040', letterSpacing: '0.1em', marginBottom: 4 }}>
-                {lang === 'tr' ? 'İSTATİSTİK' : 'STATS'}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
-                <Users size={9} color="#00e887" />
-                <span style={{ fontSize: 8, color: '#3a6040' }}>{lang === 'tr' ? 'NÜFUS' : 'POP'}:</span>
-                <span style={{ fontSize: 10, color: '#00e887', fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
-                  {stats?.population ?? '—'}
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: 6, marginBottom: 3 }}>
-                <div>
-                  <span style={{ fontSize: 7, color: '#3a6040' }}>{lang === 'tr' ? 'DOĞUM' : 'BIRTH'}: </span>
-                  <span style={{ fontSize: 9, color: '#7aff9a', fontFamily: 'Orbitron, monospace' }}>{births}</span>
-                </div>
-                <div>
-                  <span style={{ fontSize: 7, color: '#3a6040' }}>{lang === 'tr' ? 'ÖLÜM' : 'DEATH'}: </span>
-                  <span style={{ fontSize: 9, color: '#e05a5a', fontFamily: 'Orbitron, monospace' }}>{deaths}</span>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <div>
-                  <span style={{ fontSize: 7, color: '#3a6040' }}>{lang === 'tr' ? 'YIL' : 'YR'}: </span>
-                  <span style={{ fontSize: 9, color: '#7dd3fc', fontFamily: 'Orbitron, monospace' }}>{simYear}</span>
-                </div>
-                <div>
-                  <span style={{ fontSize: 7, color: '#3a6040' }}>{lang === 'tr' ? 'GÜN' : 'DAY'}: </span>
-                  <span style={{ fontSize: 9, color: '#a0b4ff', fontFamily: 'Orbitron, monospace' }}>{simDay % 365}</span>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Collapsed population indicator */}
           {!sidebarExpanded && (
@@ -377,39 +408,6 @@ export default function SimulationPage() {
             </div>
           )}
 
-          {/* Events mini log (expanded only) */}
-          {sidebarExpanded && (
-            <div style={{ flexShrink: 0, borderTop: '1px solid #0d2018', display: 'flex', flexDirection: 'column', maxHeight: 120 }}>
-              <div style={{ padding: '3px 10px', borderBottom: '1px solid #091510', flexShrink: 0 }}>
-                <span style={{ fontSize: 7, color: '#3a6040', letterSpacing: '0.1em' }}>
-                  {lang === 'tr' ? 'OLAYLAR' : 'EVENTS'}
-                </span>
-              </div>
-              <div
-                ref={eventsRef}
-                style={{ overflowY: 'auto', padding: '2px 6px', flex: 1 }}>
-                {events.length === 0 ? (
-                  <div style={{ fontSize: 7, color: '#2a4a3a', fontStyle: 'italic', padding: '3px 0' }}>
-                    {lang === 'tr' ? 'Henüz olay yok…' : 'No events yet…'}
-                  </div>
-                ) : (
-                  events.slice(-8).reverse().map((ev, i) => (
-                    <div key={i} style={{
-                      fontSize: 7.5,
-                      color: eventColor(ev, i),
-                      lineHeight: '1.5',
-                      fontFamily: 'Share Tech Mono, monospace',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}>
-                      {fmtEvent(ev)}
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
 
           {/* Toggle button */}
           <button
@@ -471,6 +469,7 @@ export default function SimulationPage() {
               <>
                 {/* Globe */}
                 <div style={{ position: 'absolute', inset: 0 }}>
+
                   <WorldGlobe
                     individuals={individuals}
                     onSelect={(ind) => { setSelectedInd(ind); setGlobeCoord(null); }}
@@ -524,6 +523,14 @@ export default function SimulationPage() {
                     </button>
                   </div>
                 )}
+
+                {/* Draggable event log panel */}
+                <DraggableLogPanel
+                  events={events}
+                  lang={lang}
+                  fmtEvent={fmtEvent}
+                  eventColor={eventColor}
+                />
               </>
             )}
 

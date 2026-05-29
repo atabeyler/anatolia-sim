@@ -327,7 +327,7 @@ export default function LoginPage() {
             </h1>
             <p className="font-share-tech text-xs tracking-[0.4em] text-sim-accent/70 mt-1 text-in"
               style={{ animationDelay: '200ms' }}>
-              {lang === 'en' ? 'CIVILIZATION EMERGENCE SYSTEM' : 'MEDENİYET ORTAYA ÇIKIŞ SİSTEMİ'}
+              MEDENİYET
             </p>
           </div>
 
