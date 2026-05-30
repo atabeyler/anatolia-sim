@@ -319,15 +319,15 @@ export default function AriaButton() {
         onMouseEnter={() => setTooltip(true)}
         onMouseLeave={() => setTooltip(false)}
         style={{
-          display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px',
-          fontSize: 9, letterSpacing: '0.1em', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px',
+          fontSize: 16, fontWeight: 700, letterSpacing: '0.1em', cursor: 'pointer',
           border: `1px solid ${color}`,
           color, fontFamily: 'Share Tech Mono, monospace',
           background: uiState === 'idle' ? 'transparent' : `${color}18`,
           boxShadow: uiState !== 'idle' ? `0 0 8px ${color}55` : 'none',
           transition: 'all 0.2s',
         }}>
-        <Icon size={10}
+        <Icon size={14}
           className={uiState === 'processing' ? 'animate-spin' : ''}
           style={{ filter: uiState !== 'idle' ? `drop-shadow(0 0 4px ${color})` : 'none' }} />
         <span>ARIA</span>

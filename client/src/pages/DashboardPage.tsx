@@ -85,8 +85,10 @@ export default function DashboardPage() {
               <AriaButton />
               <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 10 }}>{user?.username?.toUpperCase()}</span>
               <button onClick={() => { logout(); navigate('/login'); }}
-                className="p-2 text-sim-muted hover:text-red-400 transition-colors" style={{ lineHeight: 0 }}>
+                className="flex items-center gap-1.5 px-2 py-1 text-sim-muted hover:text-red-400 transition-colors"
+                style={{ fontFamily:'Share Tech Mono,monospace', fontSize:16, fontWeight:700, letterSpacing:'0.1em' }}>
                 <LogOut size={14} />
+                <span>ÇIKIŞ</span>
               </button>
             </div>
           </div>

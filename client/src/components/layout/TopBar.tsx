@@ -403,7 +403,7 @@ export default function TopBar() {
             <button key={l} onClick={() => lang !== l && toggleLang()}
               className="font-share-tech tracking-widest transition-all duration-150"
               style={{
-                padding: '4px 7px', fontSize: 9,
+                padding: '5px 10px', fontSize: 16,
                 background: lang === l ? 'rgba(79,110,247,0.28)' : 'rgba(10,10,30,0.8)',
                 color: lang === l ? '#c0ccff' : '#4a5578',
                 borderRight: i === 0 ? '1px solid rgba(79,110,247,0.25)' : 'none',
