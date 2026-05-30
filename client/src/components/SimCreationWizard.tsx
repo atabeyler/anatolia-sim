@@ -399,7 +399,7 @@ const btnBase: React.CSSProperties = {
 const btnNext  = { ...btnBase, background:'rgba(79,110,247,0.25)', border:'1px solid rgba(79,110,247,0.5)',  color:'#e0e0f0' };
 const btnBack  = { ...btnBase, background:'rgba(22,22,58,0.5)',    border:'1px solid rgba(79,110,247,0.2)',  color:'#e0e0f0' };
 const btnExit  = { ...btnBase, background:'rgba(150,30,30,0.15)',  border:'1px solid rgba(200,34,34,0.3)',   color:'#e0e0f0', padding:'9px 14px' };
-const btnStart = { ...btnBase, fontSize:13, background:'rgba(78,203,113,0.2)', border:'1px solid rgba(78,203,113,0.5)', color:'#4ecb71', padding:'9px 28px' };
+const btnStart = { ...btnBase, fontSize:14, background:'rgba(78,203,113,0.2)', border:'1px solid rgba(78,203,113,0.5)', color:'#4ecb71', padding:'9px 28px' };
 
 /* ── sub-components ──────────────────────────────────────────────────────── */
 function Lbl({ children }: { children: React.ReactNode }) {
@@ -475,7 +475,7 @@ function ColorPicker({ label, opts, value, onChange, lang }: any) {
               border: value===o.v ? '2px solid #4f9ef7' : '2px solid rgba(79,158,247,0.15)',
               boxShadow: value===o.v ? '0 0 10px #4f9ef780' : 'none', transition:'all 0.15s',
             }} />
-            <span style={{ fontSize:10, color: value===o.v ? '#4f9ef7' : '#6070a0',
+            <span style={{ fontSize:14, color: value===o.v ? '#4f9ef7' : '#e0e0f0',
               fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.04em', whiteSpace:'nowrap' }}>
               {lang==='tr' ? o.tr : o.en}
             </span>
@@ -578,7 +578,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           <div style={{ display:'flex', gap:8 }}>
             {[{ v:'male', tr:'ERKEK', en:'MALE' }, { v:'female', tr:'KADIN', en:'FEMALE' }].map(opt => (
               <button key={opt.v} onClick={() => setFd((p: any) => ({ ...p, sex: opt.v }))}
-                style={{ fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', padding:'8px 22px', fontSize:13,
+                style={{ fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', padding:'8px 22px', fontSize:14,
                   background: fd.sex===opt.v ? 'rgba(79,110,247,0.25)' : 'rgba(22,22,58,0.5)',
                   border: `1px solid ${fd.sex===opt.v ? 'rgba(79,110,247,0.6)' : 'rgba(79,110,247,0.15)'}`,
                   color:'#e0e0f0', clipPath:CLIP, cursor:'pointer' }}>
@@ -609,7 +609,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           </div>
           <SliderBar value={fd.metabolism} color="#a855f7" onChange={v => setT('metabolism', v)} />
           <div style={{ display:'flex', justifyContent:'space-between', marginTop:5,
-            fontSize:12, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace' }}>
+            fontSize:14, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace' }}>
             <span>{t('İnce', 'Lean')}</span><span>{t('Orta', 'Average')}</span><span>{t('Kaslı', 'Heavy')}</span>
           </div>
         </div>
@@ -649,16 +649,16 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           {/* 2 — slider + spectrum labels */}
           <SliderBar value={val} color={trait.c} onChange={v => setT(trait.id, v)} />
           <div style={{ display:'flex', justifyContent:'space-between', marginTop:5,
-            fontSize:11, fontFamily:'Share Tech Mono,monospace' }}>
-            <span style={{ color:'#8898c8' }}>{lang==='tr' ? tm.lo[0] : tm.lo[1]}</span>
-            <span style={{ color:'#8898c8' }}>{lang==='tr' ? tm.hi[0] : tm.hi[1]}</span>
+            fontSize:14, fontFamily:'Share Tech Mono,monospace' }}>
+            <span style={{ color:'#e0e0f0' }}>{lang==='tr' ? tm.lo[0] : tm.lo[1]}</span>
+            <span style={{ color:'#e0e0f0' }}>{lang==='tr' ? tm.hi[0] : tm.hi[1]}</span>
           </div>
 
           {/* 3 — simulation impact chips */}
           <div style={{ display:'flex', gap:7, flexWrap:'wrap', marginTop:18 }}>
             {tm.fx.map(fx => (
               <div key={fx[0]} style={{
-                padding:'3px 10px', fontSize:10, fontFamily:'Share Tech Mono,monospace',
+                padding:'3px 10px', fontSize:14, fontFamily:'Share Tech Mono,monospace',
                 color: trait.c, border:`1px solid ${trait.c}45`,
                 background:`${trait.c}12`, clipPath:CLIP, letterSpacing:'0.07em',
               }}>
@@ -668,7 +668,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           </div>
 
           {/* 4a — dynamic description */}
-          <div style={{ marginTop:14, fontSize:12, color:'#7888b8',
+          <div style={{ marginTop:14, fontSize:14, color:'#e0e0f0',
             fontFamily:'Share Tech Mono,monospace', lineHeight:1.65, letterSpacing:'0.03em' }}>
             {tm.d[tier][isTr ? 0 : 1]}
           </div>
@@ -676,11 +676,11 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           {/* 4b — historical reference card */}
           <div style={{ marginTop:12, padding:'10px 14px',
             background:'rgba(8,8,26,0.85)', border:`1px solid ${trait.c}28`, clipPath:CLIP }}>
-            <div style={{ fontSize:10, color: trait.c, fontFamily:'Share Tech Mono,monospace',
-              letterSpacing:'0.18em', marginBottom:5 }}>
+            <div style={{ fontSize:14, color: trait.c, fontFamily:'Share Tech Mono,monospace',
+              letterSpacing:'0.12em', marginBottom:6 }}>
               ◈ {tm.r[tier][0]}
             </div>
-            <div style={{ fontSize:11, color:'#5868a0', fontFamily:'Share Tech Mono,monospace',
+            <div style={{ fontSize:14, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
               lineHeight:1.55, letterSpacing:'0.03em' }}>
               {tm.r[tier][isTr ? 1 : 2]}
             </div>
@@ -739,13 +739,13 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
         display:'flex', alignItems:'center', justifyContent:'space-between' }}>
         <div>
           {founderLabel && (
-            <div style={{ fontSize:12, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace',
+            <div style={{ fontSize:14, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace',
               letterSpacing:'0.2em', marginBottom:3 }}>
               {founderLabel}
             </div>
           )}
           {subtitle && (
-            <div style={{ fontSize:11, color:'#8898c8', fontFamily:'Share Tech Mono,monospace',
+            <div style={{ fontSize:14, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
               letterSpacing:'0.15em', marginBottom:2 }}>
               {subtitle}
             </div>
@@ -755,7 +755,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
             {stepTitle()}
           </div>
         </div>
-        <div style={{ fontSize:12, color:'#e0e0f0', fontFamily:'Orbitron,monospace', letterSpacing:'0.1em' }}>
+        <div style={{ fontSize:14, color:'#e0e0f0', fontFamily:'Orbitron,monospace', letterSpacing:'0.1em' }}>
           {step+1} / {TOTAL}
         </div>
       </div>
