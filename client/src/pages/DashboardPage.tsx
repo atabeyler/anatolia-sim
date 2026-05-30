@@ -286,7 +286,7 @@ function FounderCard({ title, sex, data, onChange, lang }: {
               : (lang === 'tr' ? 'Obez' : 'Obese');
             const bmiColor = bmi < 18.5 ? '#7dd3fc' : bmi < 25 ? '#4ecb71' : bmi < 30 ? '#f59e0b' : '#ef4444';
             return (
-              <div style={{ marginTop: 4, fontSize: 10, color: '#3a5070', fontFamily: 'Share Tech Mono', display: 'flex', gap: 8 }}>
+              <div style={{ marginTop: 4, fontSize: 10, color: '#8090b0', fontFamily: 'Share Tech Mono', display: 'flex', gap: 8 }}>
                 <span>BMI: <span style={{ color: bmiColor, fontFamily: 'Orbitron, monospace' }}>{bmi.toFixed(1)}</span></span>
                 <span style={{ color: bmiColor }}>{bmiLabel}</span>
               </div>
@@ -528,7 +528,7 @@ export default function DashboardPage() {
               <span className="font-orbitron text-xs font-semibold tracking-[0.2em] text-sim-accent">
                 {lang === 'en' ? 'NEW SIMULATION' : 'YENİ SİMÜLASYON'}
               </span>
-              <span style={{ marginLeft: 'auto', fontSize: 8, color: '#3a5070', fontFamily: 'Share Tech Mono' }}>
+              <span style={{ marginLeft: 'auto', fontSize: 8, color: '#7080a8', fontFamily: 'Share Tech Mono' }}>
                 {lang === 'tr' ? '// ayarlar otomatik kaydedilir' : '// settings auto-saved'}
               </span>
             </div>
@@ -566,7 +566,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Founder genetics — scrollable section */}
-              <div style={{ fontSize: 9, color: '#3a5070', letterSpacing: '0.2em', fontFamily: 'Share Tech Mono', marginBottom: 10 }}>
+              <div style={{ fontSize: 9, color: '#7080a8', letterSpacing: '0.2em', fontFamily: 'Share Tech Mono', marginBottom: 10 }}>
                 {lang === 'tr' ? '// KURUCU GENETİĞİ' : '// FOUNDER GENETICS'}
               </div>
               <div className="grid grid-cols-2 gap-3 mb-4">
@@ -664,7 +664,7 @@ export default function DashboardPage() {
             style={{ border: '1px solid rgba(79,110,247,0.1)', background: 'rgba(4,4,15,0.6)' }}>
             <div className="relative w-12 h-12 flex items-center justify-center mb-4">
               <div className="absolute inset-0 rounded-full border border-sim-accent/20" style={{ animation: 'ring-expand 3s ease-out infinite' }} />
-              <Globe size={22} className="text-sim-muted/50" />
+              <Globe size={22} className="text-sim-muted" />
             </div>
             <p className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 10 }}>
               {lang === 'en' ? 'NO SIMULATIONS FOUND' : 'SİMÜLASYON BULUNAMADI'}
@@ -690,7 +690,7 @@ export default function DashboardPage() {
                     border: `1px solid ${sim.status === 'running' ? 'rgba(78,203,113,0.3)' : 'rgba(79,110,247,0.2)'}`,
                     clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))',
                   }}>
-                  {sim.status === 'running' ? <div className="w-2 h-2 rounded-full bg-sim-green pulse-live" /> : <Globe size={14} className="text-sim-accent/60" />}
+                  {sim.status === 'running' ? <div className="w-2 h-2 rounded-full bg-sim-green pulse-live" /> : <Globe size={14} className="text-sim-accent" />}
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -736,7 +736,7 @@ export default function DashboardPage() {
 
       {/* Footer */}
       <div className="text-center py-6 relative z-1">
-        <span className="font-share-tech text-sim-muted/30 tracking-[0.3em]" style={{ fontSize: 9 }}>
+        <span className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 9 }}>
           BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026
         </span>
       </div>
