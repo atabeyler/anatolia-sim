@@ -179,10 +179,10 @@ function HudInput({ label, type, value, onChange, placeholder, maxLength }: any)
 
 /* ── Status indicators ────────────────────────────────────── */
 const STATUS = [
-  { label: 'CORE SYSTEMS', ok: true },
-  { label: 'PHYSICS ENGINE', ok: true },
-  { label: 'GENOME MATRIX', ok: true },
-  { label: 'NEURAL NET', ok: true },
+  { label: 'CORE SYSTEMS',  labelTr: 'ÇEKİRDEK SİSTEMLER', ok: true },
+  { label: 'PHYSICS ENGINE', labelTr: 'FİZİK MOTORU',       ok: true },
+  { label: 'GENOME MATRIX', labelTr: 'GENOM MATRİSİ',       ok: true },
+  { label: 'NEURAL NET',    labelTr: 'SİNİR AĞI',           ok: true },
 ];
 
 /* ── Main Login Component ─────────────────────────────────── */
@@ -196,11 +196,23 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [booted, setBooted] = useState(false);
   const [pendingCode, setPendingCode] = useState('');
+  const [coords, setCoords] = useState<{ lat: string; lon: string } | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const f = (k: string) => (e: any) => setForm(p => ({ ...p, [k]: e.target.value }));
 
   useEffect(() => { const t = setTimeout(() => setBooted(true), 400); return () => clearTimeout(t); }, []);
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      pos => setCoords({
+        lat: `${Math.abs(pos.coords.latitude).toFixed(4)}°${pos.coords.latitude >= 0 ? 'N' : 'S'}`,
+        lon: `${Math.abs(pos.coords.longitude).toFixed(4)}°${pos.coords.longitude >= 0 ? 'E' : 'W'}`,
+      }),
+      () => {} // permission denied → keep default
+    );
+  }, []);
 
   useEffect(() => {
     if (!pendingCode) return;
@@ -287,7 +299,7 @@ export default function LoginPage() {
         {STATUS.map((s, i) => (
           <div key={s.label} className="flex items-center gap-2 boot-in" style={{ animationDelay: `${i * 120}ms` }}>
             <div className={`w-1.5 h-1.5 rounded-full ${s.ok ? 'bg-sim-green pulse-live' : 'bg-sim-red'}`} />
-            <span className="text-xs font-share-tech tracking-widest" style={{ color: '#c0c8e8' }}>{s.label}</span>
+            <span className="text-xs font-share-tech tracking-widest" style={{ color: '#c0c8e8' }}>{lang === 'tr' ? s.labelTr : s.label}</span>
             <span className={`text-xs font-share-tech ${s.ok ? 'text-sim-green' : 'text-sim-red'}`}>{s.ok ? 'OK' : 'ERR'}</span>
           </div>
         ))}
@@ -295,7 +307,7 @@ export default function LoginPage() {
 
       {/* Coordinate display bottom */}
       <div className="fixed bottom-5 left-5 z-20 font-share-tech text-xs tracking-widest hidden sm:block" style={{ color: '#c0c8e8' }}>
-        <div>LAT: 39.9334°N · LON: 32.8597°E</div>
+        <div>LAT: {coords?.lat ?? '39.9334°N'} · LON: {coords?.lon ?? '32.8597°E'}</div>
         <div className="mt-0.5">SYS: ANATOLİA-SIM v1.0 · BUILD 2026</div>
       </div>
 
@@ -435,7 +447,7 @@ export default function LoginPage() {
 
           {/* Footer */}
           <p className="font-share-tech text-xs text-sim-muted/40 mt-6 mb-2 tracking-widest text-in" style={{ animationDelay: '600ms' }}>
-            BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026
+            {lang === 'tr' ? 'BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026' : 'BOLD MILITARY TECHNOLOGY AND DEFENSE INDUSTRIES INC. © 2026'}
           </p>
         </div>
       )}

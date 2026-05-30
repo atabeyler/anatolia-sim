@@ -82,7 +82,7 @@ export default function EventsPanel() {
       {/* Summary row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 3, marginBottom: 8 }}>
         {FILTERS.slice(1).map(f => (
-          <div key={f.id} style={{ background: 'rgba(0,15,8,0.7)', border: `1px solid ${f.color}22`, padding: '3px 5px' }}>
+          <div key={f.id} style={{ background: 'rgba(15,0,0,0.7)', border: `1px solid ${f.color}22`, padding: '3px 5px' }}>
             <div style={{ fontSize: 6, color: f.color, letterSpacing: '0.08em', opacity: 0.7, whiteSpace: 'nowrap', overflow: 'hidden' }}>
               {lang === 'tr' ? f.labelTr.toUpperCase() : f.labelEn.toUpperCase()}
             </div>
@@ -99,7 +99,7 @@ export default function EventsPanel() {
           <button key={f.id} onClick={() => setFilter(f.id)}
             style={{
               padding: '2px 6px', fontSize: 7.5,
-              border: `1px solid ${filter === f.id ? f.color : '#1a3a2a'}`,
+              border: `1px solid ${filter === f.id ? f.color : '#3a1a1a'}`,
               color: filter === f.id ? f.color : '#3a6040',
               background: filter === f.id ? `${f.color}14` : 'transparent',
               fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer',
@@ -131,7 +131,7 @@ export default function EventsPanel() {
             display: 'flex', gap: 6, alignItems: 'flex-start',
             padding: '5px 6px', marginBottom: 2,
             background: i === 0 ? `${color}0c` : 'transparent',
-            border: `1px solid ${i < 3 ? color + '28' : '#0a1a0f'}`,
+            border: `1px solid ${i < 3 ? color + '28' : '#1a0808'}`,
             opacity: Math.max(0.35, 1 - i * 0.012),
           }}>
             <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1.1, color, marginTop: 1 }}>{icon}</span>

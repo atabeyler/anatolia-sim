@@ -25,7 +25,7 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
         className="fixed top-0 left-0 bottom-0 w-80 z-40 flex flex-col overflow-hidden"
         style={{
           background: 'rgba(2,8,4,0.98)',
-          borderRight: '1px solid #0d2018',
+          borderRight: '1px solid #1a0808',
           backdropFilter: 'blur(20px)',
           boxShadow: '4px 0 40px rgba(0,80,40,0.2)',
         }}>
@@ -44,7 +44,7 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
 
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 flex-shrink-0"
-        style={{ background: 'rgba(0,10,5,0.95)', borderBottom: '1px solid #0d2018' }}>
+        style={{ background: 'rgba(10,0,0,0.95)', borderBottom: '1px solid #1a0808' }}>
         <div className="w-1 h-4 flex-shrink-0" style={{ background: '#00e887', boxShadow: '0 0 6px #00e887' }} />
         <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', color: '#00e887' }}>
           {displayTitle.toUpperCase()}
@@ -63,8 +63,8 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
 
       {/* Footer bar */}
       <div className="px-3 py-1 flex-shrink-0"
-        style={{ borderTop: '1px solid #0d2018', background: 'rgba(0,8,4,0.9)' }}>
-        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: '#1a3a2a', letterSpacing: '0.15em' }}>
+        style={{ borderTop: '1px solid #1a0808', background: 'rgba(0,8,4,0.9)' }}>
+        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: '#3a1a1a', letterSpacing: '0.15em' }}>
           MODULE/{displayTitle.toUpperCase().replace(/ /g, '_')}
         </span>
       </div>
