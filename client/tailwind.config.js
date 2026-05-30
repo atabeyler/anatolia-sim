@@ -7,8 +7,8 @@ export default {
         sim: {
           bg:      '#030310',
           surface: '#07071a',
-          border:  '#16163a',
-          accent:  '#4f6ef7',
+          border:  '#3a0a0a',
+          accent:  '#cc2222',
           gold:    '#d4a838',
           red:     '#e05a5a',
           green:   '#4ecb71',

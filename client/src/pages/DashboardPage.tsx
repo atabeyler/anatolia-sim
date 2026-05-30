@@ -135,10 +135,10 @@ function TraitSlider({ id, label, labelEn, color, value, onChange, lang }: any) 
   return (
     <div className="mb-2">
       <div className="flex justify-between mb-0.5">
-        <span style={{ fontSize: 9, color: '#7080a0', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.08em' }}>
+        <span style={{ fontSize: 10, color: '#5060a0', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.08em' }}>
           {lang === 'tr' ? label : labelEn}
         </span>
-        <span style={{ fontSize: 9, color, fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
+        <span style={{ fontSize: 10, color, fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
           {displayValue}
         </span>
       </div>
@@ -345,7 +345,7 @@ function FounderCard({ title, sex, data, onChange, lang }: {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { user, accessToken, logout, lang } = useSimStore();
+  const { user, accessToken, logout, lang, toggleLang } = useSimStore();
   const [sims, setSims] = useState<any[]>([]);
   const [showNew, setShowNew] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
@@ -441,6 +441,17 @@ export default function DashboardPage() {
                 </span>
               </div>
             )}
+            <button onClick={toggleLang}
+              style={{
+                padding: '3px 8px', fontSize: 10, cursor: 'pointer',
+                border: '1px solid rgba(200,34,34,0.4)', color: '#cc2222',
+                fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.1em',
+                background: 'transparent', transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => { (e.target as HTMLElement).style.background = 'rgba(200,34,34,0.1)'; }}
+              onMouseLeave={e => { (e.target as HTMLElement).style.background = 'transparent'; }}>
+              {lang === 'tr' ? 'EN' : 'TR'}
+            </button>
             <AriaButton />
             <div className="flex items-center gap-2">
               <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 10 }}>{user?.username?.toUpperCase()}</span>
