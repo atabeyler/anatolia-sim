@@ -16,10 +16,8 @@ function loadState(): { form?: any; founder1?: any; founder2?: any } | null {
 }
 
 // ── Helpers: height ↔ cm, weight ↔ metabolism ────────────────────────────────
-// Server formula: height_cm = 150 + height_factor * 45  (range 150–195 cm)
 const toCm  = (v: number) => Math.round(150 + Math.max(0, Math.min(1, v)) * 45);
 const fromCm = (cm: number) => Math.max(0, Math.min(1, (cm - 150) / 45));
-// weight_kg = (height_cm/100)^2 * (19 + metabolism * 8)
 const toKg  = (heightVal: number, metabVal: number) => {
   const h = toCm(heightVal) / 100;
   return Math.round(h * h * (19 + Math.max(0, Math.min(1, metabVal)) * 8));
@@ -136,10 +134,10 @@ function TraitSlider({ id, label, labelEn, color, value, onChange, lang }: any) 
   return (
     <div className="mb-2">
       <div className="flex justify-between mb-0.5">
-        <span style={{ fontSize: 10, color: '#5060a0', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.08em' }}>
+        <span style={{ fontSize: 13, color: '#5060a0', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.08em' }}>
           {lang === 'tr' ? label : labelEn}
         </span>
-        <span style={{ fontSize: 10, color, fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
+        <span style={{ fontSize: 13, color, fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
           {displayValue}
         </span>
       </div>
@@ -172,16 +170,13 @@ function ColorChips({ options, value, onChange }: { options: typeof EYE_OPTIONS;
 
 const inputStyle: React.CSSProperties = {
   width: '100%', background: 'rgba(5,5,20,0.9)', border: '1px solid rgba(79,110,247,0.2)',
-  padding: '4px 8px', fontSize: 11, color: '#4f9ef7', fontFamily: 'Share Tech Mono, monospace', outline: 'none',
+  padding: '4px 8px', fontSize: 12, color: '#4f9ef7', fontFamily: 'Share Tech Mono, monospace', outline: 'none',
 };
 
 function UnitInput({ label, value, unit, min, max, onChange, color = '#c0d0f0' }: {
   label: string; value: number; unit: string; min: number; max: number; onChange: (v: number) => void; color?: string;
 }) {
-  // Local raw string while user is typing — only committed on blur
   const [raw, setRaw] = useState(String(value));
-
-  // Sync when parent value changes (e.g., linked slider moves)
   useEffect(() => { setRaw(String(value)); }, [value]);
 
   function commit(str: string) {
@@ -191,13 +186,13 @@ function UnitInput({ label, value, unit, min, max, onChange, color = '#c0d0f0' }
       onChange(clamped);
       setRaw(String(clamped));
     } else {
-      setRaw(String(value)); // revert to last valid value
+      setRaw(String(value));
     }
   }
 
   return (
     <div>
-      <div style={{ fontSize: 10, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono', letterSpacing: '0.1em' }}>{label}</div>
+      <div style={{ fontSize: 12, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono', letterSpacing: '0.1em' }}>{label}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
         <input
           type="number" min={min} max={max}
@@ -207,7 +202,7 @@ function UnitInput({ label, value, unit, min, max, onChange, color = '#c0d0f0' }
           onKeyDown={e => { if (e.key === 'Enter') commit((e.target as HTMLInputElement).value); }}
           style={{ ...inputStyle, flex: 1, color }}
         />
-        <span style={{ fontSize: 10, color: '#5060a0', fontFamily: 'Share Tech Mono', flexShrink: 0 }}>{unit}</span>
+        <span style={{ fontSize: 12, color: '#5060a0', fontFamily: 'Share Tech Mono', flexShrink: 0 }}>{unit}</span>
       </div>
     </div>
   );
@@ -221,7 +216,7 @@ function FounderCard({ title, sex, data, onChange, lang }: {
   const weightKg = toKg(data.height ?? 0.5, data.metabolism ?? 0.5);
 
   const sec = (label: string) => (
-    <div style={{ fontSize: 10, color: '#4f9ef7', letterSpacing: '0.2em', marginBottom: 6, fontFamily: 'Share Tech Mono' }}>
+    <div style={{ fontSize: 13, color: '#4f9ef7', letterSpacing: '0.2em', marginBottom: 6, fontFamily: 'Share Tech Mono' }}>
       {label}
     </div>
   );
@@ -231,7 +226,7 @@ function FounderCard({ title, sex, data, onChange, lang }: {
       {/* Header */}
       <div className="px-3 py-2 flex items-center gap-2" style={{ borderBottom: `1px solid ${accentColor}20`, background: `${accentColor}08` }}>
         <div className="w-1.5 h-4" style={{ background: accentColor, boxShadow: `0 0 6px ${accentColor}` }} />
-        <span style={{ fontSize: 10, color: accentColor, fontFamily: 'Orbitron, monospace', fontWeight: 700, letterSpacing: '0.15em' }}>
+        <span style={{ fontSize: 14, color: accentColor, fontFamily: 'Orbitron, monospace', fontWeight: 700, letterSpacing: '0.15em' }}>
           {title}
         </span>
       </div>
@@ -242,21 +237,21 @@ function FounderCard({ title, sex, data, onChange, lang }: {
           {sec(lang === 'tr' ? '── KİMLİK ──' : '── IDENTITY ──')}
           <div className="grid grid-cols-2 gap-2">
             <div className="col-span-2">
-              <div style={{ fontSize: 10, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'İSİM' : 'NAME'}</div>
+              <div style={{ fontSize: 12, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'İSİM' : 'NAME'}</div>
               <input value={data.name ?? ''} onChange={e => onChange('name', e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <div style={{ fontSize: 10, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'YAŞ' : 'AGE'}</div>
+              <div style={{ fontSize: 12, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'YAŞ' : 'AGE'}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <input type="number" min="15" max="65" value={data.ageYears ?? 20}
                   onChange={e => onChange('ageYears', parseInt(e.target.value || '20', 10))}
                   style={{ ...inputStyle, flex: 1 }} />
-                <span style={{ fontSize: 10, color: '#5060a0', fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'yaş' : 'yr'}</span>
+                <span style={{ fontSize: 12, color: '#5060a0', fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'yaş' : 'yr'}</span>
               </div>
             </div>
             <div>
-              <div style={{ fontSize: 10, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'CİNSİYET' : 'SEX'}</div>
-              <div style={{ padding: '4px 8px', fontSize: 11, color: accentColor, fontFamily: 'Share Tech Mono', border: `1px solid ${accentColor}30`, background: `${accentColor}08` }}>
+              <div style={{ fontSize: 12, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'CİNSİYET' : 'SEX'}</div>
+              <div style={{ padding: '4px 8px', fontSize: 12, color: accentColor, fontFamily: 'Share Tech Mono', border: `1px solid ${accentColor}30`, background: `${accentColor}08` }}>
                 {sex === 'male' ? (lang === 'tr' ? 'ERKEK' : 'MALE') : (lang === 'tr' ? 'KADIN' : 'FEMALE')}
               </div>
             </div>
@@ -278,7 +273,6 @@ function FounderCard({ title, sex, data, onChange, lang }: {
               onChange={kg => onChange('metabolism', fromKg(kg, data.height ?? 0.5))}
             />
           </div>
-          {/* BMI preview */}
           {(() => {
             const bmi = weightKg / ((heightCm / 100) ** 2);
             const bmiLabel = bmi < 18.5 ? (lang === 'tr' ? 'Zayıf' : 'Underweight')
@@ -287,7 +281,7 @@ function FounderCard({ title, sex, data, onChange, lang }: {
               : (lang === 'tr' ? 'Obez' : 'Obese');
             const bmiColor = bmi < 18.5 ? '#7dd3fc' : bmi < 25 ? '#4ecb71' : bmi < 30 ? '#f59e0b' : '#ef4444';
             return (
-              <div style={{ marginTop: 4, fontSize: 10, color: '#8090b0', fontFamily: 'Share Tech Mono', display: 'flex', gap: 8 }}>
+              <div style={{ marginTop: 4, fontSize: 13, color: '#8090b0', fontFamily: 'Share Tech Mono', display: 'flex', gap: 8 }}>
                 <span>BMI: <span style={{ color: bmiColor, fontFamily: 'Orbitron, monospace' }}>{bmi.toFixed(1)}</span></span>
                 <span style={{ color: bmiColor }}>{bmiLabel}</span>
               </div>
@@ -305,7 +299,7 @@ function FounderCard({ title, sex, data, onChange, lang }: {
               { key: 'skin_tone',  label: lang === 'tr' ? 'TEN RENGİ'  : 'SKIN TONE',  opts: SKIN_OPTIONS },
             ].map(({ key, label, opts }) => (
               <div key={key}>
-                <div style={{ fontSize: 10, color: '#5060a0', marginBottom: 4, fontFamily: 'Share Tech Mono' }}>
+                <div style={{ fontSize: 13, color: '#5060a0', marginBottom: 4, fontFamily: 'Share Tech Mono' }}>
                   {label}&nbsp;
                   <span style={{ color: '#8090c0' }}>— {opts.find(o => o.value === data[key])?.[lang === 'tr' ? 'labelTr' : 'label']}</span>
                 </div>
@@ -324,7 +318,6 @@ function FounderCard({ title, sex, data, onChange, lang }: {
               .map(t => (
                 <TraitSlider key={t.id} {...t} value={data[t.id] ?? 0.5} onChange={onChange} lang={lang} />
               ))}
-            {/* Height slider shows cm; metabolism slider stays (weight input is the primary control) */}
             {group.group === 'Beden' && (
               <>
                 <TraitSlider
@@ -351,7 +344,6 @@ export default function DashboardPage() {
   const [showNew, setShowNew] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
 
-  // ── State with localStorage persistence ──────────────────────────────────
   const [form, setForm] = useState<{ name: string; latitude: string; longitude: string }>(() => {
     const s = loadState();
     return { name: '', latitude: s?.form?.latitude ?? '39.9334', longitude: s?.form?.longitude ?? '32.8597' };
@@ -368,7 +360,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const headers = { Authorization: `Bearer ${accessToken}` };
 
-  // Persist to localStorage on any change
   useEffect(() => {
     saveState({ latitude: form.latitude, longitude: form.longitude }, founder1, founder2);
   }, [form.latitude, form.longitude, founder1, founder2]);
@@ -399,7 +390,7 @@ export default function DashboardPage() {
       }, { headers });
       setSims(s => [data, ...s]);
       setShowNew(false);
-      setForm(f => ({ ...f, name: '' })); // Only reset name, keep coords + genetics
+      setForm(f => ({ ...f, name: '' }));
     } finally { setLoading(false); }
   }
 
@@ -420,15 +411,15 @@ export default function DashboardPage() {
           backdropFilter: 'blur(20px)',
           boxShadow: '0 2px 30px rgba(200,34,34,0.2)',
         }}>
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="relative w-7 h-7 flex items-center justify-center">
+            <div className="relative w-8 h-8 flex items-center justify-center">
               <div className="absolute inset-0 rounded-full border border-sim-accent/50 neon-breathe" />
-              <Globe size={14} className="text-sim-accent" style={{ filter: 'drop-shadow(0 0 4px rgba(79,110,247,0.8))' }} />
+              <Globe size={16} className="text-sim-accent" style={{ filter: 'drop-shadow(0 0 4px rgba(79,110,247,0.8))' }} />
             </div>
-            <div className="flex flex-col leading-none gap-0.5">
-              <span className="font-orbitron text-sim-accent font-bold tracking-[0.25em]" style={{ fontSize: 12, textShadow: '0 0 10px rgba(79,110,247,0.6)' }}>ANATOLİA-SİM</span>
-              <span className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 8 }}>{lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}</span>
+            <div className="flex flex-col leading-none gap-1">
+              <span className="font-orbitron text-sim-accent font-bold tracking-[0.25em]" style={{ fontSize: 24, textShadow: '0 0 10px rgba(79,110,247,0.6)' }}>ANATOLİA-SİM</span>
+              <span className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 18 }}>{lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}</span>
             </div>
           </div>
 
@@ -437,7 +428,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2 px-3 py-1"
                 style={{ background: 'rgba(78,203,113,0.1)', border: '1px solid rgba(78,203,113,0.3)' }}>
                 <div className="w-1.5 h-1.5 rounded-full bg-sim-green pulse-live" />
-                <span className="font-share-tech text-sim-green tracking-widest" style={{ fontSize: 10 }}>
+                <span className="font-share-tech text-sim-green tracking-widest" style={{ fontSize: 14 }}>
                   {runningCount} {lang === 'en' ? 'ACTIVE' : 'AKTİF'}
                 </span>
               </div>
@@ -445,10 +436,10 @@ export default function DashboardPage() {
             <LangToggle />
             <AriaButton />
             <div className="flex items-center gap-2">
-              <span className="font-share-tech tracking-widest" style={{ fontSize: 10, color: '#cc2222' }}>{user?.username?.toUpperCase()}</span>
+              <span className="font-share-tech tracking-widest" style={{ fontSize: 16, color: '#cc2222' }}>{user?.username?.toUpperCase()}</span>
               <button onClick={() => { logout(); navigate('/login'); }}
                 className="p-2 transition-colors" style={{ lineHeight: 0, color: '#cc2222' }}>
-                <LogOut size={14} />
+                <LogOut size={16} />
               </button>
             </div>
           </div>
@@ -473,27 +464,27 @@ export default function DashboardPage() {
               <button onClick={() => setCompareMode(c => !c)}
                 className="flex items-center gap-2 font-share-tech tracking-widest transition-all duration-150"
                 style={{
-                  padding: '6px 12px', fontSize: 10,
+                  padding: '8px 14px', fontSize: 16,
                   background: compareMode ? 'rgba(79,110,247,0.2)' : 'rgba(22,22,58,0.6)',
                   border: `1px solid ${compareMode ? 'rgba(79,110,247,0.5)' : 'rgba(79,110,247,0.15)'}`,
                   color: compareMode ? '#a0b4ff' : '#6070a0',
                   clipPath: 'polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px))',
                 }}>
-                <BarChart2 size={13} />
+                <BarChart2 size={15} />
                 {lang === 'en' ? 'COMPARE' : 'KARŞILAŞTIR'}
               </button>
             )}
             <button onClick={() => setShowNew(true)}
               className="flex items-center gap-2 font-share-tech tracking-widest transition-all duration-150 hover:brightness-110"
               style={{
-                padding: '6px 14px', fontSize: 10,
+                padding: '8px 16px', fontSize: 16,
                 background: 'rgba(79,110,247,0.2)',
                 border: '1px solid rgba(79,110,247,0.5)',
                 color: '#a0b4ff',
                 clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
                 boxShadow: '0 0 15px rgba(79,110,247,0.2)',
               }}>
-              <Plus size={13} />
+              <Plus size={15} />
               {lang === 'en' ? 'NEW SIMULATION' : 'YENİ SİMÜLASYON'}
             </button>
           </div>
@@ -507,7 +498,6 @@ export default function DashboardPage() {
             backdropFilter: 'blur(20px)',
             animation: 'warp-in 0.4s cubic-bezier(0.2,0.8,0.4,1) both',
           }}>
-            {/* Corner brackets */}
             {[['top','left'],['top','right'],['bottom','left'],['bottom','right']].map(([v,h]) => (
               <span key={v+h} style={{ position: 'absolute', [v]: -1, [h]: -1, width: 12, height: 12,
                 [`border${v.charAt(0).toUpperCase()+v.slice(1)}`]: '2px solid rgba(200,34,34,0.9)',
@@ -527,12 +517,12 @@ export default function DashboardPage() {
             <div className="p-5">
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="col-span-3">
-                  <label className="font-share-tech text-sim-muted tracking-widest block mb-1.5" style={{ fontSize: 9 }}>
+                  <label className="font-share-tech text-sim-muted tracking-widest block mb-1.5" style={{ fontSize: 14 }}>
                     {lang === 'en' ? 'SIMULATION NAME' : 'SİMÜLASYON ADI'}
                   </label>
                   <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                    className="w-full text-sm focus:outline-none font-share-tech"
-                    style={{ background: 'rgba(7,7,26,0.9)', border: '1px solid rgba(79,110,247,0.25)', padding: '8px 12px', color: '#c0c8e8',
+                    className="w-full focus:outline-none font-share-tech"
+                    style={{ background: 'rgba(7,7,26,0.9)', border: '1px solid rgba(79,110,247,0.25)', padding: '8px 12px', fontSize: 14, color: '#c0c8e8',
                       clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))' }}
                     onFocus={e => e.target.style.borderColor = 'rgba(79,110,247,0.7)'}
                     onBlur={e => e.target.style.borderColor = 'rgba(79,110,247,0.25)'}
@@ -543,11 +533,11 @@ export default function DashboardPage() {
                   { key: 'longitude', label: lang === 'en' ? 'LONGITUDE' : 'BOYLAM' },
                 ].map(({ key, label }) => (
                   <div key={key}>
-                    <label className="font-share-tech text-sim-muted tracking-widest block mb-1.5" style={{ fontSize: 9 }}>{label}</label>
+                    <label className="font-share-tech text-sim-muted tracking-widest block mb-1.5" style={{ fontSize: 14 }}>{label}</label>
                     <input type="number" step="0.0001" value={(form as any)[key]}
                       onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                      className="w-full text-sm focus:outline-none font-share-tech"
-                      style={{ background: 'rgba(7,7,26,0.9)', border: '1px solid rgba(79,110,247,0.25)', padding: '8px 12px', color: '#c0c8e8',
+                      className="w-full focus:outline-none font-share-tech"
+                      style={{ background: 'rgba(7,7,26,0.9)', border: '1px solid rgba(79,110,247,0.25)', padding: '8px 12px', fontSize: 14, color: '#c0c8e8',
                         clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))' }}
                       onFocus={e => e.target.style.borderColor = 'rgba(79,110,247,0.7)'}
                       onBlur={e => e.target.style.borderColor = 'rgba(79,110,247,0.25)'}
@@ -556,8 +546,7 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              {/* Founder genetics — scrollable section */}
-              <div style={{ fontSize: 9, color: '#7080a8', letterSpacing: '0.2em', fontFamily: 'Share Tech Mono', marginBottom: 10 }}>
+              <div style={{ fontSize: 14, color: '#7080a8', letterSpacing: '0.2em', fontFamily: 'Share Tech Mono', marginBottom: 10 }}>
                 {lang === 'tr' ? '// KURUCU GENETİĞİ' : '// FOUNDER GENETICS'}
               </div>
               <div className="grid grid-cols-2 gap-3 mb-4">
@@ -575,7 +564,7 @@ export default function DashboardPage() {
                 <button onClick={createSim} disabled={loading || !form.name}
                   className="font-share-tech tracking-widest transition-all duration-150 disabled:opacity-40"
                   style={{
-                    padding: '7px 16px', fontSize: 10,
+                    padding: '9px 20px', fontSize: 16,
                     background: 'rgba(79,110,247,0.25)', border: '1px solid rgba(79,110,247,0.5)', color: '#a0b4ff',
                     clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
                     boxShadow: '0 0 15px rgba(79,110,247,0.2)',
@@ -585,7 +574,7 @@ export default function DashboardPage() {
                 <button onClick={() => setShowNew(false)}
                   className="font-share-tech tracking-widest text-sim-muted hover:text-sim-text transition-colors"
                   style={{
-                    padding: '7px 16px', fontSize: 10,
+                    padding: '9px 20px', fontSize: 16,
                     background: 'rgba(22,22,58,0.5)', border: '1px solid rgba(79,110,247,0.15)',
                     clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
                   }}>
@@ -686,7 +675,7 @@ export default function DashboardPage() {
 
                 <div className="flex-1 min-w-0">
                   <p className="font-orbitron font-bold tracking-[0.1em] truncate" style={{ fontSize: 13, color: '#d0d8f8' }}>{sim.name}</p>
-                  <p className="font-share-tech text-sim-muted mt-0.5 tracking-widest" style={{ fontSize: 9 }}>
+                  <p className="font-share-tech text-sim-muted mt-0.5 tracking-widest" style={{ fontSize: 13 }}>
                     {sim.start_latitude?.toFixed(2)}°N {sim.start_longitude?.toFixed(2)}°E
                     <span className="mx-2 text-sim-border/60">·</span>
                     {lang === 'en' ? 'YEAR' : 'YIL'} <span className="text-sim-accent">{sim.current_year}</span>
@@ -694,7 +683,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="flex-shrink-0 px-3 py-1 font-share-tech tracking-widest" style={{
-                  fontSize: 9,
+                  fontSize: 13,
                   background: sim.status === 'running' ? 'rgba(78,203,113,0.1)' : 'rgba(22,22,58,0.6)',
                   border: `1px solid ${sim.status === 'running' ? 'rgba(78,203,113,0.35)' : 'rgba(79,110,247,0.15)'}`,
                   color: sim.status === 'running' ? '#4ecb71' : '#6070a0',
@@ -727,7 +716,7 @@ export default function DashboardPage() {
 
       {/* Footer */}
       <div className="text-center py-6 relative z-1">
-        <span className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 9 }}>
+        <span className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 11 }}>
           {lang === 'tr' ? 'BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026' : 'BOLD MILITARY TECHNOLOGY AND DEFENSE INDUSTRIES INC. © 2026'}
         </span>
       </div>
