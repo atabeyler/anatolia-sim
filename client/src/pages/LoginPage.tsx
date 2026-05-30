@@ -338,7 +338,7 @@ export default function LoginPage() {
             </h1>
             <p className="font-share-tech text-xs tracking-[0.4em] text-sim-accent mt-1 text-in"
               style={{ animationDelay: '200ms' }}>
-              MEDENİYET
+              {lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}
             </p>
           </div>
 

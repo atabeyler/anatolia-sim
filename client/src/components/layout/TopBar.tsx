@@ -293,7 +293,7 @@ export default function TopBar() {
         {!isMobile && (
           <div className="flex flex-col leading-none">
             <span className="font-orbitron text-sim-accent font-bold tracking-[0.2em]" style={{ fontSize: 10 }}>ANATOLİA</span>
-            <span className="font-share-tech text-sim-muted tracking-[0.25em]" style={{ fontSize: 7 }}>SİM MEDENİYET</span>
+            <span className="font-share-tech text-sim-muted tracking-[0.25em]" style={{ fontSize: 7 }}>{lang === 'tr' ? 'SİM MEDENİYET' : 'SIM CIVILIZATION'}</span>
           </div>
         )}
       </div>

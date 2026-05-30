@@ -428,7 +428,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex flex-col leading-none gap-0.5">
               <span className="font-orbitron text-sim-accent font-bold tracking-[0.25em]" style={{ fontSize: 12, textShadow: '0 0 10px rgba(79,110,247,0.6)' }}>ANATOLİA-SİM</span>
-              <span className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 8 }}>MEDENİYET</span>
+              <span className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 8 }}>{lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}</span>
             </div>
           </div>
 
