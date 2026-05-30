@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSimStore } from '../../store/simStore';
 import axios from 'axios';
@@ -20,6 +20,37 @@ export default function AriaButton() {
   const [uiState, setUiState]     = useState<AriaState>('idle');
   const [transcript, setTranscript] = useState('');
   const [tooltip, setTooltip]     = useState(false);
+  const [isMobile, setIsMobile]   = useState(false);
+  const [pos, setPos]             = useState({ x: 20, y: 600 });
+  const dragOffset = useRef({ dx: 0, dy: 0 });
+  const dragging   = useRef(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)');
+    const update = (m: MediaQueryList | MediaQueryListEvent) => {
+      setIsMobile(m.matches);
+      if (m.matches) setPos({ x: 20, y: window.innerHeight - 100 });
+    };
+    update(mq);
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
+  function onTouchStart(e: React.TouchEvent) {
+    dragging.current = true;
+    const t = e.touches[0];
+    dragOffset.current = { dx: t.clientX - pos.x, dy: t.clientY - pos.y };
+  }
+  function onTouchMove(e: React.TouchEvent) {
+    if (!dragging.current) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    setPos({
+      x: Math.max(0, Math.min(window.innerWidth  - 132, t.clientX - dragOffset.current.dx)),
+      y: Math.max(0, Math.min(window.innerHeight - 52,  t.clientY - dragOffset.current.dy)),
+    });
+  }
+  function onTouchEnd() { dragging.current = false; }
 
   const uiRef         = useRef<AriaState>('idle');
   const activeRef     = useRef(false);
@@ -308,9 +339,58 @@ export default function AriaButton() {
     : Volume2;
 
   const label = {
-    tr: { idle: 'ARIA', command: '🎙 Konuşun…', processing: 'İşleniyor…', speaking: 'Konuşuyor…' },
-    en: { idle: 'ARIA', command: '🎙 Speak…',   processing: 'Processing…', speaking: 'Speaking…'  },
+    tr: { idle: 'Asistan', command: '🎙 Konuşun…', processing: 'İşleniyor…', speaking: 'Konuşuyor…' },
+    en: { idle: 'Assistant', command: '🎙 Speak…',  processing: 'Processing…', speaking: 'Speaking…'  },
   }[store.lang][uiState];
+
+  /* ── Mobile: sürüklenebilir yüzen pill buton ───────────────────────────── */
+  if (isMobile) {
+    const mobileLabel = store.lang === 'tr'
+      ? { idle: 'ASİSTAN', command: 'DİNLİYOR', processing: 'İŞLENİYOR', speaking: 'KONUŞUYOR' }[uiState]
+      : { idle: 'ASSISTANT', command: 'LISTENING', processing: 'PROCESSING', speaking: 'SPEAKING' }[uiState];
+
+    return (
+      <button
+        onClick={toggle}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        style={{
+          position: 'fixed', left: pos.x, top: pos.y, zIndex: 1000,
+          height: 46, borderRadius: 23,
+          padding: '0 18px 0 13px',
+          background: uiState !== 'idle' ? `${color}18` : 'rgba(4,4,18,0.94)',
+          border: `2px solid ${color}`,
+          color,
+          display: 'flex', alignItems: 'center', gap: 9,
+          boxShadow: uiState !== 'idle'
+            ? `0 0 20px ${color}80, 0 0 40px ${color}35, inset 0 0 12px ${color}10`
+            : `0 0 12px ${color}45, 0 2px 8px rgba(0,0,0,0.5)`,
+          touchAction: 'none', cursor: 'grab',
+          transition: 'box-shadow 0.35s, background 0.35s',
+          userSelect: 'none',
+        }}>
+        <Icon size={20}
+          className={uiState === 'processing' ? 'animate-spin' : ''}
+          style={{ filter: `drop-shadow(0 0 8px ${color})`, flexShrink: 0 }} />
+        <span style={{
+          fontFamily: 'Share Tech Mono, monospace',
+          fontSize: 11, fontWeight: 700, letterSpacing: '0.14em',
+          textShadow: `0 0 8px ${color}`, whiteSpace: 'nowrap',
+        }}>
+          {mobileLabel}
+        </span>
+        {uiState !== 'idle' && (
+          <span style={{
+            position: 'absolute', top: -4, right: -4,
+            width: 14, height: 14, borderRadius: '50%',
+            background: color, boxShadow: `0 0 10px ${color}`,
+            animation: 'pulse 1s infinite',
+          }} />
+        )}
+      </button>
+    );
+  }
 
   return (
     <div style={{ position: 'relative', flexShrink: 0 }}>
@@ -330,7 +410,7 @@ export default function AriaButton() {
         <Icon size={14}
           className={uiState === 'processing' ? 'animate-spin' : ''}
           style={{ filter: uiState !== 'idle' ? `drop-shadow(0 0 4px ${color})` : 'none' }} />
-        <span>ARIA</span>
+        <span>{store.lang === 'tr' ? 'Asistan' : 'Assistant'}</span>
         {uiState !== 'idle' && (
           <span style={{
             width: 4, height: 4, borderRadius: '50%', background: color,

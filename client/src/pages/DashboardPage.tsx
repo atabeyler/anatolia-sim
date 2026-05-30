@@ -82,7 +82,7 @@ export default function DashboardPage() {
                 </span>
               </div>
             )}
-            <div className="hidden sm:block"><AriaButton /></div>
+            <AriaButton />
             <LangToggle />
             <span className="hidden sm:block font-share-tech text-sim-muted tracking-widest font-bold" style={{ fontSize: 14 }}>{user?.username?.toUpperCase()}</span>
             <button onClick={() => { logout(); navigate('/login'); }}
