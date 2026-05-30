@@ -31,6 +31,24 @@ export default function App() {
       .finally(() => setAuthChecked(true));
   }, [setUser]);
 
+  useEffect(() => {
+    let lastTap = 0;
+    function onTouchEnd(e: TouchEvent) {
+      const now = Date.now();
+      if (now - lastTap < 300 && e.touches.length === 0) {
+        const el = document.documentElement as any;
+        if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+          (el.requestFullscreen?.() ?? el.webkitRequestFullscreen?.())?.catch?.(() => {});
+        } else {
+          (document.exitFullscreen?.() ?? (document as any).webkitExitFullscreen?.())?.catch?.(() => {});
+        }
+      }
+      lastTap = now;
+    }
+    document.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => document.removeEventListener('touchend', onTouchEnd);
+  }, []);
+
   if (!authChecked) return <div className="w-screen h-screen bg-sim-bg" />;
 
   return (
