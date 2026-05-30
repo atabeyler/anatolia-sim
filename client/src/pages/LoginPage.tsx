@@ -344,7 +344,7 @@ export default function LoginPage() {
             <div className="absolute -top-px left-6 right-6 flex items-center justify-center">
               <div className="bg-[#030310] px-3 flex items-center gap-2">
                 <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
-                <span className="font-share-tech text-sim-accent tracking-[0.3em]" style={{ fontSize: 18 }}>
+                <span className="font-share-tech text-sim-accent tracking-[0.1em] sm:tracking-[0.3em]" style={{ fontSize: 'clamp(11px, 3.8vw, 18px)' }}>
                   {mode === 'login' ? (lang === 'tr' ? 'KİMLİK DOĞRULAMA' : 'IDENTITY VERIFICATION') : (lang === 'tr' ? 'HESAP OLUŞTURMA' : 'ACCOUNT CREATION')}
                 </span>
                 <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
@@ -433,8 +433,13 @@ export default function LoginPage() {
           </div>
 
           {/* Footer */}
-          <p className="font-share-tech text-xs text-sim-muted mt-6 mb-2 tracking-widest text-in" style={{ animationDelay: '600ms' }}>
-            {lang === 'tr' ? 'BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026' : 'BOLD MILITARY TECHNOLOGY AND DEFENSE INDUSTRIES INC. © 2026'}
+          <p className="font-share-tech text-xs text-sim-muted mt-6 mb-2 tracking-widest text-in text-center px-4" style={{ animationDelay: '600ms', lineHeight: 1.6 }}>
+            <span className="hidden sm:inline">
+              {lang === 'tr' ? 'BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026' : 'BOLD MILITARY TECHNOLOGY AND DEFENSE INDUSTRIES INC. © 2026'}
+            </span>
+            <span className="sm:hidden">
+              {lang === 'tr' ? <>BOLD ASKERİ TEKNOLOJİ<br />VE SAVUNMA SANAYİ A.Ş. © 2026</> : <>BOLD MILITARY TECHNOLOGY<br />AND DEFENSE INDUSTRIES INC. © 2026</>}
+            </span>
           </p>
         </div>
       )}
