@@ -219,7 +219,7 @@ export default function DashboardPage() {
                     border: '1px solid rgba(200,34,34,0.25)',
                     animation: 'ring-expand 2.4s ease-out 1.6s infinite',
                   }} />
-                  <Globe size={26} style={{ color: '#cc2222', filter: 'drop-shadow(0 0 8px rgba(200,34,34,1)) drop-shadow(0 0 16px rgba(200,34,34,0.6))' }} />
+                  <Globe size={26} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 8px rgba(79,158,247,0.9)) drop-shadow(0 0 16px rgba(79,158,247,0.5))' }} />
                 </div>
                 <p className="font-share-tech tracking-[0.3em]" style={{ fontSize: 14, color: '#e0e0f0' }}>
                   {lang === 'en' ? 'NO SIMULATIONS FOUND' : 'SİMÜLASYON BULUNAMADI'}
