@@ -204,9 +204,22 @@ export default function DashboardPage() {
             {sims.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20"
                 style={{ border: '1px solid rgba(200,34,34,0.4)', background: 'rgba(4,4,15,0.6)' }}>
-                <div className="relative w-12 h-12 flex items-center justify-center mb-4">
-                  <div className="absolute inset-0 rounded-full border border-sim-accent/20" style={{ animation: 'ring-expand 3s ease-out infinite' }} />
-                  <Globe size={22} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 6px rgba(79,158,247,0.8))' }} />
+                <div className="relative w-16 h-16 flex items-center justify-center mb-5">
+                  <div className="absolute inset-0 rounded-full" style={{
+                    border: '1.5px solid rgba(79,158,247,0.7)',
+                    boxShadow: '0 0 10px rgba(79,158,247,0.5), inset 0 0 10px rgba(79,158,247,0.1)',
+                    animation: 'ring-expand 2.4s ease-out infinite',
+                  }} />
+                  <div className="absolute inset-0 rounded-full" style={{
+                    border: '1px solid rgba(79,158,247,0.45)',
+                    boxShadow: '0 0 14px rgba(79,158,247,0.35)',
+                    animation: 'ring-expand 2.4s ease-out 0.8s infinite',
+                  }} />
+                  <div className="absolute inset-0 rounded-full" style={{
+                    border: '1px solid rgba(79,158,247,0.25)',
+                    animation: 'ring-expand 2.4s ease-out 1.6s infinite',
+                  }} />
+                  <Globe size={26} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 8px rgba(79,158,247,1)) drop-shadow(0 0 16px rgba(79,158,247,0.6))' }} />
                 </div>
                 <p className="font-share-tech tracking-[0.3em]" style={{ fontSize: 14, color: '#e0e0f0' }}>
                   {lang === 'en' ? 'NO SIMULATIONS FOUND' : 'SİMÜLASYON BULUNAMADI'}
