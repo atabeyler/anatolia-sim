@@ -821,31 +821,31 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
       )}
 
       {/* Navigation */}
-      <div style={{ padding:'10px 16px 16px', borderTop:'1px solid rgba(79,110,247,0.15)',
-        display:'flex', flexDirection:'column', gap:8 }}>
-        {/* Ana navigasyon: GERİ + DEVAM ET */}
-        <div style={{ display:'flex', justifyContent:'flex-end', gap:8 }}>
-          {step > 0 && (
-            <button onClick={back} style={btnBack}>← {t('GERİ', 'BACK')}</button>
-          )}
-          {isSummary ? (
-            <button onClick={() => setConfirmOpen(true)} disabled={loading}
-              style={{ ...btnStart, opacity: loading ? 0.5 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}>
-              {loading ? t('BAŞLATILIYOR…', 'INITIALIZING…') : t('BAŞLAT', 'LAUNCH')}
-            </button>
-          ) : (
-            <button onClick={next} disabled={!canNext}
-              style={{ ...btnNext, opacity: !canNext ? 0.4 : 1, cursor: !canNext ? 'not-allowed' : 'pointer' }}>
-              {t('DEVAM ET', 'CONTINUE')} →
-            </button>
-          )}
-        </div>
-        {/* Çıkış: ayrı satırda solda */}
-        <div>
-          <button onClick={onExit} style={btnExit}>
-            {t('ÇIK', 'EXIT')}
+      <div style={{ padding:'10px 12px 14px', borderTop:'1px solid rgba(79,110,247,0.15)',
+        display:'flex', gap:6 }}>
+        <button onClick={onExit}
+          style={{ ...btnExit, flex:1, textAlign:'center', padding:'9px 4px', minWidth:0 }}>
+          {t('ÇIK', 'EXIT')}
+        </button>
+        {step > 0 && (
+          <button onClick={back}
+            style={{ ...btnBack, flex:1, textAlign:'center', padding:'9px 4px', minWidth:0 }}>
+            ← {t('GERİ', 'BACK')}
           </button>
-        </div>
+        )}
+        {isSummary ? (
+          <button onClick={() => setConfirmOpen(true)} disabled={loading}
+            style={{ ...btnStart, flex:2, textAlign:'center', padding:'9px 4px', minWidth:0,
+              opacity: loading ? 0.5 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}>
+            {loading ? t('BAŞLATILIYOR…', 'INITIALIZING…') : t('BAŞLAT', 'LAUNCH')}
+          </button>
+        ) : (
+          <button onClick={next} disabled={!canNext}
+            style={{ ...btnNext, flex:2, textAlign:'center', padding:'9px 4px', minWidth:0,
+              opacity: !canNext ? 0.4 : 1, cursor: !canNext ? 'not-allowed' : 'pointer' }}>
+            {t('DEVAM ET', 'CONTINUE')} →
+          </button>
+        )}
       </div>
     </div>
   );
