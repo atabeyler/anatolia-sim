@@ -4,6 +4,7 @@ import { Globe, Plus, Play, LogOut, BarChart2, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
 import AriaButton from '../components/layout/AriaButton';
+import LangToggle from '../components/layout/LangToggle';
 
 // ── localStorage persistence ──────────────────────────────────────────────────
 const STORAGE_KEY = 'anatolia_founders_v4';
@@ -415,9 +416,9 @@ export default function DashboardPage() {
       <div className="sticky top-0 z-10"
         style={{
           background: 'rgba(3,3,16,0.97)',
-          borderBottom: '1px solid rgba(79,110,247,0.3)',
+          borderBottom: '1px solid rgba(200,34,34,0.7)',
           backdropFilter: 'blur(20px)',
-          boxShadow: '0 2px 30px rgba(79,110,247,0.06)',
+          boxShadow: '0 2px 30px rgba(200,34,34,0.2)',
         }}>
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -441,22 +442,12 @@ export default function DashboardPage() {
                 </span>
               </div>
             )}
-            <button onClick={toggleLang}
-              style={{
-                padding: '3px 8px', fontSize: 10, cursor: 'pointer',
-                border: '1px solid rgba(200,34,34,0.4)', color: '#cc2222',
-                fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.1em',
-                background: 'transparent', transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.background = 'rgba(200,34,34,0.1)'; }}
-              onMouseLeave={e => { (e.target as HTMLElement).style.background = 'transparent'; }}>
-              {lang === 'tr' ? 'EN' : 'TR'}
-            </button>
+            <LangToggle />
             <AriaButton />
             <div className="flex items-center gap-2">
-              <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 10 }}>{user?.username?.toUpperCase()}</span>
+              <span className="font-share-tech tracking-widest" style={{ fontSize: 10, color: '#cc2222' }}>{user?.username?.toUpperCase()}</span>
               <button onClick={() => { logout(); navigate('/login'); }}
-                className="p-2 text-sim-muted hover:text-red-400 transition-colors" style={{ lineHeight: 0 }}>
+                className="p-2 transition-colors" style={{ lineHeight: 0, color: '#cc2222' }}>
                 <LogOut size={14} />
               </button>
             </div>
@@ -512,18 +503,18 @@ export default function DashboardPage() {
         {showNew && (
           <div className="mb-6 relative" style={{
             background: 'rgba(4,4,15,0.97)',
-            border: '1px solid rgba(79,110,247,0.3)',
+            border: '1px solid rgba(200,34,34,0.7)',
             backdropFilter: 'blur(20px)',
             animation: 'warp-in 0.4s cubic-bezier(0.2,0.8,0.4,1) both',
           }}>
             {/* Corner brackets */}
             {[['top','left'],['top','right'],['bottom','left'],['bottom','right']].map(([v,h]) => (
               <span key={v+h} style={{ position: 'absolute', [v]: -1, [h]: -1, width: 12, height: 12,
-                [`border${v.charAt(0).toUpperCase()+v.slice(1)}`]: '2px solid rgba(79,110,247,0.9)',
-                [`border${h.charAt(0).toUpperCase()+h.slice(1)}`]: '2px solid rgba(79,110,247,0.9)', zIndex: 2 }} />
+                [`border${v.charAt(0).toUpperCase()+v.slice(1)}`]: '2px solid rgba(200,34,34,0.9)',
+                [`border${h.charAt(0).toUpperCase()+h.slice(1)}`]: '2px solid rgba(200,34,34,0.9)', zIndex: 2 }} />
             ))}
 
-            <div className="p-4 border-b flex items-center gap-2" style={{ borderColor: 'rgba(79,110,247,0.2)' }}>
+            <div className="p-4 border-b flex items-center gap-2" style={{ borderColor: 'rgba(200,34,34,0.5)' }}>
               <div className="w-1 h-4 bg-sim-accent" style={{ boxShadow: '0 0 6px rgba(79,110,247,0.8)' }} />
               <span className="font-orbitron text-xs font-semibold tracking-[0.2em] text-sim-accent">
                 {lang === 'en' ? 'NEW SIMULATION' : 'YENİ SİMÜLASYON'}
@@ -608,9 +599,9 @@ export default function DashboardPage() {
         {/* Compare mode */}
         {compareMode && sims.length >= 2 && (
           <div className="mb-6 relative" style={{
-            background: 'rgba(4,4,15,0.97)', border: '1px solid rgba(79,110,247,0.2)', animation: 'boot-in 0.4s ease-out both',
+            background: 'rgba(4,4,15,0.97)', border: '1px solid rgba(200,34,34,0.6)', animation: 'boot-in 0.4s ease-out both',
           }}>
-            <div className="px-4 py-2.5 border-b flex items-center gap-2" style={{ borderColor: 'rgba(79,110,247,0.15)' }}>
+            <div className="px-4 py-2.5 border-b flex items-center gap-2" style={{ borderColor: 'rgba(200,34,34,0.4)' }}>
               <BarChart2 size={13} className="text-sim-accent" />
               <span className="font-orbitron text-xs font-semibold tracking-[0.2em] text-sim-accent">
                 {lang === 'en' ? 'PARALLEL COMPARISON' : 'PARALEL KARŞILAŞTIRMA'}
@@ -636,7 +627,7 @@ export default function DashboardPage() {
                     { label: lang === 'en' ? 'STATUS' : 'DURUM', key: 'status' },
                     { label: lang === 'en' ? 'LOCATION' : 'KONUM', key: '_coord' },
                   ].map(row => (
-                    <tr key={row.key} style={{ borderBottom: '1px solid rgba(79,110,247,0.08)' }}>
+                    <tr key={row.key} style={{ borderBottom: '1px solid rgba(200,34,34,0.2)' }}>
                       <td className="py-1.5 pr-4">
                         <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 9 }}>{row.label}</span>
                       </td>
@@ -661,7 +652,7 @@ export default function DashboardPage() {
         {/* Simulation list */}
         {sims.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20"
-            style={{ border: '1px solid rgba(79,110,247,0.1)', background: 'rgba(4,4,15,0.6)' }}>
+            style={{ border: '1px solid rgba(200,34,34,0.4)', background: 'rgba(4,4,15,0.6)' }}>
             <div className="relative w-12 h-12 flex items-center justify-center mb-4">
               <div className="absolute inset-0 rounded-full border border-sim-accent/20" style={{ animation: 'ring-expand 3s ease-out infinite' }} />
               <Globe size={22} className="text-sim-muted" />
@@ -676,12 +667,12 @@ export default function DashboardPage() {
               <div key={sim.id}
                 className="relative flex items-center gap-4 cursor-pointer transition-all duration-200"
                 style={{
-                  background: 'rgba(4,4,15,0.9)', border: '1px solid rgba(79,110,247,0.18)', padding: '14px 16px',
+                  background: 'rgba(4,4,15,0.9)', border: '1px solid rgba(200,34,34,0.6)', padding: '14px 16px',
                   clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
                   animation: `boot-in 0.4s ease-out ${i * 60}ms both`,
                 }}
-                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(79,110,247,0.45)'}
-                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(79,110,247,0.18)'}
+                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(200,34,34,0.9)'}
+                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(200,34,34,0.6)'}
                 onClick={() => navigate(`/simulation/${sim.id}`)}>
 
                 <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center"
@@ -737,7 +728,7 @@ export default function DashboardPage() {
       {/* Footer */}
       <div className="text-center py-6 relative z-1">
         <span className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 9 }}>
-          BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026
+          {lang === 'tr' ? 'BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026' : 'BOLD MILITARY TECHNOLOGY AND DEFENSE INDUSTRIES INC. © 2026'}
         </span>
       </div>
     </div>

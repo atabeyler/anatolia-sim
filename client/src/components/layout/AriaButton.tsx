@@ -299,7 +299,7 @@ export default function AriaButton() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   const COLORS: Record<AriaState, string> = {
-    idle: '#4a6a7a', command: '#f97316', processing: '#a855f7', speaking: '#4ecb71',
+    idle: '#00e887', command: '#f97316', processing: '#a855f7', speaking: '#4ecb71',
   };
   const color = COLORS[uiState];
   const Icon  = uiState === 'idle'       ? MicOff
@@ -321,7 +321,7 @@ export default function AriaButton() {
         style={{
           display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px',
           fontSize: 9, letterSpacing: '0.1em', cursor: 'pointer',
-          border: `1px solid ${uiState === 'idle' ? '#1a3a2a' : color}`,
+          border: `1px solid ${color}`,
           color, fontFamily: 'Share Tech Mono, monospace',
           background: uiState === 'idle' ? 'transparent' : `${color}18`,
           boxShadow: uiState !== 'idle' ? `0 0 8px ${color}55` : 'none',

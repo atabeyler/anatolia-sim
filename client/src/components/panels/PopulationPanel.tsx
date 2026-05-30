@@ -146,7 +146,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
               {soc.has_mate && <span className="font-share-tech px-1.5 py-0.5" style={{ fontSize: 8, color: '#ff8ab0', border: '1px solid rgba(255,138,176,0.3)', background: 'rgba(255,138,176,0.08)' }}>Çift</span>}
               {(soc.children_ids?.length > 0) && <span className="font-share-tech px-1.5 py-0.5" style={{ fontSize: 8, color: '#4ecb71', border: '1px solid rgba(78,203,113,0.3)', background: 'rgba(78,203,113,0.08)' }}>{soc.children_ids.length} Çocuk</span>}
               {soc.group_id && <span className="font-share-tech px-1.5 py-0.5" style={{ fontSize: 8, color: '#4f6ef7', border: '1px solid rgba(79,110,247,0.3)', background: 'rgba(79,110,247,0.08)' }}>Grup</span>}
-              {!soc.has_mate && !soc.group_id && <span className="font-share-tech text-sim-muted/50" style={{ fontSize: 8 }}>Yalnız</span>}
+              {!soc.has_mate && !soc.group_id && <span className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>Yalnız</span>}
             </div>
           </div>
 
@@ -165,7 +165,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             {/* Parents */}
             {(parent1 || parent2 || ind.parent_1_id || ind.parent_2_id) && (
               <div className="mb-2">
-                <div style={{ fontSize: 7.5, color: '#3a5a48', letterSpacing: '0.08em', marginBottom: 4 }}>
+                <div style={{ fontSize: 7.5, color: '#7a9a88', letterSpacing: '0.08em', marginBottom: 4 }}>
                   {lang === 'tr' ? 'EBEVEYNLER' : 'PARENTS'}
                 </div>
                 {(parent1 ?? ind.parent_1_id) && (
@@ -177,7 +177,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
                         {parent1 ? nameFromId(parent1.id, parent1.sex, parent1.phenotype?.name ?? parent1.name) : `ID:${ind.parent_1_id?.slice(-6)}`}
                       </span>
                       {parent1 && (
-                        <span style={{ color: '#3a5a48', marginLeft: 4 }}>
+                        <span style={{ color: '#7a9a88', marginLeft: 4 }}>
                           {parseFloat(parent1.age_years ?? 0).toFixed(0)}{lang === 'tr' ? ' yaş' : ' yr'}
                         </span>
                       )}
@@ -193,7 +193,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
                         {parent2 ? nameFromId(parent2.id, parent2.sex, parent2.phenotype?.name ?? parent2.name) : `ID:${ind.parent_2_id?.slice(-6)}`}
                       </span>
                       {parent2 && (
-                        <span style={{ color: '#3a5a48', marginLeft: 4 }}>
+                        <span style={{ color: '#7a9a88', marginLeft: 4 }}>
                           {parseFloat(parent2.age_years ?? 0).toFixed(0)}{lang === 'tr' ? ' yaş' : ' yr'}
                         </span>
                       )}
@@ -206,7 +206,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             {/* Children */}
             {children.length > 0 && (
               <div className="mb-2">
-                <div style={{ fontSize: 7.5, color: '#3a5a48', letterSpacing: '0.08em', marginBottom: 4 }}>
+                <div style={{ fontSize: 7.5, color: '#7a9a88', letterSpacing: '0.08em', marginBottom: 4 }}>
                   {lang === 'tr' ? `ÇOCUKLAR (${children.length})` : `CHILDREN (${children.length})`}
                 </div>
                 {children.slice(0, 8).map(c => (
@@ -225,7 +225,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
                   </div>
                 ))}
                 {children.length > 8 && (
-                  <div className="font-share-tech text-sim-muted/40" style={{ fontSize: 7.5, marginLeft: 12 }}>
+                  <div className="font-share-tech text-sim-muted" style={{ fontSize: 7.5, marginLeft: 12 }}>
                     +{children.length - 8} {lang === 'tr' ? 'çocuk daha' : 'more'}
                   </div>
                 )}
@@ -235,7 +235,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             {/* Siblings */}
             {siblings.length > 0 && (
               <div>
-                <div style={{ fontSize: 7.5, color: '#3a5a48', letterSpacing: '0.08em', marginBottom: 4 }}>
+                <div style={{ fontSize: 7.5, color: '#7a9a88', letterSpacing: '0.08em', marginBottom: 4 }}>
                   {lang === 'tr' ? `KARDEŞLER (${siblings.length})` : `SIBLINGS (${siblings.length})`}
                 </div>
                 {siblings.slice(0, 5).map(s => (
@@ -251,7 +251,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
                   </div>
                 ))}
                 {siblings.length > 5 && (
-                  <div className="font-share-tech text-sim-muted/40" style={{ fontSize: 7.5, marginLeft: 12 }}>
+                  <div className="font-share-tech text-sim-muted" style={{ fontSize: 7.5, marginLeft: 12 }}>
                     +{siblings.length - 5} {lang === 'tr' ? 'kardeş daha' : 'more'}
                   </div>
                 )}
@@ -259,7 +259,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             )}
 
             {isFounder && children.length === 0 && (
-              <div className="font-share-tech text-sim-muted/30" style={{ fontSize: 8 }}>
+              <div className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>
                 {lang === 'tr' ? 'Henüz çocuk yok.' : 'No children yet.'}
               </div>
             )}
@@ -370,16 +370,16 @@ export default function PopulationPanel() {
                 </div>
                 <div className="flex items-center gap-1 mt-0.5">
                   <span className="font-share-tech" style={{ fontSize: 8, color: stage.color }}>{stage.label}</span>
-                  <span className="font-share-tech text-sim-muted/40" style={{ fontSize: 8 }}>·</span>
+                  <span className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>·</span>
                   <span className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>{age.toFixed(0)} yaş</span>
-                  <span className="font-share-tech text-sim-muted/40" style={{ fontSize: 8 }}>·</span>
-                  <span className="font-share-tech text-sim-muted/60" style={{ fontSize: 8 }}>
+                  <span className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>·</span>
+                  <span className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>
                     {(ind.y ?? 0).toFixed(1)}° {(ind.x ?? 0).toFixed(1)}°
                   </span>
                 </div>
               </div>
 
-              <ChevronRight size={10} className="text-sim-muted/40 flex-shrink-0" />
+              <ChevronRight size={10} className="text-sim-muted flex-shrink-0" />
             </button>
           );
         })}

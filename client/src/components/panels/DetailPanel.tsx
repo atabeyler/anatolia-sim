@@ -25,7 +25,7 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
         className="fixed top-0 left-0 bottom-0 w-80 z-40 flex flex-col overflow-hidden"
         style={{
           background: 'rgba(2,8,4,0.98)',
-          borderRight: '1px solid #1a0808',
+          borderRight: '1px solid #cc2222',
           backdropFilter: 'blur(20px)',
           boxShadow: '4px 0 40px rgba(0,80,40,0.2)',
         }}>
@@ -33,18 +33,18 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
       {/* Corner brackets */}
       <span style={{
         position: 'absolute', top: -1, right: -1, width: 14, height: 14,
-        borderTop: '2px solid rgba(79,110,247,0.9)', borderRight: '2px solid rgba(79,110,247,0.9)',
+        borderTop: '2px solid rgba(200,34,34,0.9)', borderRight: '2px solid rgba(200,34,34,0.9)',
         animation: 'corner-blink 4s ease-in-out infinite 1s', pointerEvents: 'none', zIndex: 2,
       }} />
       <span style={{
         position: 'absolute', bottom: -1, left: -1, width: 14, height: 14,
-        borderBottom: '2px solid rgba(79,110,247,0.9)', borderLeft: '2px solid rgba(79,110,247,0.9)',
+        borderBottom: '2px solid rgba(200,34,34,0.9)', borderLeft: '2px solid rgba(200,34,34,0.9)',
         animation: 'corner-blink 4s ease-in-out infinite 2s', pointerEvents: 'none', zIndex: 2,
       }} />
 
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 flex-shrink-0"
-        style={{ background: 'rgba(10,0,0,0.95)', borderBottom: '1px solid #1a0808' }}>
+        style={{ background: 'rgba(10,0,0,0.95)', borderBottom: '1px solid #cc2222' }}>
         <div className="w-1 h-4 flex-shrink-0" style={{ background: '#00e887', boxShadow: '0 0 6px #00e887' }} />
         <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', color: '#00e887' }}>
           {displayTitle.toUpperCase()}
@@ -63,7 +63,7 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
 
       {/* Footer bar */}
       <div className="px-3 py-1 flex-shrink-0"
-        style={{ borderTop: '1px solid #1a0808', background: 'rgba(0,8,4,0.9)' }}>
+        style={{ borderTop: '1px solid #cc2222', background: 'rgba(0,8,4,0.9)' }}>
         <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: '#3a1a1a', letterSpacing: '0.15em' }}>
           MODULE/{displayTitle.toUpperCase().replace(/ /g, '_')}
         </span>

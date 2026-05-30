@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
+import LangToggle from '../components/layout/LangToggle';
 
 /* ── Canvas starfield ─────────────────────────────────────── */
 function StarField() {
@@ -288,11 +289,9 @@ export default function LoginPage() {
         style={{ background: 'radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%)', bottom: '20%', right: '25%', filter: 'blur(30px)' }} />
 
       {/* Lang toggle */}
-      <button onClick={toggleLang}
-        className="fixed top-5 right-5 px-3 py-1.5 text-xs font-share-tech tracking-widest border border-sim-border hover:border-sim-accent/60 hover:text-sim-accent text-sim-muted transition-all z-20"
-        style={{ clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))' }}>
-        {lang === 'en' ? 'TR' : 'EN'}
-      </button>
+      <div className="fixed top-5 right-5 z-20">
+        <LangToggle />
+      </div>
 
       {/* System status top-left */}
       <div className="fixed top-5 left-5 z-20 space-y-1 hidden sm:block">
