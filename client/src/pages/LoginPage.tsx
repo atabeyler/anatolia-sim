@@ -287,14 +287,14 @@ export default function LoginPage() {
         {STATUS.map((s, i) => (
           <div key={s.label} className="flex items-center gap-2 boot-in" style={{ animationDelay: `${i * 120}ms` }}>
             <div className={`w-1.5 h-1.5 rounded-full ${s.ok ? 'bg-sim-green pulse-live' : 'bg-sim-red'}`} />
-            <span className="text-xs font-share-tech text-sim-muted/70 tracking-widest">{s.label}</span>
+            <span className="text-xs font-share-tech tracking-widest" style={{ color: '#c0c8e8' }}>{s.label}</span>
             <span className={`text-xs font-share-tech ${s.ok ? 'text-sim-green' : 'text-sim-red'}`}>{s.ok ? 'OK' : 'ERR'}</span>
           </div>
         ))}
       </div>
 
       {/* Coordinate display bottom */}
-      <div className="fixed bottom-5 left-5 z-20 font-share-tech text-xs text-sim-muted/50 tracking-widest hidden sm:block">
+      <div className="fixed bottom-5 left-5 z-20 font-share-tech text-xs tracking-widest hidden sm:block" style={{ color: '#c0c8e8' }}>
         <div>LAT: 39.9334°N · LON: 32.8597°E</div>
         <div className="mt-0.5">SYS: ANATOLİA-SIM v1.0 · BUILD 2026</div>
       </div>
