@@ -206,9 +206,9 @@ export default function DashboardPage() {
                 style={{ border: '1px solid rgba(200,34,34,0.4)', background: 'rgba(4,4,15,0.6)' }}>
                 <div className="relative w-12 h-12 flex items-center justify-center mb-4">
                   <div className="absolute inset-0 rounded-full border border-sim-accent/20" style={{ animation: 'ring-expand 3s ease-out infinite' }} />
-                  <Globe size={22} className="text-sim-muted" />
+                  <Globe size={22} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 6px rgba(79,158,247,0.8))' }} />
                 </div>
-                <p className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 10 }}>
+                <p className="font-share-tech tracking-[0.3em]" style={{ fontSize: 14, color: '#e0e0f0' }}>
                   {lang === 'en' ? 'NO SIMULATIONS FOUND' : 'SİMÜLASYON BULUNAMADI'}
                 </p>
               </div>
