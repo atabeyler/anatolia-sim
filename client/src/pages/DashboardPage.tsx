@@ -134,7 +134,7 @@ function TraitSlider({ id, label, labelEn, color, value, onChange, lang }: any) 
   return (
     <div className="mb-2">
       <div className="flex justify-between mb-0.5">
-        <span style={{ fontSize: 13, color: '#5060a0', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.08em' }}>
+        <span style={{ fontSize: 14, color: '#5060a0', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.08em' }}>
           {lang === 'tr' ? label : labelEn}
         </span>
         <span style={{ fontSize: 13, color, fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
@@ -192,7 +192,7 @@ function UnitInput({ label, value, unit, min, max, onChange, color = '#c0d0f0' }
 
   return (
     <div>
-      <div style={{ fontSize: 12, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono', letterSpacing: '0.1em' }}>{label}</div>
+      <div style={{ fontSize: 12, color: '#e0e0f0', marginBottom: 3, fontFamily: 'Share Tech Mono', letterSpacing: '0.1em' }}>{label}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
         <input
           type="number" min={min} max={max}
@@ -237,11 +237,11 @@ function FounderCard({ title, sex, data, onChange, lang }: {
           {sec(lang === 'tr' ? '── KİMLİK ──' : '── IDENTITY ──')}
           <div className="grid grid-cols-2 gap-2">
             <div className="col-span-2">
-              <div style={{ fontSize: 12, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'İSİM' : 'NAME'}</div>
+              <div style={{ fontSize: 12, color: '#e0e0f0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'İSİM' : 'NAME'}</div>
               <input value={data.name ?? ''} onChange={e => onChange('name', e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <div style={{ fontSize: 12, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'YAŞ' : 'AGE'}</div>
+              <div style={{ fontSize: 12, color: '#e0e0f0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'YAŞ' : 'AGE'}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <input type="number" min="15" max="65" value={data.ageYears ?? 20}
                   onChange={e => onChange('ageYears', parseInt(e.target.value || '20', 10))}
@@ -250,8 +250,8 @@ function FounderCard({ title, sex, data, onChange, lang }: {
               </div>
             </div>
             <div>
-              <div style={{ fontSize: 12, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'CİNSİYET' : 'SEX'}</div>
-              <div style={{ padding: '4px 8px', fontSize: 12, color: accentColor, fontFamily: 'Share Tech Mono', border: `1px solid ${accentColor}30`, background: `${accentColor}08` }}>
+              <div style={{ fontSize: 12, color: '#e0e0f0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'CİNSİYET' : 'SEX'}</div>
+              <div style={{ padding: '4px 8px', fontSize: 14, color: accentColor, fontFamily: 'Share Tech Mono', border: `1px solid ${accentColor}30`, background: `${accentColor}08` }}>
                 {sex === 'male' ? (lang === 'tr' ? 'ERKEK' : 'MALE') : (lang === 'tr' ? 'KADIN' : 'FEMALE')}
               </div>
             </div>
@@ -281,7 +281,7 @@ function FounderCard({ title, sex, data, onChange, lang }: {
               : (lang === 'tr' ? 'Obez' : 'Obese');
             const bmiColor = bmi < 18.5 ? '#7dd3fc' : bmi < 25 ? '#4ecb71' : bmi < 30 ? '#f59e0b' : '#ef4444';
             return (
-              <div style={{ marginTop: 4, fontSize: 13, color: '#8090b0', fontFamily: 'Share Tech Mono', display: 'flex', gap: 8 }}>
+              <div style={{ marginTop: 4, fontSize: 14, color: '#8090b0', fontFamily: 'Share Tech Mono', display: 'flex', gap: 8 }}>
                 <span>BMI: <span style={{ color: bmiColor, fontFamily: 'Orbitron, monospace' }}>{bmi.toFixed(1)}</span></span>
                 <span style={{ color: bmiColor }}>{bmiLabel}</span>
               </div>
@@ -299,7 +299,7 @@ function FounderCard({ title, sex, data, onChange, lang }: {
               { key: 'skin_tone',  label: lang === 'tr' ? 'TEN RENGİ'  : 'SKIN TONE',  opts: SKIN_OPTIONS },
             ].map(({ key, label, opts }) => (
               <div key={key}>
-                <div style={{ fontSize: 13, color: '#5060a0', marginBottom: 4, fontFamily: 'Share Tech Mono' }}>
+                <div style={{ fontSize: 14, color: '#5060a0', marginBottom: 4, fontFamily: 'Share Tech Mono' }}>
                   {label}&nbsp;
                   <span style={{ color: '#8090c0' }}>— {opts.find(o => o.value === data[key])?.[lang === 'tr' ? 'labelTr' : 'label']}</span>
                 </div>
@@ -418,8 +418,8 @@ export default function DashboardPage() {
               <Globe size={16} className="text-sim-accent" style={{ filter: 'drop-shadow(0 0 4px rgba(79,110,247,0.8))' }} />
             </div>
             <div className="flex flex-col leading-none gap-1">
-              <span className="font-orbitron text-sim-accent font-bold tracking-[0.25em]" style={{ fontSize: 24, textShadow: '0 0 10px rgba(79,110,247,0.6)' }}>ANATOLİA-SİM</span>
-              <span className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 18 }}>{lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}</span>
+              <span className="font-orbitron text-sim-accent font-bold tracking-[0.25em]" style={{ fontSize: 18, textShadow: '0 0 10px rgba(79,110,247,0.6)' }}>ANATOLİA-SİM</span>
+              <span className="font-share-tech tracking-[0.3em]" style={{ fontSize: 16, color: '#e0e0f0' }}>{lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}</span>
             </div>
           </div>
 
@@ -480,7 +480,7 @@ export default function DashboardPage() {
                 padding: '8px 16px', fontSize: 16,
                 background: 'rgba(79,110,247,0.2)',
                 border: '1px solid rgba(79,110,247,0.5)',
-                color: '#a0b4ff',
+                color: '#e0e0f0',
                 clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
                 boxShadow: '0 0 15px rgba(79,110,247,0.2)',
               }}>
@@ -508,9 +508,6 @@ export default function DashboardPage() {
               <div className="w-1 h-4 bg-sim-accent" style={{ boxShadow: '0 0 6px rgba(79,110,247,0.8)' }} />
               <span className="font-orbitron text-xs font-semibold tracking-[0.2em] text-sim-accent">
                 {lang === 'en' ? 'NEW SIMULATION' : 'YENİ SİMÜLASYON'}
-              </span>
-              <span style={{ marginLeft: 'auto', fontSize: 8, color: '#7080a8', fontFamily: 'Share Tech Mono' }}>
-                {lang === 'tr' ? '// ayarlar otomatik kaydedilir' : '// settings auto-saved'}
               </span>
             </div>
 
@@ -546,7 +543,7 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              <div style={{ fontSize: 14, color: '#7080a8', letterSpacing: '0.2em', fontFamily: 'Share Tech Mono', marginBottom: 10 }}>
+              <div style={{ fontSize: 14, color: '#e0e0f0', letterSpacing: '0.2em', fontFamily: 'Share Tech Mono', marginBottom: 10 }}>
                 {lang === 'tr' ? '// KURUCU GENETİĞİ' : '// FOUNDER GENETICS'}
               </div>
               <div className="grid grid-cols-2 gap-3 mb-4">
@@ -674,11 +671,11 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="font-orbitron font-bold tracking-[0.1em] truncate" style={{ fontSize: 13, color: '#d0d8f8' }}>{sim.name}</p>
-                  <p className="font-share-tech text-sim-muted mt-0.5 tracking-widest" style={{ fontSize: 13 }}>
+                  <p className="font-orbitron font-bold tracking-[0.1em] truncate" style={{ fontSize: 14, color: '#d0d8f8' }}>{sim.name}</p>
+                  <p className="font-share-tech mt-0.5 tracking-widest" style={{ fontSize: 14, color: '#e0e0f0' }}>
                     {sim.start_latitude?.toFixed(2)}°N {sim.start_longitude?.toFixed(2)}°E
-                    <span className="mx-2 text-sim-border/60">·</span>
-                    {lang === 'en' ? 'YEAR' : 'YIL'} <span className="text-sim-accent">{sim.current_year}</span>
+                    <span className="mx-2" style={{ color: 'rgba(200,34,34,0.4)' }}>·</span>
+                    {lang === 'en' ? 'YEAR' : 'YIL'} <span style={{ color: '#e0e0f0' }}>{sim.current_year}</span>
                   </p>
                 </div>
 
@@ -686,7 +683,7 @@ export default function DashboardPage() {
                   fontSize: 13,
                   background: sim.status === 'running' ? 'rgba(78,203,113,0.1)' : 'rgba(22,22,58,0.6)',
                   border: `1px solid ${sim.status === 'running' ? 'rgba(78,203,113,0.35)' : 'rgba(79,110,247,0.15)'}`,
-                  color: sim.status === 'running' ? '#4ecb71' : '#6070a0',
+                  color: '#e0e0f0',
                 }}>
                   {sim.status.toUpperCase()}
                 </div>
