@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Globe, Plus, Play, LogOut, BarChart2, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
+import AriaButton from '../components/layout/AriaButton';
+import LangToggle from '../components/layout/LangToggle';
 
 // ── localStorage persistence ──────────────────────────────────────────────────
 const STORAGE_KEY = 'anatolia_founders_v4';
@@ -418,21 +420,21 @@ export default function DashboardPage() {
           backdropFilter: 'blur(20px)',
           boxShadow: '0 2px 30px rgba(79,110,247,0.06)',
         }}>
-        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-2 min-h-14 sm:min-h-16 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <div className="relative w-7 h-7 flex items-center justify-center">
               <div className="absolute inset-0 rounded-full border border-sim-accent/50 neon-breathe" />
-              <Globe size={16} className="text-sim-accent" style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 4px rgba(79,158,247,0.8))' }} />
+              <Globe size={14} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 4px rgba(79,158,247,0.8))' }} />
             </div>
-            <div className="flex flex-col leading-none gap-1">
-              <span className="font-orbitron font-bold tracking-[0.25em]" style={{ fontSize: 18, color: '#4f9ef7', textShadow: '0 0 10px rgba(79,158,247,0.6)' }}>ANATOLİA-SİM</span>
-              <span className="font-share-tech tracking-[0.3em]" style={{ fontSize: 16, color: '#4f9ef7' }}>{lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}</span>
+            <div className="flex flex-col leading-none gap-0.5">
+              <span className="font-orbitron font-bold tracking-[0.2em]" style={{ fontSize: 'clamp(12px, 3.8vw, 18px)', color: '#4f9ef7', textShadow: '0 0 10px rgba(79,158,247,0.6)' }}>ANATOLİA-SİM</span>
+              <span className="font-share-tech tracking-[0.25em]" style={{ fontSize: 'clamp(10px, 3vw, 16px)', color: '#4f9ef7' }}>{lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {runningCount > 0 && (
-              <div className="flex items-center gap-2 px-3 py-1"
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1"
                 style={{ background: 'rgba(78,203,113,0.1)', border: '1px solid rgba(78,203,113,0.3)' }}>
                 <div className="w-1.5 h-1.5 rounded-full bg-sim-green pulse-live" />
                 <span className="font-share-tech text-sim-green tracking-widest" style={{ fontSize: 10 }}>
@@ -440,13 +442,15 @@ export default function DashboardPage() {
                 </span>
               </div>
             )}
-            <div className="flex items-center gap-2">
-              <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 10 }}>{user?.username?.toUpperCase()}</span>
-              <button onClick={() => { logout(); navigate('/login'); }}
-                className="p-2 text-sim-muted hover:text-red-400 transition-colors" style={{ lineHeight: 0 }}>
-                <LogOut size={14} />
-              </button>
-            </div>
+            <AriaButton />
+            <LangToggle />
+            <span className="font-share-tech text-sim-muted tracking-widest font-bold" style={{ fontSize: 14 }}>{user?.username?.toUpperCase()}</span>
+            <button onClick={() => { logout(); navigate('/login'); }}
+              className="flex items-center gap-1 sm:gap-1.5 px-2 py-1 text-sim-muted hover:text-red-400 transition-colors"
+              style={{ fontFamily: 'Share Tech Mono,monospace', fontSize: 14, fontWeight: 700, letterSpacing: '0.1em' }}>
+              <LogOut size={13} />
+              <span>ÇIKIŞ</span>
+            </button>
           </div>
         </div>
       </div>
