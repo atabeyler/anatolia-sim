@@ -55,7 +55,7 @@ export default function DashboardPage() {
           background: 'rgba(3,3,16,0.97)',
           borderBottom: '1px solid rgba(200,34,34,0.7)',
           backdropFilter: 'blur(20px)',
-          boxShadow: '0 2px 30px rgba(200,34,34,0.2)',
+          boxShadow: '0 2px 20px rgba(200,34,34,0.5), 0 0 8px rgba(200,34,34,0.3)',
         }}>
         <div className="max-w-5xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
           {/* Brand */}

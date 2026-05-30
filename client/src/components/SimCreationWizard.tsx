@@ -821,12 +821,10 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
       )}
 
       {/* Navigation */}
-      <div style={{ padding:'12px 24px 20px', borderTop:'1px solid rgba(79,110,247,0.15)',
-        display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-        <button onClick={onExit} style={btnExit}>
-          {t('ÇIK', 'EXIT')}
-        </button>
-        <div style={{ display:'flex', gap:8 }}>
+      <div style={{ padding:'10px 16px 16px', borderTop:'1px solid rgba(79,110,247,0.15)',
+        display:'flex', flexDirection:'column', gap:8 }}>
+        {/* Ana navigasyon: GERİ + DEVAM ET */}
+        <div style={{ display:'flex', justifyContent:'flex-end', gap:8 }}>
           {step > 0 && (
             <button onClick={back} style={btnBack}>← {t('GERİ', 'BACK')}</button>
           )}
@@ -841,6 +839,12 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
               {t('DEVAM ET', 'CONTINUE')} →
             </button>
           )}
+        </div>
+        {/* Çıkış: ayrı satırda solda */}
+        <div>
+          <button onClick={onExit} style={btnExit}>
+            {t('ÇIK', 'EXIT')}
+          </button>
         </div>
       </div>
     </div>
