@@ -3,7 +3,6 @@ import { Play, Pause, Globe, X, Settings, Menu, LogOut, Home, Sliders, Power } f
 import { useSimStore } from '../../store/simStore';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import AriaButton from './AriaButton';
 
 const SPEEDS = [1, 10, 100, 1000];
 
@@ -394,9 +393,6 @@ export default function TopBar() {
 
       {/* Actions */}
       <div className="flex items-center gap-0.5 flex-shrink-0 ml-1 relative">
-        {/* Sesli asistan */}
-        {!isMobile && <AriaButton />}
-
         {/* TR / EN — her ikisi görünür */}
         <div className="flex items-center flex-shrink-0" style={{ border: '1px solid rgba(79,110,247,0.3)', overflow: 'hidden' }}>
           {(['en', 'tr'] as const).map((l, i) => (

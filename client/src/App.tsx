@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import SimulationPage from './pages/SimulationPage';
 import AdminPage from './pages/AdminPage';
+import AriaButton from './components/layout/AriaButton';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user } = useSimStore();
@@ -20,7 +21,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const { setUser } = useSimStore();
+  const { user, setUser } = useSimStore();
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      {user && <AriaButton />}
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />

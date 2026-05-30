@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Globe, Plus, Play, LogOut, BarChart2, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
-import AriaButton from '../components/layout/AriaButton';
 import LangToggle from '../components/layout/LangToggle';
 import SimCreationWizard from '../components/SimCreationWizard';
 
@@ -82,7 +81,6 @@ export default function DashboardPage() {
                 </span>
               </div>
             )}
-            <AriaButton />
             <LangToggle />
             <span className="hidden sm:block font-share-tech text-sim-muted tracking-widest font-bold" style={{ fontSize: 14 }}>{user?.username?.toUpperCase()}</span>
             <button onClick={() => { logout(); navigate('/login'); }}

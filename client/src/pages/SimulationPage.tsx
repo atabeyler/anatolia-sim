@@ -4,7 +4,6 @@ import axios from 'axios';
 import { Play, Pause, FolderOpen, ChevronLeft, ChevronRight, Users, X } from 'lucide-react';
 import { useSimStore } from '../store/simStore';
 import { useSimWebSocket } from '../hooks/useSimWebSocket';
-import AriaButton from '../components/layout/AriaButton';
 import LangToggle from '../components/layout/LangToggle';
 import WorldGlobe from '../components/simulation/WorldGlobe';
 import PopulationPanel from '../components/panels/PopulationPanel';
@@ -294,8 +293,6 @@ export default function SimulationPage() {
 
           <div style={{ flex: 1 }} />
 
-          {!isMobile && <AriaButton />}
-
           {!isMobile && (
             <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: 6 }}>
               <span style={{ fontSize: 7, color: '#6a9a78', letterSpacing: '0.1em' }}>GERÇEK</span>
@@ -365,8 +362,6 @@ export default function SimulationPage() {
           ))}
 
           <div style={{ flex: 1 }} />
-
-          {isMobile && <AriaButton />}
 
           {!isMobile && (
             <button onClick={terminateSim}
