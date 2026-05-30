@@ -319,8 +319,8 @@ export default function AriaButton() {
         onMouseEnter={() => setTooltip(true)}
         onMouseLeave={() => setTooltip(false)}
         style={{
-          display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px',
-          fontSize: 16, fontWeight: 700, letterSpacing: '0.1em', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 5, padding: '4px 8px',
+          fontSize: 14, fontWeight: 700, letterSpacing: '0.1em', cursor: 'pointer',
           border: `1px solid ${color}`,
           color, fontFamily: 'Share Tech Mono, monospace',
           background: uiState === 'idle' ? 'transparent' : `${color}18`,

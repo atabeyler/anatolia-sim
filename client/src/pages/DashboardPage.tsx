@@ -83,11 +83,11 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <LangToggle />
               <AriaButton />
-              <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 10 }}>{user?.username?.toUpperCase()}</span>
+              <span className="font-share-tech text-sim-muted tracking-widest font-bold" style={{ fontSize: 14 }}>{user?.username?.toUpperCase()}</span>
               <button onClick={() => { logout(); navigate('/login'); }}
                 className="flex items-center gap-1.5 px-2 py-1 text-sim-muted hover:text-red-400 transition-colors"
-                style={{ fontFamily:'Share Tech Mono,monospace', fontSize:16, fontWeight:700, letterSpacing:'0.1em' }}>
-                <LogOut size={14} />
+                style={{ fontFamily:'Share Tech Mono,monospace', fontSize:14, fontWeight:700, letterSpacing:'0.1em' }}>
+                <LogOut size={13} />
                 <span>ÇIKIŞ</span>
               </button>
             </div>

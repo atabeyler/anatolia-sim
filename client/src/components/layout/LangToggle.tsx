@@ -8,7 +8,7 @@ export default function LangToggle() {
       style={{
         display: 'flex', alignItems: 'center', gap: 0,
         border: '1px solid rgba(200,34,34,0.6)', background: 'transparent',
-        fontFamily: 'Share Tech Mono, monospace', fontSize: 16,
+        fontFamily: 'Share Tech Mono, monospace', fontSize: 14,
         letterSpacing: '0.08em', cursor: 'pointer', overflow: 'hidden',
       }}
     >
