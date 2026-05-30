@@ -105,21 +105,21 @@ const TOTAL = STEPS.length;
 
 /* ── shared styles ───────────────────────────────────────────────────────── */
 const CLIP = 'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))';
-const baseBtn = { fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', fontSize:13,
+const baseBtn = { fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', fontSize:16,
   clipPath:CLIP, cursor:'pointer', border:'none', padding:'9px 20px' } as const;
-const btnNext  = { ...baseBtn, background:'rgba(79,110,247,0.25)', border:'1px solid rgba(79,110,247,0.5)',  color:'#a0b4ff' };
-const btnBack  = { ...baseBtn, background:'rgba(22,22,58,0.5)',    border:'1px solid rgba(79,110,247,0.2)',  color:'#6070a0' };
-const btnExit  = { ...baseBtn, background:'rgba(150,30,30,0.15)',  border:'1px solid rgba(200,34,34,0.3)',   color:'#a05050', padding:'9px 14px' };
-const btnStart = { ...baseBtn, background:'rgba(78,203,113,0.2)',  border:'1px solid rgba(78,203,113,0.5)',  color:'#4ecb71', padding:'9px 28px' };
+const btnNext  = { ...baseBtn, background:'rgba(79,110,247,0.25)', border:'1px solid rgba(79,110,247,0.5)',  color:'#e0e0f0' };
+const btnBack  = { ...baseBtn, background:'rgba(22,22,58,0.5)',    border:'1px solid rgba(79,110,247,0.2)',  color:'#e0e0f0' };
+const btnExit  = { ...baseBtn, background:'rgba(150,30,30,0.15)',  border:'1px solid rgba(200,34,34,0.3)',   color:'#e0e0f0', padding:'9px 14px' };
+const btnStart = { ...baseBtn, fontSize:13, background:'rgba(78,203,113,0.2)',  border:'1px solid rgba(78,203,113,0.5)',  color:'#4ecb71', padding:'9px 28px' };
 const inputStyle = {
   width:'100%', outline:'none', fontFamily:'Share Tech Mono,monospace',
   background:'rgba(7,7,26,0.9)', border:'1px solid rgba(79,110,247,0.25)',
-  padding:'9px 12px', fontSize:14, color:'#c0c8e8', clipPath:CLIP,
+  padding:'9px 12px', fontSize:14, color:'#e0e0f0', clipPath:CLIP,
 } as const;
 
 /* ── sub-components ──────────────────────────────────────────────────────── */
 function Lbl({ children }: { children: React.ReactNode }) {
-  return <div style={{ fontSize:11, color:'#8898c8', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', marginBottom:5 }}>{children}</div>;
+  return <div style={{ fontSize:14, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', marginBottom:5 }}>{children}</div>;
 }
 
 function HudInput({ label, type='text', value, onChange, min, max, step }: any) {
@@ -140,10 +140,10 @@ function Slider({ id, tr: trLabel, en: enLabel, c: color, value, onChange, lang 
   return (
     <div style={{ marginBottom:16 }}>
       <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
-        <span style={{ fontSize:12, color:'#8898c8', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.08em' }}>
+        <span style={{ fontSize:14, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.08em' }}>
           {lang==='tr'?trLabel:enLabel}
         </span>
-        <span style={{ fontSize:12, color, fontFamily:'Orbitron,monospace', fontWeight:700 }}>{display}</span>
+        <span style={{ fontSize:14, color, fontFamily:'Orbitron,monospace', fontWeight:700 }}>{display}</span>
       </div>
       <div style={{ position:'relative', height:7, background:'rgba(10,10,30,0.9)', border:`1px solid ${color}30`, borderRadius:0 }}>
         <div style={{ position:'absolute', inset:'0 auto 0 0', width:`${value*100}%`,
@@ -175,8 +175,8 @@ function ColorPicker({ label, opts, value, onChange, lang }: any) {
 function SumRow({ label, value }: { label:string; value:string }) {
   return (
     <div style={{ display:'flex', justifyContent:'space-between', padding:'3px 0', borderBottom:'1px solid rgba(79,110,247,0.1)' }}>
-      <span style={{ fontSize:11, color:'#8898c8', fontFamily:'Share Tech Mono,monospace' }}>{label}</span>
-      <span style={{ fontSize:11, color:'#c0c8e8', fontFamily:'Share Tech Mono,monospace' }}>{value}</span>
+      <span style={{ fontSize:14, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace' }}>{label}</span>
+      <span style={{ fontSize:14, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace' }}>{value}</span>
     </div>
   );
 }
@@ -242,7 +242,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
                 style={{ fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', padding:'8px 22px', fontSize:13,
                   background:fd.sex===opt.v?'rgba(79,110,247,0.25)':'rgba(22,22,58,0.5)',
                   border:`1px solid ${fd.sex===opt.v?'rgba(79,110,247,0.6)':'rgba(79,110,247,0.15)'}`,
-                  color:fd.sex===opt.v?'#c0ccff':'#4a5578', clipPath:CLIP, cursor:'pointer' }}>
+                  color:'#e0e0f0', clipPath:CLIP, cursor:'pointer' }}>
                 {t(opt.tr,opt.en)}
               </button>
             ))}
@@ -281,7 +281,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
                 onChange={e=>setT('metabolism',+e.target.value)}
                 style={{ position:'absolute', inset:0, width:'100%', height:'100%', opacity:0, cursor:'pointer', margin:0 }} />
             </div>
-            <div style={{ display:'flex', justifyContent:'space-between', marginTop:4, fontSize:10, color:'#556680', fontFamily:'Share Tech Mono,monospace' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', marginTop:4, fontSize:12, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace' }}>
               <span>{t('İnce','Lean')}</span><span>{t('Orta','Average')}</span><span>{t('Kaslı','Heavy')}</span>
             </div>
           </div>
@@ -327,7 +327,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
     if (isSummary) return (
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
         <div style={{ gridColumn:'1/-1' }}>
-          <div style={{ fontSize:11, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.15em', marginBottom:8 }}>
+          <div style={{ fontSize:16, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.15em', marginBottom:8 }}>
             {t('SİMÜLASYON','SIMULATION')}
           </div>
           <SumRow label={t('AD','NAME')}    value={simForm.name||'—'} />
@@ -336,7 +336,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
         </div>
         {([{fd:f1,sex:'male'},{fd:f2,sex:'female'}] as {fd:any,sex:string}[]).map(({fd:founder,sex})=>(
           <div key={sex}>
-            <div style={{ fontSize:11, color: sex==='male'?'#4f9ef7':'#ec4899',
+            <div style={{ fontSize:16, color: sex==='male'?'#4f9ef7':'#ec4899',
               fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', marginBottom:8 }}>
               {sex==='male' ? t('KURUCU 1 — ERKEK','FOUNDER 1 — MALE') : t('KURUCU 2 — KADIN','FOUNDER 2 — FEMALE')}
             </div>
@@ -371,7 +371,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
         display:'flex', alignItems:'center', justifyContent:'space-between' }}>
         <div>
           {founderLabel && (
-            <div style={{ fontSize:9, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace',
+            <div style={{ fontSize:12, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace',
               letterSpacing:'0.2em', marginBottom:3 }}>
               {founderLabel}
             </div>
@@ -381,7 +381,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
             {lang==='tr' ? meta.tr : meta.en}
           </div>
         </div>
-        <div style={{ fontSize:10, color:'#3a4568', fontFamily:'Orbitron,monospace', letterSpacing:'0.1em' }}>
+        <div style={{ fontSize:12, color:'#e0e0f0', fontFamily:'Orbitron,monospace', letterSpacing:'0.1em' }}>
           {step+1} / {TOTAL}
         </div>
       </div>
