@@ -62,11 +62,11 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <div className="relative w-8 h-8 flex items-center justify-center">
               <div className="absolute inset-0 rounded-full border border-sim-accent/50 neon-breathe" />
-              <Globe size={16} className="text-sim-accent" style={{ filter: 'drop-shadow(0 0 4px rgba(79,110,247,0.8))' }} />
+              <Globe size={16} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 4px rgba(79,158,247,0.8))' }} />
             </div>
             <div className="flex flex-col leading-none gap-1">
-              <span className="font-orbitron text-sim-accent font-bold tracking-[0.25em]" style={{ fontSize: 18, textShadow: '0 0 10px rgba(79,110,247,0.6)' }}>ANATOLİA-SİM</span>
-              <span className="font-share-tech tracking-[0.3em]" style={{ fontSize: 16, color: '#e0e0f0' }}>{lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}</span>
+              <span className="font-orbitron font-bold tracking-[0.25em]" style={{ fontSize: 18, color: '#e0e0f0', textShadow: '0 0 10px rgba(255,255,255,0.2)' }}>ANATOLİA-SİM</span>
+              <span className="font-share-tech tracking-[0.3em]" style={{ fontSize: 16, color: '#cc2222' }}>{lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}</span>
             </div>
           </div>
 
@@ -124,7 +124,7 @@ export default function DashboardPage() {
                       padding: '8px 14px', fontSize: 16,
                       background: compareMode ? 'rgba(79,110,247,0.2)' : 'rgba(22,22,58,0.6)',
                       border: `1px solid ${compareMode ? 'rgba(79,110,247,0.5)' : 'rgba(79,110,247,0.15)'}`,
-                      color: compareMode ? '#a0b4ff' : '#6070a0',
+                      color: '#e0e0f0',
                       clipPath: 'polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px))',
                     }}>
                     <BarChart2 size={15} />
@@ -163,7 +163,7 @@ export default function DashboardPage() {
                     <thead>
                       <tr>
                         <th className="text-left pb-2 pr-4">
-                          <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 9 }}>{lang === 'en' ? 'METRIC' : 'METRİK'}</span>
+                          <span className="font-share-tech tracking-widest" style={{ fontSize: 14, color: '#e0e0f0' }}>{lang === 'en' ? 'METRIC' : 'METRİK'}</span>
                         </th>
                         {sims.slice(0, 4).map(s => (
                           <th key={s.id} className="text-left pb-2 pr-4">
@@ -180,7 +180,7 @@ export default function DashboardPage() {
                       ].map(row => (
                         <tr key={row.key} style={{ borderBottom: '1px solid rgba(200,34,34,0.2)' }}>
                           <td className="py-1.5 pr-4">
-                            <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 9 }}>{row.label}</span>
+                            <span className="font-share-tech tracking-widest" style={{ fontSize: 14, color: '#e0e0f0' }}>{row.label}</span>
                           </td>
                           {sims.slice(0, 4).map(s => (
                             <td key={s.id} className="py-1.5 pr-4">
