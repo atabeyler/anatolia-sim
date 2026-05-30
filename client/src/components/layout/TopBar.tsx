@@ -288,12 +288,12 @@ export default function TopBar() {
         <div className="relative w-6 h-6 flex items-center justify-center flex-shrink-0">
           <div className="absolute inset-0 rounded-full border border-sim-accent/60"
             style={{ animation: 'neon-breathe 3.5s ease-in-out infinite' }} />
-          <Globe size={13} className="text-sim-accent" style={{ filter: 'drop-shadow(0 0 4px rgba(79,110,247,0.8))' }} />
+          <Globe size={13} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 4px rgba(79,158,247,0.8))' }} />
         </div>
         {!isMobile && (
           <div className="flex flex-col leading-none">
-            <span className="font-orbitron text-sim-accent font-bold tracking-[0.2em]" style={{ fontSize: 10 }}>ANATOLİA</span>
-            <span className="font-share-tech text-sim-muted tracking-[0.25em]" style={{ fontSize: 7 }}>SİM MEDENİYET</span>
+            <span className="font-orbitron font-bold tracking-[0.2em]" style={{ fontSize: 10, color: '#4f9ef7' }}>ANATOLİA</span>
+            <span className="font-share-tech tracking-[0.25em]" style={{ fontSize: 7, color: '#4f9ef7' }}>{lang === 'tr' ? 'SİM MEDENİYET' : 'SIM CIVILIZATION'}</span>
           </div>
         )}
       </div>

@@ -243,7 +243,7 @@ export default function SimulationPage() {
 
         {/* Row 1: Logo | SIM time | Real clock | BAŞLAT/DURDUR */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px', borderBottom: '1px solid #0d2018' }}>
-          <span style={{ fontSize: 13, fontFamily: 'Orbitron, monospace', fontWeight: 900, color: '#00e887', letterSpacing: '0.15em', flexShrink: 0 }}>
+          <span style={{ fontSize: 13, fontFamily: 'Orbitron, monospace', fontWeight: 900, color: '#4f9ef7', letterSpacing: '0.15em', flexShrink: 0 }}>
             ANATOLIA-SIM
           </span>
 

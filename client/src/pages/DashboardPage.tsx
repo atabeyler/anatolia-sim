@@ -422,11 +422,11 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <div className="relative w-7 h-7 flex items-center justify-center">
               <div className="absolute inset-0 rounded-full border border-sim-accent/50 neon-breathe" />
-              <Globe size={14} className="text-sim-accent" style={{ filter: 'drop-shadow(0 0 4px rgba(79,110,247,0.8))' }} />
+              <Globe size={16} className="text-sim-accent" style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 4px rgba(79,158,247,0.8))' }} />
             </div>
-            <div className="flex flex-col leading-none gap-0.5">
-              <span className="font-orbitron text-sim-accent font-bold tracking-[0.25em]" style={{ fontSize: 12, textShadow: '0 0 10px rgba(79,110,247,0.6)' }}>ANATOLİA-SİM</span>
-              <span className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 8 }}>MEDENİYET</span>
+            <div className="flex flex-col leading-none gap-1">
+              <span className="font-orbitron font-bold tracking-[0.25em]" style={{ fontSize: 18, color: '#4f9ef7', textShadow: '0 0 10px rgba(79,158,247,0.6)' }}>ANATOLİA-SİM</span>
+              <span className="font-share-tech tracking-[0.3em]" style={{ fontSize: 16, color: '#4f9ef7' }}>{lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}</span>
             </div>
           </div>
 
@@ -523,7 +523,7 @@ export default function DashboardPage() {
             <div className="p-5">
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="col-span-3">
-                  <label className="font-share-tech text-sim-muted tracking-widest block mb-1.5" style={{ fontSize: 9 }}>
+                  <label className="font-share-tech tracking-widest block mb-1.5" style={{ fontSize: 14, color: '#e0e0f0' }}>
                     {lang === 'en' ? 'SIMULATION NAME' : 'SİMÜLASYON ADI'}
                   </label>
                   <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
@@ -539,7 +539,7 @@ export default function DashboardPage() {
                   { key: 'longitude', label: lang === 'en' ? 'LONGITUDE' : 'BOYLAM' },
                 ].map(({ key, label }) => (
                   <div key={key}>
-                    <label className="font-share-tech text-sim-muted tracking-widest block mb-1.5" style={{ fontSize: 9 }}>{label}</label>
+                    <label className="font-share-tech tracking-widest block mb-1.5" style={{ fontSize: 14, color: '#e0e0f0' }}>{label}</label>
                     <input type="number" step="0.0001" value={(form as any)[key]}
                       onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
                       className="w-full text-sm focus:outline-none font-share-tech"
@@ -608,7 +608,7 @@ export default function DashboardPage() {
                 <thead>
                   <tr>
                     <th className="text-left pb-2 pr-4">
-                      <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 9 }}>{lang === 'en' ? 'METRIC' : 'METRİK'}</span>
+                      <span className="font-share-tech tracking-widest" style={{ fontSize: 9, color: '#e0e0f0' }}>{lang === 'en' ? 'METRIC' : 'METRİK'}</span>
                     </th>
                     {sims.slice(0, 4).map(s => (
                       <th key={s.id} className="text-left pb-2 pr-4">
@@ -625,7 +625,7 @@ export default function DashboardPage() {
                   ].map(row => (
                     <tr key={row.key} style={{ borderBottom: '1px solid rgba(79,110,247,0.08)' }}>
                       <td className="py-1.5 pr-4">
-                        <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 9 }}>{row.label}</span>
+                        <span className="font-share-tech tracking-widest" style={{ fontSize: 9, color: '#e0e0f0' }}>{row.label}</span>
                       </td>
                       {sims.slice(0, 4).map(s => (
                         <td key={s.id} className="py-1.5 pr-4">

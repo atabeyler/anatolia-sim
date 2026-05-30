@@ -319,15 +319,15 @@ export default function LoginPage() {
           {/* Title */}
           <div className="text-center mb-2">
             <h1
-              className="glitch-text font-orbitron text-2xl sm:text-3xl font-bold tracking-[0.2em] text-white flicker"
+              className="glitch-text font-orbitron text-2xl sm:text-3xl font-bold tracking-[0.2em] flicker"
               data-text="ANATOLİA-SİM"
-              style={{ textShadow: '0 0 20px rgba(79,110,247,0.6), 0 0 40px rgba(79,110,247,0.3)' }}
+              style={{ color: '#4f9ef7', textShadow: '0 0 20px rgba(79,158,247,0.6), 0 0 40px rgba(79,158,247,0.3)' }}
             >
               ANATOLİA-SİM
             </h1>
-            <p className="font-share-tech text-xs tracking-[0.4em] text-sim-accent/70 mt-1 text-in"
-              style={{ animationDelay: '200ms' }}>
-              MEDENİYET
+            <p className="font-share-tech text-xs tracking-[0.4em] mt-1 text-in"
+              style={{ animationDelay: '200ms', color: '#4f9ef7' }}>
+              {lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}
             </p>
           </div>
 
