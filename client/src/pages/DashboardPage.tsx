@@ -58,21 +58,23 @@ export default function DashboardPage() {
           backdropFilter: 'blur(20px)',
           boxShadow: '0 2px 30px rgba(200,34,34,0.2)',
         }}>
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative w-8 h-8 flex items-center justify-center">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
+          {/* Brand */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="relative w-7 h-7 flex items-center justify-center">
               <div className="absolute inset-0 rounded-full border border-sim-accent/50 neon-breathe" />
-              <Globe size={16} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 4px rgba(79,158,247,0.8))' }} />
+              <Globe size={14} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 4px rgba(79,158,247,0.8))' }} />
             </div>
-            <div className="flex flex-col leading-none gap-1">
-              <span className="font-orbitron font-bold tracking-[0.25em]" style={{ fontSize: 18, color: '#e0e0f0', textShadow: '0 0 10px rgba(255,255,255,0.2)' }}>ANATOLİA-SİM</span>
-              <span className="font-share-tech tracking-[0.3em]" style={{ fontSize: 16, color: '#cc2222' }}>{lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}</span>
+            <div className="flex flex-col leading-none gap-0.5">
+              <span className="font-orbitron font-bold tracking-[0.2em]" style={{ fontSize: 'clamp(12px, 3.8vw, 18px)', color: '#e0e0f0' }}>ANATOLİA-SİM</span>
+              <span className="font-share-tech tracking-[0.25em]" style={{ fontSize: 'clamp(10px, 3vw, 16px)', color: '#cc2222' }}>{lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* Right actions */}
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {runningCount > 0 && (
-              <div className="flex items-center gap-2 px-3 py-1"
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1"
                 style={{ background: 'rgba(78,203,113,0.1)', border: '1px solid rgba(78,203,113,0.3)' }}>
                 <div className="w-1.5 h-1.5 rounded-full bg-sim-green pulse-live" />
                 <span className="font-share-tech text-sim-green tracking-widest" style={{ fontSize: 10 }}>
@@ -80,22 +82,20 @@ export default function DashboardPage() {
                 </span>
               </div>
             )}
-            <div className="flex items-center gap-2">
-              <LangToggle />
-              <AriaButton />
-              <span className="font-share-tech text-sim-muted tracking-widest font-bold" style={{ fontSize: 14 }}>{user?.username?.toUpperCase()}</span>
-              <button onClick={() => { logout(); navigate('/login'); }}
-                className="flex items-center gap-1.5 px-2 py-1 text-sim-muted hover:text-red-400 transition-colors"
-                style={{ fontFamily:'Share Tech Mono,monospace', fontSize:14, fontWeight:700, letterSpacing:'0.1em' }}>
-                <LogOut size={13} />
-                <span>ÇIKIŞ</span>
-              </button>
-            </div>
+            <div className="hidden sm:block"><AriaButton /></div>
+            <LangToggle />
+            <span className="hidden sm:block font-share-tech text-sim-muted tracking-widest font-bold" style={{ fontSize: 14 }}>{user?.username?.toUpperCase()}</span>
+            <button onClick={() => { logout(); navigate('/login'); }}
+              className="flex items-center gap-1 sm:gap-1.5 px-2 py-1 text-sim-muted hover:text-red-400 transition-colors"
+              style={{ fontFamily:'Share Tech Mono,monospace', fontSize:14, fontWeight:700, letterSpacing:'0.1em' }}>
+              <LogOut size={13} />
+              <span className="hidden sm:inline">ÇIKIŞ</span>
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8 relative z-1">
+      <div className="max-w-5xl mx-auto px-3 sm:px-6 py-5 sm:py-8 relative z-1">
 
         {/* Wizard overlay — shown instead of list when creating */}
         {showNew ? (
@@ -108,43 +108,43 @@ export default function DashboardPage() {
         ) : (
           <>
             {/* Title row */}
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-1 h-5 bg-sim-accent" style={{ boxShadow: '0 0 8px rgba(79,110,247,0.8)' }} />
-                  <h2 className="font-orbitron font-bold tracking-[0.15em] text-sim-text" style={{ fontSize: 16 }}>
-                    {lang === 'en' ? 'SIMULATION REGISTRY' : 'SİMÜLASYON KAYITLARI'}
-                  </h2>
-                </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-5 sm:mb-8">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-5 bg-sim-accent" style={{ boxShadow: '0 0 8px rgba(79,110,247,0.8)' }} />
+                <h2 className="font-orbitron font-bold tracking-[0.12em] text-sim-text" style={{ fontSize: 'clamp(13px, 3.5vw, 16px)' }}>
+                  {lang === 'en' ? 'SIMULATION REGISTRY' : 'SİMÜLASYON KAYITLARI'}
+                </h2>
               </div>
 
               <div className="flex items-center gap-2">
                 {sims.length >= 2 && (
                   <button onClick={() => setCompareMode(c => !c)}
-                    className="flex items-center gap-2 font-share-tech tracking-widest transition-all duration-150"
+                    className="flex items-center gap-1.5 font-share-tech tracking-widest transition-all duration-150"
                     style={{
-                      padding: '8px 14px', fontSize: 16,
+                      padding: '7px 10px', fontSize: 'clamp(12px, 3vw, 14px)',
                       background: compareMode ? 'rgba(79,110,247,0.2)' : 'rgba(22,22,58,0.6)',
                       border: `1px solid ${compareMode ? 'rgba(79,110,247,0.5)' : 'rgba(79,110,247,0.15)'}`,
                       color: '#e0e0f0',
                       clipPath: 'polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px))',
                     }}>
-                    <BarChart2 size={15} />
-                    {lang === 'en' ? 'COMPARE' : 'KARŞILAŞTIR'}
+                    <BarChart2 size={13} />
+                    <span className="hidden sm:inline">{lang === 'en' ? 'COMPARE' : 'KARŞILAŞTIR'}</span>
+                    <span className="sm:hidden">{lang === 'en' ? 'CMP' : 'KAR'}</span>
                   </button>
                 )}
                 <button onClick={() => setShowNew(true)}
-                  className="flex items-center gap-2 font-share-tech tracking-widest transition-all duration-150 hover:brightness-110"
+                  className="flex items-center gap-1.5 font-share-tech tracking-widest transition-all duration-150 hover:brightness-110"
                   style={{
-                    padding: '8px 16px', fontSize: 16,
+                    padding: '7px 10px', fontSize: 'clamp(12px, 3vw, 14px)',
                     background: 'rgba(79,110,247,0.2)',
                     border: '1px solid rgba(79,110,247,0.5)',
                     color: '#e0e0f0',
                     clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
                     boxShadow: '0 0 15px rgba(79,110,247,0.2)',
                   }}>
-                  <Plus size={15} />
-                  {lang === 'en' ? 'NEW SIMULATION' : 'YENİ SİMÜLASYON'}
+                  <Plus size={13} />
+                  <span className="hidden sm:inline">{lang === 'en' ? 'NEW SIMULATION' : 'YENİ SİMÜLASYON'}</span>
+                  <span className="sm:hidden">{lang === 'en' ? 'NEW' : 'YENİ'}</span>
                 </button>
               </div>
             </div>
@@ -281,9 +281,14 @@ export default function DashboardPage() {
       </div>
 
       {/* Footer */}
-      <div className="text-center py-6 relative z-1">
-        <span className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 11 }}>
-          {lang === 'tr' ? 'BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026' : 'BOLD MILITARY TECHNOLOGY AND DEFENSE INDUSTRIES INC. © 2026'}
+      <div className="text-center py-6 px-4 relative z-1">
+        <span className="font-share-tech text-sim-muted tracking-[0.2em]" style={{ fontSize: 11, lineHeight: 1.7 }}>
+          <span className="hidden sm:inline">
+            {lang === 'tr' ? 'BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026' : 'BOLD MILITARY TECHNOLOGY AND DEFENSE INDUSTRIES INC. © 2026'}
+          </span>
+          <span className="sm:hidden">
+            {lang === 'tr' ? <>BOLD ASKERİ TEKNOLOJİ<br />VE SAVUNMA SANAYİ A.Ş. © 2026</> : <>BOLD MILITARY TECHNOLOGY<br />AND DEFENSE INDUSTRIES INC. © 2026</>}
+          </span>
         </span>
       </div>
     </div>
