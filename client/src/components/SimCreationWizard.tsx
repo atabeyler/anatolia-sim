@@ -527,8 +527,9 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
                               : t('KURUCU 2 — KADIN', 'FOUNDER 2 — FEMALE'))
     : null;
 
-  const isSummary = meta.type === 'summary';
-  const canNext   = meta.type === 'sim-info' ? simForm.name.trim() !== '' : true;
+  const isSummary  = meta.type === 'summary';
+  const canNext    = meta.type === 'sim-info' ? simForm.name.trim() !== '' : true;
+  const traitColor = meta.type === 'trait' ? ALL_TRAITS[meta.idx].c : null;
 
   /* step title */
   function stepTitle(): string {
@@ -752,8 +753,13 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
               {subtitle}
             </div>
           )}
-          <div style={{ fontSize:14, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
-            letterSpacing:'0.15em', fontWeight:700 }}>
+          <div style={{
+            fontSize: traitColor ? 24 : 14,
+            color: traitColor ?? '#e0e0f0',
+            fontFamily: traitColor ? 'Orbitron,monospace' : 'Share Tech Mono,monospace',
+            letterSpacing:'0.15em', fontWeight:700,
+            textShadow: traitColor ? `0 0 12px ${traitColor}60` : 'none',
+          }}>
             {stepTitle()}
           </div>
         </div>
