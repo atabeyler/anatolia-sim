@@ -151,7 +151,7 @@ function HudInput({ label, type, value, onChange, placeholder, maxLength }: any)
     <div className="mb-3">
       <div className="flex items-center gap-2 mb-1.5">
         <div className={`w-1 h-3 transition-colors ${focused ? 'bg-sim-accent' : 'bg-sim-border'}`} />
-        <label className="text-xs font-share-tech tracking-widest uppercase text-sim-muted">{label}</label>
+        <label className="font-share-tech tracking-widest uppercase text-sim-muted" style={{ fontSize: 14 }}>{label}</label>
       </div>
       <div className={`relative transition-all duration-200 ${focused ? 'drop-shadow-[0_0_8px_rgba(79,110,247,0.4)]' : ''}`}>
         <input
@@ -336,8 +336,8 @@ export default function LoginPage() {
             >
               ANATOLİA-SİM
             </h1>
-            <p className="font-share-tech text-xs tracking-[0.4em] text-sim-accent mt-1 text-in"
-              style={{ animationDelay: '200ms' }}>
+            <p className="font-share-tech tracking-[0.4em] text-sim-accent mt-1 text-in"
+              style={{ animationDelay: '200ms', fontSize: 18 }}>
               {lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}
             </p>
           </div>
@@ -358,8 +358,8 @@ export default function LoginPage() {
             <div className="absolute -top-px left-6 right-6 flex items-center justify-center">
               <div className="bg-[#030310] px-3 flex items-center gap-2">
                 <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
-                <span className="font-share-tech text-xs text-sim-accent tracking-[0.3em]">
-                  {mode === 'login' ? 'IDENTITY VERIFICATION' : 'ACCOUNT CREATION'}
+                <span className="font-share-tech text-sim-accent tracking-[0.3em]" style={{ fontSize: 14 }}>
+                  {mode === 'login' ? (lang === 'tr' ? 'KİMLİK DOĞRULAMA' : 'IDENTITY VERIFICATION') : (lang === 'tr' ? 'HESAP OLUŞTURMA' : 'ACCOUNT CREATION')}
                 </span>
                 <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
               </div>
@@ -391,7 +391,7 @@ export default function LoginPage() {
                   value={form.reg_user_code}
                   onChange={(e: any) => setForm(p => ({ ...p, reg_user_code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') }))}
                   placeholder="ANSYZ0001" />
-                <p className="font-share-tech text-sim-muted tracking-wide -mt-2 mb-2" style={{ fontSize: 9 }}>
+                <p className="font-share-tech text-sim-muted tracking-wide -mt-2 mb-2" style={{ fontSize: 11 }}>
                   {lang === 'en' ? '4-20 chars · letters & numbers only' : '4-20 karakter · harf ve rakam'}
                 </p>
                 <HudInput label="TC KİMLİK NO" type="text" maxLength={11}
@@ -400,7 +400,7 @@ export default function LoginPage() {
                   value={form.email} onChange={f('email')} placeholder="user@domain.com" />
                 <HudInput label={lang === 'en' ? 'Password' : 'ŞİFRE'} type="password"
                   value={form.password} onChange={f('password')} placeholder="••••••••" />
-                <p className="font-share-tech text-sim-muted tracking-wide mb-3" style={{ fontSize: 9 }}>
+                <p className="font-share-tech text-sim-muted tracking-wide mb-3" style={{ fontSize: 11 }}>
                   {lang === 'en'
                     ? 'Min 8 chars · uppercase · lowercase · number · symbol'
                     : 'Min 8 karakter · büyük harf · küçük harf · rakam · özel karakter'}
