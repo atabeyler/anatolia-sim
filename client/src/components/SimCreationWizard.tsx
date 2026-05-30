@@ -59,7 +59,8 @@ type TM = {
   lo: [string,string]; hi: [string,string];
   fx: [string,string][];
   d: [[string,string],[string,string],[string,string]];
-  r: [[string,string,string],[string,string,string],[string,string,string]];
+  r: [[string,string,string,string],[string,string,string,string],[string,string,string,string]];
+  // r tuple: [trName, enName, trDetail, enDetail]
 };
 const TRAIT_META: TM[] = [
   /* 0 fluid_intelligence */ {
@@ -71,9 +72,9 @@ const TRAIT_META: TM[] = [
       ['Çağını aşan icatlar doğar; teknoloji sıçramaları yaşanır.','Era-defining inventions emerge; technological leaps occur.'],
     ],
     r:[
-      ['Neanderthal Toplulukları','Temel araçlar ve ateş yeterli görülür; sembolik düşünce sınırlıdır.','Basic tools and fire suffice; symbolic thinking is limited.'],
-      ['Orta Çağ Anadolu','Pratik bilgi birikimi güçlü; teorik ilerleme yavaştır.','Practical knowledge is strong; theoretical advancement is slow.'],
-      ['Atina · İskenderiye','Felsefe, matematik ve doğa bilimi medeniyetin özünü oluşturur.','Philosophy, math and natural science form the core of civilization.'],
+      ['Neanderthal Toplulukları','Neanderthal Communities','Temel araçlar ve ateş yeterli görülür; sembolik düşünce sınırlıdır.','Basic tools and fire suffice; symbolic thinking is limited.'],
+      ['Orta Çağ Anadolu','Medieval Anatolia','Pratik bilgi birikimi güçlü; teorik ilerleme yavaştır.','Practical knowledge is strong; theoretical advancement is slow.'],
+      ['Atina · İskenderiye','Athens · Alexandria','Felsefe, matematik ve doğa bilimi medeniyetin özünü oluşturur.','Philosophy, math and natural science form the core of civilization.'],
     ],
   },
   /* 1 curiosity */ {
@@ -85,9 +86,9 @@ const TRAIT_META: TM[] = [
       ['Sınırsız merak; kıtalararası ticaret ve büyük keşifler hızlanır.','Boundless curiosity; intercontinental trade and great discoveries accelerate.'],
     ],
     r:[
-      ['İzole Ada Toplulukları','Dışarıdaki dünyadan habersiz; içe dönük döngüsel bir yaşam.','Unaware of the outside world; an inward, cyclical existence.'],
-      ['Anadolu Kervan Yolları','Doğu ile Batı arasında bilgi ve mal akışı.','Flow of knowledge and goods between East and West.'],
-      ['Fenikeli Tüccarlar','Akdeniz\'i aşan ticaret ağı; alfabe ve kültür taşıyıcısı.','A trade network spanning the Mediterranean; carrier of the alphabet and culture.'],
+      ['İzole Ada Toplulukları','Isolated Island Communities','Dışarıdaki dünyadan habersiz; içe dönük döngüsel bir yaşam.','Unaware of the outside world; an inward, cyclical existence.'],
+      ['Anadolu Kervan Yolları','Anatolian Caravan Routes','Doğu ile Batı arasında bilgi ve mal akışı.','Flow of knowledge and goods between East and West.'],
+      ['Fenikeli Tüccarlar','Phoenician Merchants','Akdeniz\'i aşan ticaret ağı; alfabe ve kültür taşıyıcısı.','A trade network spanning the Mediterranean; carrier of the alphabet and culture.'],
     ],
   },
   /* 2 language_capacity */ {
@@ -99,9 +100,9 @@ const TRAIT_META: TM[] = [
       ['Felsefe, hukuk ve edebiyat medeniyetin çekirdeğine yerleşir.','Philosophy, law and literature settle at the core of civilization.'],
     ],
     r:[
-      ['Tarih Öncesi Topluluklar','Yalnızca sözlü gelenek; hafıza nesil sınırlıdır.','Oral tradition only; memory is limited to one generation.'],
-      ['Sümer Yazıcıları','Çivi yazısı ile ticaret kayıtları ve yasalar kalıcı hale gelir.','Cuneiform makes trade records and laws permanent.'],
-      ['Antik Atina · Osmanlı Divanı','Hatiplik, şiir ve retorik devlet yönetiminin ayrılmaz parçasıdır.','Oratory, poetry and rhetoric are inseparable from governance.'],
+      ['Tarih Öncesi Topluluklar','Pre-Historic Communities','Yalnızca sözlü gelenek; hafıza nesil sınırlıdır.','Oral tradition only; memory is limited to one generation.'],
+      ['Sümer Yazıcıları','Sumerian Scribes','Çivi yazısı ile ticaret kayıtları ve yasalar kalıcı hale gelir.','Cuneiform makes trade records and laws permanent.'],
+      ['Antik Atina · Osmanlı Divanı','Ancient Athens · Ottoman Divan','Hatiplik, şiir ve retorik devlet yönetiminin ayrılmaz parçasıdır.','Oratory, poetry and rhetoric are inseparable from governance.'],
     ],
   },
   /* 3 learning_rate */ {
@@ -113,9 +114,9 @@ const TRAIT_META: TM[] = [
       ['Kriz anında hızlı uyum; yabancı teknolojiler süratle benimsenir.','Rapid adaptation in crisis; foreign technologies adopted swiftly.'],
     ],
     r:[
-      ['Geç Bizans','Yeni gelişmelere kapalı yapı; değişim çoğunlukla dışarıdan zorla gelir.','Closed to new developments; change usually comes forced from outside.'],
-      ['Roma İmparatorluğu','Fethedilen halklardan teknoloji ve kültür özümsenir.','Technology and culture absorbed from conquered peoples.'],
-      ['Meiji Japonya\'sı','Batı teknolojisi onlarca yılda özümsenerek yerel kimlikle harmanlanır.','Western technology absorbed in decades and blended with local identity.'],
+      ['Geç Bizans','Late Byzantium','Yeni gelişmelere kapalı yapı; değişim çoğunlukla dışarıdan zorla gelir.','Closed to new developments; change usually comes forced from outside.'],
+      ['Roma İmparatorluğu','Roman Empire','Fethedilen halklardan teknoloji ve kültür özümsenir.','Technology and culture absorbed from conquered peoples.'],
+      ['Meiji Japonya\'sı','Meiji Japan','Batı teknolojisi onlarca yılda özümsenerek yerel kimlikle harmanlanır.','Western technology absorbed in decades and blended with local identity.'],
     ],
   },
   /* 4 conscientiousness */ {
@@ -127,9 +128,9 @@ const TRAIT_META: TM[] = [
       ['Güçlü ordu ve altyapı; disiplin büyük medeniyetlerin çimentosudur.','Strong military and infrastructure; discipline is the cement of great civilizations.'],
     ],
     r:[
-      ['Göçebe Türk Boyları','Hızlı hareket ve özgürlük; kalıcı yapı ve kurumlar ikincil planda.','Swift movement and freedom; permanent structures and institutions are secondary.'],
-      ['Abbasi Halifeliği','Bilim kurumları ile askeri disiplin dengeli biçimde var olur.','Scientific institutions and military discipline coexist in balance.'],
-      ['Roma Lejionu · Prusya','Disiplin, devlet örgütlenmesinin ve fetihlerinin temel taşıdır.','Discipline is the cornerstone of state organization and conquests.'],
+      ['Göçebe Türk Boyları','Nomadic Turkish Tribes','Hızlı hareket ve özgürlük; kalıcı yapı ve kurumlar ikincil planda.','Swift movement and freedom; permanent structures and institutions are secondary.'],
+      ['Abbasi Halifeliği','Abbasid Caliphate','Bilim kurumları ile askeri disiplin dengeli biçimde var olur.','Scientific institutions and military discipline coexist in balance.'],
+      ['Roma Lejionu · Prusya','Roman Legion · Prussia','Disiplin, devlet örgütlenmesinin ve fetihlerinin temel taşıdır.','Discipline is the cornerstone of state organization and conquests.'],
     ],
   },
   /* 5 self_awareness */ {
@@ -141,9 +142,9 @@ const TRAIT_META: TM[] = [
       ['Derin felsefi gelenek; devlet kurumları kuşaklar boyu işlevini korur.','Deep philosophical tradition; state institutions function across generations.'],
     ],
     r:[
-      ['Erken Orta Asya Göçebeleri','Kişisel kahramanlık ön planda; kurumsal süreklilik zayıf.','Personal heroism comes first; institutional continuity is weak.'],
-      ['Selçuklu Devlet Geleneği','Tecrübeli vezirler ve danışmanlar devlet hafızasını korur.','Experienced viziers and advisors preserve institutional memory.'],
-      ['Konfüçyüs Çin\'i · Stoacı Roma','Öz disiplin ve bilgelik, iyi yönetimin temeli sayılır.','Self-discipline and wisdom are considered the basis of good governance.'],
+      ['Erken Orta Asya Göçebeleri','Early Central Asian Nomads','Kişisel kahramanlık ön planda; kurumsal süreklilik zayıf.','Personal heroism comes first; institutional continuity is weak.'],
+      ['Selçuklu Devlet Geleneği','Seljuk State Tradition','Tecrübeli vezirler ve danışmanlar devlet hafızasını korur.','Experienced viziers and advisors preserve institutional memory.'],
+      ['Konfüçyüs Çin\'i · Stoacı Roma','Confucian China · Stoic Rome','Öz disiplin ve bilgelik, iyi yönetimin temeli sayılır.','Self-discipline and wisdom are considered the basis of good governance.'],
     ],
   },
   /* 6 stress_resilience */ {
@@ -155,9 +156,9 @@ const TRAIT_META: TM[] = [
       ['Uzun savaşlara, salgınlara ve yıkımlara rağmen toplum ayakta kalır.','Society stands despite long wars, epidemics, and devastation.'],
     ],
     r:[
-      ['Küçük Ada Medeniyetleri','İklim değişikliği ya da kuraklık karşısında savunmasız; çöküş ani.','Vulnerable to climate change or drought; collapse is sudden.'],
-      ['Bizans İmparatorluğu','Yüzyıllarca kriz ve kuşatmalara rağmen direnç ve süreklilik.','Resilience and continuity despite centuries of crises and sieges.'],
-      ['Osmanlı · Roma','Yıkıcı savaşlardan sonra dahi toparlanma ve yeniden inşa kapasitesi.','Capacity for recovery and reconstruction even after devastating wars.'],
+      ['Küçük Ada Medeniyetleri','Small Island Civilizations','İklim değişikliği ya da kuraklık karşısında savunmasız; çöküş ani.','Vulnerable to climate change or drought; collapse is sudden.'],
+      ['Bizans İmparatorluğu','Byzantine Empire','Yüzyıllarca kriz ve kuşatmalara rağmen direnç ve süreklilik.','Resilience and continuity despite centuries of crises and sieges.'],
+      ['Osmanlı · Roma','Ottoman · Rome','Yıkıcı savaşlardan sonra dahi toparlanma ve yeniden inşa kapasitesi.','Capacity for recovery and reconstruction even after devastating wars.'],
     ],
   },
   /* 7 risk_tolerance */ {
@@ -169,9 +170,9 @@ const TRAIT_META: TM[] = [
       ['Hızlı genişleme; yüksek kazanım ya da büyük çöküş — orta yol azdır.','Rapid expansion; high gain or great collapse — there is little middle ground.'],
     ],
     r:[
-      ['Savunmacı Çin','Çin Seddi politikası: dışa kapalılık ve içsel istikrar önceliği.','Great Wall policy: closed to outside, prioritizing internal stability.'],
-      ['Venedik Cumhuriyeti','Ticaret ve ittifakla büyüme; riskler titizlikle hesaplanır.','Growth through trade and alliances; risks are carefully calculated.'],
-      ['İskender · Vikinglar','Bilinmeyene atılan cesur adım; ya imparatorluk ya yok oluş.','A bold step into the unknown; either empire or extinction.'],
+      ['Savunmacı Çin','Defensive China','Çin Seddi politikası: dışa kapalılık ve içsel istikrar önceliği.','Great Wall policy: closed to outside, prioritizing internal stability.'],
+      ['Venedik Cumhuriyeti','Republic of Venice','Ticaret ve ittifakla büyüme; riskler titizlikle hesaplanır.','Growth through trade and alliances; risks are carefully calculated.'],
+      ['İskender · Vikinglar','Alexander · Vikings','Bilinmeyene atılan cesur adım; ya imparatorluk ya yok oluş.','A bold step into the unknown; either empire or extinction.'],
     ],
   },
   /* 8 innovation */ {
@@ -183,9 +184,9 @@ const TRAIT_META: TM[] = [
       ['Çağını aşan buluşlar; teknoloji ve bilimdeki atılımlar nesilleri şekillendirir.','Era-defining inventions; breakthroughs in technology and science shape generations.'],
     ],
     r:[
-      ['Geç Bizans','Kurumsal muhafazakarlık; yenilik tehditlere karşı dondurulmuş.','Institutional conservatism; innovation frozen against perceived threats.'],
-      ['İslam Altın Çağı','Matematik, astronomi ve tıp alanında sistematik, birikimli ilerleme.','Systematic, cumulative progress in mathematics, astronomy and medicine.'],
-      ['Rönesans İtalya\'sı · Bağdat','Sanat ve bilimin iç içe geçtiği yaratıcı patlama dönemi.','A creative explosion where art and science are intertwined.'],
+      ['Geç Bizans','Late Byzantium','Kurumsal muhafazakarlık; yenilik tehditlere karşı dondurulmuş.','Institutional conservatism; innovation frozen against perceived threats.'],
+      ['İslam Altın Çağı','Islamic Golden Age','Matematik, astronomi ve tıp alanında sistematik, birikimli ilerleme.','Systematic, cumulative progress in mathematics, astronomy and medicine.'],
+      ['Rönesans İtalya\'sı · Bağdat','Renaissance Italy · Baghdad','Sanat ve bilimin iç içe geçtiği yaratıcı patlama dönemi.','A creative explosion where art and science are intertwined.'],
     ],
   },
   /* 9 artistic_sense */ {
@@ -197,9 +198,9 @@ const TRAIT_META: TM[] = [
       ['Evrensel sanat mirası bırakılır; güzellik bizzat bir güç unsuru olur.','A universal artistic legacy is left; beauty itself becomes a source of power.'],
     ],
     r:[
-      ['Erken Neolitik Topluluklar','Araç ve barınak işlevsel; süslemeler henüz rudimenter.','Tools and shelters are functional; decorations are still rudimentary.'],
-      ['Anadolu Selçuklu Mimarisi','Geometrik bezeme ve çini sanatı zirvede; cami ve medrese ustalığı.','Geometric ornamentation and tile art at their peak; mastery of mosque and madrassa.'],
-      ['Osmanlı · Bizans','Saray kültürü, mozaik ve minyatür — güzelliğin devlet politikası olduğu çağ.','Palace culture, mosaic and miniature — an era where beauty is state policy.'],
+      ['Erken Neolitik Topluluklar','Early Neolithic Communities','Araç ve barınak işlevsel; süslemeler henüz rudimenter.','Tools and shelters are functional; decorations are still rudimentary.'],
+      ['Anadolu Selçuklu Mimarisi','Anatolian Seljuk Architecture','Geometrik bezeme ve çini sanatı zirvede; cami ve medrese ustalığı.','Geometric ornamentation and tile art at their peak; mastery of mosque and madrassa.'],
+      ['Osmanlı · Bizans','Ottoman · Byzantium','Saray kültürü, mozaik ve minyatür — güzelliğin devlet politikası olduğu çağ.','Palace culture, mosaic and miniature — an era where beauty is state policy.'],
     ],
   },
   /* 10 empathy */ {
@@ -211,9 +212,9 @@ const TRAIT_META: TM[] = [
       ['Güçlü yardımlaşma kültürü; iç çatışmalar azalır, uyum güçlenir.','A strong culture of mutual aid; internal conflicts decrease, cohesion strengthens.'],
     ],
     r:[
-      ['Sparta Kast Sistemi','Helotlar sistematik baskı altında; güçlü olan hayatta kalır.','Helots under systematic oppression; the strong survive.'],
-      ['Orta Çağ Feodal Düzeni','Kilise aracılığıyla sınırlı koruma; yardım erdem sayılır ama zorunlu değildir.','Limited protection through the Church; charity is a virtue but not obligatory.'],
-      ['Endülüs İslam Medeniyeti','Üç dinin bir arada yaşadığı tolerans modeli; hoşgörü devlet politikası.','A model of tolerance where three faiths coexist; tolerance is state policy.'],
+      ['Sparta Kast Sistemi','Spartan Caste System','Helotlar sistematik baskı altında; güçlü olan hayatta kalır.','Helots under systematic oppression; the strong survive.'],
+      ['Orta Çağ Feodal Düzeni','Medieval Feudal Order','Kilise aracılığıyla sınırlı koruma; yardım erdem sayılır ama zorunlu değildir.','Limited protection through the Church; charity is a virtue but not obligatory.'],
+      ['Endülüs İslam Medeniyeti','Andalusian Islamic Civilization','Üç dinin bir arada yaşadığı tolerans modeli; hoşgörü devlet politikası.','A model of tolerance where three faiths coexist; tolerance is state policy.'],
     ],
   },
   /* 11 social_bonding */ {
@@ -225,9 +226,9 @@ const TRAIT_META: TM[] = [
       ['Güçlü kolektif eylem; dev altyapı ve inşaat projeleri hayata geçer.','Strong collective action; grand infrastructure and construction projects come to life.'],
     ],
     r:[
-      ['Bozkır Göçebe Toplulukları','Bireysel özgürlük yüksek; kalıcı kurumlar kurmak güç.','Individual freedom is high; establishing permanent institutions is difficult.'],
-      ['Anadolu Köy Kültürü','İmece geleneği; klan ve komşuluk dayanışması toplumu ayakta tutar.','İmece tradition; clan and neighborhood solidarity keeps society standing.'],
-      ['Eski Mısır · Çin İmparatorluğu','Dev inşaat projeleri ve merkezi devlet — kolektif gücün doruk noktası.','Massive construction projects and central state — the pinnacle of collective power.'],
+      ['Bozkır Göçebe Toplulukları','Steppe Nomadic Communities','Bireysel özgürlük yüksek; kalıcı kurumlar kurmak güç.','Individual freedom is high; establishing permanent institutions is difficult.'],
+      ['Anadolu Köy Kültürü','Anatolian Village Culture','İmece geleneği; klan ve komşuluk dayanışması toplumu ayakta tutar.','İmece tradition; clan and neighborhood solidarity keeps society standing.'],
+      ['Eski Mısır · Çin İmparatorluğu','Ancient Egypt · Chinese Empire','Dev inşaat projeleri ve merkezi devlet — kolektif gücün doruk noktası.','Massive construction projects and central state — the pinnacle of collective power.'],
     ],
   },
   /* 12 aggression */ {
@@ -239,9 +240,9 @@ const TRAIT_META: TM[] = [
       ['Hızlı toprak genişlemesi; sürekli savaş hali toplumu ve kurumları şekillendirir.','Rapid territorial expansion; the permanent state of war shapes society and institutions.'],
     ],
     r:[
-      ['Hitit Diplomasisi','Tarihte bilinen ilk barış antlaşması; savaş yerine müzakere.','The first known peace treaty in history; negotiation instead of war.'],
-      ['Osmanlı Denge Politikası','Güç yoluyla barış; stratejik savaş ve diplomatik ittifakların dengesi.','Peace through power; a balance of strategic war and diplomatic alliances.'],
-      ['Moğol İmparatorluğu · Vikinglar','Fetih kültürü; korku ve hız yoluyla geniş coğrafyalar denetim altına alınır.','A culture of conquest; vast geographies controlled through fear and speed.'],
+      ['Hitit Diplomasisi','Hittite Diplomacy','Tarihte bilinen ilk barış antlaşması; savaş yerine müzakere.','The first known peace treaty in history; negotiation instead of war.'],
+      ['Osmanlı Denge Politikası','Ottoman Balance Policy','Güç yoluyla barış; stratejik savaş ve diplomatik ittifakların dengesi.','Peace through power; a balance of strategic war and diplomatic alliances.'],
+      ['Moğol İmparatorluğu · Vikinglar','Mongol Empire · Vikings','Fetih kültürü; korku ve hız yoluyla geniş coğrafyalar denetim altına alınır.','A culture of conquest; vast geographies controlled through fear and speed.'],
     ],
   },
   /* 13 cooperation */ {
@@ -253,9 +254,9 @@ const TRAIT_META: TM[] = [
       ['Güçlü ittifak ağları; ortak projeler medeniyetin ilerleyiş hızını artırır.','Strong alliance networks; joint projects accelerate the pace of civilizational progress.'],
     ],
     r:[
-      ['İtalyan Şehir Devletleri','Floransa, Venedik, Cenova rekabeti: yenilik ateşleyici, güç dağıtık.','Florence, Venice, Genoa rivalry: competition ignites innovation, power remains dispersed.'],
-      ['Hansa Birliği','Kuzey Avrupa ticaret şehirlerinin ortak savunma ve ticaret ağı.','A joint defense and trade network of northern European merchant cities.'],
-      ['Roma Müttefik Sistemi · Osmanlı Millet Düzeni','Farklı halkların ortak çatı altında örgütlenmesi — çoklukta birlik.','Organization of diverse peoples under a common roof — unity within diversity.'],
+      ['İtalyan Şehir Devletleri','Italian City-States','Floransa, Venedik, Cenova rekabeti: yenilik ateşleyici, güç dağıtık.','Florence, Venice, Genoa rivalry: competition ignites innovation, power remains dispersed.'],
+      ['Hansa Birliği','Hanseatic League','Kuzey Avrupa ticaret şehirlerinin ortak savunma ve ticaret ağı.','A joint defense and trade network of northern European merchant cities.'],
+      ['Roma Müttefik Sistemi · Osmanlı Millet Düzeni','Roman Alliance System · Ottoman Millet Order','Farklı halkların ortak çatı altında örgütlenmesi — çoklukta birlik.','Organization of diverse peoples under a common roof — unity within diversity.'],
     ],
   },
   /* 14 dominance */ {
@@ -267,9 +268,9 @@ const TRAIT_META: TM[] = [
       ['Güçlü merkezi otorite; hızlı kararlar ve sert yönetim büyük toplulukları yönetir.','Strong central authority; swift decisions and firm governance manage large communities.'],
     ],
     r:[
-      ['Atina Demokrasisi','Agora tartışmaları; her yurttaşın söz hakkı, kararlar ağır alınır.','Agora debates; every citizen has a voice, decisions are taken slowly.'],
-      ['Venedik Doge Konseyi','Aristokrat oy birliği; liderlik tekeli önlenir, denge korunur.','Aristocratic consensus; monopoly of leadership is prevented, balance is maintained.'],
-      ['Osmanlı Sultanlığı · Moğol Han Sistemi','Mutlak otorite; süratli seferber olma ve merkezi kaynak yönetimi.','Absolute authority; rapid mobilization and centralized resource management.'],
+      ['Atina Demokrasisi','Athenian Democracy','Agora tartışmaları; her yurttaşın söz hakkı, kararlar ağır alınır.','Agora debates; every citizen has a voice, decisions are taken slowly.'],
+      ['Venedik Doge Konseyi','Venetian Doge Council','Aristokrat oy birliği; liderlik tekeli önlenir, denge korunur.','Aristocratic consensus; monopoly of leadership is prevented, balance is maintained.'],
+      ['Osmanlı Sultanlığı · Moğol Han Sistemi','Ottoman Sultanate · Mongol Khan System','Mutlak otorite; süratli seferber olma ve merkezi kaynak yönetimi.','Absolute authority; rapid mobilization and centralized resource management.'],
     ],
   },
   /* 15 physical_strength */ {
@@ -281,9 +282,9 @@ const TRAIT_META: TM[] = [
       ['Yüksek üretim ve savaş kapasitesi; büyük yapılar ve uzun seferler mümkün.','High production and combat capacity; great structures and long campaigns become possible.'],
     ],
     r:[
-      ['Bizans Strateji Odaklı Ordu','Sayısal üstünlük yerine taktik üstünlük; az kuvvetle çok başarı.','Tactical superiority over numerical strength; great success with few forces.'],
-      ['Osmanlı Yeniçeri Ocağı','Eğitim ve fiziksel kapasite bir arada; disiplinli ağır piyade.','Training and physical capacity together; disciplined heavy infantry.'],
-      ['Spartalı Savaşçılar · Moğol Atlıları','Fizik üstünlük medeniyetin temeli; savaşa adanmış toplum modeli.','Physical superiority is the foundation of civilization; a society dedicated to war.'],
+      ['Bizans Strateji Odaklı Ordu','Byzantine Strategic Army','Sayısal üstünlük yerine taktik üstünlük; az kuvvetle çok başarı.','Tactical superiority over numerical strength; great success with few forces.'],
+      ['Osmanlı Yeniçeri Ocağı','Ottoman Janissary Corps','Eğitim ve fiziksel kapasite bir arada; disiplinli ağır piyade.','Training and physical capacity together; disciplined heavy infantry.'],
+      ['Spartalı Savaşçılar · Moğol Atlıları','Spartan Warriors · Mongol Cavalry','Fizik üstünlük medeniyetin temeli; savaşa adanmış toplum modeli.','Physical superiority is the foundation of civilization; a society dedicated to war.'],
     ],
   },
   /* 16 endurance */ {
@@ -295,9 +296,9 @@ const TRAIT_META: TM[] = [
       ['Kıtalararası seferler ve aşırı koşullarda hayatta kalış; toplum zorlukla güçlenir.','Intercontinental campaigns and survival in extreme conditions; society grows stronger through hardship.'],
     ],
     r:[
-      ['Küçük Akdeniz Şehir Devletleri','Kısa mesafeli ticaret ve savunma; uzun mesafeli güç projeksiyonu sınırlı.','Short-range trade and defense; long-range power projection is limited.'],
-      ['Selçuklu Sefer Ordusu','At ve deve ile uzun bozkır seferleri; lojistik zorlukları aşma kapasitesi.','Long steppe campaigns with horse and camel; capacity to overcome logistical challenges.'],
-      ['Moğol · Türk Büyük Göç Dalgaları','Binlerce kilometre at sırtında; iklim ve coğrafya engel tanınmaz.','Thousands of kilometers on horseback; climate and geography pose no barriers.'],
+      ['Küçük Akdeniz Şehir Devletleri','Small Mediterranean City-States','Kısa mesafeli ticaret ve savunma; uzun mesafeli güç projeksiyonu sınırlı.','Short-range trade and defense; long-range power projection is limited.'],
+      ['Selçuklu Sefer Ordusu','Seljuk Campaign Army','At ve deve ile uzun bozkır seferleri; lojistik zorlukları aşma kapasitesi.','Long steppe campaigns with horse and camel; capacity to overcome logistical challenges.'],
+      ['Moğol · Türk Büyük Göç Dalgaları','Mongol · Turkish Great Migrations','Binlerce kilometre at sırtında; iklim ve coğrafya engel tanınmaz.','Thousands of kilometers on horseback; climate and geography pose no barriers.'],
     ],
   },
   /* 17 immune_strength */ {
@@ -309,9 +310,9 @@ const TRAIT_META: TM[] = [
       ['Nüfus istikrarı güçlü; salgınlar görece hızlı atlatılır, toplum toparlanır.','Population stability is strong; epidemics are overcome relatively quickly, society recovers.'],
     ],
     r:[
-      ['Kara Ölüm Sonrası Avrupa','Nüfusun üçte birini silen veba; kültürel ve ekonomik çöküş dönemi.','A plague that wiped out a third of the population; a period of cultural and economic collapse.'],
-      ['Orta Çağ Anadolu Kentleri','Doğu-Batı ticaretinin buluşma noktası; salgınlara maruz ama dirençli.','The meeting point of East-West trade; exposed to epidemics but resilient.'],
-      ['Osmanlı Şehirleri (erken dönem)','Karantina uygulamaları erken benimsendi; görece düşük salgın ölüm oranı.','Quarantine practices adopted early; relatively low epidemic mortality rates.'],
+      ['Kara Ölüm Sonrası Avrupa','Post-Black Death Europe','Nüfusun üçte birini silen veba; kültürel ve ekonomik çöküş dönemi.','A plague that wiped out a third of the population; a period of cultural and economic collapse.'],
+      ['Orta Çağ Anadolu Kentleri','Medieval Anatolian Cities','Doğu-Batı ticaretinin buluşma noktası; salgınlara maruz ama dirençli.','The meeting point of East-West trade; exposed to epidemics but resilient.'],
+      ['Osmanlı Şehirleri (erken dönem)','Ottoman Cities (Early Period)','Karantina uygulamaları erken benimsendi; görece düşük salgın ölüm oranı.','Quarantine practices adopted early; relatively low epidemic mortality rates.'],
     ],
   },
   /* 18 fertility */ {
@@ -323,9 +324,9 @@ const TRAIT_META: TM[] = [
       ['Hızlı nüfus patlaması; toprak ve kaynak ihtiyacı baskı yaratır, göç artar.','Rapid population explosion; need for land and resources creates pressure, migration increases.'],
     ],
     r:[
-      ['Antik Yunan Şehir Devletleri','Nüfus kontrolü bilinçli uygulandı; toprak sınırlı, kalite ön planda.','Population control was consciously practiced; land is limited, quality comes first.'],
-      ['Osmanlı Klasik Dönemi','Dengeli demografik büyüme; sürdürülebilir toprak ve kaynak yönetimi.','Balanced demographic growth; sustainable land and resource management.'],
-      ['Erken İslam Fetihleri','Demografik dinamizm ve genç nüfus; fetihlerin arkasındaki insan gücü.','Demographic dynamism and a young population; the human power behind the conquests.'],
+      ['Antik Yunan Şehir Devletleri','Ancient Greek City-States','Nüfus kontrolü bilinçli uygulandı; toprak sınırlı, kalite ön planda.','Population control was consciously practiced; land is limited, quality comes first.'],
+      ['Osmanlı Klasik Dönemi','Ottoman Classical Period','Dengeli demografik büyüme; sürdürülebilir toprak ve kaynak yönetimi.','Balanced demographic growth; sustainable land and resource management.'],
+      ['Erken İslam Fetihleri','Early Islamic Conquests','Demografik dinamizm ve genç nüfus; fetihlerin arkasındaki insan gücü.','Demographic dynamism and a young population; the human power behind the conquests.'],
     ],
   },
   /* 19 longevity */ {
@@ -337,9 +338,9 @@ const TRAIT_META: TM[] = [
       ['Uzun ömürlü liderler ve güçlü kurumsal hafıza; medeniyetin sürekliliği güvence altında.','Long-lived leaders and strong institutional memory; the continuity of civilization is secured.'],
     ],
     r:[
-      ['Erken Göçebe Topluluklar','Kısa ortalama yaşam; bilgelik aktarımı sözlü ve sınırlı.','Short average lifespan; wisdom transfer is oral and limited.'],
-      ['Osmanlı Vezir Sistemi','Tecrübeli bürokrasi; devlet hafızası kurumsal kanallarla korunur.','Experienced bureaucracy; state memory is preserved through institutional channels.'],
-      ['Çin İmparatorluk Bürokrasisi · Roma Senatosu','Nesiller boyu süren kurumsal derinlik — medeniyetin güvencesi.','Institutional depth spanning generations — the guarantee of civilization.'],
+      ['Erken Göçebe Topluluklar','Early Nomadic Communities','Kısa ortalama yaşam; bilgelik aktarımı sözlü ve sınırlı.','Short average lifespan; wisdom transfer is oral and limited.'],
+      ['Osmanlı Vezir Sistemi','Ottoman Vizier System','Tecrübeli bürokrasi; devlet hafızası kurumsal kanallarla korunur.','Experienced bureaucracy; state memory is preserved through institutional channels.'],
+      ['Çin İmparatorluk Bürokrasisi · Roma Senatosu','Chinese Imperial Bureaucracy · Roman Senate','Nesiller boyu süren kurumsal derinlik — medeniyetin güvencesi.','Institutional depth spanning generations — the guarantee of civilization.'],
     ],
   },
 ];
@@ -678,11 +679,11 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
             background:'rgba(8,8,26,0.85)', border:`1px solid ${trait.c}28`, clipPath:CLIP }}>
             <div style={{ fontSize:14, color: trait.c, fontFamily:'Share Tech Mono,monospace',
               letterSpacing:'0.12em', marginBottom:6 }}>
-              ◈ {tm.r[tier][0]}
+              ◈ {isTr ? tm.r[tier][0] : tm.r[tier][1]}
             </div>
             <div style={{ fontSize:14, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
               lineHeight:1.55, letterSpacing:'0.03em' }}>
-              {tm.r[tier][isTr ? 1 : 2]}
+              {isTr ? tm.r[tier][2] : tm.r[tier][3]}
             </div>
           </div>
         </div>
