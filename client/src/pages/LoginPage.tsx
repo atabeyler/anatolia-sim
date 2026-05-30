@@ -148,10 +148,10 @@ function LogoRings() {
 function HudInput({ label, type, value, onChange, placeholder, maxLength }: any) {
   const [focused, setFocused] = useState(false);
   return (
-    <div className="mb-3">
-      <div className="flex items-center gap-2 mb-1.5">
-        <div className={`w-1 h-3 transition-colors ${focused ? 'bg-sim-accent' : 'bg-sim-border'}`} />
-        <label className="font-share-tech tracking-widest uppercase text-sim-muted" style={{ fontSize: 14 }}>{label}</label>
+    <div className="mb-2">
+      <div className="flex items-center gap-2 mb-1">
+        <div className={`w-1 h-3 flex-shrink-0 transition-colors ${focused ? 'bg-sim-accent' : 'bg-sim-border'}`} />
+        <label className="font-share-tech tracking-wider uppercase" style={{ fontSize: 13, color: '#c0c8e8' }}>{label}</label>
       </div>
       <div className={`relative transition-all duration-200 ${focused ? 'drop-shadow-[0_0_8px_rgba(79,110,247,0.4)]' : ''}`}>
         <input
@@ -162,7 +162,7 @@ function HudInput({ label, type, value, onChange, placeholder, maxLength }: any)
           onBlur={() => setFocused(false)}
           placeholder={placeholder}
           maxLength={maxLength}
-          className={`w-full bg-sim-bg/80 px-3 py-2.5 text-sm text-sim-text font-share-tech tracking-wide placeholder-sim-muted/50 focus:outline-none transition-all border ${focused ? 'border-sim-accent/70 bg-sim-surface/80' : 'border-sim-border'}`}
+          className={`w-full bg-sim-bg/80 px-3 py-2 text-sm text-sim-text font-share-tech tracking-wide placeholder-sim-muted/50 focus:outline-none transition-all border ${focused ? 'border-sim-accent/70 bg-sim-surface/80' : 'border-sim-border'}`}
           style={{ clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))' }}
         />
         {focused && (
@@ -343,14 +343,14 @@ export default function LoginPage() {
           </div>
 
           {/* Separator line */}
-          <div className="flex items-center gap-3 my-3 w-80 max-w-full">
+          <div className="flex items-center gap-3 my-3 w-96 max-w-full">
             <div className="flex-1 h-px bg-gradient-to-r from-transparent to-sim-accent/40" />
             <div className="w-1.5 h-1.5 rotate-45 bg-sim-accent/60" />
             <div className="flex-1 h-px bg-gradient-to-l from-transparent to-sim-accent/40" />
           </div>
 
           {/* Form panel */}
-          <div className="w-80 max-w-full hud-panel relative boot-in" style={{ animationDelay: '300ms', padding: '24px 20px' }}>
+          <div className="w-96 max-w-full hud-panel relative boot-in" style={{ animationDelay: '300ms', padding: '20px 24px' }}>
             <span className="hud-corner-tr" />
             <span className="hud-corner-bl" />
 
@@ -366,10 +366,11 @@ export default function LoginPage() {
             </div>
 
             {/* Mode toggle */}
-            <div className="flex gap-1 mb-4 mt-2">
+            <div className="flex gap-1 mb-3 mt-2">
               {(['login', 'register'] as const).map(m => (
                 <button key={m} type="button" onClick={() => setMode(m)}
-                  className={`flex-1 py-2 text-xs font-share-tech tracking-widest uppercase transition-all border ${
+                  style={{ fontSize: 13 }}
+                  className={`flex-1 py-2 font-share-tech tracking-widest uppercase transition-all border ${
                     mode === m
                       ? 'bg-sim-accent/20 border-sim-accent/60 text-sim-accent shadow-neon-sm'
                       : 'border-sim-border/50 text-sim-muted hover:border-sim-accent/30 hover:text-sim-text'
@@ -381,7 +382,7 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit}>
               {mode === 'register' ? (<>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-1.5">
                   <HudInput label={lang === 'en' ? 'First Name' : 'Ad'} type="text"
                     value={form.first_name} onChange={f('first_name')} placeholder="AD" />
                   <HudInput label={lang === 'en' ? 'Last Name' : 'Soyad'} type="text"
@@ -391,7 +392,7 @@ export default function LoginPage() {
                   value={form.reg_user_code}
                   onChange={(e: any) => setForm(p => ({ ...p, reg_user_code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') }))}
                   placeholder="ANSYZ0001" />
-                <p className="font-share-tech text-sim-muted tracking-wide -mt-2 mb-2" style={{ fontSize: 11 }}>
+                <p className="font-share-tech tracking-wide -mt-1 mb-1.5" style={{ fontSize: 11, color: '#6a8a9a' }}>
                   {lang === 'en' ? '4-20 chars · letters & numbers only' : '4-20 karakter · harf ve rakam'}
                 </p>
                 <HudInput label="TC KİMLİK NO" type="text" maxLength={11}
@@ -400,10 +401,10 @@ export default function LoginPage() {
                   value={form.email} onChange={f('email')} placeholder="user@domain.com" />
                 <HudInput label={lang === 'en' ? 'Password' : 'ŞİFRE'} type="password"
                   value={form.password} onChange={f('password')} placeholder="••••••••" />
-                <p className="font-share-tech text-sim-muted tracking-wide mb-3" style={{ fontSize: 11 }}>
+                <p className="font-share-tech tracking-wide mb-2" style={{ fontSize: 11, color: '#6a8a9a' }}>
                   {lang === 'en'
-                    ? 'Min 8 chars · uppercase · lowercase · number · symbol'
-                    : 'Min 8 karakter · büyük harf · küçük harf · rakam · özel karakter'}
+                    ? 'Min 8 chars · upper · lower · number · symbol'
+                    : 'Min 8 karakter · büyük · küçük · rakam · sembol'}
                 </p>
               </>) : (<>
                 <HudInput label={lang === 'en' ? 'User Code' : 'KULLANICI KODU'} type="text"
