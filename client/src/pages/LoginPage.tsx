@@ -151,7 +151,7 @@ function HudInput({ label, type, value, onChange, placeholder, maxLength }: any)
     <div className="mb-2">
       <div className="flex items-center gap-2 mb-1">
         <div className={`w-1 h-3 flex-shrink-0 transition-colors ${focused ? 'bg-sim-accent' : 'bg-sim-border'}`} />
-        <label className="font-share-tech tracking-wider uppercase" style={{ fontSize: 13, color: '#c0c8e8' }}>{label}</label>
+        <label className="font-share-tech tracking-wider uppercase" style={{ fontSize: 16, color: '#c0c8e8' }}>{label}</label>
       </div>
       <div className={`relative transition-all duration-200 ${focused ? 'drop-shadow-[0_0_8px_rgba(79,110,247,0.4)]' : ''}`}>
         <input
@@ -162,8 +162,8 @@ function HudInput({ label, type, value, onChange, placeholder, maxLength }: any)
           onBlur={() => setFocused(false)}
           placeholder={placeholder}
           maxLength={maxLength}
-          className={`w-full bg-sim-bg/80 px-3 py-2 text-sm text-sim-text font-share-tech tracking-wide placeholder-sim-muted/50 focus:outline-none transition-all border ${focused ? 'border-sim-accent/70 bg-sim-surface/80' : 'border-sim-border'}`}
-          style={{ clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))' }}
+          className={`w-full bg-sim-bg/80 px-3 py-2 text-sim-text font-share-tech tracking-wide placeholder-sim-muted/50 focus:outline-none transition-all border ${focused ? 'border-sim-accent/70 bg-sim-surface/80' : 'border-sim-border'}`}
+          style={{ fontSize: 16, clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))' }}
         />
         {focused && (
           <>
@@ -343,14 +343,14 @@ export default function LoginPage() {
           </div>
 
           {/* Separator line */}
-          <div className="flex items-center gap-3 my-3 w-96 max-w-full">
+          <div className="flex items-center gap-3 my-3 w-[460px] max-w-full">
             <div className="flex-1 h-px bg-gradient-to-r from-transparent to-sim-accent/40" />
             <div className="w-1.5 h-1.5 rotate-45 bg-sim-accent/60" />
             <div className="flex-1 h-px bg-gradient-to-l from-transparent to-sim-accent/40" />
           </div>
 
           {/* Form panel */}
-          <div className="w-96 max-w-full hud-panel relative boot-in" style={{ animationDelay: '300ms', padding: '20px 24px' }}>
+          <div className="w-[460px] max-w-full hud-panel relative boot-in" style={{ animationDelay: '300ms', padding: '22px 28px' }}>
             <span className="hud-corner-tr" />
             <span className="hud-corner-bl" />
 
@@ -358,7 +358,7 @@ export default function LoginPage() {
             <div className="absolute -top-px left-6 right-6 flex items-center justify-center">
               <div className="bg-[#030310] px-3 flex items-center gap-2">
                 <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
-                <span className="font-share-tech text-sim-accent tracking-[0.3em]" style={{ fontSize: 14 }}>
+                <span className="font-share-tech text-sim-accent tracking-[0.3em]" style={{ fontSize: 18 }}>
                   {mode === 'login' ? (lang === 'tr' ? 'KİMLİK DOĞRULAMA' : 'IDENTITY VERIFICATION') : (lang === 'tr' ? 'HESAP OLUŞTURMA' : 'ACCOUNT CREATION')}
                 </span>
                 <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
@@ -369,8 +369,8 @@ export default function LoginPage() {
             <div className="flex gap-1 mb-3 mt-2">
               {(['login', 'register'] as const).map(m => (
                 <button key={m} type="button" onClick={() => setMode(m)}
-                  style={{ fontSize: 13 }}
-                  className={`flex-1 py-2 font-share-tech tracking-widest uppercase transition-all border ${
+                  style={{ fontSize: 16 }}
+                  className={`flex-1 py-2.5 font-share-tech tracking-widest uppercase transition-all border ${
                     mode === m
                       ? 'bg-sim-accent/20 border-sim-accent/60 text-sim-accent shadow-neon-sm'
                       : 'border-sim-border/50 text-sim-muted hover:border-sim-accent/30 hover:text-sim-text'
@@ -392,7 +392,7 @@ export default function LoginPage() {
                   value={form.reg_user_code}
                   onChange={(e: any) => setForm(p => ({ ...p, reg_user_code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') }))}
                   placeholder="ANSYZ0001" />
-                <p className="font-share-tech tracking-wide -mt-1 mb-1.5" style={{ fontSize: 11, color: '#6a8a9a' }}>
+                <p className="font-share-tech tracking-wide -mt-1 mb-1.5" style={{ fontSize: 12, color: '#6a8a9a' }}>
                   {lang === 'en' ? '4-20 chars · letters & numbers only' : '4-20 karakter · harf ve rakam'}
                 </p>
                 <HudInput label="TC KİMLİK NO" type="text" maxLength={11}
@@ -401,7 +401,7 @@ export default function LoginPage() {
                   value={form.email} onChange={f('email')} placeholder="user@domain.com" />
                 <HudInput label={lang === 'en' ? 'Password' : 'ŞİFRE'} type="password"
                   value={form.password} onChange={f('password')} placeholder="••••••••" />
-                <p className="font-share-tech tracking-wide mb-2" style={{ fontSize: 11, color: '#6a8a9a' }}>
+                <p className="font-share-tech tracking-wide mb-2" style={{ fontSize: 12, color: '#6a8a9a' }}>
                   {lang === 'en'
                     ? 'Min 8 chars · upper · lower · number · symbol'
                     : 'Min 8 karakter · büyük · küçük · rakam · sembol'}
@@ -414,19 +414,20 @@ export default function LoginPage() {
               </>)}
 
               {error && (
-                <div className="mb-3 px-3 py-2 border-l-2 border-sim-red bg-sim-red/10 text-xs font-share-tech text-sim-red tracking-wide">
+                <div className="mb-3 px-3 py-2 border-l-2 border-sim-red bg-sim-red/10 font-share-tech text-sim-red tracking-wide" style={{ fontSize: 14 }}>
                   ⚠ {error}
                 </div>
               )}
               {success && (
-                <div className="mb-3 px-3 py-2 border-l-2 border-sim-green bg-sim-green/10 text-xs font-share-tech text-sim-green tracking-wide">
+                <div className="mb-3 px-3 py-2 border-l-2 border-sim-green bg-sim-green/10 font-share-tech text-sim-green tracking-wide" style={{ fontSize: 14 }}>
                   ✓ {success}
                 </div>
               )}
 
               <button type="submit" disabled={loading}
-                className="w-full py-3 font-orbitron text-sm font-semibold tracking-[0.2em] text-white transition-all disabled:opacity-40 neon-breathe relative overflow-hidden"
+                className="w-full py-3.5 font-orbitron font-semibold tracking-[0.2em] text-white transition-all disabled:opacity-40 neon-breathe relative overflow-hidden"
                 style={{
+                  fontSize: 18,
                   background: loading ? 'rgba(79,110,247,0.3)' : 'linear-gradient(135deg, rgba(79,110,247,0.35) 0%, rgba(79,110,247,0.2) 100%)',
                   border: '1px solid rgba(79,110,247,0.6)',
                   clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))',
