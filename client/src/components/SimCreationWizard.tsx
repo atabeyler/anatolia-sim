@@ -777,35 +777,40 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
       {confirmOpen && (
         <div style={{ position:'fixed', inset:0, zIndex:999,
           background:'rgba(0,0,10,0.82)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <div style={{ maxWidth:380, width:'90%', background:'rgba(4,4,18,0.98)',
+          <div style={{ maxWidth:400, width:'90%', background:'rgba(4,4,18,0.98)',
             border:'1px solid rgba(204,34,34,0.6)', clipPath:CLIP, padding:'28px 28px 24px' }}>
-            <div style={{ fontSize:14, color:'#cc2222', fontFamily:'Share Tech Mono,monospace',
-              letterSpacing:'0.2em', marginBottom:14 }}>
-              ⚠ {t('UYARI', 'WARNING')}
+            <div style={{ fontSize:20, color:'#cc2222', fontFamily:'Orbitron,monospace',
+              letterSpacing:'0.2em', marginBottom:16, display:'flex', alignItems:'center', gap:10 }}>
+              <span style={{
+                display:'inline-block',
+                filter:'drop-shadow(0 0 8px #cc2222) drop-shadow(0 0 18px #cc222299)',
+                animation:'warn-pulse 1.4s ease-in-out infinite',
+              }}>⚠</span>
+              <span style={{ textShadow:'0 0 12px #cc222288' }}>{t('UYARI', 'WARNING')}</span>
             </div>
-            <div style={{ fontSize:14, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
-              lineHeight:1.65, letterSpacing:'0.04em', marginBottom:24 }}>
+            <div style={{ fontSize:16, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
+              lineHeight:1.7, letterSpacing:'0.04em', marginBottom:24 }}>
               {t(
                 'Bu adım geri döndürülemez. Simülasyon başlatıldıktan sonra kurucu ayarları değiştirilemez.',
                 'This step is irreversible. Founder settings cannot be changed once the simulation is launched.'
               )}
             </div>
             <div style={{ fontSize:16, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
-              letterSpacing:'0.12em', marginBottom:20, borderTop:'1px solid rgba(204,34,34,0.2)',
+              letterSpacing:'0.12em', marginBottom:20, borderTop:'1px solid rgba(204,34,34,0.25)',
               paddingTop:16 }}>
               {t('Onaylıyor musunuz?', 'Do you confirm?')}
             </div>
             <div style={{ display:'flex', gap:12 }}>
               <button
                 onClick={() => { setConfirmOpen(false); onSubmit(simForm, f1, f2); }}
-                style={{ ...btnBase, fontSize:14, flex:1,
+                style={{ ...btnBase, fontSize:16, flex:1,
                   background:'rgba(78,203,113,0.18)', border:'1px solid rgba(78,203,113,0.55)',
                   color:'#4ecb71' }}>
                 {t('ONAYLA', 'CONFIRM')}
               </button>
               <button
                 onClick={() => setConfirmOpen(false)}
-                style={{ ...btnBase, fontSize:14, flex:1,
+                style={{ ...btnBase, fontSize:16, flex:1,
                   background:'rgba(204,34,34,0.15)', border:'1px solid rgba(204,34,34,0.45)',
                   color:'#e05555' }}>
                 {t('VAZGEÇ', 'CANCEL')}
