@@ -507,6 +507,7 @@ interface Props {
 
 export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: Props) {
   const [step, setStep] = useState(0);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [simForm, setSimForm] = useState({ name:'', latitude:'', longitude:'' });
   const [f1, setF1] = useState<any>(founderDefaults('male'));
   const [f2, setF2] = useState<any>(founderDefaults('female'));
@@ -766,6 +767,48 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
         {renderContent()}
       </div>
 
+      {/* Confirmation modal */}
+      {confirmOpen && (
+        <div style={{ position:'fixed', inset:0, zIndex:999,
+          background:'rgba(0,0,10,0.82)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ maxWidth:380, width:'90%', background:'rgba(4,4,18,0.98)',
+            border:'1px solid rgba(204,34,34,0.6)', clipPath:CLIP, padding:'28px 28px 24px' }}>
+            <div style={{ fontSize:14, color:'#cc2222', fontFamily:'Share Tech Mono,monospace',
+              letterSpacing:'0.2em', marginBottom:14 }}>
+              ⚠ {t('UYARI', 'WARNING')}
+            </div>
+            <div style={{ fontSize:14, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
+              lineHeight:1.65, letterSpacing:'0.04em', marginBottom:24 }}>
+              {t(
+                'Bu adım geri döndürülemez. Simülasyon başlatıldıktan sonra kurucu ayarları değiştirilemez.',
+                'This step is irreversible. Founder settings cannot be changed once the simulation is launched.'
+              )}
+            </div>
+            <div style={{ fontSize:16, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
+              letterSpacing:'0.12em', marginBottom:20, borderTop:'1px solid rgba(204,34,34,0.2)',
+              paddingTop:16 }}>
+              {t('Onaylıyor musunuz?', 'Do you confirm?')}
+            </div>
+            <div style={{ display:'flex', gap:12 }}>
+              <button
+                onClick={() => { setConfirmOpen(false); onSubmit(simForm, f1, f2); }}
+                style={{ ...btnBase, fontSize:14, flex:1,
+                  background:'rgba(78,203,113,0.18)', border:'1px solid rgba(78,203,113,0.55)',
+                  color:'#4ecb71' }}>
+                {t('ONAYLA', 'CONFIRM')}
+              </button>
+              <button
+                onClick={() => setConfirmOpen(false)}
+                style={{ ...btnBase, fontSize:14, flex:1,
+                  background:'rgba(204,34,34,0.15)', border:'1px solid rgba(204,34,34,0.45)',
+                  color:'#e05555' }}>
+                {t('VAZGEÇ', 'CANCEL')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Navigation */}
       <div style={{ padding:'12px 24px 20px', borderTop:'1px solid rgba(79,110,247,0.15)',
         display:'flex', justifyContent:'space-between', alignItems:'center' }}>
@@ -777,7 +820,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
             <button onClick={back} style={btnBack}>← {t('GERİ', 'BACK')}</button>
           )}
           {isSummary ? (
-            <button onClick={() => onSubmit(simForm, f1, f2)} disabled={loading}
+            <button onClick={() => setConfirmOpen(true)} disabled={loading}
               style={{ ...btnStart, opacity: loading ? 0.5 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}>
               {loading ? t('BAŞLATILIYOR…', 'INITIALIZING…') : t('BAŞLAT', 'LAUNCH')}
             </button>
