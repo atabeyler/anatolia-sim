@@ -198,7 +198,6 @@ export default function LoginPage() {
   const [booted, setBooted] = useState(false);
   const [pendingCode, setPendingCode] = useState('');
   const [coords, setCoords] = useState<{ lat: string; lon: string } | null>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const f = (k: string) => (e: any) => setForm(p => ({ ...p, [k]: e.target.value }));
 
@@ -234,19 +233,6 @@ export default function LoginPage() {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [pendingCode, lang]);
 
-  useEffect(() => {
-    function fitToViewport() {
-      const el = contentRef.current;
-      if (!el) return;
-      el.style.zoom = '1';
-      const available = window.innerHeight - 16;
-      const needed = el.scrollHeight;
-      if (needed > available) el.style.zoom = String(available / needed);
-    }
-    fitToViewport();
-    window.addEventListener('resize', fitToViewport);
-    return () => window.removeEventListener('resize', fitToViewport);
-  }, [booted, mode, error, success]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -276,7 +262,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative h-screen overflow-hidden flex flex-col items-center justify-center bg-[#030310] scanlines">
+    <div className="relative min-h-screen overflow-y-auto flex flex-col items-center justify-center bg-[#030310] scanlines">
       {/* Backgrounds */}
       <StarField />
       <HexGrid />
@@ -312,7 +298,7 @@ export default function LoginPage() {
 
       {/* Main content */}
       {booted && (
-        <div ref={contentRef} className="z-10 flex flex-col items-center warp-in w-full px-4 py-2">
+        <div className="z-10 flex flex-col items-center warp-in w-full px-4 py-8">
           {/* Logo area with rings */}
           <div className="relative w-28 h-28 flex items-center justify-center mb-4">
             <LogoRings />
