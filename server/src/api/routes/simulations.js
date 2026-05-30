@@ -70,15 +70,44 @@ function buildFounderParams(params = {}, defaults = {}) {
   };
 }
 
+function agePhysique(age, sex, heightFactor, metabolism) {
+  // Adult genetic height: males 155-200cm, females 145-185cm
+  const adultH = sex === 'male'
+    ? Math.round(155 + heightFactor * 45)
+    : Math.round(145 + heightFactor * 40);
+
+  let h, w;
+  if (age < 0.08) {          // newborn
+    h = Math.round(48 + heightFactor * 6);
+    w = parseFloat((2.8 + heightFactor * 1.2).toFixed(1));
+  } else if (age < 2) {      // infant
+    const t = age / 2;
+    h = Math.round(54 + t * 31);                   // 54→85 cm
+    w = parseFloat((4 + t * 8).toFixed(1));        // 4→12 kg
+  } else if (age < 12) {     // child
+    const t = (age - 2) / 10;
+    h = Math.round(85 + t * (adultH * 0.83 - 85));
+    w = Math.round(12 + t * 23);                   // 12→35 kg
+  } else if (age < 18) {     // adolescent
+    const t = (age - 12) / 6;
+    h = Math.round(adultH * 0.83 + t * adultH * 0.17);
+    const adultW = Math.round((adultH / 100) ** 2 * (18 + metabolism * 8));
+    w = Math.round(35 + t * (adultW - 35));
+  } else {                   // adult / elder
+    h = adultH;
+    w = Math.round((adultH / 100) ** 2 * (18 + metabolism * 8));
+  }
+  return { h, w };
+}
+
 function serializeIndividual(ind, currentDay) {
   const age = Math.max(0, (currentDay - (ind.birth_day ?? 0)) / 365);
   const heightFactor = ind.phenotype?.height_factor ?? 0.5;
-  const metabolism = ind.phenotype?.metabolism ?? 0.5;
-  const heightCm = ind.phenotype?.height_cm ?? Math.round(150 + heightFactor * 45);
-  const weightKg = Math.round((heightCm / 100) * (heightCm / 100) * (19 + metabolism * 8));
+  const metabolism   = ind.phenotype?.metabolism   ?? 0.5;
+  const { h: heightCm, w: weightKg } = agePhysique(age, ind.sex ?? 'male', heightFactor, metabolism);
   return {
     id: ind.id,
-    name: ind.phenotype?.name ?? ind.name ?? null, // null = pre-linguistic, UI shows ID
+    name: ind.phenotype?.name ?? ind.name ?? null,
     sex: ind.sex,
     birth_day: ind.birth_day,
     death_day: ind.death_day,
@@ -88,6 +117,8 @@ function serializeIndividual(ind, currentDay) {
     y: ind.y,
     height_cm: heightCm,
     weight_kg: weightKg,
+    parent_1_id: ind.parent_1_id ?? null,
+    parent_2_id: ind.parent_2_id ?? null,
     genome: ind.genome,
     phenotype: ind.phenotype,
     health: ind.health,
@@ -206,7 +237,7 @@ router.get('/:id/population', authenticate, requireSimulationOwner, async (req, 
       return res.json(individuals);
     }
 
-    let sql = 'SELECT id, sex, birth_day, death_day, alive, x, y, genome, phenotype, health, mind, social, skills, beliefs, language FROM individuals WHERE simulation_id = $1';
+    let sql = 'SELECT id, sex, birth_day, death_day, alive, x, y, genome, phenotype, health, mind, social, skills, beliefs, language, parent_1_id, parent_2_id FROM individuals WHERE simulation_id = $1';
     if (req.query.alive === 'true') sql += ' AND alive = true';
     sql += ' LIMIT 5000';
     const { rows } = await query(sql, [req.params.id]);
