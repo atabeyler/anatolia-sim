@@ -171,7 +171,7 @@ function ColorChips({ options, value, onChange }: { options: typeof EYE_OPTIONS;
 
 const inputStyle: React.CSSProperties = {
   width: '100%', background: 'rgba(5,5,20,0.9)', border: '1px solid rgba(79,110,247,0.2)',
-  padding: '4px 8px', fontSize: 11, color: '#c0d0f0', fontFamily: 'Share Tech Mono, monospace', outline: 'none',
+  padding: '4px 8px', fontSize: 11, color: '#4f9ef7', fontFamily: 'Share Tech Mono, monospace', outline: 'none',
 };
 
 function UnitInput({ label, value, unit, min, max, onChange, color = '#c0d0f0' }: {
@@ -196,7 +196,7 @@ function UnitInput({ label, value, unit, min, max, onChange, color = '#c0d0f0' }
 
   return (
     <div>
-      <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono', letterSpacing: '0.1em' }}>{label}</div>
+      <div style={{ fontSize: 10, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono', letterSpacing: '0.1em' }}>{label}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
         <input
           type="number" min={min} max={max}
@@ -206,7 +206,7 @@ function UnitInput({ label, value, unit, min, max, onChange, color = '#c0d0f0' }
           onKeyDown={e => { if (e.key === 'Enter') commit((e.target as HTMLInputElement).value); }}
           style={{ ...inputStyle, flex: 1, color }}
         />
-        <span style={{ fontSize: 9, color: '#5060a0', fontFamily: 'Share Tech Mono', flexShrink: 0 }}>{unit}</span>
+        <span style={{ fontSize: 10, color: '#5060a0', fontFamily: 'Share Tech Mono', flexShrink: 0 }}>{unit}</span>
       </div>
     </div>
   );
@@ -220,7 +220,7 @@ function FounderCard({ title, sex, data, onChange, lang }: {
   const weightKg = toKg(data.height ?? 0.5, data.metabolism ?? 0.5);
 
   const sec = (label: string) => (
-    <div style={{ fontSize: 8, color: '#3a5070', letterSpacing: '0.2em', marginBottom: 6, fontFamily: 'Share Tech Mono' }}>
+    <div style={{ fontSize: 10, color: '#4f9ef7', letterSpacing: '0.2em', marginBottom: 6, fontFamily: 'Share Tech Mono' }}>
       {label}
     </div>
   );
@@ -241,20 +241,20 @@ function FounderCard({ title, sex, data, onChange, lang }: {
           {sec(lang === 'tr' ? '── KİMLİK ──' : '── IDENTITY ──')}
           <div className="grid grid-cols-2 gap-2">
             <div className="col-span-2">
-              <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'İSİM' : 'NAME'}</div>
+              <div style={{ fontSize: 10, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'İSİM' : 'NAME'}</div>
               <input value={data.name ?? ''} onChange={e => onChange('name', e.target.value)} style={inputStyle} />
             </div>
             <div>
-              <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'YAŞ' : 'AGE'}</div>
+              <div style={{ fontSize: 10, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'YAŞ' : 'AGE'}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <input type="number" min="15" max="65" value={data.ageYears ?? 20}
                   onChange={e => onChange('ageYears', parseInt(e.target.value || '20', 10))}
                   style={{ ...inputStyle, flex: 1 }} />
-                <span style={{ fontSize: 9, color: '#5060a0', fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'yaş' : 'yr'}</span>
+                <span style={{ fontSize: 10, color: '#5060a0', fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'yaş' : 'yr'}</span>
               </div>
             </div>
             <div>
-              <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'CİNSİYET' : 'SEX'}</div>
+              <div style={{ fontSize: 10, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'CİNSİYET' : 'SEX'}</div>
               <div style={{ padding: '4px 8px', fontSize: 11, color: accentColor, fontFamily: 'Share Tech Mono', border: `1px solid ${accentColor}30`, background: `${accentColor}08` }}>
                 {sex === 'male' ? (lang === 'tr' ? 'ERKEK' : 'MALE') : (lang === 'tr' ? 'KADIN' : 'FEMALE')}
               </div>
@@ -286,7 +286,7 @@ function FounderCard({ title, sex, data, onChange, lang }: {
               : (lang === 'tr' ? 'Obez' : 'Obese');
             const bmiColor = bmi < 18.5 ? '#7dd3fc' : bmi < 25 ? '#4ecb71' : bmi < 30 ? '#f59e0b' : '#ef4444';
             return (
-              <div style={{ marginTop: 4, fontSize: 8, color: '#3a5070', fontFamily: 'Share Tech Mono', display: 'flex', gap: 8 }}>
+              <div style={{ marginTop: 4, fontSize: 10, color: '#3a5070', fontFamily: 'Share Tech Mono', display: 'flex', gap: 8 }}>
                 <span>BMI: <span style={{ color: bmiColor, fontFamily: 'Orbitron, monospace' }}>{bmi.toFixed(1)}</span></span>
                 <span style={{ color: bmiColor }}>{bmiLabel}</span>
               </div>
@@ -304,7 +304,7 @@ function FounderCard({ title, sex, data, onChange, lang }: {
               { key: 'skin_tone',  label: lang === 'tr' ? 'TEN RENGİ'  : 'SKIN TONE',  opts: SKIN_OPTIONS },
             ].map(({ key, label, opts }) => (
               <div key={key}>
-                <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 4, fontFamily: 'Share Tech Mono' }}>
+                <div style={{ fontSize: 10, color: '#5060a0', marginBottom: 4, fontFamily: 'Share Tech Mono' }}>
                   {label}&nbsp;
                   <span style={{ color: '#8090c0' }}>— {opts.find(o => o.value === data[key])?.[lang === 'tr' ? 'labelTr' : 'label']}</span>
                 </div>
