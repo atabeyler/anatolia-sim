@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSimStore } from '../../store/simStore';
 import axios from 'axios';
-import { Mic, MicOff, Volume2, Loader2 } from 'lucide-react';
+import { Mic, MicOff, Loader2 } from 'lucide-react';
 
-type AriaState = 'idle' | 'command' | 'processing' | 'speaking';
+type AriaState = 'idle' | 'command' | 'processing';
 
 const SR: any = typeof window !== 'undefined'
   ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null)
@@ -22,6 +22,7 @@ export default function AriaButton() {
 
   const [uiState, setUiState]       = useState<AriaState>('idle');
   const [transcript, setTranscript] = useState('');
+  const [ariaText, setAriaText]     = useState('');
   const [lastAction, setLastAction] = useState<string | null>(null);
   const [pos, setPos]               = useState({
     x: 20,
@@ -88,13 +89,10 @@ export default function AriaButton() {
   const activeRef     = useRef(false);
   const processingRef = useRef(false);
   const recRef        = useRef<any>(null);
-  const audioCtxRef   = useRef<any>(null);
   const watchdogRef   = useRef<any>(null);
-  const ttsSourceRef  = useRef<any>(null);
 
   function setUI(s: AriaState) { uiRef.current = s; setUiState(s); }
 
-  /** Arm a watchdog: if processing stays true for 20 s, force-reset. */
   function armWatchdog() {
     clearTimeout(watchdogRef.current);
     watchdogRef.current = setTimeout(() => {
@@ -106,104 +104,22 @@ export default function AriaButton() {
   }
   function disarmWatchdog() { clearTimeout(watchdogRef.current); }
 
-  /** Immediately stop any in-progress TTS playback. */
-  function abortTTS() {
-    try { ttsSourceRef.current?.stop(); } catch {}
-    ttsSourceRef.current = null;
-    try { window.speechSynthesis?.cancel(); } catch {}
-  }
-
-  /**
-   * Monitors echo-cancelled mic energy via getUserMedia.
-   * Fires onDetect() the moment the user starts speaking (ARIA's own voice
-   * is removed by the browser's AEC before we ever see the audio data).
-   * Returns a stop/cleanup function.
-   */
-  function startVAD(onDetect: () => void): () => void {
-    if (!navigator.mediaDevices?.getUserMedia) return () => {};
-    let stopped   = false;
-    let stream: any  = null;
-    let vadCtx: any  = null;
-    let interval: any = null;
-
-    const stop = () => {
-      stopped = true;
-      clearInterval(interval);
-      try { stream?.getTracks().forEach((t: any) => t.stop()); } catch {}
-      try { vadCtx?.close(); } catch {}
-      stream = null; vadCtx = null;
-    };
-
-    navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-    }).then(s => {
-      if (stopped) { s.getTracks().forEach((t: any) => t.stop()); return; }
-      stream = s;
-      const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
-      if (!Ctx) { stop(); return; }
-      vadCtx = new Ctx();
-      const src = vadCtx.createMediaStreamSource(s);
-      const analyser = vadCtx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.5;
-      src.connect(analyser);
-      const data = new Uint8Array(analyser.frequencyBinCount);
-
-      // Wait 500 ms before monitoring so AEC can lock on to the TTS output
-      setTimeout(() => {
-        if (stopped) return;
-        interval = setInterval(() => {
-          if (stopped) return;
-          analyser.getByteFrequencyData(data);
-          let sum = 0;
-          for (let i = 2; i < 38; i++) sum += data[i]; // ~170–3300 Hz voice range
-          if (sum / 36 > 22) { // energy threshold (0–255 scale)
-            stop();
-            onDetect();
-          }
-        }, 40);
-      }, 500);
-    }).catch(() => {}); // mic already in use or denied — silently skip VAD
-
-    return stop;
-  }
-
   function toggle() {
     if (activeRef.current) {
       activeRef.current     = false;
       processingRef.current = false;
       disarmWatchdog();
       killRec(recRef.current); recRef.current = null;
-      abortTTS();
-      try { audioCtxRef.current?.close(); } catch {}
-      audioCtxRef.current = null;
       setUI('idle');
       setTranscript('');
+      setAriaText('');
     } else {
-      try {
-        const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
-        if (Ctx) {
-          const ctx = new Ctx();
-          ctx.resume().catch(() => {});
-          audioCtxRef.current = ctx;
-        }
-      } catch {}
-      try {
-        const synth = window.speechSynthesis;
-        if (synth) {
-          synth.getVoices();
-          const dummy = new SpeechSynthesisUtterance('');
-          synth.speak(dummy);
-          synth.cancel();
-        }
-      } catch {}
       activeRef.current     = true;
       processingRef.current = false;
       startRecognition();
     }
   }
 
-  /** Safely detach all handlers then stop a recognition instance. */
   function killRec(rec: any) {
     if (!rec) return;
     rec.onresult = null;
@@ -216,8 +132,6 @@ export default function AriaButton() {
   function startRecognition() {
     if (!activeRef.current) return;
 
-    // Kill the old session cleanly — null handlers first so onend can't
-    // trigger another startRecognition call (double-start race condition).
     killRec(recRef.current);
     recRef.current = null;
 
@@ -235,11 +149,9 @@ export default function AriaButton() {
 
     rec.onresult = (e: any) => {
       if (!activeRef.current || processingRef.current) return;
-
       const results: any[] = Array.from(e.results);
       const live = results.slice(resultIdx).map((r: any) => r[0].transcript).join(' ');
       if (live) setTranscript(live);
-
       for (let i = resultIdx; i < results.length; i++) {
         if (results[i].isFinal) {
           const cmd = results[i][0].transcript.trim();
@@ -247,7 +159,7 @@ export default function AriaButton() {
           resultIdx = i + 1;
           processingRef.current = true;
           armWatchdog();
-          killRec(rec); // detach handlers so onend won't restart while processing
+          killRec(rec);
           processCommand(cmd);
           return;
         }
@@ -272,7 +184,6 @@ export default function AriaButton() {
   }
 
   async function processCommand(cmd: string) {
-    // Guard: if deactivated while waiting in onresult, release lock and bail
     if (!activeRef.current) { processingRef.current = false; return; }
     setUI('processing');
 
@@ -337,100 +248,20 @@ export default function AriaButton() {
       }
     }
 
+    // Show response in bubble and immediately resume listening
     setTranscript('');
-    // VAD: echo-cancelled energy detection. When user speaks, TTS is cut immediately.
-    // startVAD uses getUserMedia({echoCancellation:true}) so ARIA's own voice is
-    // removed by the browser's AEC before the analyser ever sees it.
-    const stopVAD = startVAD(() => { abortTTS(); });
-    try {
-      await speakText(responseText);
-    } finally {
-      stopVAD();
-      disarmWatchdog();
-      processingRef.current = false;
-      if (activeRef.current) startRecognition(); else setUI('idle');
+    setAriaText(responseText);
+    disarmWatchdog();
+    processingRef.current = false;
+    if (activeRef.current) {
+      startRecognition();
+      // Auto-clear after reading time (70 ms per char, 2.5–8 s range)
+      const ms = Math.min(Math.max(2500, responseText.length * 70), 8000);
+      setTimeout(() => setAriaText(t => t === responseText ? '' : t), ms);
+    } else {
+      setAriaText('');
+      setUI('idle');
     }
-  }
-
-  async function speakText(text: string) {
-    setUI('speaking');
-    const { accessToken } = storeRef.current;
-
-    try {
-      const resp = await axios.post('/api/aria/speak', { text },
-        { headers: { Authorization: `Bearer ${accessToken}` }, responseType: 'arraybuffer', timeout: 9000 });
-      const ab = resp.data as ArrayBuffer;
-      if (ab.byteLength > 800 && audioCtxRef.current) {
-        const ctx = audioCtxRef.current as AudioContext;
-        if (ctx.state !== 'closed') {
-          try {
-            await ctx.resume();
-            // Use a copy so the buffer isn't detached on repeated use
-            const buf = await ctx.decodeAudioData((ab as any).slice ? (ab as any).slice(0) : ab);
-            const src = ctx.createBufferSource();
-            src.buffer = buf;
-            src.connect(ctx.destination);
-            ttsSourceRef.current = src;
-            src.start();
-            // onended can silently never fire — cap at 15 s or 80 ms/char, whichever is larger
-            await new Promise<void>(res => {
-              const ms = Math.min(Math.max(4000, text.length * 80), 15000);
-              const t  = setTimeout(res, ms);
-              src.onended = () => { clearTimeout(t); res(); };
-            });
-            ttsSourceRef.current = null;
-            return;
-          } catch {
-            // AudioContext bad — rebuild it for next command
-            try { audioCtxRef.current?.close(); } catch {}
-            try {
-              const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
-              if (Ctx) { audioCtxRef.current = new Ctx(); audioCtxRef.current.resume().catch(() => {}); }
-            } catch { audioCtxRef.current = null; }
-          }
-        }
-      }
-    } catch { /* fall through to browser TTS */ }
-
-    await browserSpeak(text);
-  }
-
-  function browserSpeak(text: string): Promise<void> {
-    return new Promise(res => {
-      const synth = window.speechSynthesis;
-      if (!synth) { setTimeout(res, 800); return; }
-
-      synth.cancel();
-
-      const utt  = new SpeechSynthesisUtterance(text);
-      utt.lang   = storeRef.current.lang === 'tr' ? 'tr-TR' : 'en-US';
-      utt.volume = 1.0;
-      utt.rate   = 0.92;
-
-      let done = false;
-      const finish = () => { if (!done) { done = true; res(); } };
-      // Cap at 12 s — long pauses in synthesis shouldn't freeze the whole loop
-      const guard = setTimeout(finish, Math.min(Math.max(3000, text.length * 60), 12000));
-      utt.onend   = () => { clearTimeout(guard); finish(); };
-      utt.onerror = () => { clearTimeout(guard); finish(); };
-
-      const go = () => {
-        if (done) return;
-        const voices = synth.getVoices();
-        const lng    = utt.lang.split('-')[0];
-        const match  = voices.find(v => v.lang.startsWith(lng) && !v.name.toLowerCase().includes('whisper'));
-        if (match) utt.voice = match;
-        synth.speak(utt);
-      };
-
-      if (synth.getVoices().length > 0) {
-        go();
-      } else {
-        let called = false;
-        synth.onvoiceschanged = () => { if (!called) { called = true; go(); } };
-        setTimeout(() => { if (!called) { called = true; go(); } }, 500);
-      }
-    });
   }
 
   function executeAction(action: any) {
@@ -488,14 +319,12 @@ export default function AriaButton() {
         toggleLang(); break;
       case 'god_mode':
         setActivePanel('god'); break;
-      /* ── Dashboard actions ── */
       case 'create_simulation':
         window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'create_simulation' } })); break;
       case 'open_simulation':
         window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'open_simulation', index: action.index ?? 0 } })); break;
       case 'toggle_compare':
         window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'toggle_compare' } })); break;
-      /* ── Wizard actions ── */
       case 'wizard_next':
         window.dispatchEvent(new CustomEvent('aria-wizard', { detail: { action: 'next' } })); break;
       case 'wizard_back':
@@ -515,33 +344,30 @@ export default function AriaButton() {
   function buildSummary(stats: any, lang: string): string {
     if (!stats) return lang === 'tr' ? 'Simülasyon verisi yok.' : 'No simulation data.';
     if (lang === 'tr')
-      return `Asistan rapor veriyor. Yıl ${stats.year}, nüfus ${stats.population}. ` +
+      return `Yıl ${stats.year}, nüfus ${stats.population}. ` +
         `${stats.technologies} teknoloji keşfedildi. ` +
-        `Ortalama mutluluk yüzde ${Math.round((stats.happiness_index ?? 0.5) * 100)}. ` +
-        `Mevsim ${stats.season ?? 'bilinmiyor'}, sıcaklık ${stats.temperature ?? 20} derece. ` +
-        `${stats.beliefs ?? 0} inanç sistemi, ${stats.groups ?? 0} sosyal grup mevcut.`;
-    return `Assistant reporting. Year ${stats.year}, population ${stats.population}. ` +
-      `${stats.technologies} technologies discovered. ` +
-      `Average happiness ${Math.round((stats.happiness_index ?? 0.5) * 100)} percent. ` +
-      `Season ${stats.season ?? 'unknown'}, temperature ${stats.temperature ?? 20} degrees. ` +
-      `${stats.beliefs ?? 0} belief systems, ${stats.groups ?? 0} social groups active.`;
+        `Mutluluk %${Math.round((stats.happiness_index ?? 0.5) * 100)}, ` +
+        `mevsim ${stats.season ?? '?'}, ${stats.temperature ?? 20}°C.`;
+    return `Year ${stats.year}, population ${stats.population}. ` +
+      `${stats.technologies} technologies. ` +
+      `Happiness ${Math.round((stats.happiness_index ?? 0.5) * 100)}%, ` +
+      `season ${stats.season ?? '?'}, ${stats.temperature ?? 20}°C.`;
   }
 
   /* ── Visuals ────────────────────────────────────────────────────────────── */
   const COLORS: Record<AriaState, string> = {
-    idle: '#00e887', command: '#f97316', processing: '#a855f7', speaking: '#4ecb71',
+    idle: '#00e887', command: '#f97316', processing: '#a855f7',
   };
   const color = COLORS[uiState];
-  const Icon  = uiState === 'idle'       ? MicOff
-    : uiState === 'command'    ? Mic
-    : uiState === 'processing' ? Loader2
-    : Volume2;
+  const Icon  = uiState === 'processing' ? Loader2 : uiState === 'command' ? Mic : MicOff;
 
   const langKey = store.lang === 'tr' ? 'tr' : 'en';
   const stateLabel = {
-    tr: { idle: 'ASİSTAN', command: 'DİNLİYOR…', processing: 'İŞLENİYOR…', speaking: 'KONUŞUYOR…' },
-    en: { idle: 'ASSISTANT', command: 'LISTENING…', processing: 'PROCESSING…', speaking: 'SPEAKING…' },
+    tr: { idle: 'ASİSTAN', command: 'DİNLİYOR…', processing: 'İŞLENİYOR…' },
+    en: { idle: 'ASSISTANT', command: 'LISTENING…', processing: 'PROCESSING…' },
   }[langKey][uiState];
+
+  const hasOverlay = uiState !== 'idle' && (transcript || ariaText);
 
   return (
     <>
@@ -593,27 +419,42 @@ export default function AriaButton() {
         )}
       </button>
 
-      {/* Active state overlay: transcript + hint */}
+      {/* Overlay bubble: transcript while listening, ARIA reply after processing */}
       {uiState !== 'idle' && (
         <div style={{
           position: 'fixed',
-          left: Math.max(0, Math.min(window.innerWidth - 240, pos.x)),
-          top: Math.max(0, pos.y - (transcript ? 72 : 48)),
+          left: Math.max(0, Math.min(window.innerWidth - 280, pos.x)),
+          top: Math.max(0, pos.y - (hasOverlay ? 90 : 48)),
           zIndex: 9998,
           background: '#07071aee',
           border: `1px solid ${color}55`,
           borderRadius: 8,
-          padding: '6px 10px',
-          maxWidth: 240,
+          padding: '7px 11px',
+          maxWidth: 280,
           boxShadow: `0 0 12px ${color}33`,
           pointerEvents: 'none',
         }}>
+          {/* User transcript (while listening) */}
           {transcript && (
             <div style={{
-              color: '#a0b4ff', fontSize: 10, marginBottom: 4,
+              color: '#a0b4ff', fontSize: 10, marginBottom: ariaText ? 6 : 0,
               fontFamily: 'Share Tech Mono, monospace',
             }}>
-              "{transcript.slice(0, 100)}{transcript.length > 100 ? '…' : ''}"
+              "{transcript.slice(0, 120)}{transcript.length > 120 ? '…' : ''}"
+            </div>
+          )}
+          {/* ARIA response text */}
+          {ariaText && (
+            <div style={{
+              color: '#00e887',
+              fontSize: 11,
+              fontFamily: 'Share Tech Mono, monospace',
+              lineHeight: 1.5,
+              marginBottom: 4,
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}>
+              {ariaText}
             </div>
           )}
           <div style={{
