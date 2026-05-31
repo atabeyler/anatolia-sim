@@ -28,24 +28,24 @@ const PAGES_TEXT: Record<string, { tr: string; en: string }> = {
 };
 
 function H({ children }: { children: React.ReactNode }) {
-  return <div style={{ fontSize: 8, color: '#00e887', letterSpacing: '0.18em', margin: '14px 0 5px', paddingBottom: 3, borderBottom: '1px solid #0d2a18' }}>{children}</div>;
+  return <div style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.18em', margin: '14px 0 5px', paddingBottom: 3, borderBottom: '1px solid #0d2a18' }}>{children}</div>;
 }
 function Sub({ children }: { children: React.ReactNode }) {
-  return <div style={{ fontSize: 8.5, color: '#00c870', letterSpacing: '0.08em', margin: '7px 0 3px' }}>{children}</div>;
+  return <div style={{ fontSize: 14, color: '#00c870', letterSpacing: '0.08em', margin: '7px 0 3px' }}>{children}</div>;
 }
 function Row({ label, val }: { label: React.ReactNode; val: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', gap: 6, margin: '2px 0' }}>
-      <span style={{ fontSize: 8.5, color: '#4a8a60', minWidth: 110, flexShrink: 0 }}>{label}</span>
-      <span style={{ fontSize: 8.5, color: '#7aaa90', lineHeight: 1.5 }}>{val}</span>
+      <span style={{ fontSize: 14, color: '#4ecb71', minWidth: 110, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: 14, color: '#4ecb71', lineHeight: 1.5 }}>{val}</span>
     </div>
   );
 }
 function Note({ children }: { children: React.ReactNode }) {
-  return <div style={{ fontSize: 8, color: '#6a9a78', margin: '3px 0', lineHeight: 1.5, paddingLeft: 8, borderLeft: '2px solid #0d2a18' }}>{children}</div>;
+  return <div style={{ fontSize: 14, color: '#4ecb71', margin: '3px 0', lineHeight: 1.5, paddingLeft: 8, borderLeft: '2px solid #0d2a18' }}>{children}</div>;
 }
 function Bullet({ children }: { children: React.ReactNode }) {
-  return <div style={{ fontSize: 8.5, color: '#7aaa90', margin: '2px 0 2px 8px', lineHeight: 1.5 }}>› {children}</div>;
+  return <div style={{ fontSize: 14, color: '#4ecb71', margin: '2px 0 2px 8px', lineHeight: 1.5 }}>› {children}</div>;
 }
 
 interface Props {
@@ -76,18 +76,18 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions }: Props
       style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       onClick={close}>
       <div
-        style={{ background: 'rgba(0,4,2,0.98)', border: '1px solid #cc2222', minWidth: 340, maxWidth: 480, width: '92vw', fontFamily: 'Share Tech Mono, monospace', boxShadow: '0 8px 40px rgba(0,0,0,0.8)' }}
+        style={{ background: 'rgba(0,4,2,0.98)', border: '1px solid #2a4a2a', minWidth: 340, maxWidth: 480, width: '92vw', fontFamily: 'Share Tech Mono, monospace', boxShadow: '0 8px 40px rgba(0,0,0,0.8)' }}
         onClick={e => e.stopPropagation()}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderBottom: '1px solid #cc2222', background: 'rgba(0,20,10,0.9)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderBottom: '1px solid #2a4a2a', background: 'rgba(0,20,10,0.9)' }}>
           <div style={{ width: 3, height: 14, background: '#00e887', boxShadow: '0 0 6px #00e887', flexShrink: 0 }} />
-          <span style={{ fontSize: 10, color: '#00e887', letterSpacing: '0.2em', flex: 1 }}>
+          <span style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.2em', flex: 1 }}>
             {page === null ? 'ANATOLİA-SİM' : pageTitle[page]}
           </span>
           <button
             onClick={() => { if (page) setPage(null); else close(); }}
-            style={{ background: 'transparent', border: 'none', color: '#6a9a78', cursor: 'pointer', fontSize: 9, letterSpacing: '0.1em', padding: '2px 6px', display: 'flex', alignItems: 'center' }}>
+            style={{ background: 'transparent', border: 'none', color: '#4ecb71', cursor: 'pointer', fontSize: 14, letterSpacing: '0.1em', padding: '2px 6px', display: 'flex', alignItems: 'center' }}>
             {page ? '← GERİ' : <X size={12} />}
           </button>
         </div>
@@ -103,13 +103,13 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions }: Props
               { id: 'contact',  labelTr: 'İletişim',               labelEn: 'Contact' },
             ] as { id: NonNullable<Page>; labelTr: string; labelEn: string }[]).map(item => (
               <button key={item.id} onClick={() => setPage(item.id)}
-                style={{ display: 'block', width: '100%', padding: '9px 14px', background: 'transparent', border: 'none', borderBottom: '1px solid #0a1a10', color: '#a0c8b0', fontSize: 11, textAlign: 'left', cursor: 'pointer', letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace' }}>
+                style={{ display: 'block', width: '100%', padding: '9px 14px', background: 'transparent', border: 'none', borderBottom: '1px solid #0a1a10', color: '#4ecb71', fontSize: 14, textAlign: 'left', cursor: 'pointer', letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace' }}>
                 › {lang === 'tr' ? item.labelTr : item.labelEn}
               </button>
             ))}
             {mobileActions}
             <div style={{ padding: '8px 14px', borderTop: '1px solid #0a1a10', marginTop: 4 }}>
-              <div style={{ fontSize: 7.5, color: '#1e3a28', letterSpacing: '0.08em' }}>
+              <div style={{ fontSize: 14, color: '#3a6a4a', letterSpacing: '0.08em' }}>
                 RST Q-Nation 200120401018 · Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026
               </div>
             </div>
@@ -127,12 +127,12 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions }: Props
                   width: '100%', padding: '10px 14px',
                   background: lang === l.code ? 'rgba(0,232,135,0.08)' : 'transparent',
                   border: 'none', borderBottom: '1px solid #0a1a10',
-                  color: lang === l.code ? '#00e887' : '#a0c8b0',
-                  fontSize: 12, textAlign: 'left', cursor: 'pointer',
+                  color: lang === l.code ? '#00e887' : '#4ecb71',
+                  fontSize: 14, textAlign: 'left', cursor: 'pointer',
                   letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace',
                 }}>
                 <span style={{ flex: 1 }}>› {l.label}</span>
-                {lang === l.code && <span style={{ fontSize: 10, color: '#00e887' }}>✓</span>}
+                {lang === l.code && <span style={{ fontSize: 14, color: '#00e887' }}>✓</span>}
               </button>
             ))}
           </div>
@@ -144,7 +144,7 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions }: Props
           return (
             <div style={{ padding: '12px 14px', maxHeight: 320, overflowY: 'auto' }}>
               {text.split('\n').map((line, i) => (
-                <p key={i} style={{ fontSize: line === line.toUpperCase() && line.length > 2 ? 8.5 : 9, color: line === line.toUpperCase() && line.length > 2 ? '#00e887' : '#7aaa90', margin: '0 0 5px 0', letterSpacing: '0.05em', lineHeight: 1.6 }}>
+                <p key={i} style={{ fontSize: 14, color: line === line.toUpperCase() && line.length > 2 ? '#00e887' : '#4ecb71', margin: '0 0 5px 0', letterSpacing: '0.05em', lineHeight: 1.6 }}>
                   {line || <br />}
                 </p>
               ))}
@@ -154,7 +154,7 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions }: Props
 
         {/* ── User Guide ── */}
         {page === 'guide' && (
-          <div style={{ padding: '10px 14px 14px', maxHeight: 480, overflowY: 'auto', fontSize: 9 }}>
+          <div style={{ padding: '10px 14px 14px', maxHeight: 480, overflowY: 'auto', fontSize: 14 }>
             <H>{lang === 'tr' ? '1 — SİMÜLASYON OLUŞTURMA' : '1 — CREATING A SIMULATION'}</H>
             <Row label={lang === 'tr' ? 'Simülasyon Adı' : 'Name'} val={lang === 'tr' ? 'Medeniyetinize anlamlı bir ad verin. Raporlarda ve kontrol panelinde görünür.' : 'Give your civilization a meaningful name. Appears in reports and the control panel.'} />
             <Row label={lang === 'tr' ? 'Konum Seçimi' : 'Location'} val={lang === 'tr' ? 'Haritadan bir başlangıç noktası seçin. Enlem/boylam, biyom ve iklim koşullarını belirler. Önerilen: Anadolu (36–42°K, 26–45°D), Mezopotamya, Nil Deltası.' : 'Pick a starting point on the map. Latitude/longitude determines biome and climate. Recommended: Anatolia (36–42°N, 26–45°E), Mesopotamia, Nile Delta.'} />
@@ -236,7 +236,7 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions }: Props
             <Bullet>{lang === 'tr' ? 'Dil gelişimi için nüfusun 5+ kişilik gruplar halinde bir arada yaşaması gerekir' : 'Language development requires groups of 5+ individuals living together'}</Bullet>
             <Bullet>{lang === 'tr' ? 'Tarayıcıyı kapatmak simülasyonu durdurmaz; sunucu arka planda çalışmayı sürdürür' : 'Closing the browser does not stop the simulation; the server keeps running in the background'}</Bullet>
 
-            <div style={{ marginTop: 16, paddingTop: 8, borderTop: '1px solid #0a1a10', fontSize: 7.5, color: '#1e3a28', letterSpacing: '0.06em' }}>
+            <div style={{ marginTop: 16, paddingTop: 8, borderTop: '1px solid #0a1a10', fontSize: 14, color: '#3a6a4a', letterSpacing: '0.06em' }}>
               ANATOLİA-SİM · RST Q-Nation 200120401018 · © 2026 Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.
             </div>
           </div>
