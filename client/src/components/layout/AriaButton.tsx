@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSimStore } from '../../store/simStore';
 import axios from 'axios';
-import { Mic, MicOff, Loader2 } from 'lucide-react';
+import { Mic, MicOff } from 'lucide-react';
 
-type AriaState = 'idle' | 'command' | 'processing';
+type AriaState = 'idle' | 'command';
 
 const SR: any = typeof window !== 'undefined'
   ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null)
@@ -88,6 +88,7 @@ export default function AriaButton() {
   const uiRef         = useRef<AriaState>('idle');
   const activeRef     = useRef(false);
   const processingRef = useRef(false);
+  const queueRef      = useRef<string[]>([]);
   const recRef        = useRef<any>(null);
   const watchdogRef   = useRef<any>(null);
 
@@ -96,10 +97,8 @@ export default function AriaButton() {
   function armWatchdog() {
     clearTimeout(watchdogRef.current);
     watchdogRef.current = setTimeout(() => {
-      if (activeRef.current && processingRef.current) {
-        processingRef.current = false;
-        startRecognition();
-      }
+      processingRef.current = false;
+      processQueue();
     }, 20000);
   }
   function disarmWatchdog() { clearTimeout(watchdogRef.current); }
@@ -108,6 +107,7 @@ export default function AriaButton() {
     if (activeRef.current) {
       activeRef.current     = false;
       processingRef.current = false;
+      queueRef.current = [];
       disarmWatchdog();
       killRec(recRef.current); recRef.current = null;
       setUI('idle');
@@ -116,6 +116,7 @@ export default function AriaButton() {
     } else {
       activeRef.current     = true;
       processingRef.current = false;
+      queueRef.current = [];
       startRecognition();
     }
   }
@@ -148,7 +149,7 @@ export default function AriaButton() {
     let resultIdx = 0;
 
     rec.onresult = (e: any) => {
-      if (!activeRef.current || processingRef.current) return;
+      if (!activeRef.current) return;
       const results: any[] = Array.from(e.results);
       const live = results.slice(resultIdx).map((r: any) => r[0].transcript).join(' ');
       if (live) setTranscript(live);
@@ -157,11 +158,8 @@ export default function AriaButton() {
           const cmd = results[i][0].transcript.trim();
           if (!cmd) continue;
           resultIdx = i + 1;
-          processingRef.current = true;
-          armWatchdog();
-          killRec(rec);
-          processCommand(cmd);
-          return;
+          queueRef.current.push(cmd);
+          processQueue();
         }
       }
     };
@@ -170,12 +168,12 @@ export default function AriaButton() {
       if (!activeRef.current) return;
       if (e.error === 'aborted' || e.error === 'not-allowed') return;
       recRef.current = null;
-      if (!processingRef.current) setTimeout(startRecognition, 800);
+      setTimeout(startRecognition, 800);
     };
 
     rec.onend = () => {
       recRef.current = null;
-      if (!activeRef.current || processingRef.current) return;
+      if (!activeRef.current) return;
       setTimeout(startRecognition, 200);
     };
 
@@ -183,9 +181,20 @@ export default function AriaButton() {
     catch { setTimeout(startRecognition, 1000); }
   }
 
+  async function processQueue() {
+    if (!activeRef.current || processingRef.current) return;
+    const next = queueRef.current.shift();
+    if (!next) return;
+    processingRef.current = true;
+    armWatchdog();
+    await processCommand(next);
+    disarmWatchdog();
+    processingRef.current = false;
+    processQueue();
+  }
+
   async function processCommand(cmd: string) {
-    if (!activeRef.current) { processingRef.current = false; return; }
-    setUI('processing');
+    if (!activeRef.current) return;
 
     const { currentSim, accessToken, stats, events, lang } = storeRef.current;
     let responseText: string;
@@ -251,10 +260,7 @@ export default function AriaButton() {
     // Show response in bubble and immediately resume listening
     setTranscript('');
     setAriaText(responseText);
-    disarmWatchdog();
-    processingRef.current = false;
     if (activeRef.current) {
-      startRecognition();
       // Auto-clear after reading time (70 ms per char, 2.5–8 s range)
       const ms = Math.min(Math.max(2500, responseText.length * 70), 8000);
       setTimeout(() => setAriaText(t => t === responseText ? '' : t), ms);
@@ -356,15 +362,15 @@ export default function AriaButton() {
 
   /* ── Visuals ────────────────────────────────────────────────────────────── */
   const COLORS: Record<AriaState, string> = {
-    idle: '#00e887', command: '#f97316', processing: '#a855f7',
+    idle: '#00e887', command: '#f97316',
   };
   const color = COLORS[uiState];
-  const Icon  = uiState === 'processing' ? Loader2 : uiState === 'command' ? Mic : MicOff;
+  const Icon  = uiState === 'command' ? Mic : MicOff;
 
   const langKey = store.lang === 'tr' ? 'tr' : 'en';
   const stateLabel = {
-    tr: { idle: 'ASİSTAN', command: 'DİNLİYOR…', processing: 'İŞLENİYOR…' },
-    en: { idle: 'ASSISTANT', command: 'LISTENING…', processing: 'PROCESSING…' },
+    tr: { idle: 'ASİSTAN', command: 'DİNLİYOR…' },
+    en: { idle: 'ASSISTANT', command: 'LISTENING…' },
   }[langKey][uiState];
 
   const hasOverlay = uiState !== 'idle' && (transcript || ariaText);
@@ -406,7 +412,6 @@ export default function AriaButton() {
         }}>
         <Icon
           size={18}
-          className={uiState === 'processing' ? 'animate-spin' : ''}
           style={{ filter: `drop-shadow(0 0 6px ${color})`, flexShrink: 0 }}
         />
         <span style={{ whiteSpace: 'nowrap' }}>{stateLabel}</span>
@@ -490,3 +495,11 @@ export default function AriaButton() {
     </>
   );
 }
+
+
+
+
+
+
+
+
