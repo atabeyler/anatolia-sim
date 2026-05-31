@@ -191,12 +191,22 @@ export default function AriaButton() {
         const { data } = await axios.post('/api/aria/command', {
           message: cmd, lang, stats,
           events: events.slice(0, 8),
-          context: {
-            simStatus: currentSim?.status ?? 'none',
-            simId: currentSim?.id ?? null,
-            hasActiveSim: !!currentSim,
-            page: window.location.pathname,
-          },
+          context: (() => {
+            const wizardOpen = !!(window as any).__ariaWizardOpen;
+            return {
+              simStatus: currentSim?.status ?? 'none',
+              simId: currentSim?.id ?? null,
+              hasActiveSim: !!currentSim,
+              page: wizardOpen ? '/wizard' : window.location.pathname,
+              wizardOpen,
+              ...(wizardOpen && {
+                wizardStep: (window as any).__ariaWizardStep,
+                wizardStepType: (window as any).__ariaWizardStepType,
+                wizardFounder: (window as any).__ariaWizardFounder,
+                wizardTraitName: (window as any).__ariaWizardTraitName,
+              }),
+            };
+          })(),
         }, { headers: { Authorization: `Bearer ${accessToken}` } });
 
         if (data.action) {
@@ -217,6 +227,7 @@ export default function AriaButton() {
             : at === 'wizard_back'       ? '← geri'
             : at === 'wizard_submit'     ? '🚀 başlat'
             : at === 'wizard_exit'       ? '✕ çıkış'
+            : at === 'wizard_set'        ? `✎ ${data.action.field}=${data.action.value}`
             : at;
           setLastAction(label);
           setTimeout(() => setLastAction(null), 3000);
@@ -367,6 +378,10 @@ export default function AriaButton() {
       case 'wizard_exit':
         window.dispatchEvent(new CustomEvent('aria-wizard', { detail: { action: 'exit' } }));
         window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'wizard_exit' } })); break;
+      case 'wizard_set':
+        window.dispatchEvent(new CustomEvent('aria-wizard', {
+          detail: { action: 'set', field: action.field, value: action.value, founder: action.founder },
+        })); break;
     }
   }
 

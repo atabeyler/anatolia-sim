@@ -525,9 +525,27 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
   const stepRef = useRef(step);
   stepRef.current = step;
 
+  // Keep window globals in sync so AriaButton can send context to the API
+  useEffect(() => {
+    const cur = STEPS[step];
+    (window as any).__ariaWizardStep = step;
+    (window as any).__ariaWizardStepType = cur.type;
+    (window as any).__ariaWizardFounder = (cur as any).f ?? null;
+    (window as any).__ariaWizardTraitName = cur.type === 'trait'
+      ? `${ALL_TRAITS[(cur as any).idx]?.tr} (${ALL_TRAITS[(cur as any).idx]?.id})`
+      : null;
+  }, [step]);
+
   useEffect(() => {
     function onAriaWizard(e: Event) {
-      const { action } = (e as CustomEvent).detail;
+      const detail = (e as CustomEvent).detail;
+      const { action, field, value, founder } = detail;
+
+      // Determine target founder setter for 'set' action
+      const curStep = STEPS[stepRef.current];
+      const isF2now = curStep.type !== 'sim-info' && curStep.type !== 'summary' && (curStep as any).f === 2;
+      const targetSet = founder === 1 ? setF1 : founder === 2 ? setF2 : (isF2now ? setF2 : setF1);
+
       switch (action) {
         case 'next':   setStep(s => Math.min(s + 1, TOTAL - 1)); break;
         case 'back':   setStep(s => Math.max(s - 1, 0)); break;
@@ -535,7 +553,50 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           if (STEPS[stepRef.current]?.type === 'summary') setConfirmOpen(true);
           else setStep(TOTAL - 1);
           break;
-        case 'exit':   onExit(); break;
+        case 'exit': onExit(); break;
+
+        case 'set': {
+          // Sim info fields
+          if (field === 'sim_name')      { setSimForm((p: any) => ({...p, name: String(value)})); break; }
+          if (field === 'sim_latitude')  { setSimForm((p: any) => ({...p, latitude: String(value)})); break; }
+          if (field === 'sim_longitude') { setSimForm((p: any) => ({...p, longitude: String(value)})); break; }
+          // Founder identity fields
+          if (field === 'founder_name')  { targetSet((p: any) => ({...p, name: String(value)})); break; }
+          if (field === 'founder_age')   { targetSet((p: any) => ({...p, ageYears: Math.max(16, Math.min(60, Math.round(Number(value))))})); break; }
+          if (field === 'founder_sex')   { targetSet((p: any) => ({...p, sex: String(value)})); break; }
+          // Physical fields — height stored as 0-1 normalized (0=145cm, 1=200cm)
+          if (field === 'founder_height') {
+            const cm = Number(value);
+            targetSet((p: any) => ({...p, height: Math.max(0, Math.min(1, (cm - 145) / 55))}));
+            break;
+          }
+          // Appearance fields
+          if (field === 'founder_eye')  { targetSet((p: any) => ({...p, eye_color: String(value)})); break; }
+          if (field === 'founder_hair') { targetSet((p: any) => ({...p, hair_color: String(value)})); break; }
+          if (field === 'founder_skin') { targetSet((p: any) => ({...p, skin_tone: String(value)})); break; }
+          // Set whichever trait is on the CURRENT step
+          if (field === 'current_trait') {
+            const def = STEPS[stepRef.current];
+            if (def?.type === 'trait') {
+              const tid = ALL_TRAITS[(def as any).idx].id;
+              const num = Number(value);
+              const norm = num > 1 ? num / 100 : num;
+              targetSet((p: any) => ({...p, [tid]: Math.max(0, Math.min(1, norm))}));
+            }
+            break;
+          }
+          // Fallback: treat field as direct trait/property key
+          {
+            const num = Number(value);
+            if (!isNaN(num)) {
+              const norm = num > 1 ? num / 100 : num;
+              targetSet((p: any) => ({...p, [field]: Math.max(0, Math.min(1, norm))}));
+            } else {
+              targetSet((p: any) => ({...p, [field]: value}));
+            }
+          }
+          break;
+        }
       }
     }
     window.addEventListener('aria-wizard', onAriaWizard);

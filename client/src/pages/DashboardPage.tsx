@@ -18,6 +18,12 @@ export default function DashboardPage() {
 
   useEffect(() => { axios.get('/api/simulations', { headers }).then(r => setSims(r.data)); }, []);
 
+  // Keep ARIA informed of wizard open/closed state
+  useEffect(() => {
+    (window as any).__ariaWizardOpen = showNew;
+    if (!showNew) (window as any).__ariaWizardStep = -1;
+  }, [showNew]);
+
   const simsRef = useRef<any[]>([]);
   simsRef.current = sims;
 
