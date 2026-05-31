@@ -1,14 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Globe, Plus, Play, LogOut, BarChart2, Trash2 } from 'lucide-react';
+import { Globe, Plus, Play, LogOut, BarChart2, Trash2, X } from 'lucide-react';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
-import LangToggle from '../components/layout/LangToggle';
 import SimCreationWizard from '../components/SimCreationWizard';
+
+const LANGUAGES = [
+  { code: 'en' as const, label: 'English',   beta: false },
+  { code: 'tr' as const, label: 'Türkçe',    beta: false },
+  { code: 'de' as const, label: 'Deutsch',   beta: true  },
+  { code: 'fr' as const, label: 'Français',  beta: true  },
+  { code: 'ar' as const, label: 'العربية',   beta: true  },
+];
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { user, accessToken, logout, lang } = useSimStore();
+  const { user, accessToken, logout, lang, setLang } = useSimStore();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPage, setMenuPage] = useState<'about' | 'mission' | 'contact' | 'language' | null>(null);
   const [sims, setSims]             = useState<any[]>([]);
   const [showNew, setShowNew]       = useState(false);
   const [compareMode, setCompareMode] = useState(false);
@@ -81,13 +90,17 @@ export default function DashboardPage() {
                 </span>
               </div>
             )}
-            <LangToggle />
             <span className="hidden sm:block font-share-tech text-sim-muted tracking-widest font-bold" style={{ fontSize: 14 }}>{user?.username?.toUpperCase()}</span>
             <button onClick={() => { logout(); navigate('/login'); }}
               className="flex items-center gap-1 sm:gap-1.5 px-2 py-1 text-sim-muted hover:text-red-400 transition-colors"
               style={{ fontFamily:'Share Tech Mono,monospace', fontSize:14, fontWeight:700, letterSpacing:'0.1em' }}>
               <LogOut size={13} />
               <span className="hidden sm:inline">ÇIKIŞ</span>
+            </button>
+            <button onClick={() => { setMenuOpen(true); setMenuPage(null); }}
+              className="flex items-center gap-1 font-share-tech transition-all hover:brightness-110"
+              style={{ padding: '5px 8px', fontSize: 13, border: '1px solid rgba(200,34,34,0.5)', color: '#9abaaa', background: 'transparent', letterSpacing: '0.08em' }}>
+              ☰<span className="hidden sm:inline ml-1" style={{ fontSize: 11 }}>MENÜ</span>
             </button>
           </div>
         </div>
@@ -290,6 +303,104 @@ export default function DashboardPage() {
           </>
         )}
       </div>
+
+      {/* Menu Overlay */}
+      {menuOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => { setMenuOpen(false); setMenuPage(null); }}>
+          <div style={{ background: 'rgba(3,3,16,0.98)', border: '1px solid rgba(200,34,34,0.7)', minWidth: 320, maxWidth: 460, width: '92vw', fontFamily: 'Share Tech Mono, monospace', boxShadow: '0 8px 40px rgba(0,0,0,0.8)' }}
+            onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderBottom: '1px solid rgba(200,34,34,0.5)', background: 'rgba(3,3,16,0.9)' }}>
+              <div style={{ width: 3, height: 14, background: '#cc2222', boxShadow: '0 0 6px rgba(200,34,34,0.5)', flexShrink: 0 }} />
+              <span style={{ fontSize: 10, color: '#e0e0f0', letterSpacing: '0.2em', flex: 1 }}>
+                {menuPage === null ? 'ANATOLİA-SİM'
+                  : menuPage === 'language' ? (lang === 'en' ? 'LANGUAGE' : 'DİL SEÇENEKLERİ')
+                  : menuPage === 'about' ? (lang === 'en' ? 'ABOUT' : 'HAKKIMIZDA')
+                  : menuPage === 'mission' ? (lang === 'en' ? 'MISSION & VISION' : 'MİSYON & VİZYON')
+                  : (lang === 'en' ? 'CONTACT' : 'İLETİŞİM')}
+              </span>
+              <button onClick={() => { if (menuPage) { setMenuPage(null); } else { setMenuOpen(false); } }}
+                style={{ background: 'transparent', border: 'none', color: '#7a9a88', cursor: 'pointer', fontSize: 9, letterSpacing: '0.1em', padding: '2px 6px', display: 'flex', alignItems: 'center' }}>
+                {menuPage ? '← GERİ' : <X size={12} />}
+              </button>
+            </div>
+
+            {/* Main menu list */}
+            {menuPage === null && (
+              <div style={{ padding: '6px 0' }}>
+                {[
+                  { id: 'language', labelTr: '🌐 Dil / Language', labelEn: '🌐 Language' },
+                  { id: 'about',    labelTr: 'Hakkımızda',        labelEn: 'About' },
+                  { id: 'mission',  labelTr: 'Misyon & Vizyon',   labelEn: 'Mission & Vision' },
+                  { id: 'contact',  labelTr: 'İletişim',          labelEn: 'Contact' },
+                ].map(item => (
+                  <button key={item.id} onClick={() => setMenuPage(item.id as any)}
+                    style={{ display: 'block', width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(10,10,30,0.8)', color: '#a0b8c0', fontSize: 11, textAlign: 'left', cursor: 'pointer', letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace' }}>
+                    › {lang === 'tr' ? item.labelTr : item.labelEn}
+                  </button>
+                ))}
+                <div style={{ padding: '8px 14px', borderTop: '1px solid rgba(200,34,34,0.25)', marginTop: 4 }}>
+                  <div style={{ fontSize: 7.5, color: 'rgba(150,50,50,0.5)', letterSpacing: '0.08em' }}>
+                    RST Q-Nation 200120401018 · Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Language selection */}
+            {menuPage === 'language' && (
+              <div style={{ padding: '6px 0' }}>
+                {LANGUAGES.map(l => (
+                  <button key={l.code}
+                    onClick={() => { setLang(l.code); setMenuOpen(false); setMenuPage(null); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      width: '100%', padding: '11px 14px',
+                      background: lang === l.code ? 'rgba(200,34,34,0.08)' : 'transparent',
+                      border: 'none', borderBottom: '1px solid rgba(10,10,30,0.8)',
+                      color: lang === l.code ? '#e05a5a' : '#a0b8c0',
+                      fontSize: 12, textAlign: 'left', cursor: 'pointer',
+                      letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace',
+                    }}>
+                    <span style={{ flex: 1 }}>› {l.label}</span>
+                    {l.beta && <span style={{ fontSize: 8, padding: '1px 5px', border: '1px solid rgba(200,34,34,0.35)', color: '#cc5555' }}>BETA</span>}
+                    {lang === l.code && <span style={{ fontSize: 11, color: '#e05a5a' }}>✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* About / Mission / Contact sub-pages */}
+            {menuPage !== null && menuPage !== 'language' && (() => {
+              const pages: Record<string, { tr: string; en: string }> = {
+                about: {
+                  tr: 'ANATOLİA-SİM, Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. bünyesinde Yalçın Atabey tarafından geliştirilen, simülasyon hipotezini deneysel olarak test etmeye yönelik ileri düzey bir medeniyet simülasyon platformudur.\n\nGerçek biyolojik, genetik, çevresel ve sosyal mekanizmaları temel alarak iki bireyden başlayan bir nüfusun binlerce yıl boyunca nasıl evrildiğini, dil, inanç, teknoloji ve devlet yapılarını nasıl geliştirdiğini müdahalesiz biçimde gözlemlemeyi sağlar.\n\nProje Kodu: RST Q-Nation 200120401018',
+                  en: 'ANATOLİA-SİM is an advanced civilization simulation platform developed by Yalçın Atabey under Bold Askeri Teknoloji ve Savunma Sanayi A.Ş., designed to experimentally test the simulation hypothesis.\n\nIt models real biological, genetic, environmental and social mechanisms — observing a population that starts from two individuals, evolving over thousands of years into language, belief, technology and governance.\n\nProject Code: RST Q-Nation 200120401018',
+                },
+                mission: {
+                  tr: 'MİSYON\nSimülasyon hipotezini bilimsel ve deneysel zeminlerde test etmek; insan medeniyetinin evrensel örüntülerini ortaya çıkarmak.\n\nVİZYON\nDünyanın en kapsamlı yapay yaşam ve medeniyet simülasyon platformu olmak; insanlığın kökeni, bilinci ve geleceği hakkında nesnel veriler üretmek.',
+                  en: "MISSION\nTest the simulation hypothesis on scientific and experimental grounds; reveal the universal patterns of human civilization.\n\nVISION\nBecome the world's most comprehensive artificial life and civilization simulation platform; produce objective data about the origin, consciousness and future of humanity.",
+                },
+                contact: {
+                  tr: 'Proje Sahibi: Yalçın Atabey\nKuruluş: Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.\nE-posta: info@boldkimya.com.tr\nTelefon: +90 532 217 07 76\nORCID: 0009-0004-9037-5750\n\n© 2026 Tüm hakları saklıdır.',
+                  en: 'Project Owner: Yalçın Atabey\nOrganization: Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.\nE-mail: info@boldkimya.com.tr\nPhone: +90 532 217 07 76\nORCID: 0009-0004-9037-5750\n\n© 2026 All rights reserved.',
+                },
+              };
+              const text = lang === 'tr' ? pages[menuPage].tr : pages[menuPage].en;
+              return (
+                <div style={{ padding: '12px 14px', maxHeight: 320, overflowY: 'auto' }}>
+                  {text.split('\n').map((line, i) => (
+                    <p key={i} style={{ fontSize: line === line.toUpperCase() && line.length > 2 ? 8.5 : 9, color: line === line.toUpperCase() && line.length > 2 ? '#cc2222' : '#7aaa90', margin: '0 0 5px 0', letterSpacing: '0.05em', lineHeight: 1.6 }}>
+                      {line || <br />}
+                    </p>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="text-center py-6 px-4 relative z-1">

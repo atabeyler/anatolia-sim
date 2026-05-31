@@ -499,7 +499,7 @@ function SumRow({ label, value }: { label: string; value: string }) {
 
 /* ── main wizard ─────────────────────────────────────────────────────────── */
 interface Props {
-  lang: 'tr'|'en';
+  lang: 'en'|'tr'|'de'|'fr'|'ar';
   loading: boolean;
   onSubmit: (form: any, f1: any, f2: any) => void;
   onExit: () => void;

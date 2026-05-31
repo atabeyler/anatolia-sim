@@ -4,7 +4,6 @@ import axios from 'axios';
 import { Play, Pause, FolderOpen, ChevronLeft, ChevronRight, Users, X } from 'lucide-react';
 import { useSimStore } from '../store/simStore';
 import { useSimWebSocket } from '../hooks/useSimWebSocket';
-import LangToggle from '../components/layout/LangToggle';
 import WorldGlobe from '../components/simulation/WorldGlobe';
 import PopulationPanel from '../components/panels/PopulationPanel';
 import BiologyPanel from '../components/panels/BiologyPanel';
@@ -29,6 +28,14 @@ import HypothesisPanel from '../components/panels/HypothesisPanel';
 import EventsPanel from '../components/panels/EventsPanel';
 
 const SPEEDS = [1, 5, 20, 100];
+
+const LANGUAGES = [
+  { code: 'en' as const, label: 'English',   beta: false },
+  { code: 'tr' as const, label: 'Türkçe',    beta: false },
+  { code: 'de' as const, label: 'Deutsch',   beta: true  },
+  { code: 'fr' as const, label: 'Français',  beta: true  },
+  { code: 'ar' as const, label: 'العربية',   beta: true  },
+];
 
 const MODULES = [
   { id: 'population',   label: 'NÜFUS',      labelEn: 'POPUL.',   icon: '👥' },
@@ -164,7 +171,7 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
 export default function SimulationPage() {
   const { simId } = useParams<{ simId: string }>();
   const navigate = useNavigate();
-  const { accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, toggleLang, speedMultiplier, setSpeed, resetLiveState, setEvents } = useSimStore();
+  const { accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, setLang, speedMultiplier, setSpeed, resetLiveState, setEvents } = useSimStore();
   const [individuals, setIndividuals] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'harita' | 'durum' | 'kontrol'>('harita');
@@ -173,7 +180,7 @@ export default function SimulationPage() {
   const [selectedInd, setSelectedInd] = useState<any>(null);
   const [globeCoord, setGlobeCoord] = useState<{ lat: number; lon: number } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuPage, setMenuPage] = useState<'about' | 'mission' | 'contact' | 'guide' | null>(null);
+  const [menuPage, setMenuPage] = useState<'about' | 'mission' | 'contact' | 'guide' | 'language' | null>(null);
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
 
   // Responsive breakpoint
@@ -338,9 +345,6 @@ export default function SimulationPage() {
                 <span style={{ fontSize: isMobile ? 10 : 11, color, fontFamily: 'Orbitron, monospace', fontWeight: 700, lineHeight: 1.2 }}>{value}</span>
               </div>
             ))}
-          </div>
-          <div style={{ flexShrink: 0 }}>
-            <LangToggle />
           </div>
         </div>
 
@@ -632,8 +636,6 @@ export default function SimulationPage() {
                     </div>
                   </div>
 
-                  <LangToggle />
-
                   {currentSim && (
                     <div style={{ border: '1px solid #2a0d0d', padding: 12 }}>
                       <div style={{ fontSize: 8, color: '#6a3030', letterSpacing: '0.15em', marginBottom: 8 }}>TEHLİKELİ BÖLGE</div>
@@ -673,6 +675,7 @@ export default function SimulationPage() {
               <div style={{ width: 3, height: 14, background: '#00e887', boxShadow: '0 0 6px #00e887', flexShrink: 0 }} />
               <span style={{ fontSize: 10, color: '#00e887', letterSpacing: '0.2em', flex: 1 }}>
                 {menuPage === null ? 'ANATOLIA-SIM'
+                  : menuPage === 'language' ? (lang === 'tr' ? 'DİL SEÇENEKLERİ' : 'LANGUAGE')
                   : menuPage === 'about' ? (lang === 'tr' ? 'HAKKIMIZDA' : 'ABOUT')
                   : menuPage === 'mission' ? (lang === 'tr' ? 'MİSYON & VİZYON' : 'MISSION & VISION')
                   : menuPage === 'guide' ? (lang === 'tr' ? 'KULLANIM KILAVUZU' : 'USER GUIDE')
@@ -688,6 +691,7 @@ export default function SimulationPage() {
             {menuPage === null && (
               <div style={{ padding: '6px 0' }}>
                 {[
+                  { id: 'language', labelTr: '🌐 Dil / Language', labelEn: '🌐 Language' },
                   { id: 'guide', labelTr: '📖 Kullanım Kılavuzu', labelEn: '📖 User Guide' },
                   { id: 'about', labelTr: 'Hakkımızda', labelEn: 'About' },
                   { id: 'mission', labelTr: 'Misyon & Vizyon', labelEn: 'Mission & Vision' },
@@ -718,8 +722,31 @@ export default function SimulationPage() {
               </div>
             )}
 
+            {/* Language selection */}
+            {menuPage === 'language' && (
+              <div style={{ padding: '6px 0' }}>
+                {LANGUAGES.map(l => (
+                  <button key={l.code}
+                    onClick={() => { setLang(l.code); setMenuOpen(false); setMenuPage(null); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      width: '100%', padding: '10px 14px',
+                      background: lang === l.code ? 'rgba(0,232,135,0.08)' : 'transparent',
+                      border: 'none', borderBottom: '1px solid #0a1a10',
+                      color: lang === l.code ? '#00e887' : '#a0c8b0',
+                      fontSize: 11, textAlign: 'left', cursor: 'pointer',
+                      letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace',
+                    }}>
+                    <span style={{ flex: 1 }}>› {l.label}</span>
+                    {l.beta && <span style={{ fontSize: 8, padding: '1px 4px', border: '1px solid rgba(0,232,135,0.3)', color: '#00c870' }}>BETA</span>}
+                    {lang === l.code && <span style={{ fontSize: 10, color: '#00e887' }}>✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Sub-page content */}
-            {menuPage !== null && menuPage !== 'guide' && (() => {
+            {menuPage !== null && menuPage !== 'guide' && menuPage !== 'language' && (() => {
               const pages: Record<string, { tr: string; en: string }> = {
                 about: {
                   tr: 'ANATOLİA-SİM, Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. bünyesinde Yalçın Atabey tarafından geliştirilen, simülasyon hipotezini deneysel olarak test etmeye yönelik ileri düzey bir medeniyet simülasyon platformudur.\n\nGerçek biyolojik, genetik, çevresel ve sosyal mekanizmaları temel alarak iki bireyden başlayan bir nüfusun binlerce yıl boyunca nasıl evrildiğini, dil, inanç, teknoloji ve devlet yapılarını nasıl geliştirdiğini müdahalesiz biçimde gözlemlemeyi sağlar.\n\nProje Kodu: RST Q-Nation 200120401018',

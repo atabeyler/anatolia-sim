@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
-import LangToggle from '../components/layout/LangToggle';
 
 /* ── Canvas starfield ─────────────────────────────────────── */
 function StarField() {
@@ -189,7 +188,7 @@ const STATUS = [
 /* ── Main Login Component ─────────────────────────────────── */
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { setUser, lang, toggleLang } = useSimStore();
+  const { setUser, lang } = useSimStore();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [form, setForm] = useState({ user_code: '', reg_user_code: '', first_name: '', last_name: '', tc_no: '', email: '', password: '' });
   const [error, setError] = useState('');
@@ -274,10 +273,7 @@ export default function LoginPage() {
       <div className="fixed w-64 h-64 rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%)', bottom: '20%', right: '25%', filter: 'blur(30px)' }} />
 
-      {/* Lang toggle */}
-      <div className="fixed top-5 right-5 z-20">
-        <LangToggle />
-      </div>
+
 
       {/* System status top-left */}
       <div className="fixed top-5 left-5 z-20 space-y-1 hidden sm:block">
