@@ -154,7 +154,7 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions }: Props
 
         {/* ── User Guide ── */}
         {page === 'guide' && (
-          <div style={{ padding: '10px 14px 14px', maxHeight: 480, overflowY: 'auto', fontSize: 14 }>
+          <div style={{ padding: '10px 14px 14px', maxHeight: 480, overflowY: 'auto', fontSize: 14 }}>
             <H>{lang === 'tr' ? '1 — SİMÜLASYON OLUŞTURMA' : '1 — CREATING A SIMULATION'}</H>
             <Row label={lang === 'tr' ? 'Simülasyon Adı' : 'Name'} val={lang === 'tr' ? 'Medeniyetinize anlamlı bir ad verin. Raporlarda ve kontrol panelinde görünür.' : 'Give your civilization a meaningful name. Appears in reports and the control panel.'} />
             <Row label={lang === 'tr' ? 'Konum Seçimi' : 'Location'} val={lang === 'tr' ? 'Haritadan bir başlangıç noktası seçin. Enlem/boylam, biyom ve iklim koşullarını belirler. Önerilen: Anadolu (36–42°K, 26–45°D), Mezopotamya, Nil Deltası.' : 'Pick a starting point on the map. Latitude/longitude determines biome and climate. Recommended: Anatolia (36–42°N, 26–45°E), Mesopotamia, Nile Delta.'} />
