@@ -88,8 +88,11 @@ export default function AriaButton() {
   const activeRef     = useRef(false);
   const processingRef = useRef(false);
   const recRef        = useRef<any>(null);
-  const audioCtxRef   = useRef<any>(null);
-  const watchdogRef   = useRef<any>(null);
+  const audioCtxRef      = useRef<any>(null);
+  const watchdogRef      = useRef<any>(null);
+  const bargeInRecRef    = useRef<any>(null);
+  const ttsSourceRef     = useRef<any>(null);
+  const bargeInCancelRef = useRef<(() => void) | null>(null);
 
   function setUI(s: AriaState) { uiRef.current = s; setUiState(s); }
 
@@ -105,13 +108,81 @@ export default function AriaButton() {
   }
   function disarmWatchdog() { clearTimeout(watchdogRef.current); }
 
+  /** Immediately stop any in-progress TTS playback. */
+  function abortTTS() {
+    try { ttsSourceRef.current?.stop(); } catch {}
+    ttsSourceRef.current = null;
+    try { window.speechSynthesis?.cancel(); } catch {}
+  }
+
+  /**
+   * Starts a background SR session while ARIA is speaking.
+   * On first interim result: calls abortTTS() so ARIA stops immediately.
+   * On final result: resolves the promise with the transcript.
+   * Returns { promise, cancel, detected } — call cancel() to clean up.
+   */
+  function startBargeIn(): { promise: Promise<string | null>; cancel: () => void; detected: () => boolean } {
+    let resolve!: (v: string | null) => void;
+    const promise = new Promise<string | null>(r => { resolve = r; });
+    let done           = false;
+    let speechDetected = false;
+    let timer: any     = null;
+
+    const finish = (v: string | null) => {
+      if (done) return; done = true;
+      clearTimeout(timer);
+      const r = bargeInRecRef.current;
+      if (r) { r.onresult = null; r.onerror = null; r.onend = null; try { r.abort(); } catch {} }
+      bargeInRecRef.current    = null;
+      bargeInCancelRef.current = null;
+      resolve(v);
+    };
+
+    const cancel = () => finish(null);
+
+    if (!SR || !activeRef.current) {
+      finish(null);
+      return { promise, cancel, detected: () => false };
+    }
+
+    // Delay 350 ms so TTS audio starts before mic opens (helps echo cancellation)
+    timer = setTimeout(() => {
+      if (done || !activeRef.current) { finish(null); return; }
+      const rec = new SR();
+      bargeInRecRef.current = rec;
+      rec.continuous     = false;
+      rec.interimResults = true;
+      rec.lang = storeRef.current.lang === 'tr' ? 'tr-TR' : 'en-US';
+
+      rec.onresult = (e: any) => {
+        if (done) return;
+        const results = Array.from(e.results) as any[];
+        for (const r of results) {
+          const t = r[0].transcript.trim();
+          if (!speechDetected && t.length >= 1) {
+            speechDetected = true;
+            abortTTS(); // user started speaking — cut ARIA off immediately
+          }
+          if (r.isFinal && t.length >= 2) { finish(t); return; }
+        }
+      };
+      rec.onerror = () => finish(null);
+      rec.onend   = () => finish(null);
+      try { rec.start(); } catch { finish(null); }
+    }, 350);
+
+    bargeInCancelRef.current = cancel;
+    return { promise, cancel, detected: () => speechDetected };
+  }
+
   function toggle() {
     if (activeRef.current) {
       activeRef.current     = false;
       processingRef.current = false;
       disarmWatchdog();
       killRec(recRef.current); recRef.current = null;
-      window.speechSynthesis?.cancel();
+      bargeInCancelRef.current?.(); bargeInCancelRef.current = null;
+      abortTTS();
       try { audioCtxRef.current?.close(); } catch {}
       audioCtxRef.current = null;
       setUI('idle');
@@ -275,13 +346,34 @@ export default function AriaButton() {
     }
 
     setTranscript('');
-    // Always reset state after speaking, even if speakText throws
+    // Start barge-in listener: if user speaks during TTS, ARIA stops and processes the new command
+    const bi = startBargeIn();
+    let biCmd: string | null = null;
     try {
       await speakText(responseText);
+      // If user started speaking during TTS, wait up to 1.5 s for the final SR result
+      if (bi.detected()) {
+        biCmd = await Promise.race([
+          bi.promise,
+          new Promise<null>(r => setTimeout(r, 1500)),
+        ]);
+      }
     } finally {
+      bi.cancel();
       disarmWatchdog();
       processingRef.current = false;
-      if (activeRef.current) startRecognition(); else setUI('idle');
+      if (activeRef.current) {
+        if (biCmd) {
+          // Barge-in: immediately process what the user said
+          processingRef.current = true;
+          armWatchdog();
+          processCommand(biCmd);
+        } else {
+          startRecognition();
+        }
+      } else {
+        setUI('idle');
+      }
     }
   }
 
@@ -303,6 +395,7 @@ export default function AriaButton() {
             const src = ctx.createBufferSource();
             src.buffer = buf;
             src.connect(ctx.destination);
+            ttsSourceRef.current = src;
             src.start();
             // onended can silently never fire — cap at 15 s or 80 ms/char, whichever is larger
             await new Promise<void>(res => {
@@ -310,6 +403,7 @@ export default function AriaButton() {
               const t  = setTimeout(res, ms);
               src.onended = () => { clearTimeout(t); res(); };
             });
+            ttsSourceRef.current = null;
             return;
           } catch {
             // AudioContext bad — rebuild it for next command
