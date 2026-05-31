@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Play, Pause, FolderOpen, ChevronLeft, ChevronRight, Users, X } from 'lucide-react';
+import { Play, Pause, FolderOpen, ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import { useSimStore } from '../store/simStore';
 import { useSimWebSocket } from '../hooks/useSimWebSocket';
+import SimMenuOverlay from '../components/layout/SimMenuOverlay';
 import WorldGlobe from '../components/simulation/WorldGlobe';
 import PopulationPanel from '../components/panels/PopulationPanel';
 import BiologyPanel from '../components/panels/BiologyPanel';
@@ -28,14 +29,6 @@ import HypothesisPanel from '../components/panels/HypothesisPanel';
 import EventsPanel from '../components/panels/EventsPanel';
 
 const SPEEDS = [1, 5, 20, 100];
-
-const LANGUAGES = [
-  { code: 'en' as const, label: 'English',   beta: false },
-  { code: 'tr' as const, label: 'Türkçe',    beta: false },
-  { code: 'de' as const, label: 'Deutsch',   beta: true  },
-  { code: 'fr' as const, label: 'Français',  beta: true  },
-  { code: 'ar' as const, label: 'العربية',   beta: true  },
-];
 
 const MODULES = [
   { id: 'population',   label: 'NÜFUS',      labelEn: 'POPUL.',   icon: '👥' },
@@ -171,7 +164,7 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
 export default function SimulationPage() {
   const { simId } = useParams<{ simId: string }>();
   const navigate = useNavigate();
-  const { accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, setLang, speedMultiplier, setSpeed, resetLiveState, setEvents } = useSimStore();
+  const { accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, speedMultiplier, setSpeed, resetLiveState, setEvents } = useSimStore();
   const [individuals, setIndividuals] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'harita' | 'durum' | 'kontrol'>('harita');
@@ -180,7 +173,6 @@ export default function SimulationPage() {
   const [selectedInd, setSelectedInd] = useState<any>(null);
   const [globeCoord, setGlobeCoord] = useState<{ lat: number; lon: number } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuPage, setMenuPage] = useState<'about' | 'mission' | 'contact' | 'guide' | 'language' | null>(null);
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
 
   // Responsive breakpoint
@@ -382,7 +374,7 @@ export default function SimulationPage() {
             </button>
           )}
           <button
-            onClick={() => { setMenuOpen(true); setMenuPage(null); }}
+            onClick={() => setMenuOpen(true)}
             style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid #cc2222', color: '#7aaa88', background: 'transparent', fontSize: 8, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
             ☰ {!isMobile && (lang === 'tr' ? 'MENÜ' : 'MENU')}
           </button>
@@ -665,299 +657,22 @@ export default function SimulationPage() {
       </div>
 
       {/* ═══ MENU OVERLAY ═══ */}
-      {menuOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          onClick={() => { setMenuOpen(false); setMenuPage(null); }}>
-          <div style={{ background: 'rgba(0,4,2,0.98)', border: '1px solid #cc2222', minWidth: 340, maxWidth: 480, padding: 0, fontFamily: 'Share Tech Mono, monospace', boxShadow: '0 8px 40px rgba(0,0,0,0.8)' }}
-            onClick={e => e.stopPropagation()}>
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderBottom: '1px solid #cc2222', background: 'rgba(0,20,10,0.9)' }}>
-              <div style={{ width: 3, height: 14, background: '#00e887', boxShadow: '0 0 6px #00e887', flexShrink: 0 }} />
-              <span style={{ fontSize: 10, color: '#00e887', letterSpacing: '0.2em', flex: 1 }}>
-                {menuPage === null ? 'ANATOLIA-SIM'
-                  : menuPage === 'language' ? (lang === 'tr' ? 'DİL SEÇENEKLERİ' : 'LANGUAGE')
-                  : menuPage === 'about' ? (lang === 'tr' ? 'HAKKIMIZDA' : 'ABOUT')
-                  : menuPage === 'mission' ? (lang === 'tr' ? 'MİSYON & VİZYON' : 'MISSION & VISION')
-                  : menuPage === 'guide' ? (lang === 'tr' ? 'KULLANIM KILAVUZU' : 'USER GUIDE')
-                  : (lang === 'tr' ? 'İLETİŞİM' : 'CONTACT')}
-              </span>
-              <button onClick={() => { if (menuPage) { setMenuPage(null); } else { setMenuOpen(false); } }}
-                style={{ background: 'transparent', border: 'none', color: '#6a9a78', cursor: 'pointer', fontSize: 9, letterSpacing: '0.1em', padding: '2px 6px' }}>
-                {menuPage ? '← GERİ' : <X size={12} />}
-              </button>
-            </div>
-
-            {/* Main menu */}
-            {menuPage === null && (
-              <div style={{ padding: '6px 0' }}>
-                {[
-                  { id: 'language', labelTr: '🌐 Dil / Language', labelEn: '🌐 Language' },
-                  { id: 'guide', labelTr: '📖 Kullanım Kılavuzu', labelEn: '📖 User Guide' },
-                  { id: 'about', labelTr: 'Hakkımızda', labelEn: 'About' },
-                  { id: 'mission', labelTr: 'Misyon & Vizyon', labelEn: 'Mission & Vision' },
-                  { id: 'contact', labelTr: 'İletişim', labelEn: 'Contact' },
-                ].map(item => (
-                  <button key={item.id} onClick={() => setMenuPage(item.id as any)}
-                    style={{ display: 'block', width: '100%', padding: '9px 14px', background: 'transparent', border: 'none', borderBottom: '1px solid #0a1a10', color: '#a0c8b0', fontSize: 11, textAlign: 'left', cursor: 'pointer', letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace' }}>
-                    › {lang === 'tr' ? item.labelTr : item.labelEn}
-                  </button>
-                ))}
-                {isMobile && (
-                  <div style={{ padding: '8px 14px', borderTop: '1px solid #cc2222', display: 'flex', gap: 8 }}>
-                    <button onClick={() => { setMenuOpen(false); navigate('/'); }}
-                      style={{ flex: 1, padding: '7px 0', fontSize: 9, border: '1px solid #cc2222', color: '#7aaa88', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
-                      ← {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
-                    </button>
-                    <button onClick={() => { setMenuOpen(false); terminateSim(); }}
-                      style={{ flex: 1, padding: '7px 0', fontSize: 9, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
-                      {lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
-                    </button>
-                  </div>
-                )}
-                <div style={{ padding: '8px 14px', borderTop: '1px solid #0a1a10', marginTop: isMobile ? 0 : 4 }}>
-                  <div style={{ fontSize: 7.5, color: '#1e3a28', letterSpacing: '0.08em' }}>
-                    RST Q-Nation 200120401018 · Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Language selection */}
-            {menuPage === 'language' && (
-              <div style={{ padding: '6px 0' }}>
-                {LANGUAGES.map(l => (
-                  <button key={l.code}
-                    onClick={() => { setLang(l.code); setMenuOpen(false); setMenuPage(null); }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      width: '100%', padding: '10px 14px',
-                      background: lang === l.code ? 'rgba(0,232,135,0.08)' : 'transparent',
-                      border: 'none', borderBottom: '1px solid #0a1a10',
-                      color: lang === l.code ? '#00e887' : '#a0c8b0',
-                      fontSize: 11, textAlign: 'left', cursor: 'pointer',
-                      letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace',
-                    }}>
-                    <span style={{ flex: 1 }}>› {l.label}</span>
-                    {l.beta && <span style={{ fontSize: 8, padding: '1px 4px', border: '1px solid rgba(0,232,135,0.3)', color: '#00c870' }}>BETA</span>}
-                    {lang === l.code && <span style={{ fontSize: 10, color: '#00e887' }}>✓</span>}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Sub-page content */}
-            {menuPage !== null && menuPage !== 'guide' && menuPage !== 'language' && (() => {
-              const pages: Record<string, { tr: string; en: string }> = {
-                about: {
-                  tr: 'ANATOLİA-SİM, Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. bünyesinde Yalçın Atabey tarafından geliştirilen, simülasyon hipotezini deneysel olarak test etmeye yönelik ileri düzey bir medeniyet simülasyon platformudur.\n\nGerçek biyolojik, genetik, çevresel ve sosyal mekanizmaları temel alarak iki bireyden başlayan bir nüfusun binlerce yıl boyunca nasıl evrildiğini, dil, inanç, teknoloji ve devlet yapılarını nasıl geliştirdiğini müdahalesiz biçimde gözlemlemeyi sağlar.\n\nProje Kodu: RST Q-Nation 200120401018',
-                  en: 'ANATOLİA-SİM is an advanced civilization simulation platform developed by Yalçın Atabey under Bold Askeri Teknoloji ve Savunma Sanayi A.Ş., designed to experimentally test the simulation hypothesis.\n\nIt models real biological, genetic, environmental and social mechanisms — observing a population that starts from two individuals, evolving over thousands of years into language, belief, technology and governance.\n\nProject Code: RST Q-Nation 200120401018',
-                },
-                mission: {
-                  tr: 'MİSYON\nSimülasyon hipotezini bilimsel ve deneysel zeminlerde test etmek; insan medeniyetinin evrensel örüntülerini ortaya çıkarmak.\n\nVİZYON\nDünyanın en kapsamlı yapay yaşam ve medeniyet simülasyon platformu olmak; insanlığın kökeni, bilinci ve geleceği hakkında nesnel veriler üretmek.',
-                  en: 'MISSION\nTest the simulation hypothesis on scientific and experimental grounds; reveal the universal patterns of human civilization.\n\nVISION\nBecome the world\'s most comprehensive artificial life and civilization simulation platform; produce objective data about the origin, consciousness and future of humanity.',
-                },
-                contact: {
-                  tr: 'Proje Sahibi: Yalçın Atabey\nKuruluş: Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.\nE-posta: info@boldkimya.com.tr\nTelefon: +90 532 217 07 76\nORCID: 0009-0004-9037-5750\n\n© 2026 Tüm hakları saklıdır.',
-                  en: 'Project Owner: Yalçın Atabey\nOrganization: Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.\nE-mail: info@boldkimya.com.tr\nPhone: +90 532 217 07 76\nORCID: 0009-0004-9037-5750\n\n© 2026 All rights reserved.',
-                },
-              };
-              const text = (lang === 'tr' ? pages[menuPage].tr : pages[menuPage].en);
-              return (
-                <div style={{ padding: '12px 14px', maxHeight: 320, overflowY: 'auto' }}>
-                  {text.split('\n').map((line, i) => (
-                    <p key={i} style={{ fontSize: line === line.toUpperCase() && line.length > 2 ? 8.5 : 9, color: line === line.toUpperCase() && line.length > 2 ? '#00e887' : '#7aaa90', margin: '0 0 5px 0', letterSpacing: '0.05em', lineHeight: 1.6 }}>
-                      {line || <br />}
-                    </p>
-                  ))}
-                </div>
-              );
-            })()}
-
-            {/* User Guide */}
-            {menuPage === 'guide' && (() => {
-              const H = ({ children }: { children: React.ReactNode }) => (
-                <div style={{ fontSize: 8, color: '#00e887', letterSpacing: '0.18em', margin: '14px 0 5px', paddingBottom: 3, borderBottom: '1px solid #0d2a18' }}>{children}</div>
-              );
-              const Sub = ({ children }: { children: React.ReactNode }) => (
-                <div style={{ fontSize: 8.5, color: '#00c870', letterSpacing: '0.08em', margin: '7px 0 3px' }}>{children}</div>
-              );
-              const Row = ({ label, val }: { label: React.ReactNode; val: React.ReactNode }) => (
-                <div style={{ display: 'flex', gap: 6, margin: '2px 0' }}>
-                  <span style={{ fontSize: 8.5, color: '#4a8a60', minWidth: 110, flexShrink: 0 }}>{label}</span>
-                  <span style={{ fontSize: 8.5, color: '#7aaa90', lineHeight: 1.5 }}>{val}</span>
-                </div>
-              );
-              const Note = ({ children }: { children: React.ReactNode }) => (
-                <div style={{ fontSize: 8, color: '#6a9a78', margin: '3px 0', lineHeight: 1.5, paddingLeft: 8, borderLeft: '2px solid #0d2a18' }}>{children}</div>
-              );
-              const Bullet = ({ children }: { children: React.ReactNode }) => (
-                <div style={{ fontSize: 8.5, color: '#7aaa90', margin: '2px 0 2px 8px', lineHeight: 1.5 }}>› {children}</div>
-              );
-              return (
-                <div style={{ padding: '10px 14px 14px', maxHeight: 480, overflowY: 'auto', fontSize: 9 }}>
-
-                  <H>{lang === 'tr' ? '1 — SİMÜLASYON OLUŞTURMA' : '1 — CREATING A SIMULATION'}</H>
-                  <Row label={lang === 'tr' ? 'Simülasyon Adı' : 'Name'} val={lang === 'tr' ? 'Medeniyetinize anlamlı bir ad verin. Raporlarda ve kontrol panelinde görünür.' : 'Give your civilization a meaningful name. Appears in reports and the control panel.'} />
-                  <Row label={lang === 'tr' ? 'Konum Seçimi' : 'Location'} val={lang === 'tr' ? 'Haritadan bir başlangıç noktası seçin. Enlem/boylam, biyom ve iklim koşullarını belirler. Önerilen: Anadolu (36–42°K, 26–45°D), Mezopotamya, Nil Deltası.' : 'Pick a starting point on the map. Latitude/longitude determines biome and climate. Recommended: Anatolia (36–42°N, 26–45°E), Mesopotamia, Nile Delta.'} />
-                  <Row label={lang === 'tr' ? 'Kurucu Bireyler' : 'Founders'} val={lang === 'tr' ? 'İki kurucunun adını, yaşını ve görünüşünü özelleştirin. Kurucular 60 yaşına kadar hastalık ve kazadan bağışıktır; tüm medeniyetin atasıdır.' : 'Customize name, age and appearance of both founders. Founders are immune to disease and accidents until age 60 — they are the ancestor of your entire civilization.'} />
-
-                  <H>{lang === 'tr' ? '2 — ANA EKRAN VE HARİTA' : '2 — MAIN SCREEN & MAP'}</H>
-                  <Sub>{lang === 'tr' ? '3B Dünya Haritası' : '3D World Map'}</Sub>
-                  <Row label={lang === 'tr' ? 'Sol tık + sürükle' : 'Left drag'} val={lang === 'tr' ? 'Dünyayı döndür' : 'Rotate the globe'} />
-                  <Row label={lang === 'tr' ? 'Fare tekerleği' : 'Scroll wheel'} val={lang === 'tr' ? 'Yakınlaştır / uzaklaştır' : 'Zoom in / out'} />
-                  <Row label={lang === 'tr' ? 'Bir noktaya tıkla' : 'Click a dot'} val={lang === 'tr' ? 'O bireyin detay kartını açar (yaş, sağlık, beceri, ilişkiler)' : 'Opens that individual\'s detail card (age, health, skills, relationships)'} />
-                  <Note>{lang === 'tr' ? 'Haritadaki her ışık noktası bir bireydir. Sarı = kurucu, yeşil = yetişkin, mavi = çocuk.' : 'Every dot on the map is an individual. Yellow = founder, green = adult, blue = child.'} </Note>
-                  <Sub>{lang === 'tr' ? 'Üst Bar İstatistikleri' : 'Top Bar Stats'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Nüfus: O an hayatta olan birey sayısı' : 'Population: living individuals right now'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Yıl: Simülasyon yılı (1 yıl = 365 simülasyon günü)' : 'Year: simulation year (1 year = 365 sim days)'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Gruplar: Aktif sosyal grup sayısı' : 'Groups: active social groups'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Teknoloji: Keşfedilen teknoloji sayısı' : 'Technologies: number of discovered technologies'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Biyom, sıcaklık, besin ve su bolluğu anlık güncellenir' : 'Biome, temperature, food & water abundance update in real time'} </Bullet>
-
-                  <H>{lang === 'tr' ? '3 — KONTROL BUTONLARI' : '3 — CONTROL BUTTONS'}</H>
-                  <Row label='BAŞLAT / START' val={lang === 'tr' ? 'Simülasyonu çalıştırır. Sunucuda çalışır; tarayıcıyı kapatsanız bile simülasyon devam eder.' : 'Starts the simulation on the server. Even if you close the browser, it keeps running.'} />
-                  <Row label='DURDUR / PAUSE' val={lang === 'tr' ? 'Simülasyonu duraklatır ve mevcut durumu veritabanına kaydeder. Dilediğinizde devam edebilirsiniz.' : 'Pauses the simulation and saves current state to the database. Resume any time.'} />
-                  <Row label={lang === 'tr' ? 'HIZ ×1 → ×1000' : 'SPEED ×1 → ×1000'} val={lang === 'tr' ? '×1: Gerçek zamanlı (yavaş gözlem). ×10: Günlük takip. ×100: Haftalık takip. ×1000: Uzun dönem araştırma. Yüksek hızda ekran güncellemesi azalır, hesaplama hızlanır.' : '×1: real-time (slow observation). ×10: daily tracking. ×100: weekly tracking. ×1000: long-term research. At high speed screen updates slow, computation accelerates.'} />
-                  <Row label='SONLANDIR / TERMINATE' val={lang === 'tr' ? 'Simülasyonu kalıcı olarak sonlandırır. Bu işlem geri alınamaz.' : 'Permanently terminates the simulation. This action cannot be undone.'} />
-                  <Row label='ÇIKIŞ / EXIT' val={lang === 'tr' ? 'Ana panele döner. Simülasyon arka planda çalışmaya devam eder.' : 'Returns to the main panel. Simulation keeps running in the background.'} />
-
-                  <H>{lang === 'tr' ? '4 — SOL PANEL MODÜLLERİ' : '4 — LEFT PANEL MODULES'}</H>
-                  <Note>{lang === 'tr' ? 'Her modül butonu sol panelde bulunur. Tıklanınca sağdan kayarak açılan detay penceresi gelir.' : 'Each module button is on the left panel. Clicking opens a slide-in detail window.'} </Note>
-
-                  <Sub>👥 {lang === 'tr' ? 'NÜFUS' : 'POPULATION'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Yaşayan bireylerin tam listesi, yaş ve cinsiyet dağılımı' : 'Full list of living individuals, age & sex distribution'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Ortalama yaş, doğurganlık oranı, nesil sayısı' : 'Average age, fertility rate, generation count'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Bir bireye tıklayarak genetik profil, sağlık durumu ve sosyal ilişkilerini görün' : 'Click an individual to see genome, health state & social relationships'} </Bullet>
-
-                  <Sub>📋 {lang === 'tr' ? 'OLAYLAR' : 'EVENTS'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Tüm simülasyon olayları kronolojik sırayla: doğum, ölüm, keşif, çatışma, salgın, inanç oluşumu' : 'All simulation events in chronological order: birth, death, discovery, conflict, epidemic, belief formation'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Filtre seç: Tümü / Doğum / Ölüm / Teknoloji / Dil / Keşif / Felaket / İnanç' : 'Filter by: All / Birth / Death / Tech / Language / Discovery / Disaster / Belief'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Her olayın yılı, günü ve açıklaması görünür' : 'Each event shows its year, day and description'} </Bullet>
-
-                  <Sub>🔤 {lang === 'tr' ? 'DİL' : 'LANGUAGE'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Sıfır kelimeden yazıya uzanan 7 aşamalı dil evrimi izlenir' : '7-stage language evolution tracked from zero words to writing'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Aşamalar: Dilöncesi → Ses taklidi → İşaretleşme → Proto-dil → Sözdizimi → Tam dil → Yazı' : 'Stages: Pre-linguistic → Sound imitation → Gesturing → Proto-language → Syntax → Full language → Writing'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Kelime hazinesi ve gramer yapısı gerçek zamanlı güncellenir' : 'Vocabulary and grammar structure update in real time'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Dil gelişimi nüfus büyüklüğü ve grup etkileşimine bağlıdır' : 'Language development depends on population size and group interaction'} </Bullet>
-
-                  <Sub>⏳ {lang === 'tr' ? 'GEÇMİŞ (Zaman Makinesi)' : 'HISTORY (Time Machine)'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Her 365 simülasyon günde bir otomatik kontrol noktası kaydedilir' : 'A checkpoint is saved automatically every 365 simulation days'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Listeden bir noktayı seçerek o anki nüfus anlık görüntüsünü ve dünya durumunu inceleyin' : 'Select any point to examine the population snapshot and world state at that moment'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Nüfus hareketi, grup yapısı ve teknoloji düzeyi geçmişe dönük karşılaştırılabilir' : 'Population movement, group structure and tech level can be compared retrospectively'} </Bullet>
-
-                  <Sub>📊 {lang === 'tr' ? 'ANALİZ' : 'ANALYSIS'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Nüfus eğrileri, genetik çeşitlilik ve akraba yetiştirme katsayıları' : 'Population curves, genetic diversity and inbreeding coefficients'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Kaynak tüketim grafikleri ve medeniyet puanı' : 'Resource consumption graphs and civilization score'} </Bullet>
-
-                  <Sub>🧬 {lang === 'tr' ? 'MUTASYON (Biyoloji)' : 'MUTATION (Biology)'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Genomik varyasyonlar ve fenotipik özellik dağılımları' : 'Genomic variations and phenotypic trait distributions'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Bağışıklık gücü, zeka, fiziksel özellikler ve doğurganlığın nesiller arası evrimi' : 'Evolution of immunity, intelligence, physical traits and fertility across generations'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Yüksek akraba yetiştirme katsayısı genetik hastalık riskini artırır' : 'High inbreeding coefficient increases genetic disease risk'} </Bullet>
-
-                  <Sub>✦ {lang === 'tr' ? 'TANRI MODU' : 'GOD MODE'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Salgın: Nüfusun bir bölümünü etkileyen hastalık dalgası başlatır' : 'Epidemic: launches a disease wave affecting part of the population'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Kuraklık: Besin ve su bolluğunu dramatik biçimde düşürür, göç tetikler' : 'Drought: drastically reduces food & water abundance, triggers migration'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Deprem: Yaralanmalar ve ölümlere yol açar, yapıları hasar görür' : 'Earthquake: causes injuries and deaths, damages structures'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Volkan: Bölgesel kaos, hava soğuması ve zorla göç' : 'Volcano: regional chaos, cooling, forced migration'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Sel: Su bolluğunu geçici olarak artırır, tarım arazilerini tahrip eder' : 'Flood: temporarily increases water, destroys farmland'} </Bullet>
-                  <Note>{lang === 'tr' ? 'Tanrı müdahaleleri geri alınamaz. Dikkatli kullanın.' : 'God interventions cannot be undone. Use carefully.'} </Note>
-
-                  <Sub>🧠 {lang === 'tr' ? 'AKIL (Psikoloji)' : 'MIND (Psychology)'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Bireysel ve toplumsal ruh hali, stres ve ölüm farkındalığı' : 'Individual and collective mood, stress and death awareness'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Bilinç gelişimi: Bireyler belirli bir zeka eşiğini geçince ölümlerinin farkına varır' : 'Consciousness: once intelligence crosses a threshold, individuals become aware of their mortality'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Stres, sağlık ve üreme başarısını doğrudan etkiler' : 'Stress directly affects health and reproductive success'} </Bullet>
-
-                  <Sub>🌿 {lang === 'tr' ? 'ÇEVRE' : 'ENVIRONMENT'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Mevsim döngüleri, sıcaklık ve yağış miktarı' : 'Season cycles, temperature and rainfall'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Besin ve su bolluğu: yüksek değer nüfus büyümesini destekler' : 'Food & water abundance: high values support population growth'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Biyom tipi (step, orman, Akdeniz vb.) kaynakları belirler' : 'Biome type (steppe, forest, Mediterranean etc.) determines resource availability'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'İnsan çevresel etkisi nüfus büyüdükçe artar' : 'Human environmental impact grows as the population expands'} </Bullet>
-
-                  <Sub>⚙ {lang === 'tr' ? 'TEKNOLOJİ' : 'TECHNOLOGY'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Keşfedilen teknolojilerin listesi ve her keşfin gerçekleştiği yıl' : 'List of discovered technologies and the year each was found'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Gelişim çizgisi: Besin toplayıcılık → Taş aletler → Tarım → Seramik → Metal işleme → İleri teknolojiler' : 'Development chain: Foraging → Stone tools → Agriculture → Ceramics → Metallurgy → Advanced tech'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Teknoloji keşfi zeka, grup büyüklüğü ve kaynak bolluğuna bağlıdır' : 'Tech discovery depends on intelligence, group size and resource abundance'} </Bullet>
-
-                  <Sub>☽ {lang === 'tr' ? 'İNANÇ' : 'BELIEF'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Ölüm farkındalığı kazanan bireylerde inanç sistemleri kendiliğinden oluşur' : 'Belief systems emerge spontaneously in individuals who develop death awareness'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'İnançların gruplar arası yayılma hızı ve ritüellerin oluşumu izlenir' : 'Speed of belief spread between groups and emergence of rituals tracked'} </Bullet>
-
-                  <Sub>🤝 {lang === 'tr' ? 'SOSYAL' : 'SOCIAL'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Gruplar, liderler, ittifaklar ve rakip gruplar arasındaki dinamikler' : 'Groups, leaders, alliances and rival-group dynamics'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Grup içi gerilim → liderlik yarışması → grup bölünmesi zinciri izlenebilir' : 'Internal tension → leadership contest → group fission chain can be observed'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Roller: Lider, Yaşlı, Savaşçı, Toplayıcı, Şifacı, Üye' : 'Roles: Leader, Elder, Warrior, Gatherer, Healer, Member'} </Bullet>
-
-                  <Sub>💰 {lang === 'tr' ? 'EKONOMİ' : 'ECONOMY'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Kaynak envanteri, üretilen mallar ve ticaret aktivitesi' : 'Resource inventory, produced goods and trade activity'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Gini katsayısı ile zenginlik eşitsizliği ölçülür' : 'Wealth inequality measured with Gini coefficient'} </Bullet>
-
-                  <Sub>🎭 {lang === 'tr' ? 'KÜLTÜR' : 'CULTURE'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Toplulukta ortaya çıkan kültürel unsurlar, değerler ve gelenekler' : 'Cultural elements, values and traditions emerging in the community'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Kültürel ögelerin kuşaklar arası aktarımı izlenir' : 'Intergenerational transmission of cultural elements tracked'} </Bullet>
-
-                  <Sub>🎨 {lang === 'tr' ? 'SANAT' : 'ART'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'İlk sembolik ifadelerden karmaşık sanat formlarına uzanan gelişim' : 'Development from first symbolic expressions to complex art forms'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Sanat, topluluğun moralini ve sosyal kimliğini doğrudan güçlendirir' : 'Art directly strengthens community morale and social identity'} </Bullet>
-
-                  <Sub>🌙 {lang === 'tr' ? 'ASTRONOMİ' : 'ASTRONOMY'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Gök cisimlerine yapılan ilk gözlemler ve bunların takvim sistemlerine dönüşümü' : 'First celestial observations and their transformation into calendar systems'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Astronomi bilgisi tarım zamanlaması ve din üzerinde etkilidir' : 'Astronomical knowledge influences farming timing and religion'} </Bullet>
-
-                  <Sub>💡 {lang === 'tr' ? 'HİPOTEZ' : 'HYPOTHESIS'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Simülasyondan çıkarılan istatistiksel örüntüler ve hipotezler' : 'Statistical patterns and hypotheses derived from the simulation'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Hangi koşulların medeniyetin hızlanmasına ya da çöküşüne yol açtığı analiz edilir' : 'Conditions leading to civilizational acceleration or collapse are analyzed'} </Bullet>
-
-                  <Sub>🔬 {lang === 'tr' ? 'EPİGENETİK' : 'EPIGENETICS'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Çevresel faktörlerin genetik ifadeye yansıması izlenir' : 'How environmental factors affect gene expression is tracked'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Ebeveynlerin stres ve beslenme koşulları çocuklara kalıtsal olarak aktarılabilir' : 'Parental stress and nutrition conditions can be inherited by children'} </Bullet>
-
-                  <Sub>🏛️ {lang === 'tr' ? 'MİMARİ' : 'ARCHITECTURE'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Grupların kurduğu yerleşimler ve inşa ettikleri yapılar' : 'Settlements founded by groups and structures they build'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Barınaktan kalıcı yapılara uzanan inşa tarihi izlenebilir' : 'Building history from shelter to permanent structures can be traced'} </Bullet>
-
-                  <Sub>⚖️ {lang === 'tr' ? 'HUKUK' : 'LAW'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Toplulukta kendiliğinden oluşan normlar, kurallar ve yaptırımlar' : 'Norms, rules and sanctions that emerge spontaneously in the community'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Sosyal düzenin kurumsallaşma süreci takip edilir' : 'Institutionalization of social order is tracked'} </Bullet>
-
-                  <Sub>🦠 {lang === 'tr' ? 'MİKROBİYOM' : 'MICROBIOME'}</Sub>
-                  <Bullet>{lang === 'tr' ? 'Bireylerin ve topluluğun mikrobiyolojik ekosistemi' : 'Microbiological ecosystem of individuals and the community'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Salgın hastalıkların kaynakları ve bağışıklık geliştirme süreçleri' : 'Sources of epidemic diseases and processes of developing immunity'} </Bullet>
-
-                  <H>{lang === 'tr' ? '5 — OLAY KAYDI' : '5 — EVENT LOG'}</H>
-                  <Bullet>{lang === 'tr' ? 'Harita üzerinde sol altta 3 satırlık özet akış görünür' : 'A 3-line summary feed appears bottom-left on the map'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Başlık çubuğundan tutarak ekranın istediğiniz köşesine sürükleyebilirsiniz' : 'Drag the title bar to reposition it anywhere on screen'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Detaylı liste için sol paneldeki OLAYLAR butonuna tıklayın' : 'For the full detailed list click EVENTS in the left panel'} </Bullet>
-
-                  <H>{lang === 'tr' ? '6 — ARIA SES ASISTANI' : '6 — ARIA VOICE ASSISTANT'}</H>
-                  <Row label={lang === 'tr' ? 'Uyandırma' : 'Wake word'} val={lang === 'tr' ? '"Antolia" kelimesini söyleyin veya mikrofon ikonuna tıklayın' : 'Say "Antolia" or click the microphone icon'} />
-                  <Sub>{lang === 'tr' ? 'Örnek Komutlar' : 'Example Commands'}</Sub>
-                  <Bullet>{lang === 'tr' ? '"Simülasyonu başlat" / "Simülasyonu durdur"' : '"Start the simulation" / "Stop the simulation"'} </Bullet>
-                  <Bullet>{lang === 'tr' ? '"Hızı artır" / "Hızı düşür" / "Hızı 100 yap"' : '"Increase speed" / "Decrease speed" / "Set speed to 100"'} </Bullet>
-                  <Bullet>{lang === 'tr' ? '"Nüfus panelini aç" / "Tanrı modunu aç" / "Olaylar panelini kapat"' : '"Open population panel" / "Open god mode" / "Close events panel"'} </Bullet>
-                  <Bullet>{lang === 'tr' ? '"Nüfus kaçtır?" / "Kaçıncı yıldayız?" / "En son ne oldu?"' : '"What is the population?" / "What year is it?" / "What happened last?"'} </Bullet>
-                  <Bullet>{lang === 'tr' ? '"Salgın başlat" / "Kuraklık uygula"' : '"Start epidemic" / "Apply drought"'} </Bullet>
-                  <Bullet>{lang === 'tr' ? '"Dili değiştir" (Türkçe ↔ İngilizce)' : '"Toggle language" (Turkish ↔ English)'} </Bullet>
-                  <Note>{lang === 'tr' ? 'ARIA simülasyonun tam durumunu okuyarak akıllıca yanıt verir. İnternet bağlantısı gerektirir.' : 'ARIA reads the full simulation state to give intelligent answers. Requires internet connection.'} </Note>
-
-                  <H>{lang === 'tr' ? '7 — İPUÇLARI VE STRATEJİLER' : '7 — TIPS & STRATEGIES'}</H>
-                  <Bullet>{lang === 'tr' ? 'Her 365 simülasyon günde bir otomatik kayıt yapılır; veri kaybı olmaz' : 'Auto-save runs every 365 simulation days — no data loss'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Yüksek hız (×1000) uzun dönem medeniyetleri gözlemlemek için idealdir' : 'High speed (×1000) is ideal for observing long-term civilizations'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Küçük nüfuslarda akraba yetiştirme kaçınılmazdır; genetik hastalık riskini Biyoloji panelinden takip edin' : 'Inbreeding is inevitable in small populations; monitor genetic disease risk in Biology panel'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'İlk iki kurucu 60 yaşına kadar ölmez; bu sürede mümkün olduğunca çok çocuk sahibi olmaları önemlidir' : 'First two founders cannot die before age 60; having as many children as possible in this window is crucial'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Grup oluşumu en az 2 yetişkin bireyin yakın konumda bulunmasını gerektirir' : 'Group formation requires at least 2 adults to be in close proximity'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Dil gelişimi için nüfusun 5+ kişilik gruplar halinde bir arada yaşaması gerekir' : 'Language development requires groups of 5+ individuals living together'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Tanrı modundaki felaketler nüfus tıkandığında kullanışlıdır; doğal seçilimi hızlandırır' : 'God-mode disasters are useful when population stagnates; they accelerate natural selection'} </Bullet>
-                  <Bullet>{lang === 'tr' ? 'Tarayıcıyı kapatmak simülasyonu durdurmaz; sunucu arka planda çalışmayı sürdürür' : 'Closing the browser does not stop the simulation; the server keeps running in the background'} </Bullet>
-
-                  <div style={{ marginTop: 16, paddingTop: 8, borderTop: '1px solid #0a1a10', fontSize: 7.5, color: '#1e3a28', letterSpacing: '0.06em' }}>
-                    ANATOLİA-SİM · RST Q-Nation 200120401018 · © 2026 Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.
-                  </div>
-                </div>
-              );
-            })()}
+      <SimMenuOverlay
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        mobileActions={isMobile ? (
+          <div style={{ padding: '8px 14px', borderTop: '1px solid #cc2222', display: 'flex', gap: 8 }}>
+            <button onClick={() => { setMenuOpen(false); navigate('/'); }}
+              style={{ flex: 1, padding: '7px 0', fontSize: 9, border: '1px solid #cc2222', color: '#7aaa88', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
+              ← {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
+            </button>
+            <button onClick={() => { setMenuOpen(false); terminateSim(); }}
+              style={{ flex: 1, padding: '7px 0', fontSize: 9, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
+              {lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
+            </button>
           </div>
-        </div>
-      )}
+        ) : undefined}
+      />
 
       {/* ═══ OVERLAY PANELS ═══ */}
       <EventsPanel />
