@@ -99,7 +99,7 @@ export default function EventsPanel() {
           <button key={f.id} onClick={() => setFilter(f.id)}
             style={{
               padding: '2px 6px', fontSize: 7.5,
-              border: `1px solid ${filter === f.id ? f.color : '#2a4a2a'}`,
+              border: `1px solid ${filter === f.id ? f.color : '#cc2222'}`,
               color: filter === f.id ? f.color : '#3a6040',
               background: filter === f.id ? `${f.color}14` : 'transparent',
               fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer',
@@ -131,7 +131,7 @@ export default function EventsPanel() {
             display: 'flex', gap: 6, alignItems: 'flex-start',
             padding: '5px 6px', marginBottom: 2,
             background: i === 0 ? `${color}0c` : 'transparent',
-            border: `1px solid ${i < 3 ? color + '28' : '#2a4a2a'}`,
+            border: `1px solid ${i < 3 ? color + '28' : '#cc2222'}`,
             opacity: Math.max(0.35, 1 - i * 0.012),
           }}>
             <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1.1, color, marginTop: 1 }}>{icon}</span>
