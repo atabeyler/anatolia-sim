@@ -324,10 +324,11 @@ export default function AriaButton() {
     : uiState === 'processing' ? Loader2
     : Volume2;
 
+  const langKey = store.lang === 'tr' ? 'tr' : 'en';
   const label = {
     tr: { idle: 'Asistan', command: '🎙 Konuşun…', processing: 'İşleniyor…', speaking: 'Konuşuyor…' },
     en: { idle: 'Assistant', command: '🎙 Speak…', processing: 'Processing…', speaking: 'Speaking…' },
-  }[store.lang][uiState];
+  }[langKey][uiState];
 
   /* ── Mobile: sürüklenebilir yüzen ikon ─────────────────────────────────── */
   if (isMobile) {

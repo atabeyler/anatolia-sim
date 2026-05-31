@@ -72,7 +72,8 @@ interface SimStore {
   // UI state
   activePanel: string | null;
   setActivePanel: (panel: string | null) => void;
-  lang: 'en' | 'tr';
+  lang: 'en' | 'tr' | 'de' | 'fr' | 'ar';
+  setLang: (l: 'en' | 'tr' | 'de' | 'fr' | 'ar') => void;
   toggleLang: () => void;
   theme: 'dark' | 'light';
   toggleTheme: () => void;
@@ -101,7 +102,8 @@ export const useSimStore = create<SimStore>((set) => ({
   activePanel: null,
   setActivePanel: (panel) => set(s => ({ activePanel: s.activePanel === panel ? null : panel })),
   lang: 'en',
-  toggleLang: () => set(s => ({ lang: s.lang === 'en' ? 'tr' : 'en' })),
+  setLang: (l) => set({ lang: l }),
+  toggleLang: () => set(s => ({ lang: s.lang === 'tr' ? 'en' : 'tr' })),
   theme: 'dark',
   toggleTheme: () => set(s => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
   speedMultiplier: 1,

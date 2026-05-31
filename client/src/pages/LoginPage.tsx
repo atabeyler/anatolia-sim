@@ -147,10 +147,10 @@ function LogoRings() {
 function HudInput({ label, type, value, onChange, placeholder, maxLength }: any) {
   const [focused, setFocused] = useState(false);
   return (
-    <div className="mb-3">
-      <div className="flex items-center gap-2 mb-1.5">
-        <div className={`w-1 h-3 transition-colors ${focused ? 'bg-sim-accent' : 'bg-sim-border'}`} />
-        <label className="text-xs font-share-tech tracking-widest uppercase text-sim-muted">{label}</label>
+    <div className="mb-2">
+      <div className="flex items-center gap-2 mb-1">
+        <div className={`w-1 h-3 flex-shrink-0 transition-colors ${focused ? 'bg-sim-accent' : 'bg-sim-border'}`} />
+        <label className="font-share-tech tracking-wider uppercase" style={{ fontSize: 16, color: '#c0c8e8' }}>{label}</label>
       </div>
       <div className={`relative transition-all duration-200 ${focused ? 'drop-shadow-[0_0_8px_rgba(79,110,247,0.4)]' : ''}`}>
         <input
@@ -161,8 +161,8 @@ function HudInput({ label, type, value, onChange, placeholder, maxLength }: any)
           onBlur={() => setFocused(false)}
           placeholder={placeholder}
           maxLength={maxLength}
-          className={`w-full bg-sim-bg/80 px-3 py-2.5 text-sm text-sim-text font-share-tech tracking-wide placeholder-sim-muted/50 focus:outline-none transition-all border ${focused ? 'border-sim-accent/70 bg-sim-surface/80' : 'border-sim-border'}`}
-          style={{ clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))' }}
+          className={`w-full bg-sim-bg/80 px-3 py-2 text-sim-text font-share-tech tracking-wide placeholder-sim-muted/50 focus:outline-none transition-all border ${focused ? 'border-sim-accent/70 bg-sim-surface/80' : 'border-sim-border'}`}
+          style={{ fontSize: 16, clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))' }}
         />
         {focused && (
           <>
@@ -179,16 +179,16 @@ function HudInput({ label, type, value, onChange, placeholder, maxLength }: any)
 
 /* ── Status indicators ────────────────────────────────────── */
 const STATUS = [
-  { label: 'CORE SYSTEMS', ok: true },
-  { label: 'PHYSICS ENGINE', ok: true },
-  { label: 'GENOME MATRIX', ok: true },
-  { label: 'NEURAL NET', ok: true },
+  { label: 'CORE SYSTEMS',  labelTr: 'ÇEKİRDEK SİSTEMLER', ok: true },
+  { label: 'PHYSICS ENGINE', labelTr: 'FİZİK MOTORU',       ok: true },
+  { label: 'GENOME MATRIX', labelTr: 'GENOM MATRİSİ',       ok: true },
+  { label: 'NEURAL NET',    labelTr: 'SİNİR AĞI',           ok: true },
 ];
 
 /* ── Main Login Component ─────────────────────────────────── */
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { setUser, lang, toggleLang } = useSimStore();
+  const { setUser, lang } = useSimStore();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [form, setForm] = useState({ user_code: '', reg_user_code: '', first_name: '', last_name: '', tc_no: '', email: '', password: '' });
   const [error, setError] = useState('');
@@ -196,11 +196,22 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [booted, setBooted] = useState(false);
   const [pendingCode, setPendingCode] = useState('');
-  const contentRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ lat: string; lon: string } | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const f = (k: string) => (e: any) => setForm(p => ({ ...p, [k]: e.target.value }));
 
   useEffect(() => { const t = setTimeout(() => setBooted(true), 400); return () => clearTimeout(t); }, []);
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      pos => setCoords({
+        lat: `${Math.abs(pos.coords.latitude).toFixed(4)}°${pos.coords.latitude >= 0 ? 'N' : 'S'}`,
+        lon: `${Math.abs(pos.coords.longitude).toFixed(4)}°${pos.coords.longitude >= 0 ? 'E' : 'W'}`,
+      }),
+      () => {} // permission denied → keep default
+    );
+  }, []);
 
   useEffect(() => {
     if (!pendingCode) return;
@@ -221,19 +232,6 @@ export default function LoginPage() {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [pendingCode, lang]);
 
-  useEffect(() => {
-    function fitToViewport() {
-      const el = contentRef.current;
-      if (!el) return;
-      el.style.zoom = '1';
-      const available = window.innerHeight - 16;
-      const needed = el.scrollHeight;
-      if (needed > available) el.style.zoom = String(available / needed);
-    }
-    fitToViewport();
-    window.addEventListener('resize', fitToViewport);
-    return () => window.removeEventListener('resize', fitToViewport);
-  }, [booted, mode, error, success]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -263,7 +261,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative h-screen overflow-hidden flex flex-col items-center justify-center bg-[#030310] scanlines">
+    <div className="relative min-h-screen overflow-y-auto flex flex-col items-center justify-center bg-[#030310] scanlines">
       {/* Backgrounds */}
       <StarField />
       <HexGrid />
@@ -275,33 +273,28 @@ export default function LoginPage() {
       <div className="fixed w-64 h-64 rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%)', bottom: '20%', right: '25%', filter: 'blur(30px)' }} />
 
-      {/* Lang toggle */}
-      <button onClick={toggleLang}
-        className="fixed top-5 right-5 px-3 py-1.5 text-xs font-share-tech tracking-widest border border-sim-border hover:border-sim-accent/60 hover:text-sim-accent text-sim-muted transition-all z-20"
-        style={{ clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))' }}>
-        {lang === 'en' ? 'TR' : 'EN'}
-      </button>
+
 
       {/* System status top-left */}
       <div className="fixed top-5 left-5 z-20 space-y-1 hidden sm:block">
         {STATUS.map((s, i) => (
           <div key={s.label} className="flex items-center gap-2 boot-in" style={{ animationDelay: `${i * 120}ms` }}>
             <div className={`w-1.5 h-1.5 rounded-full ${s.ok ? 'bg-sim-green pulse-live' : 'bg-sim-red'}`} />
-            <span className="text-xs font-share-tech text-sim-muted/70 tracking-widest">{s.label}</span>
+            <span className="text-xs font-share-tech tracking-widest" style={{ color: '#c0c8e8' }}>{lang === 'tr' ? s.labelTr : s.label}</span>
             <span className={`text-xs font-share-tech ${s.ok ? 'text-sim-green' : 'text-sim-red'}`}>{s.ok ? 'OK' : 'ERR'}</span>
           </div>
         ))}
       </div>
 
       {/* Coordinate display bottom */}
-      <div className="fixed bottom-5 left-5 z-20 font-share-tech text-xs text-sim-muted/50 tracking-widest hidden sm:block">
-        <div>LAT: 39.9334°N · LON: 32.8597°E</div>
+      <div className="fixed bottom-5 left-5 z-20 font-share-tech text-xs tracking-widest hidden sm:block" style={{ color: '#c0c8e8' }}>
+        <div>LAT: {coords?.lat ?? '39.9334°N'} · LON: {coords?.lon ?? '32.8597°E'}</div>
         <div className="mt-0.5">SYS: ANATOLİA-SIM v1.0 · BUILD 2026</div>
       </div>
 
       {/* Main content */}
       {booted && (
-        <div ref={contentRef} className="z-10 flex flex-col items-center warp-in w-full px-4 py-2">
+        <div className="z-10 flex flex-col items-center warp-in w-full px-4 py-8">
           {/* Logo area with rings */}
           <div className="relative w-28 h-28 flex items-center justify-center mb-4">
             <LogoRings />
@@ -319,27 +312,27 @@ export default function LoginPage() {
           {/* Title */}
           <div className="text-center mb-2">
             <h1
-              className="glitch-text font-orbitron text-2xl sm:text-3xl font-bold tracking-[0.2em] flicker"
+              className="glitch-text font-orbitron text-2xl sm:text-3xl font-bold tracking-[0.2em] text-white flicker"
               data-text="ANATOLİA-SİM"
-              style={{ color: '#4f9ef7', textShadow: '0 0 20px rgba(79,158,247,0.6), 0 0 40px rgba(79,158,247,0.3)' }}
+              style={{ textShadow: '0 0 20px rgba(79,110,247,0.6), 0 0 40px rgba(79,110,247,0.3)' }}
             >
               ANATOLİA-SİM
             </h1>
-            <p className="font-share-tech text-xs tracking-[0.4em] mt-1 text-in"
-              style={{ animationDelay: '200ms', color: '#4f9ef7' }}>
+            <p className="font-share-tech tracking-[0.4em] text-sim-accent mt-1 text-in"
+              style={{ animationDelay: '200ms', fontSize: 18 }}>
               {lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}
             </p>
           </div>
 
           {/* Separator line */}
-          <div className="flex items-center gap-3 my-3 w-80 max-w-full">
+          <div className="flex items-center gap-3 my-3 w-[460px] max-w-full">
             <div className="flex-1 h-px bg-gradient-to-r from-transparent to-sim-accent/40" />
             <div className="w-1.5 h-1.5 rotate-45 bg-sim-accent/60" />
             <div className="flex-1 h-px bg-gradient-to-l from-transparent to-sim-accent/40" />
           </div>
 
           {/* Form panel */}
-          <div className="w-80 max-w-full hud-panel relative boot-in" style={{ animationDelay: '300ms', padding: '24px 20px' }}>
+          <div className="w-[460px] max-w-full hud-panel relative boot-in" style={{ animationDelay: '300ms', padding: '22px 28px' }}>
             <span className="hud-corner-tr" />
             <span className="hud-corner-bl" />
 
@@ -347,18 +340,19 @@ export default function LoginPage() {
             <div className="absolute -top-px left-6 right-6 flex items-center justify-center">
               <div className="bg-[#030310] px-3 flex items-center gap-2">
                 <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
-                <span className="font-share-tech text-xs text-sim-accent/80 tracking-[0.3em]">
-                  {mode === 'login' ? 'IDENTITY VERIFICATION' : 'ACCOUNT CREATION'}
+                <span className="font-share-tech text-sim-accent tracking-[0.1em] sm:tracking-[0.3em]" style={{ fontSize: 'clamp(11px, 3.8vw, 18px)' }}>
+                  {mode === 'login' ? (lang === 'tr' ? 'KİMLİK DOĞRULAMA' : 'IDENTITY VERIFICATION') : (lang === 'tr' ? 'HESAP OLUŞTURMA' : 'ACCOUNT CREATION')}
                 </span>
                 <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
               </div>
             </div>
 
             {/* Mode toggle */}
-            <div className="flex gap-1 mb-4 mt-2">
+            <div className="flex gap-1 mb-3 mt-2">
               {(['login', 'register'] as const).map(m => (
                 <button key={m} type="button" onClick={() => setMode(m)}
-                  className={`flex-1 py-2 text-xs font-share-tech tracking-widest uppercase transition-all border ${
+                  style={{ fontSize: 16 }}
+                  className={`flex-1 py-2.5 font-share-tech tracking-widest uppercase transition-all border ${
                     mode === m
                       ? 'bg-sim-accent/20 border-sim-accent/60 text-sim-accent shadow-neon-sm'
                       : 'border-sim-border/50 text-sim-muted hover:border-sim-accent/30 hover:text-sim-text'
@@ -370,7 +364,7 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit}>
               {mode === 'register' ? (<>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-1.5">
                   <HudInput label={lang === 'en' ? 'First Name' : 'Ad'} type="text"
                     value={form.first_name} onChange={f('first_name')} placeholder="AD" />
                   <HudInput label={lang === 'en' ? 'Last Name' : 'Soyad'} type="text"
@@ -380,7 +374,7 @@ export default function LoginPage() {
                   value={form.reg_user_code}
                   onChange={(e: any) => setForm(p => ({ ...p, reg_user_code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') }))}
                   placeholder="ANSYZ0001" />
-                <p className="font-share-tech text-sim-muted/40 tracking-wide -mt-2 mb-2" style={{ fontSize: 9 }}>
+                <p className="font-share-tech tracking-wide -mt-1 mb-1.5" style={{ fontSize: 12, color: '#6a8a9a' }}>
                   {lang === 'en' ? '4-20 chars · letters & numbers only' : '4-20 karakter · harf ve rakam'}
                 </p>
                 <HudInput label="TC KİMLİK NO" type="text" maxLength={11}
@@ -389,10 +383,10 @@ export default function LoginPage() {
                   value={form.email} onChange={f('email')} placeholder="user@domain.com" />
                 <HudInput label={lang === 'en' ? 'Password' : 'ŞİFRE'} type="password"
                   value={form.password} onChange={f('password')} placeholder="••••••••" />
-                <p className="font-share-tech text-sim-muted/40 tracking-wide mb-3" style={{ fontSize: 9 }}>
+                <p className="font-share-tech tracking-wide mb-2" style={{ fontSize: 12, color: '#6a8a9a' }}>
                   {lang === 'en'
-                    ? 'Min 8 chars · uppercase · lowercase · number · symbol'
-                    : 'Min 8 karakter · büyük harf · küçük harf · rakam · özel karakter'}
+                    ? 'Min 8 chars · upper · lower · number · symbol'
+                    : 'Min 8 karakter · büyük · küçük · rakam · sembol'}
                 </p>
               </>) : (<>
                 <HudInput label={lang === 'en' ? 'User Code' : 'KULLANICI KODU'} type="text"
@@ -402,19 +396,20 @@ export default function LoginPage() {
               </>)}
 
               {error && (
-                <div className="mb-3 px-3 py-2 border-l-2 border-sim-red bg-sim-red/10 text-xs font-share-tech text-sim-red tracking-wide">
+                <div className="mb-3 px-3 py-2 border-l-2 border-sim-red bg-sim-red/10 font-share-tech text-sim-red tracking-wide" style={{ fontSize: 14 }}>
                   ⚠ {error}
                 </div>
               )}
               {success && (
-                <div className="mb-3 px-3 py-2 border-l-2 border-sim-green bg-sim-green/10 text-xs font-share-tech text-sim-green tracking-wide">
+                <div className="mb-3 px-3 py-2 border-l-2 border-sim-green bg-sim-green/10 font-share-tech text-sim-green tracking-wide" style={{ fontSize: 14 }}>
                   ✓ {success}
                 </div>
               )}
 
               <button type="submit" disabled={loading}
-                className="w-full py-3 font-orbitron text-sm font-semibold tracking-[0.2em] text-white transition-all disabled:opacity-40 neon-breathe relative overflow-hidden"
+                className="w-full py-3.5 font-orbitron font-semibold tracking-[0.2em] text-white transition-all disabled:opacity-40 neon-breathe relative overflow-hidden"
                 style={{
+                  fontSize: 18,
                   background: loading ? 'rgba(79,110,247,0.3)' : 'linear-gradient(135deg, rgba(79,110,247,0.35) 0%, rgba(79,110,247,0.2) 100%)',
                   border: '1px solid rgba(79,110,247,0.6)',
                   clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))',
@@ -434,8 +429,13 @@ export default function LoginPage() {
           </div>
 
           {/* Footer */}
-          <p className="font-share-tech text-xs text-sim-muted/40 mt-6 mb-2 tracking-widest text-in" style={{ animationDelay: '600ms' }}>
-            BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026
+          <p className="font-share-tech text-xs text-sim-muted mt-6 mb-2 tracking-widest text-in text-center px-4" style={{ animationDelay: '600ms', lineHeight: 1.6 }}>
+            <span className="hidden sm:inline">
+              {lang === 'tr' ? 'BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026' : 'BOLD MILITARY TECHNOLOGY AND DEFENSE INDUSTRIES INC. © 2026'}
+            </span>
+            <span className="sm:hidden">
+              {lang === 'tr' ? <>BOLD ASKERİ TEKNOLOJİ<br />VE SAVUNMA SANAYİ A.Ş. © 2026</> : <>BOLD MILITARY TECHNOLOGY<br />AND DEFENSE INDUSTRIES INC. © 2026</>}
+            </span>
           </p>
         </div>
       )}

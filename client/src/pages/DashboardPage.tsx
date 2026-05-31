@@ -1,383 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Globe, Plus, Play, LogOut, BarChart2, Trash2 } from 'lucide-react';
+import { Globe, Plus, Play, LogOut, BarChart2, Trash2, X } from 'lucide-react';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
-import AriaButton from '../components/layout/AriaButton';
-import LangToggle from '../components/layout/LangToggle';
+import SimCreationWizard from '../components/SimCreationWizard';
 
-// ── localStorage persistence ──────────────────────────────────────────────────
-const STORAGE_KEY = 'anatolia_founders_v4';
-function saveState(form: any, f1: any, f2: any) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ form, founder1: f1, founder2: f2 })); } catch {}
-}
-function loadState(): { form?: any; founder1?: any; founder2?: any } | null {
-  try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : null; } catch { return null; }
-}
-
-// ── Helpers: height ↔ cm, weight ↔ metabolism ────────────────────────────────
-// Server formula: height_cm = 150 + height_factor * 45  (range 150–195 cm)
-const toCm  = (v: number) => Math.round(150 + Math.max(0, Math.min(1, v)) * 45);
-const fromCm = (cm: number) => Math.max(0, Math.min(1, (cm - 150) / 45));
-// weight_kg = (height_cm/100)^2 * (19 + metabolism * 8)
-const toKg  = (heightVal: number, metabVal: number) => {
-  const h = toCm(heightVal) / 100;
-  return Math.round(h * h * (19 + Math.max(0, Math.min(1, metabVal)) * 8));
-};
-const fromKg = (kg: number, heightVal: number) => {
-  const h = toCm(heightVal) / 100;
-  return Math.max(0, Math.min(1, (kg / (h * h) - 19) / 8));
-};
-
-// ── Trait definitions ────────────────────────────────────────────────────────
-const TRAIT_GROUPS = [
-  {
-    group: 'Zihin', groupEn: 'Mind',
-    traits: [
-      { id: 'fluid_intelligence', label: 'Zeka',            labelEn: 'Intelligence',      color: '#7c3aed' },
-      { id: 'curiosity',          label: 'Merak',           labelEn: 'Curiosity',         color: '#f59e0b' },
-      { id: 'conscientiousness',  label: 'Disiplin',        labelEn: 'Discipline',        color: '#3b82f6' },
-      { id: 'language_capacity',  label: 'Dil Yeteneği',    labelEn: 'Language',          color: '#14b8a6' },
-      { id: 'artistic_sense',     label: 'Sanat Duygusu',   labelEn: 'Art Sense',         color: '#f97316' },
-      { id: 'self_awareness',     label: 'Öz Farkındalık',  labelEn: 'Self Awareness',    color: '#8b5cf6' },
-      { id: 'stress_resilience',  label: 'Stres Direnci',   labelEn: 'Stress Resilience', color: '#10b981' },
-      { id: 'learning_rate',      label: 'Öğrenme Hızı',    labelEn: 'Learning Rate',     color: '#818cf8' },
-      { id: 'risk_tolerance',     label: 'Risk Toleransı',  labelEn: 'Risk Tolerance',    color: '#fb7185' },
-      { id: 'innovation',         label: 'İnovasyon',       labelEn: 'Innovation',        color: '#e879f9' },
-    ],
-  },
-  {
-    group: 'Sosyal', groupEn: 'Social',
-    traits: [
-      { id: 'empathy',        label: 'Empati',           labelEn: 'Empathy',           color: '#ec4899' },
-      { id: 'social_bonding', label: 'Sosyal Bağ',       labelEn: 'Social Bonding',    color: '#f472b6' },
-      { id: 'aggression',     label: 'Saldırganlık',     labelEn: 'Aggression',        color: '#ef4444' },
-      { id: 'cooperation',    label: 'İşbirliği',        labelEn: 'Cooperation',       color: '#34d399' },
-      { id: 'dominance',      label: 'Liderlik Eğilimi', labelEn: 'Leadership Drive',  color: '#fb923c' },
-    ],
-  },
-  {
-    group: 'Beden', groupEn: 'Body',
-    traits: [
-      { id: 'height',            label: 'Boy',             labelEn: 'Height',           color: '#06b6d4' },
-      { id: 'metabolism',        label: 'Metabolizma',     labelEn: 'Metabolism',       color: '#a855f7' },
-      { id: 'physical_strength', label: 'Fiziksel Güç',    labelEn: 'Physical Strength',color: '#fb923c' },
-      { id: 'endurance',         label: 'Dayanıklılık',    labelEn: 'Endurance',        color: '#fbbf24' },
-      { id: 'immune_strength',   label: 'Bağışıklık',      labelEn: 'Immunity',         color: '#22c55e' },
-      { id: 'fertility',         label: 'Üreme Dürtüsü',   labelEn: 'Fertility Drive',  color: '#f43f5e' },
-      { id: 'longevity',         label: 'Uzun Ömür',       labelEn: 'Longevity',        color: '#84cc16' },
-    ],
-  },
+const LANGUAGES = [
+  { code: 'en' as const, label: 'English',   beta: false },
+  { code: 'tr' as const, label: 'Türkçe',    beta: false },
+  { code: 'de' as const, label: 'Deutsch',   beta: true  },
+  { code: 'fr' as const, label: 'Français',  beta: true  },
+  { code: 'ar' as const, label: 'العربية',   beta: true  },
 ];
-
-const EYE_OPTIONS: { value: string; label: string; labelTr: string; color: string }[] = [
-  { value: 'brown', label: 'Brown',  labelTr: 'Kahverengi', color: '#6b3a1f' },
-  { value: 'hazel', label: 'Hazel',  labelTr: 'Ela',        color: '#8b6914' },
-  { value: 'green', label: 'Green',  labelTr: 'Yeşil',      color: '#2d6a2d' },
-  { value: 'blue',  label: 'Blue',   labelTr: 'Mavi',       color: '#1a5276' },
-];
-const HAIR_OPTIONS: { value: string; label: string; labelTr: string; color: string }[] = [
-  { value: 'black', label: 'Black', labelTr: 'Siyah', color: '#111' },
-  { value: 'dark',  label: 'Dark',  labelTr: 'Koyu',  color: '#2c1810' },
-  { value: 'brown', label: 'Brown', labelTr: 'Kahve', color: '#5c3317' },
-  { value: 'light', label: 'Light', labelTr: 'Açık',  color: '#c68642' },
-  { value: 'blond', label: 'Blond', labelTr: 'Sarı',  color: '#d4a017' },
-  { value: 'red',   label: 'Red',   labelTr: 'Kızıl', color: '#8b2500' },
-];
-const SKIN_OPTIONS: { value: string; label: string; labelTr: string; color: string }[] = [
-  { value: 'fair',  label: 'Fair',  labelTr: 'Açık',   color: '#fde8d0' },
-  { value: 'light', label: 'Light', labelTr: 'Bej',    color: '#f5c9a0' },
-  { value: 'olive', label: 'Olive', labelTr: 'Buğday', color: '#c68642' },
-  { value: 'tan',   label: 'Tan',   labelTr: 'Bronz',  color: '#a0614a' },
-  { value: 'brown', label: 'Brown', labelTr: 'Esmer',  color: '#7b4a2d' },
-  { value: 'dark',  label: 'Dark',  labelTr: 'Koyu',   color: '#3d1f0d' },
-];
-
-const ALL_TRAITS = TRAIT_GROUPS.flatMap(g => g.traits);
-const TRAIT_DEFAULTS = Object.fromEntries(ALL_TRAITS.map(t => [t.id, 0.5]));
-
-const founderDefaults = (sex: 'male' | 'female') => ({
-  name: sex === 'male' ? 'Alp Anatol' : 'Ayla Anatol',
-  ageYears: sex === 'male' ? 22 : 20,
-  eye_color: 'brown',
-  hair_color: sex === 'male' ? 'dark' : 'brown',
-  skin_tone: 'olive',
-  ...TRAIT_DEFAULTS,
-  fluid_intelligence: 0.68,
-  curiosity:          0.60,
-  conscientiousness:  0.72,
-  language_capacity:  0.55,
-  artistic_sense:     0.50,
-  self_awareness:     0.55,
-  stress_resilience:  0.65,
-  empathy:            0.60,
-  social_bonding:     0.75,
-  aggression:         0.35,
-  cooperation:        0.72,
-  dominance:          0.50,
-  physical_strength:  0.72,
-  endurance:          0.70,
-  immune_strength:    0.74,
-  fertility:          0.80,
-  longevity:          0.68,
-  learning_rate:      0.65,
-  risk_tolerance:     0.45,
-  innovation:         0.55,
-  height: sex === 'male' ? 0.56 : 0.44,
-  metabolism: 0.45,
-});
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-function TraitSlider({ id, label, labelEn, color, value, onChange, lang }: any) {
-  const displayValue = id === 'height'
-    ? `${toCm(value)} cm`
-    : `${(value * 100).toFixed(0)}%`;
-
-  return (
-    <div className="mb-2">
-      <div className="flex justify-between mb-0.5">
-        <span style={{ fontSize: 9, color: '#7080a0', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.08em' }}>
-          {lang === 'tr' ? label : labelEn}
-        </span>
-        <span style={{ fontSize: 9, color, fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
-          {displayValue}
-        </span>
-      </div>
-      <div className="relative h-1.5" style={{ background: 'rgba(10,10,30,0.9)', border: `1px solid ${color}30` }}>
-        <div className="absolute inset-y-0 left-0 transition-all duration-200"
-          style={{ width: `${value * 100}%`, background: `linear-gradient(90deg, ${color}50, ${color})`, boxShadow: `0 0 6px ${color}50` }} />
-        <input type="range" min="0" max="1" step="0.01" value={value}
-          onChange={e => onChange(id, parseFloat(e.target.value))}
-          className="absolute inset-0 w-full opacity-0 cursor-pointer" style={{ height: '100%' }} />
-      </div>
-    </div>
-  );
-}
-
-function ColorChips({ options, value, onChange }: { options: typeof EYE_OPTIONS; value: string; onChange: (v: string) => void }) {
-  return (
-    <div className="flex flex-wrap gap-1">
-      {options.map(opt => (
-        <button key={opt.value} onClick={() => onChange(opt.value)} title={opt.label}
-          style={{
-            width: 20, height: 20, borderRadius: 2, background: opt.color,
-            border: value === opt.value ? '2px solid #a0b4ff' : '2px solid transparent',
-            boxShadow: value === opt.value ? '0 0 6px #a0b4ff80' : 'none',
-            flexShrink: 0,
-          }} />
-      ))}
-    </div>
-  );
-}
-
-const inputStyle: React.CSSProperties = {
-  width: '100%', background: 'rgba(5,5,20,0.9)', border: '1px solid rgba(79,110,247,0.2)',
-  padding: '4px 8px', fontSize: 11, color: '#c0d0f0', fontFamily: 'Share Tech Mono, monospace', outline: 'none',
-};
-
-function UnitInput({ label, value, unit, min, max, onChange, color = '#c0d0f0' }: {
-  label: string; value: number; unit: string; min: number; max: number; onChange: (v: number) => void; color?: string;
-}) {
-  // Local raw string while user is typing — only committed on blur
-  const [raw, setRaw] = useState(String(value));
-
-  // Sync when parent value changes (e.g., linked slider moves)
-  useEffect(() => { setRaw(String(value)); }, [value]);
-
-  function commit(str: string) {
-    const v = parseInt(str, 10);
-    if (!isNaN(v)) {
-      const clamped = Math.max(min, Math.min(max, v));
-      onChange(clamped);
-      setRaw(String(clamped));
-    } else {
-      setRaw(String(value)); // revert to last valid value
-    }
-  }
-
-  return (
-    <div>
-      <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono', letterSpacing: '0.1em' }}>{label}</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        <input
-          type="number" min={min} max={max}
-          value={raw}
-          onChange={e => setRaw(e.target.value)}
-          onBlur={() => commit(raw)}
-          onKeyDown={e => { if (e.key === 'Enter') commit((e.target as HTMLInputElement).value); }}
-          style={{ ...inputStyle, flex: 1, color }}
-        />
-        <span style={{ fontSize: 9, color: '#5060a0', fontFamily: 'Share Tech Mono', flexShrink: 0 }}>{unit}</span>
-      </div>
-    </div>
-  );
-}
-
-function FounderCard({ title, sex, data, onChange, lang }: {
-  title: string; sex: string; data: any; onChange: (k: string, v: any) => void; lang: string;
-}) {
-  const accentColor = sex === 'male' ? '#4f9ef7' : '#ec4899';
-  const heightCm = toCm(data.height ?? 0.5);
-  const weightKg = toKg(data.height ?? 0.5, data.metabolism ?? 0.5);
-
-  const sec = (label: string) => (
-    <div style={{ fontSize: 8, color: '#3a5070', letterSpacing: '0.2em', marginBottom: 6, fontFamily: 'Share Tech Mono' }}>
-      {label}
-    </div>
-  );
-
-  return (
-    <div style={{ background: 'rgba(4,4,15,0.95)', border: `1px solid ${accentColor}30` }}>
-      {/* Header */}
-      <div className="px-3 py-2 flex items-center gap-2" style={{ borderBottom: `1px solid ${accentColor}20`, background: `${accentColor}08` }}>
-        <div className="w-1.5 h-4" style={{ background: accentColor, boxShadow: `0 0 6px ${accentColor}` }} />
-        <span style={{ fontSize: 10, color: accentColor, fontFamily: 'Orbitron, monospace', fontWeight: 700, letterSpacing: '0.15em' }}>
-          {title}
-        </span>
-      </div>
-
-      <div className="p-3 space-y-3">
-        {/* ── KİMLİK ── */}
-        <div>
-          {sec(lang === 'tr' ? '── KİMLİK ──' : '── IDENTITY ──')}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="col-span-2">
-              <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'İSİM' : 'NAME'}</div>
-              <input value={data.name ?? ''} onChange={e => onChange('name', e.target.value)} style={inputStyle} />
-            </div>
-            <div>
-              <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'YAŞ' : 'AGE'}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <input type="number" min="15" max="65" value={data.ageYears ?? 20}
-                  onChange={e => onChange('ageYears', parseInt(e.target.value || '20', 10))}
-                  style={{ ...inputStyle, flex: 1 }} />
-                <span style={{ fontSize: 9, color: '#5060a0', fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'yaş' : 'yr'}</span>
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 3, fontFamily: 'Share Tech Mono' }}>{lang === 'tr' ? 'CİNSİYET' : 'SEX'}</div>
-              <div style={{ padding: '4px 8px', fontSize: 11, color: accentColor, fontFamily: 'Share Tech Mono', border: `1px solid ${accentColor}30`, background: `${accentColor}08` }}>
-                {sex === 'male' ? (lang === 'tr' ? 'ERKEK' : 'MALE') : (lang === 'tr' ? 'KADIN' : 'FEMALE')}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── BEDENSEL ÖLÇÜLER ── */}
-        <div>
-          {sec(lang === 'tr' ? '── BEDENSEL ÖLÇÜLER ──' : '── MEASUREMENTS ──')}
-          <div className="grid grid-cols-2 gap-2">
-            <UnitInput
-              label={lang === 'tr' ? 'BOY' : 'HEIGHT'}
-              value={heightCm} unit="cm" min={145} max={200} color="#06b6d4"
-              onChange={cm => onChange('height', fromCm(cm))}
-            />
-            <UnitInput
-              label={lang === 'tr' ? 'KİLO' : 'WEIGHT'}
-              value={weightKg} unit="kg" min={40} max={130} color="#a855f7"
-              onChange={kg => onChange('metabolism', fromKg(kg, data.height ?? 0.5))}
-            />
-          </div>
-          {/* BMI preview */}
-          {(() => {
-            const bmi = weightKg / ((heightCm / 100) ** 2);
-            const bmiLabel = bmi < 18.5 ? (lang === 'tr' ? 'Zayıf' : 'Underweight')
-              : bmi < 25 ? (lang === 'tr' ? 'Normal' : 'Normal')
-              : bmi < 30 ? (lang === 'tr' ? 'Fazla Kilolu' : 'Overweight')
-              : (lang === 'tr' ? 'Obez' : 'Obese');
-            const bmiColor = bmi < 18.5 ? '#7dd3fc' : bmi < 25 ? '#4ecb71' : bmi < 30 ? '#f59e0b' : '#ef4444';
-            return (
-              <div style={{ marginTop: 4, fontSize: 8, color: '#3a5070', fontFamily: 'Share Tech Mono', display: 'flex', gap: 8 }}>
-                <span>BMI: <span style={{ color: bmiColor, fontFamily: 'Orbitron, monospace' }}>{bmi.toFixed(1)}</span></span>
-                <span style={{ color: bmiColor }}>{bmiLabel}</span>
-              </div>
-            );
-          })()}
-        </div>
-
-        {/* ── DIŞ GÖRÜNÜŞ ── */}
-        <div>
-          {sec(lang === 'tr' ? '── DIŞ GÖRÜNÜŞ ──' : '── APPEARANCE ──')}
-          <div className="space-y-2">
-            {[
-              { key: 'eye_color',  label: lang === 'tr' ? 'GÖZ RENGİ'  : 'EYE COLOR',  opts: EYE_OPTIONS  },
-              { key: 'hair_color', label: lang === 'tr' ? 'SAÇ RENGİ'  : 'HAIR COLOR', opts: HAIR_OPTIONS },
-              { key: 'skin_tone',  label: lang === 'tr' ? 'TEN RENGİ'  : 'SKIN TONE',  opts: SKIN_OPTIONS },
-            ].map(({ key, label, opts }) => (
-              <div key={key}>
-                <div style={{ fontSize: 8, color: '#5060a0', marginBottom: 4, fontFamily: 'Share Tech Mono' }}>
-                  {label}&nbsp;
-                  <span style={{ color: '#8090c0' }}>— {opts.find(o => o.value === data[key])?.[lang === 'tr' ? 'labelTr' : 'label']}</span>
-                </div>
-                <ColorChips options={opts} value={data[key]} onChange={v => onChange(key, v)} />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── GENETİK ÖZELLİKLER ── */}
-        {TRAIT_GROUPS.map(group => (
-          <div key={group.group}>
-            {sec(lang === 'tr' ? `── ${group.group.toUpperCase()} ──` : `── ${group.groupEn.toUpperCase()} ──`)}
-            {group.traits
-              .filter(t => t.id !== 'height' && t.id !== 'metabolism')
-              .map(t => (
-                <TraitSlider key={t.id} {...t} value={data[t.id] ?? 0.5} onChange={onChange} lang={lang} />
-              ))}
-            {/* Height slider shows cm; metabolism slider stays (weight input is the primary control) */}
-            {group.group === 'Beden' && (
-              <>
-                <TraitSlider
-                  id="height" label="Boy (ince ayar)" labelEn="Height (fine tune)"
-                  color="#06b6d4" value={data.height ?? 0.5} onChange={onChange} lang={lang}
-                />
-                <TraitSlider
-                  id="metabolism" label="Metabolizma" labelEn="Metabolism"
-                  color="#a855f7" value={data.metabolism ?? 0.5} onChange={onChange} lang={lang}
-                />
-              </>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { user, accessToken, logout, lang } = useSimStore();
-  const [sims, setSims] = useState<any[]>([]);
-  const [showNew, setShowNew] = useState(false);
+  const { user, accessToken, logout, lang, setLang } = useSimStore();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPage, setMenuPage] = useState<'about' | 'mission' | 'contact' | 'language' | null>(null);
+  const [sims, setSims]             = useState<any[]>([]);
+  const [showNew, setShowNew]       = useState(false);
   const [compareMode, setCompareMode] = useState(false);
-
-  // ── State with localStorage persistence ──────────────────────────────────
-  const [form, setForm] = useState<{ name: string; latitude: string; longitude: string }>(() => {
-    const s = loadState();
-    return { name: '', latitude: s?.form?.latitude ?? '39.9334', longitude: s?.form?.longitude ?? '32.8597' };
-  });
-  const [founder1, setFounder1] = useState<any>(() => {
-    const s = loadState();
-    return s?.founder1 ? { ...founderDefaults('male'), ...s.founder1 } : founderDefaults('male');
-  });
-  const [founder2, setFounder2] = useState<any>(() => {
-    const s = loadState();
-    return s?.founder2 ? { ...founderDefaults('female'), ...s.founder2 } : founderDefaults('female');
-  });
-
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading]       = useState(false);
   const headers = { Authorization: `Bearer ${accessToken}` };
 
-  // Persist to localStorage on any change
-  useEffect(() => {
-    saveState({ latitude: form.latitude, longitude: form.longitude }, founder1, founder2);
-  }, [form.latitude, form.longitude, founder1, founder2]);
-
   useEffect(() => { axios.get('/api/simulations', { headers }).then(r => setSims(r.data)); }, []);
-
-  function makeSetter(setter: any) {
-    return (key: string, value: any) => setter((prev: any) => ({ ...prev, [key]: value }));
-  }
 
   async function deleteSim(id: string, name: string) {
     if (!confirm(lang === 'en' ? `Delete "${name}"? This cannot be undone.` : `"${name}" silinsin mi? Bu işlem geri alınamaz.`)) return;
@@ -387,7 +34,7 @@ export default function DashboardPage() {
     } catch { alert(lang === 'en' ? 'Delete failed.' : 'Silme başarısız.'); }
   }
 
-  async function createSim() {
+  async function createSim(form: any, founder1: any, founder2: any) {
     setLoading(true);
     try {
       const { data } = await axios.post('/api/simulations', {
@@ -399,7 +46,6 @@ export default function DashboardPage() {
       }, { headers });
       setSims(s => [data, ...s]);
       setShowNew(false);
-      setForm(f => ({ ...f, name: '' })); // Only reset name, keep coords + genetics
     } finally { setLoading(false); }
   }
 
@@ -416,22 +62,24 @@ export default function DashboardPage() {
       <div className="sticky top-0 z-10"
         style={{
           background: 'rgba(3,3,16,0.97)',
-          borderBottom: '1px solid rgba(79,110,247,0.3)',
+          borderBottom: '1px solid rgba(200,34,34,0.7)',
           backdropFilter: 'blur(20px)',
-          boxShadow: '0 2px 30px rgba(79,110,247,0.06)',
+          boxShadow: '0 2px 20px rgba(200,34,34,0.5), 0 0 8px rgba(200,34,34,0.3)',
         }}>
-        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-2 min-h-14 sm:min-h-16 flex flex-wrap items-center justify-between gap-2">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
+          {/* Brand */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className="relative w-7 h-7 flex items-center justify-center">
               <div className="absolute inset-0 rounded-full border border-sim-accent/50 neon-breathe" />
               <Globe size={14} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 4px rgba(79,158,247,0.8))' }} />
             </div>
             <div className="flex flex-col leading-none gap-0.5">
-              <span className="font-orbitron font-bold tracking-[0.2em]" style={{ fontSize: 'clamp(12px, 3.8vw, 18px)', color: '#4f9ef7', textShadow: '0 0 10px rgba(79,158,247,0.6)' }}>ANATOLİA-SİM</span>
-              <span className="font-share-tech tracking-[0.25em]" style={{ fontSize: 'clamp(10px, 3vw, 16px)', color: '#4f9ef7' }}>{lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}</span>
+              <span className="font-orbitron font-bold tracking-[0.2em]" style={{ fontSize: 'clamp(12px, 3.8vw, 18px)', color: '#e0e0f0' }}>ANATOLİA-SİM</span>
+              <span className="font-share-tech tracking-[0.25em]" style={{ fontSize: 'clamp(10px, 3vw, 16px)', color: '#cc2222' }}>{lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}</span>
             </div>
           </div>
 
+          {/* Right actions */}
           <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {runningCount > 0 && (
               <div className="hidden sm:flex items-center gap-2 px-3 py-1"
@@ -442,293 +90,327 @@ export default function DashboardPage() {
                 </span>
               </div>
             )}
-            <AriaButton />
-            <LangToggle />
-            <span className="font-share-tech text-sim-muted tracking-widest font-bold" style={{ fontSize: 14 }}>{user?.username?.toUpperCase()}</span>
+            <span className="hidden sm:block font-share-tech text-sim-muted tracking-widest font-bold" style={{ fontSize: 14 }}>{user?.username?.toUpperCase()}</span>
             <button onClick={() => { logout(); navigate('/login'); }}
               className="flex items-center gap-1 sm:gap-1.5 px-2 py-1 text-sim-muted hover:text-red-400 transition-colors"
-              style={{ fontFamily: 'Share Tech Mono,monospace', fontSize: 14, fontWeight: 700, letterSpacing: '0.1em' }}>
+              style={{ fontFamily:'Share Tech Mono,monospace', fontSize:14, fontWeight:700, letterSpacing:'0.1em' }}>
               <LogOut size={13} />
-              <span>ÇIKIŞ</span>
+              <span className="hidden sm:inline">ÇIKIŞ</span>
+            </button>
+            <button onClick={() => { setMenuOpen(true); setMenuPage(null); }}
+              className="flex items-center gap-1 font-share-tech transition-all hover:brightness-110"
+              style={{ padding: '5px 8px', fontSize: 13, border: '1px solid rgba(200,34,34,0.5)', color: '#9abaaa', background: 'transparent', letterSpacing: '0.08em' }}>
+              ☰<span className="hidden sm:inline ml-1" style={{ fontSize: 11 }}>MENÜ</span>
             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8 relative z-1">
+      <div className="max-w-5xl mx-auto px-3 sm:px-6 py-5 sm:py-8 relative z-1">
 
-        {/* Title row */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-1 h-5 bg-sim-accent" style={{ boxShadow: '0 0 8px rgba(79,110,247,0.8)' }} />
-              <h2 className="font-orbitron font-bold tracking-[0.15em] text-sim-text" style={{ fontSize: 16 }}>
-                {lang === 'en' ? 'SIMULATION REGISTRY' : 'SİMÜLASYON KAYITLARI'}
-              </h2>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {sims.length >= 2 && (
-              <button onClick={() => setCompareMode(c => !c)}
-                className="flex items-center gap-2 font-share-tech tracking-widest transition-all duration-150"
-                style={{
-                  padding: '6px 12px', fontSize: 10,
-                  background: compareMode ? 'rgba(79,110,247,0.2)' : 'rgba(22,22,58,0.6)',
-                  border: `1px solid ${compareMode ? 'rgba(79,110,247,0.5)' : 'rgba(79,110,247,0.15)'}`,
-                  color: compareMode ? '#a0b4ff' : '#6070a0',
-                  clipPath: 'polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px))',
-                }}>
-                <BarChart2 size={13} />
-                {lang === 'en' ? 'COMPARE' : 'KARŞILAŞTIR'}
-              </button>
-            )}
-            <button onClick={() => setShowNew(true)}
-              className="flex items-center gap-2 font-share-tech tracking-widest transition-all duration-150 hover:brightness-110"
-              style={{
-                padding: '6px 14px', fontSize: 10,
-                background: 'rgba(79,110,247,0.2)',
-                border: '1px solid rgba(79,110,247,0.5)',
-                color: '#a0b4ff',
-                clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
-                boxShadow: '0 0 15px rgba(79,110,247,0.2)',
-              }}>
-              <Plus size={13} />
-              {lang === 'en' ? 'NEW SIMULATION' : 'YENİ SİMÜLASYON'}
-            </button>
-          </div>
-        </div>
-
-        {/* New simulation form */}
-        {showNew && (
-          <div className="mb-6 relative" style={{
-            background: 'rgba(4,4,15,0.97)',
-            border: '1px solid rgba(79,110,247,0.3)',
-            backdropFilter: 'blur(20px)',
-            animation: 'warp-in 0.4s cubic-bezier(0.2,0.8,0.4,1) both',
-          }}>
-            {/* Corner brackets */}
-            {[['top','left'],['top','right'],['bottom','left'],['bottom','right']].map(([v,h]) => (
-              <span key={v+h} style={{ position: 'absolute', [v]: -1, [h]: -1, width: 12, height: 12,
-                [`border${v.charAt(0).toUpperCase()+v.slice(1)}`]: '2px solid rgba(79,110,247,0.9)',
-                [`border${h.charAt(0).toUpperCase()+h.slice(1)}`]: '2px solid rgba(79,110,247,0.9)', zIndex: 2 }} />
-            ))}
-
-            <div className="p-4 border-b flex items-center gap-2" style={{ borderColor: 'rgba(79,110,247,0.2)' }}>
-              <div className="w-1 h-4 bg-sim-accent" style={{ boxShadow: '0 0 6px rgba(79,110,247,0.8)' }} />
-              <span className="font-orbitron text-xs font-semibold tracking-[0.2em] text-sim-accent">
-                {lang === 'en' ? 'NEW SIMULATION' : 'YENİ SİMÜLASYON'}
-              </span>
-              <span style={{ marginLeft: 'auto', fontSize: 8, color: '#3a5070', fontFamily: 'Share Tech Mono' }}>
-                {lang === 'tr' ? '// ayarlar otomatik kaydedilir' : '// settings auto-saved'}
-              </span>
-            </div>
-
-            <div className="p-5">
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="col-span-3">
-                  <label className="font-share-tech tracking-widest block mb-1.5" style={{ fontSize: 14, color: '#e0e0f0' }}>
-                    {lang === 'en' ? 'SIMULATION NAME' : 'SİMÜLASYON ADI'}
-                  </label>
-                  <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                    className="w-full text-sm focus:outline-none font-share-tech"
-                    style={{ background: 'rgba(7,7,26,0.9)', border: '1px solid rgba(79,110,247,0.25)', padding: '8px 12px', color: '#c0c8e8',
-                      clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))' }}
-                    onFocus={e => e.target.style.borderColor = 'rgba(79,110,247,0.7)'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(79,110,247,0.25)'}
-                  />
-                </div>
-                {[
-                  { key: 'latitude',  label: lang === 'en' ? 'LATITUDE'  : 'ENLEM'  },
-                  { key: 'longitude', label: lang === 'en' ? 'LONGITUDE' : 'BOYLAM' },
-                ].map(({ key, label }) => (
-                  <div key={key}>
-                    <label className="font-share-tech tracking-widest block mb-1.5" style={{ fontSize: 14, color: '#e0e0f0' }}>{label}</label>
-                    <input type="number" step="0.0001" value={(form as any)[key]}
-                      onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                      className="w-full text-sm focus:outline-none font-share-tech"
-                      style={{ background: 'rgba(7,7,26,0.9)', border: '1px solid rgba(79,110,247,0.25)', padding: '8px 12px', color: '#c0c8e8',
-                        clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))' }}
-                      onFocus={e => e.target.style.borderColor = 'rgba(79,110,247,0.7)'}
-                      onBlur={e => e.target.style.borderColor = 'rgba(79,110,247,0.25)'}
-                    />
-                  </div>
-                ))}
+        {/* Wizard overlay — shown instead of list when creating */}
+        {showNew ? (
+          <SimCreationWizard
+            lang={lang}
+            loading={loading}
+            onSubmit={createSim}
+            onExit={() => setShowNew(false)}
+          />
+        ) : (
+          <>
+            {/* Title row */}
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-5 sm:mb-8">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-5 bg-sim-accent" style={{ boxShadow: '0 0 8px rgba(79,110,247,0.8)' }} />
+                <h2 className="font-orbitron font-bold tracking-[0.12em] text-sim-text" style={{ fontSize: 'clamp(13px, 3.5vw, 16px)' }}>
+                  {lang === 'en' ? 'SIMULATION REGISTRY' : 'SİMÜLASYON KAYITLARI'}
+                </h2>
               </div>
 
-              {/* Founder genetics — scrollable section */}
-              <div style={{ fontSize: 9, color: '#3a5070', letterSpacing: '0.2em', fontFamily: 'Share Tech Mono', marginBottom: 10 }}>
-                {lang === 'tr' ? '// KURUCU GENETİĞİ' : '// FOUNDER GENETICS'}
-              </div>
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <FounderCard
-                  title={lang === 'tr' ? 'KURUCU 1 — ERKEK' : 'FOUNDER 1 — MALE'}
-                  sex="male" data={founder1} onChange={makeSetter(setFounder1)} lang={lang}
-                />
-                <FounderCard
-                  title={lang === 'tr' ? 'KURUCU 2 — KADIN' : 'FOUNDER 2 — FEMALE'}
-                  sex="female" data={founder2} onChange={makeSetter(setFounder2)} lang={lang}
-                />
-              </div>
-
-              <div className="flex gap-3">
-                <button onClick={createSim} disabled={loading || !form.name}
-                  className="font-share-tech tracking-widest transition-all duration-150 disabled:opacity-40"
+              <div className="flex items-center gap-2">
+                {sims.length >= 2 && (
+                  <button onClick={() => setCompareMode(c => !c)}
+                    className="flex items-center gap-1.5 font-share-tech tracking-widest transition-all duration-150"
+                    style={{
+                      padding: '7px 10px', fontSize: 'clamp(12px, 3vw, 14px)',
+                      background: compareMode ? 'rgba(79,110,247,0.2)' : 'rgba(22,22,58,0.6)',
+                      border: `1px solid ${compareMode ? 'rgba(79,110,247,0.5)' : 'rgba(79,110,247,0.15)'}`,
+                      color: '#e0e0f0',
+                      clipPath: 'polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px))',
+                    }}>
+                    <BarChart2 size={13} />
+                    <span className="hidden sm:inline">{lang === 'en' ? 'COMPARE' : 'KARŞILAŞTIR'}</span>
+                    <span className="sm:hidden">{lang === 'en' ? 'CMP' : 'KAR'}</span>
+                  </button>
+                )}
+                <button onClick={() => setShowNew(true)}
+                  className="flex items-center gap-1.5 font-share-tech tracking-widest transition-all duration-150 hover:brightness-110"
                   style={{
-                    padding: '7px 16px', fontSize: 10,
-                    background: 'rgba(79,110,247,0.25)', border: '1px solid rgba(79,110,247,0.5)', color: '#a0b4ff',
+                    padding: '7px 10px', fontSize: 'clamp(12px, 3vw, 14px)',
+                    background: 'rgba(79,110,247,0.2)',
+                    border: '1px solid rgba(79,110,247,0.5)',
+                    color: '#e0e0f0',
                     clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
                     boxShadow: '0 0 15px rgba(79,110,247,0.2)',
                   }}>
-                  {loading ? (lang === 'en' ? 'INITIALIZING…' : 'BAŞLATILIYOR…') : (lang === 'en' ? 'INITIALIZE' : 'BAŞLAT')}
-                </button>
-                <button onClick={() => setShowNew(false)}
-                  className="font-share-tech tracking-widest text-sim-muted hover:text-sim-text transition-colors"
-                  style={{
-                    padding: '7px 16px', fontSize: 10,
-                    background: 'rgba(22,22,58,0.5)', border: '1px solid rgba(79,110,247,0.15)',
-                    clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
-                  }}>
-                  {lang === 'en' ? 'ABORT' : 'İPTAL'}
+                  <Plus size={13} />
+                  <span className="hidden sm:inline">{lang === 'en' ? 'NEW SIMULATION' : 'YENİ SİMÜLASYON'}</span>
+                  <span className="sm:hidden">{lang === 'en' ? 'NEW' : 'YENİ'}</span>
                 </button>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Compare mode */}
-        {compareMode && sims.length >= 2 && (
-          <div className="mb-6 relative" style={{
-            background: 'rgba(4,4,15,0.97)', border: '1px solid rgba(79,110,247,0.2)', animation: 'boot-in 0.4s ease-out both',
-          }}>
-            <div className="px-4 py-2.5 border-b flex items-center gap-2" style={{ borderColor: 'rgba(79,110,247,0.15)' }}>
-              <BarChart2 size={13} className="text-sim-accent" />
-              <span className="font-orbitron text-xs font-semibold tracking-[0.2em] text-sim-accent">
-                {lang === 'en' ? 'PARALLEL COMPARISON' : 'PARALEL KARŞILAŞTIRMA'}
-              </span>
-            </div>
-            <div className="p-4 overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr>
-                    <th className="text-left pb-2 pr-4">
-                      <span className="font-share-tech tracking-widest" style={{ fontSize: 9, color: '#e0e0f0' }}>{lang === 'en' ? 'METRIC' : 'METRİK'}</span>
-                    </th>
-                    {sims.slice(0, 4).map(s => (
-                      <th key={s.id} className="text-left pb-2 pr-4">
-                        <span className="font-share-tech text-sim-accent tracking-widest" style={{ fontSize: 9 }}>{s.name.toUpperCase()}</span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { label: lang === 'en' ? 'YEAR' : 'YIL', key: 'current_year' },
-                    { label: lang === 'en' ? 'STATUS' : 'DURUM', key: 'status' },
-                    { label: lang === 'en' ? 'LOCATION' : 'KONUM', key: '_coord' },
-                  ].map(row => (
-                    <tr key={row.key} style={{ borderBottom: '1px solid rgba(79,110,247,0.08)' }}>
-                      <td className="py-1.5 pr-4">
-                        <span className="font-share-tech tracking-widest" style={{ fontSize: 9, color: '#e0e0f0' }}>{row.label}</span>
-                      </td>
-                      {sims.slice(0, 4).map(s => (
-                        <td key={s.id} className="py-1.5 pr-4">
-                          {row.key === '_coord'
-                            ? <span className="font-share-tech text-sim-text" style={{ fontSize: 10 }}>{s.start_latitude?.toFixed(1)}°N {s.start_longitude?.toFixed(1)}°E</span>
-                            : row.key === 'status'
-                              ? <span className="font-share-tech tracking-widest" style={{ fontSize: 10, color: s.status === 'running' ? '#4ecb71' : '#6070a0' }}>{s.status.toUpperCase()}</span>
-                              : <span className="font-orbitron font-bold text-sim-text" style={{ fontSize: 11 }}>{s[row.key]}</span>
-                          }
-                        </td>
+            {/* Compare mode */}
+            {compareMode && sims.length >= 2 && (
+              <div className="mb-6 relative" style={{
+                background: 'rgba(4,4,15,0.97)', border: '1px solid rgba(200,34,34,0.6)', animation: 'boot-in 0.4s ease-out both',
+              }}>
+                <div className="px-4 py-2.5 border-b flex items-center gap-2" style={{ borderColor: 'rgba(200,34,34,0.4)' }}>
+                  <BarChart2 size={13} className="text-sim-accent" />
+                  <span className="font-orbitron text-xs font-semibold tracking-[0.2em] text-sim-accent">
+                    {lang === 'en' ? 'PARALLEL COMPARISON' : 'PARALEL KARŞILAŞTIRMA'}
+                  </span>
+                </div>
+                <div className="p-4 overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr>
+                        <th className="text-left pb-2 pr-4">
+                          <span className="font-share-tech tracking-widest" style={{ fontSize: 14, color: '#e0e0f0' }}>{lang === 'en' ? 'METRIC' : 'METRİK'}</span>
+                        </th>
+                        {sims.slice(0, 4).map(s => (
+                          <th key={s.id} className="text-left pb-2 pr-4">
+                            <span className="font-share-tech text-sim-accent tracking-widest" style={{ fontSize: 9 }}>{s.name.toUpperCase()}</span>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { label: lang === 'en' ? 'YEAR' : 'YIL', key: 'current_year' },
+                        { label: lang === 'en' ? 'STATUS' : 'DURUM', key: 'status' },
+                        { label: lang === 'en' ? 'LOCATION' : 'KONUM', key: '_coord' },
+                      ].map(row => (
+                        <tr key={row.key} style={{ borderBottom: '1px solid rgba(200,34,34,0.2)' }}>
+                          <td className="py-1.5 pr-4">
+                            <span className="font-share-tech tracking-widest" style={{ fontSize: 14, color: '#e0e0f0' }}>{row.label}</span>
+                          </td>
+                          {sims.slice(0, 4).map(s => (
+                            <td key={s.id} className="py-1.5 pr-4">
+                              {row.key === '_coord'
+                                ? <span className="font-share-tech text-sim-text" style={{ fontSize: 10 }}>{s.start_latitude?.toFixed(1)}°N {s.start_longitude?.toFixed(1)}°E</span>
+                                : row.key === 'status'
+                                  ? <span className="font-share-tech tracking-widest" style={{ fontSize: 10, color: s.status === 'running' ? '#4ecb71' : '#6070a0' }}>{s.status.toUpperCase()}</span>
+                                  : <span className="font-orbitron font-bold text-sim-text" style={{ fontSize: 11 }}>{s[row.key]}</span>
+                              }
+                            </td>
+                          ))}
+                        </tr>
                       ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Simulation list */}
-        {sims.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20"
-            style={{ border: '1px solid rgba(79,110,247,0.1)', background: 'rgba(4,4,15,0.6)' }}>
-            <div className="relative w-12 h-12 flex items-center justify-center mb-4">
-              <div className="absolute inset-0 rounded-full border border-sim-accent/20" style={{ animation: 'ring-expand 3s ease-out infinite' }} />
-              <Globe size={22} className="text-sim-muted/50" />
-            </div>
-            <p className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 10 }}>
-              {lang === 'en' ? 'NO SIMULATIONS FOUND' : 'SİMÜLASYON BULUNAMADI'}
-            </p>
-          </div>
-        ) : (
-          <div className="grid gap-3">
-            {sims.map((sim, i) => (
-              <div key={sim.id}
-                className="relative flex items-center gap-4 cursor-pointer transition-all duration-200"
-                style={{
-                  background: 'rgba(4,4,15,0.9)', border: '1px solid rgba(79,110,247,0.18)', padding: '14px 16px',
-                  clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
-                  animation: `boot-in 0.4s ease-out ${i * 60}ms both`,
-                }}
-                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(79,110,247,0.45)'}
-                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(79,110,247,0.18)'}
-                onClick={() => navigate(`/simulation/${sim.id}`)}>
-
-                <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center"
-                  style={{
-                    background: sim.status === 'running' ? 'rgba(78,203,113,0.1)' : 'rgba(79,110,247,0.1)',
-                    border: `1px solid ${sim.status === 'running' ? 'rgba(78,203,113,0.3)' : 'rgba(79,110,247,0.2)'}`,
-                    clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))',
-                  }}>
-                  {sim.status === 'running' ? <div className="w-2 h-2 rounded-full bg-sim-green pulse-live" /> : <Globe size={14} className="text-sim-accent/60" />}
+                    </tbody>
+                  </table>
                 </div>
-
-                <div className="flex-1 min-w-0">
-                  <p className="font-orbitron font-bold tracking-[0.1em] truncate" style={{ fontSize: 13, color: '#d0d8f8' }}>{sim.name}</p>
-                  <p className="font-share-tech text-sim-muted mt-0.5 tracking-widest" style={{ fontSize: 9 }}>
-                    {sim.start_latitude?.toFixed(2)}°N {sim.start_longitude?.toFixed(2)}°E
-                    <span className="mx-2 text-sim-border/60">·</span>
-                    {lang === 'en' ? 'YEAR' : 'YIL'} <span className="text-sim-accent">{sim.current_year}</span>
-                  </p>
-                </div>
-
-                <div className="flex-shrink-0 px-3 py-1 font-share-tech tracking-widest" style={{
-                  fontSize: 9,
-                  background: sim.status === 'running' ? 'rgba(78,203,113,0.1)' : 'rgba(22,22,58,0.6)',
-                  border: `1px solid ${sim.status === 'running' ? 'rgba(78,203,113,0.35)' : 'rgba(79,110,247,0.15)'}`,
-                  color: sim.status === 'running' ? '#4ecb71' : '#6070a0',
-                }}>
-                  {sim.status.toUpperCase()}
-                </div>
-
-                <button
-                  onClick={e => { e.stopPropagation(); deleteSim(sim.id, sim.name); }}
-                  className="flex-shrink-0 p-2 transition-all duration-150"
-                  title={lang === 'en' ? 'Delete' : 'Sil'}
-                  style={{ background: 'transparent', border: '1px solid rgba(224,90,90,0.25)', color: '#7a3030', lineHeight: 0,
-                    clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#e05a5a'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(224,90,90,0.6)'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#7a3030'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(224,90,90,0.25)'; }}>
-                  <Trash2 size={13} />
-                </button>
-                <button
-                  onClick={e => { e.stopPropagation(); navigate(`/simulation/${sim.id}`); }}
-                  className="flex-shrink-0 p-2 transition-all duration-150 hover:brightness-125"
-                  style={{ background: 'rgba(79,110,247,0.15)', border: '1px solid rgba(79,110,247,0.35)', color: '#4f6ef7', lineHeight: 0,
-                    clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}>
-                  <Play size={13} />
-                </button>
               </div>
-            ))}
-          </div>
+            )}
+
+            {/* Simulation list */}
+            {sims.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20"
+                style={{ border: '1px solid rgba(200,34,34,0.4)', background: 'rgba(4,4,15,0.6)' }}>
+                <div className="relative w-16 h-16 flex items-center justify-center mb-5">
+                  <div className="absolute inset-0 rounded-full" style={{
+                    border: '1.5px solid rgba(200,34,34,0.7)',
+                    boxShadow: '0 0 10px rgba(200,34,34,0.5), inset 0 0 10px rgba(200,34,34,0.1)',
+                    animation: 'ring-expand 2.4s ease-out infinite',
+                  }} />
+                  <div className="absolute inset-0 rounded-full" style={{
+                    border: '1px solid rgba(200,34,34,0.45)',
+                    boxShadow: '0 0 14px rgba(200,34,34,0.35)',
+                    animation: 'ring-expand 2.4s ease-out 0.8s infinite',
+                  }} />
+                  <div className="absolute inset-0 rounded-full" style={{
+                    border: '1px solid rgba(200,34,34,0.25)',
+                    animation: 'ring-expand 2.4s ease-out 1.6s infinite',
+                  }} />
+                  <Globe size={26} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 8px rgba(79,158,247,0.9)) drop-shadow(0 0 16px rgba(79,158,247,0.5))' }} />
+                </div>
+                <p className="font-share-tech tracking-[0.3em]" style={{ fontSize: 14, color: '#e0e0f0' }}>
+                  {lang === 'en' ? 'NO SIMULATIONS FOUND' : 'SİMÜLASYON BULUNAMADI'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {sims.map((sim, i) => (
+                  <div key={sim.id}
+                    className="relative flex items-center gap-4 cursor-pointer transition-all duration-200"
+                    style={{
+                      background: 'rgba(4,4,15,0.9)', border: '1px solid rgba(200,34,34,0.6)', padding: '14px 16px',
+                      clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))',
+                      animation: `boot-in 0.4s ease-out ${i * 60}ms both`,
+                    }}
+                    onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(200,34,34,0.9)'}
+                    onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(200,34,34,0.6)'}
+                    onClick={() => navigate(`/simulation/${sim.id}`)}>
+
+                    <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center"
+                      style={{
+                        background: sim.status === 'running' ? 'rgba(78,203,113,0.1)' : 'rgba(79,110,247,0.1)',
+                        border: `1px solid ${sim.status === 'running' ? 'rgba(78,203,113,0.3)' : 'rgba(79,110,247,0.2)'}`,
+                        clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))',
+                      }}>
+                      {sim.status === 'running' ? <div className="w-2 h-2 rounded-full bg-sim-green pulse-live" /> : <Globe size={14} className="text-sim-accent" />}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="font-orbitron font-bold tracking-[0.1em] truncate" style={{ fontSize: 14, color: '#d0d8f8' }}>{sim.name}</p>
+                      <p className="font-share-tech mt-0.5 tracking-widest" style={{ fontSize: 14, color: '#e0e0f0' }}>
+                        {sim.start_latitude?.toFixed(2)}°N {sim.start_longitude?.toFixed(2)}°E
+                        <span className="mx-2" style={{ color: 'rgba(200,34,34,0.4)' }}>·</span>
+                        {lang === 'en' ? 'YEAR' : 'YIL'} <span style={{ color: '#e0e0f0' }}>{sim.current_year}</span>
+                      </p>
+                    </div>
+
+                    <div className="flex-shrink-0 px-3 py-1 font-share-tech tracking-widest" style={{
+                      fontSize: 13,
+                      background: sim.status === 'running' ? 'rgba(78,203,113,0.1)' : 'rgba(22,22,58,0.6)',
+                      border: `1px solid ${sim.status === 'running' ? 'rgba(78,203,113,0.35)' : 'rgba(79,110,247,0.15)'}`,
+                      color: '#e0e0f0',
+                    }}>
+                      {sim.status.toUpperCase()}
+                    </div>
+
+                    <button
+                      onClick={e => { e.stopPropagation(); deleteSim(sim.id, sim.name); }}
+                      className="flex-shrink-0 p-2 transition-all duration-150"
+                      title={lang === 'en' ? 'Delete' : 'Sil'}
+                      style={{ background: 'transparent', border: '1px solid rgba(224,90,90,0.25)', color: '#7a3030', lineHeight: 0,
+                        clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#e05a5a'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(224,90,90,0.6)'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#7a3030'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(224,90,90,0.25)'; }}>
+                      <Trash2 size={13} />
+                    </button>
+                    <button
+                      onClick={e => { e.stopPropagation(); navigate(`/simulation/${sim.id}`); }}
+                      className="flex-shrink-0 p-2 transition-all duration-150 hover:brightness-125"
+                      style={{ background: 'rgba(79,110,247,0.15)', border: '1px solid rgba(79,110,247,0.35)', color: '#4f6ef7', lineHeight: 0,
+                        clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}>
+                      <Play size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
+      {/* Menu Overlay */}
+      {menuOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => { setMenuOpen(false); setMenuPage(null); }}>
+          <div style={{ background: 'rgba(3,3,16,0.98)', border: '1px solid rgba(200,34,34,0.7)', minWidth: 320, maxWidth: 460, width: '92vw', fontFamily: 'Share Tech Mono, monospace', boxShadow: '0 8px 40px rgba(0,0,0,0.8)' }}
+            onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderBottom: '1px solid rgba(200,34,34,0.5)', background: 'rgba(3,3,16,0.9)' }}>
+              <div style={{ width: 3, height: 14, background: '#cc2222', boxShadow: '0 0 6px rgba(200,34,34,0.5)', flexShrink: 0 }} />
+              <span style={{ fontSize: 10, color: '#e0e0f0', letterSpacing: '0.2em', flex: 1 }}>
+                {menuPage === null ? 'ANATOLİA-SİM'
+                  : menuPage === 'language' ? (lang === 'en' ? 'LANGUAGE' : 'DİL SEÇENEKLERİ')
+                  : menuPage === 'about' ? (lang === 'en' ? 'ABOUT' : 'HAKKIMIZDA')
+                  : menuPage === 'mission' ? (lang === 'en' ? 'MISSION & VISION' : 'MİSYON & VİZYON')
+                  : (lang === 'en' ? 'CONTACT' : 'İLETİŞİM')}
+              </span>
+              <button onClick={() => { if (menuPage) { setMenuPage(null); } else { setMenuOpen(false); } }}
+                style={{ background: 'transparent', border: 'none', color: '#7a9a88', cursor: 'pointer', fontSize: 9, letterSpacing: '0.1em', padding: '2px 6px', display: 'flex', alignItems: 'center' }}>
+                {menuPage ? '← GERİ' : <X size={12} />}
+              </button>
+            </div>
+
+            {/* Main menu list */}
+            {menuPage === null && (
+              <div style={{ padding: '6px 0' }}>
+                {[
+                  { id: 'language', labelTr: '🌐 Dil / Language', labelEn: '🌐 Language' },
+                  { id: 'about',    labelTr: 'Hakkımızda',        labelEn: 'About' },
+                  { id: 'mission',  labelTr: 'Misyon & Vizyon',   labelEn: 'Mission & Vision' },
+                  { id: 'contact',  labelTr: 'İletişim',          labelEn: 'Contact' },
+                ].map(item => (
+                  <button key={item.id} onClick={() => setMenuPage(item.id as any)}
+                    style={{ display: 'block', width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(10,10,30,0.8)', color: '#a0b8c0', fontSize: 11, textAlign: 'left', cursor: 'pointer', letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace' }}>
+                    › {lang === 'tr' ? item.labelTr : item.labelEn}
+                  </button>
+                ))}
+                <div style={{ padding: '8px 14px', borderTop: '1px solid rgba(200,34,34,0.25)', marginTop: 4 }}>
+                  <div style={{ fontSize: 7.5, color: 'rgba(150,50,50,0.5)', letterSpacing: '0.08em' }}>
+                    RST Q-Nation 200120401018 · Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Language selection */}
+            {menuPage === 'language' && (
+              <div style={{ padding: '6px 0' }}>
+                {LANGUAGES.map(l => (
+                  <button key={l.code}
+                    onClick={() => { setLang(l.code); setMenuOpen(false); setMenuPage(null); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      width: '100%', padding: '11px 14px',
+                      background: lang === l.code ? 'rgba(200,34,34,0.08)' : 'transparent',
+                      border: 'none', borderBottom: '1px solid rgba(10,10,30,0.8)',
+                      color: lang === l.code ? '#e05a5a' : '#a0b8c0',
+                      fontSize: 12, textAlign: 'left', cursor: 'pointer',
+                      letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace',
+                    }}>
+                    <span style={{ flex: 1 }}>› {l.label}</span>
+                    {l.beta && <span style={{ fontSize: 8, padding: '1px 5px', border: '1px solid rgba(200,34,34,0.35)', color: '#cc5555' }}>BETA</span>}
+                    {lang === l.code && <span style={{ fontSize: 11, color: '#e05a5a' }}>✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* About / Mission / Contact sub-pages */}
+            {menuPage !== null && menuPage !== 'language' && (() => {
+              const pages: Record<string, { tr: string; en: string }> = {
+                about: {
+                  tr: 'ANATOLİA-SİM, Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. bünyesinde Yalçın Atabey tarafından geliştirilen, simülasyon hipotezini deneysel olarak test etmeye yönelik ileri düzey bir medeniyet simülasyon platformudur.\n\nGerçek biyolojik, genetik, çevresel ve sosyal mekanizmaları temel alarak iki bireyden başlayan bir nüfusun binlerce yıl boyunca nasıl evrildiğini, dil, inanç, teknoloji ve devlet yapılarını nasıl geliştirdiğini müdahalesiz biçimde gözlemlemeyi sağlar.\n\nProje Kodu: RST Q-Nation 200120401018',
+                  en: 'ANATOLİA-SİM is an advanced civilization simulation platform developed by Yalçın Atabey under Bold Askeri Teknoloji ve Savunma Sanayi A.Ş., designed to experimentally test the simulation hypothesis.\n\nIt models real biological, genetic, environmental and social mechanisms — observing a population that starts from two individuals, evolving over thousands of years into language, belief, technology and governance.\n\nProject Code: RST Q-Nation 200120401018',
+                },
+                mission: {
+                  tr: 'MİSYON\nSimülasyon hipotezini bilimsel ve deneysel zeminlerde test etmek; insan medeniyetinin evrensel örüntülerini ortaya çıkarmak.\n\nVİZYON\nDünyanın en kapsamlı yapay yaşam ve medeniyet simülasyon platformu olmak; insanlığın kökeni, bilinci ve geleceği hakkında nesnel veriler üretmek.',
+                  en: "MISSION\nTest the simulation hypothesis on scientific and experimental grounds; reveal the universal patterns of human civilization.\n\nVISION\nBecome the world's most comprehensive artificial life and civilization simulation platform; produce objective data about the origin, consciousness and future of humanity.",
+                },
+                contact: {
+                  tr: 'Proje Sahibi: Yalçın Atabey\nKuruluş: Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.\nE-posta: info@boldkimya.com.tr\nTelefon: +90 532 217 07 76\nORCID: 0009-0004-9037-5750\n\n© 2026 Tüm hakları saklıdır.',
+                  en: 'Project Owner: Yalçın Atabey\nOrganization: Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.\nE-mail: info@boldkimya.com.tr\nPhone: +90 532 217 07 76\nORCID: 0009-0004-9037-5750\n\n© 2026 All rights reserved.',
+                },
+              };
+              const text = lang === 'tr' ? pages[menuPage].tr : pages[menuPage].en;
+              return (
+                <div style={{ padding: '12px 14px', maxHeight: 320, overflowY: 'auto' }}>
+                  {text.split('\n').map((line, i) => (
+                    <p key={i} style={{ fontSize: line === line.toUpperCase() && line.length > 2 ? 8.5 : 9, color: line === line.toUpperCase() && line.length > 2 ? '#cc2222' : '#7aaa90', margin: '0 0 5px 0', letterSpacing: '0.05em', lineHeight: 1.6 }}>
+                      {line || <br />}
+                    </p>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
-      <div className="text-center py-6 relative z-1">
-        <span className="font-share-tech text-sim-muted/30 tracking-[0.3em]" style={{ fontSize: 9 }}>
-          BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026
+      <div className="text-center py-6 px-4 relative z-1">
+        <span className="font-share-tech text-sim-muted tracking-[0.2em]" style={{ fontSize: 11, lineHeight: 1.7 }}>
+          <span className="hidden sm:inline">
+            {lang === 'tr' ? 'BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026' : 'BOLD MILITARY TECHNOLOGY AND DEFENSE INDUSTRIES INC. © 2026'}
+          </span>
+          <span className="sm:hidden">
+            {lang === 'tr' ? <>BOLD ASKERİ TEKNOLOJİ<br />VE SAVUNMA SANAYİ A.Ş. © 2026</> : <>BOLD MILITARY TECHNOLOGY<br />AND DEFENSE INDUSTRIES INC. © 2026</>}
+          </span>
         </span>
       </div>
     </div>

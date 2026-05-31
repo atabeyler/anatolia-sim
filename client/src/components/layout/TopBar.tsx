@@ -3,7 +3,6 @@ import { Play, Pause, Globe, X, Settings, Menu, LogOut, Home, Sliders, Power } f
 import { useSimStore } from '../../store/simStore';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import AriaButton from './AriaButton';
 
 const SPEEDS = [1, 10, 100, 1000];
 
@@ -288,12 +287,12 @@ export default function TopBar() {
         <div className="relative w-6 h-6 flex items-center justify-center flex-shrink-0">
           <div className="absolute inset-0 rounded-full border border-sim-accent/60"
             style={{ animation: 'neon-breathe 3.5s ease-in-out infinite' }} />
-          <Globe size={13} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 4px rgba(79,158,247,0.8))' }} />
+          <Globe size={13} className="text-sim-accent" style={{ filter: 'drop-shadow(0 0 4px rgba(79,110,247,0.8))' }} />
         </div>
         {!isMobile && (
           <div className="flex flex-col leading-none">
-            <span className="font-orbitron font-bold tracking-[0.2em]" style={{ fontSize: 10, color: '#4f9ef7' }}>ANATOLİA</span>
-            <span className="font-share-tech tracking-[0.25em]" style={{ fontSize: 7, color: '#4f9ef7' }}>{lang === 'tr' ? 'SİM MEDENİYET' : 'SIM CIVILIZATION'}</span>
+            <span className="font-orbitron text-sim-accent font-bold tracking-[0.2em]" style={{ fontSize: 10 }}>ANATOLİA</span>
+            <span className="font-share-tech text-sim-muted tracking-[0.25em]" style={{ fontSize: 7 }}>{lang === 'tr' ? 'SİM MEDENİYET' : 'SIM CIVILIZATION'}</span>
           </div>
         )}
       </div>
@@ -394,16 +393,13 @@ export default function TopBar() {
 
       {/* Actions */}
       <div className="flex items-center gap-0.5 flex-shrink-0 ml-1 relative">
-        {/* Sesli asistan */}
-        {!isMobile && <AriaButton />}
-
         {/* TR / EN — her ikisi görünür */}
         <div className="flex items-center flex-shrink-0" style={{ border: '1px solid rgba(79,110,247,0.3)', overflow: 'hidden' }}>
           {(['en', 'tr'] as const).map((l, i) => (
             <button key={l} onClick={() => lang !== l && toggleLang()}
               className="font-share-tech tracking-widest transition-all duration-150"
               style={{
-                padding: '4px 7px', fontSize: 9,
+                padding: '4px 8px', fontSize: 14,
                 background: lang === l ? 'rgba(79,110,247,0.28)' : 'rgba(10,10,30,0.8)',
                 color: lang === l ? '#c0ccff' : '#4a5578',
                 borderRight: i === 0 ? '1px solid rgba(79,110,247,0.25)' : 'none',
