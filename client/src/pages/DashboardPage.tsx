@@ -39,6 +39,22 @@ export default function DashboardPage() {
         }
         case 'toggle_compare': setCompareMode(c => !c); break;
         case 'wizard_exit': setShowNew(false); break;
+        case 'delete_simulation': {
+          const sim = simsRef.current[index ?? 0];
+          if (!sim) break;
+          const { lang: l, accessToken: tok } = useSimStore.getState();
+          if (!confirm(l === 'en' ? `Delete "${sim.name}"? This cannot be undone.` : `"${sim.name}" silinsin mi? Bu işlem geri alınamaz.`)) break;
+          axios.delete(`/api/simulations/${sim.id}`, { headers: { Authorization: `Bearer ${tok}` } })
+            .then(() => setSims(s => s.filter((s2: any) => s2.id !== sim.id)))
+            .catch(() => alert(l === 'en' ? 'Delete failed.' : 'Silme başarısız.'));
+          break;
+        }
+        case 'logout': {
+          const { logout: doLogout } = useSimStore.getState();
+          doLogout();
+          navigate('/login');
+          break;
+        }
       }
     }
     window.addEventListener('aria-dashboard', onAriaDashboard);

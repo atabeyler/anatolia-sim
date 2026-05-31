@@ -117,6 +117,7 @@ export default function AriaButton() {
     } else {
       activeRef.current     = true;
       processingRef.current = false;
+      pendingCmdRef.current = null;
       startRecognition();
     }
   }
@@ -159,7 +160,6 @@ export default function AriaButton() {
           if (!cmd) continue;
           resultIdx = i + 1;
           if (processingRef.current) {
-            // Queue — will be picked up when current command finishes
             pendingCmdRef.current = cmd;
           } else {
             processingRef.current = true;
@@ -225,22 +225,29 @@ export default function AriaButton() {
         acts.forEach((a: any) => executeAction(a));
         if (acts.length === 1) {
           const at = acts[0].type;
-          const label = at === 'navigate_panel'    ? `📂 ${acts[0].panel}`
-            : at === 'change_speed'      ? `⚡ x${acts[0].speed}`
-            : at === 'apply_disaster'    ? `⚠ ${acts[0].disaster}`
-            : at === 'start_simulation'  ? '▶ başlat'
-            : at === 'pause_simulation'  ? '⏸ duraklat'
-            : at === 'god_mode'          ? '✦ tanrı modu'
-            : at === 'set_tab'           ? `🗂 ${acts[0].tab}`
-            : at === 'navigate_to'       ? `→ ${acts[0].route}`
-            : at === 'create_simulation' ? '✚ yeni sim'
-            : at === 'open_simulation'   ? `▶ sim #${(acts[0].index ?? 0) + 1}`
-            : at === 'toggle_compare'    ? '⇄ karşılaştır'
-            : at === 'wizard_next'       ? '→ ileri'
-            : at === 'wizard_back'       ? '← geri'
-            : at === 'wizard_submit'     ? '🚀 başlat'
-            : at === 'wizard_exit'       ? '✕ çıkış'
-            : at === 'wizard_set'        ? `✎ ${acts[0].field}=${acts[0].value}`
+          const label = at === 'navigate_panel'       ? `📂 ${acts[0].panel}`
+            : at === 'change_speed'         ? `⚡ x${acts[0].speed}`
+            : at === 'apply_disaster'       ? `⚠ ${acts[0].disaster}`
+            : at === 'start_simulation'     ? '▶ başlat'
+            : at === 'pause_simulation'     ? '⏸ duraklat'
+            : at === 'toggle_simulation'    ? '⏯ sim'
+            : at === 'terminate_simulation' ? '⏹ sonlandır'
+            : at === 'toggle_sidebar'       ? '◀▶ sidebar'
+            : at === 'god_mode'             ? '✦ tanrı modu'
+            : at === 'set_tab'              ? `🗂 ${acts[0].tab}`
+            : at === 'navigate_to'          ? `→ ${acts[0].route}`
+            : at === 'create_simulation'    ? '✚ yeni sim'
+            : at === 'open_simulation'      ? `▶ sim #${(acts[0].index ?? 0) + 1}`
+            : at === 'delete_simulation'    ? `🗑 sim #${(acts[0].index ?? 0) + 1}`
+            : at === 'toggle_compare'       ? '⇄ karşılaştır'
+            : at === 'logout'               ? '🔓 çıkış'
+            : at === 'toggle_lang'          ? '🌐 dil'
+            : at === 'set_lang'             ? `🌐 ${acts[0].lang}`
+            : at === 'wizard_next'          ? '→ ileri'
+            : at === 'wizard_back'          ? '← geri'
+            : at === 'wizard_submit'        ? '🚀 başlat'
+            : at === 'wizard_exit'          ? '✕ çıkış'
+            : at === 'wizard_set'           ? `✎ ${acts[0].field}=${acts[0].value}`
             : at;
           setLastAction(label);
           setTimeout(() => setLastAction(null), 3000);
@@ -255,7 +262,6 @@ export default function AriaButton() {
       }
     }
 
-    // Show response in bubble, then resume listening (or run queued command)
     setTranscript('');
     setAriaText(responseText);
     disarmWatchdog();
@@ -264,7 +270,6 @@ export default function AriaButton() {
       const pending = pendingCmdRef.current;
       pendingCmdRef.current = null;
       if (pending) {
-        // A command arrived while we were processing — run it immediately
         processingRef.current = true;
         armWatchdog();
         killRec(recRef.current); recRef.current = null;
@@ -272,7 +277,6 @@ export default function AriaButton() {
       } else {
         startRecognition();
       }
-      // Auto-clear after reading time (70 ms per char, 2.5–8 s range)
       const ms = Math.min(Math.max(2500, responseText.length * 70), 8000);
       setTimeout(() => setAriaText(t => t === responseText ? '' : t), ms);
     } else {
@@ -282,7 +286,7 @@ export default function AriaButton() {
   }
 
   function executeAction(action: any) {
-    const { currentSim, accessToken, setActivePanel, setSpeed, toggleLang, setCurrentSim } = storeRef.current;
+    const { currentSim, accessToken, setActivePanel, setSpeed, toggleLang, setLang, setCurrentSim, logout } = storeRef.current;
     if (!action?.type) return;
     switch (action.type) {
       case 'navigate_panel':
@@ -334,14 +338,26 @@ export default function AriaButton() {
         window.dispatchEvent(new CustomEvent('aria-set-tab', { detail: action.tab })); break;
       case 'toggle_lang':
         toggleLang(); break;
+      case 'set_lang':
+        if (action.lang) setLang(action.lang); break;
       case 'god_mode':
         setActivePanel('god'); break;
+      case 'toggle_sidebar':
+        window.dispatchEvent(new CustomEvent('aria-simulation', { detail: { action: 'toggle_sidebar' } })); break;
+      case 'terminate_simulation':
+        window.dispatchEvent(new CustomEvent('aria-simulation', { detail: { action: 'terminate_simulation' } })); break;
+      case 'logout':
+        logout();
+        navigate('/login');
+        break;
       case 'create_simulation':
         window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'create_simulation' } })); break;
       case 'open_simulation':
         window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'open_simulation', index: action.index ?? 0 } })); break;
       case 'toggle_compare':
         window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'toggle_compare' } })); break;
+      case 'delete_simulation':
+        window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'delete_simulation', index: action.index ?? 0 } })); break;
       case 'wizard_next':
         window.dispatchEvent(new CustomEvent('aria-wizard', { detail: { action: 'next' } })); break;
       case 'wizard_back':
@@ -451,7 +467,6 @@ export default function AriaButton() {
           boxShadow: `0 0 12px ${color}33`,
           pointerEvents: 'none',
         }}>
-          {/* User transcript (while listening) */}
           {transcript && (
             <div style={{
               color: '#a0b4ff', fontSize: 10, marginBottom: ariaText ? 6 : 0,
@@ -460,7 +475,6 @@ export default function AriaButton() {
               "{transcript.slice(0, 120)}{transcript.length > 120 ? '…' : ''}"
             </div>
           )}
-          {/* ARIA response text */}
           {ariaText && (
             <div style={{
               color: '#00e887',

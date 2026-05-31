@@ -191,6 +191,29 @@ export default function SimulationPage() {
     window.addEventListener('aria-set-tab', onAriaTab);
     return () => window.removeEventListener('aria-set-tab', onAriaTab);
   }, []);
+
+  // ARIA simulation control listener
+  useEffect(() => {
+    function onAriaSimulation(e: Event) {
+      const { action } = (e as CustomEvent).detail;
+      switch (action) {
+        case 'toggle_sidebar':
+          setSidebarExpanded(v => !v);
+          break;
+        case 'terminate_simulation': {
+          const { currentSim: sim, accessToken: tok, lang: l, setCurrentSim: setSim } = useSimStore.getState();
+          if (!sim || !tok) return;
+          if (!confirm(l === 'tr' ? 'Simülasyonu sonlandır?' : 'Terminate simulation?')) return;
+          axios.post(`/api/simulations/${sim.id}/terminate`, {}, { headers: { Authorization: `Bearer ${tok}` } })
+            .then(() => { setSim({ ...sim, status: 'completed' }); navigate('/'); })
+            .catch(() => {});
+          break;
+        }
+      }
+    }
+    window.addEventListener('aria-simulation', onAriaSimulation);
+    return () => window.removeEventListener('aria-simulation', onAriaSimulation);
+  }, [navigate]);
   useSimWebSocket(simId ?? null);
 
   // Real clock
