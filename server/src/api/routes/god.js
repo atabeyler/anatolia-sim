@@ -3,6 +3,7 @@ import { authenticate, requireSimulationOwner } from '../middleware/auth.js';
 import { query } from '../../db/database.js';
 import { simulationManager } from '../simulationManager.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
 const router = Router();
 
@@ -127,14 +128,16 @@ router.post('/:simId/talk/:individualId', authenticate, requireSimulationOwner, 
     if (!individual) return res.status(404).json({ error: 'Individual not found' });
     const age = Math.floor((engine.currentDay - individual.birth_day) / 365);
     const langStage = individual.language?.stage ?? 0;
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? '');
-    const talkModel = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      systemInstruction: `You are roleplaying as a simulated human in a civilization simulation. Age: ${age}, Sex: ${individual.sex}, Language stage: ${langStage} (${individual.language?.stage_name ?? 'pre-linguistic'}), Intelligence: ${individual.phenotype?.fluid_intelligence?.toFixed(2)}/1.0. If stage 0-1: only grunts/gestures. If stage 2: proto-sounds. If stage 3: max 10 simple words. If stage 4+: simple sentences. Never break character.`,
-      generationConfig: { maxOutputTokens: 500 },
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY ?? '' });
+    const talkCompletion = await groq.chat.completions.create({
+      model: 'llama-3.1-8b-instant',
+      messages: [
+        { role: 'system', content: `You are roleplaying as a simulated human in a civilization simulation. Age: ${age}, Sex: ${individual.sex}, Language stage: ${langStage} (${individual.language?.stage_name ?? 'pre-linguistic'}), Intelligence: ${individual.phenotype?.fluid_intelligence?.toFixed(2)}/1.0. If stage 0-1: only grunts/gestures. If stage 2: proto-sounds. If stage 3: max 10 simple words. If stage 4+: simple sentences. Never break character.` },
+        { role: 'user', content: message },
+      ],
+      max_tokens: 500,
     });
-    const talkResult = await talkModel.generateContent(message);
-    const individualResponse = talkResult.response.text();
+    const individualResponse = talkCompletion.choices[0].message.content ?? '';
     await query(`INSERT INTO individual_conversations (simulation_id,individual_id,sim_day,user_message,individual_response,language_stage) VALUES ($1,$2,$3,$4,$5,$6)`,
       [simId, individualId, engine.currentDay, message, individualResponse, individual.language.stage_name ?? 'pre-linguistic']);
     res.json({ response: individualResponse });

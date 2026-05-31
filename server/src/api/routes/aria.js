@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
 const router = Router();
 
@@ -40,38 +40,34 @@ function buildStatsContext(stats, events, context) {
 
 router.post('/command', authenticate, async (req, res) => {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return res.status(503).json({ text: 'GEMINI_API_KEY sunucuda tanımlı değil.', actions: [] });
-    const genAI = new GoogleGenerativeAI(apiKey);
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) return res.status(503).json({ text: 'GROQ_API_KEY sunucuda tanımlı değil.', actions: [] });
 
     const { message, lang, stats, events, context } = req.body;
     const statsCtx = buildStatsContext(stats, events, context);
     const respondIn = lang === 'tr' ? 'Turkish' : 'English';
 
-    const systemInstruction = `You are ARIA, the omnipotent AI controller of ANATOLİA-SİM civilization simulation.
+    const groq = new Groq({ apiKey });
+
+    const systemPrompt = `You are ARIA, the omnipotent AI controller of ANATOLİA-SİM civilization simulation.
 You have full command over the application. Respond in ${respondIn}.
 
 SIMULATION STATE:
 ${statsCtx}
 
-OUTPUT FORMAT: Respond ONLY with a valid JSON object.
+OUTPUT FORMAT: Respond ONLY with a valid JSON object — no markdown, no extra text.
 {"text": "short response (1-2 sentences)", "actions": [ACTION, ...] or []}
 
 The "actions" field is ALWAYS an array. Include ALL actions the user requested in one utterance.
-Example multi-command: {"text": "Tamam, simülasyon adı ve koordinatlar ayarlandı.", "actions": [{"type":"wizard_set","field":"sim_name","value":"Yalçın"}, {"type":"wizard_set","field":"sim_latitude","value":"30"}, {"type":"wizard_set","field":"sim_longitude","value":"40"}]}
-
-IMPORTANT: Choose actions based on the CURRENT PAGE shown in the simulation state above.
-
-ALL AVAILABLE ACTIONS — include ALL that apply. Use empty array [] for reports/summaries.
-Multiple wizard_set actions CAN and SHOULD be combined when the user sets multiple fields at once.
+Multiple wizard_set actions MUST be combined when user sets multiple fields at once.
 
 === SIMULATION PAGE ACTIONS (use when page=simulation) ===
 - {"type":"navigate_panel","panel":"PANEL_NAME"}
 - {"type":"close_panel"}
 - {"type":"change_speed","speed":NUMBER}  (valid: 1, 5, 20, 100)
-- {"type":"toggle_simulation"}
 - {"type":"start_simulation"}
 - {"type":"pause_simulation"}
+- {"type":"toggle_simulation"}
 - {"type":"apply_disaster","disaster":"earthquake","params":{"magnitude":7,"lat":0,"lon":0,"radius":300}}
 - {"type":"apply_disaster","disaster":"flood","params":{"severity":0.8,"lat":0,"lon":0,"radius":300}}
 - {"type":"apply_disaster","disaster":"drought","params":{}}
@@ -84,9 +80,9 @@ Multiple wizard_set actions CAN and SHOULD be combined when the user sets multip
 - {"type":"god_mode"}
 
 === DASHBOARD ACTIONS (use when page=dashboard) ===
-- {"type":"create_simulation"}  (open new simulation wizard)
-- {"type":"open_simulation","index":0}  (open Nth simulation, 0=most recent)
-- {"type":"toggle_compare"}  (toggle comparison mode)
+- {"type":"create_simulation"}
+- {"type":"open_simulation","index":0}
+- {"type":"toggle_compare"}
 
 === WIZARD ACTIONS (use when page=wizard or wizardOpen) ===
 - {"type":"wizard_next"}
@@ -97,8 +93,7 @@ Multiple wizard_set actions CAN and SHOULD be combined when the user sets multip
 - {"type":"wizard_set","field":"FIELD","value":"VALUE","founder":1}
 - {"type":"wizard_set","field":"FIELD","value":"VALUE","founder":2}
 
-WIZARD FIELDS:
-  sim_name, sim_latitude, sim_longitude,
+WIZARD FIELDS: sim_name, sim_latitude, sim_longitude,
   founder_name, founder_age, founder_sex (male/female),
   founder_height (cm 145-200), founder_eye (brown/hazel/green/blue),
   founder_hair (black/dark/brown/light/blond/red),
@@ -111,31 +106,28 @@ TRAIT IDs: fluid_intelligence, curiosity, language_capacity, learning_rate,
   cooperation, dominance, physical_strength, endurance, immune_strength,
   fertility, longevity
 
-=== GLOBAL ACTIONS (any page) ===
+=== GLOBAL ACTIONS ===
 - {"type":"navigate_to","route":"/"}
-- {"type":"navigate_to","route":"/login"}
 - {"type":"toggle_lang"}
 
 PANEL NAMES: population, biology, environment, astronomy, culture, language, technology, belief, social, economy, art, architecture, law, microbiome, psychology, epigenetics, god, timemachine, analysis, hypothesis
 
-Keep spoken responses to 1-2 sentences. Return ONLY the JSON object.`;
+Keep text to 1-2 sentences. Return ONLY the JSON object.`;
 
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      systemInstruction,
-      generationConfig: {
-        responseMimeType: 'application/json',
-        maxOutputTokens: 600,
-      },
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: message },
+      ],
+      max_tokens: 600,
+      response_format: { type: 'json_object' },
     });
 
-    const result = await model.generateContent(message);
-    const raw = result.response.text();
-
+    const raw = completion.choices[0].message.content ?? '{}';
     let parsed;
     try { parsed = JSON.parse(raw); } catch { parsed = { text: raw, actions: [] }; }
 
-    // Normalise old-style single "action" field to array
     if (!parsed.actions && parsed.action != null) {
       parsed.actions = [parsed.action];
       delete parsed.action;
@@ -147,15 +139,11 @@ Keep spoken responses to 1-2 sentences. Return ONLY the JSON object.`;
   } catch (err) {
     const detail = err?.message ?? String(err);
     console.error('ARIA error:', detail);
-    res.status(500).json({
-      text: `ARIA hata: ${detail.slice(0, 120)}`,
-      actions: [],
-    });
+    res.status(500).json({ text: `ARIA hata: ${detail.slice(0, 120)}`, actions: [] });
   }
 });
 
-// /speak endpoint kept for potential future use but not called by frontend
-router.post('/speak', authenticate, async (req, res) => {
+router.post('/speak', authenticate, async (_req, res) => {
   res.status(503).json({ error: 'TTS disabled' });
 });
 
