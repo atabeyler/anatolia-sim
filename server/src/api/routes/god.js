@@ -24,7 +24,7 @@ router.post('/:simId/intervene', authenticate, requireSimulationOwner, async (re
     let affected = 0, deaths = 0;
     switch (type) {
       case 'earthquake': {
-        const { magnitude, lat, lon, radius = 100 } = params;
+        const { magnitude = 7, lat = 0, lon = 0, radius = 250 } = params;
         for (const ind of alive) {
           const dist = Math.hypot(ind.x - lon, ind.y - lat);
           if (dist < radius) {
@@ -37,7 +37,7 @@ router.post('/:simId/intervene', authenticate, requireSimulationOwner, async (re
         break;
       }
       case 'flood': {
-        const { severity, lat, lon, radius = 150 } = params;
+        const { severity = 0.7, lat = 0, lon = 0, radius = 250 } = params;
         for (const ind of alive) {
           if (Math.hypot(ind.x - lon, ind.y - lat) < radius) {
             if (Math.random() < severity * 0.15) { markDead(ind, engine.currentDay, 'flood'); deaths++; }
@@ -129,7 +129,7 @@ router.post('/:simId/talk/:individualId', authenticate, requireSimulationOwner, 
     const age = Math.floor((engine.currentDay - individual.birth_day) / 365);
     const langStage = individual.language?.stage ?? 0;
     const response = await anthropic.messages.create({
-      model: 'claude-opus-4-7', max_tokens: 500,
+      model: 'claude-opus-4-8', max_tokens: 500,
       system: `You are roleplaying as a simulated human in a civilization simulation. Age: ${age}, Sex: ${individual.sex}, Language stage: ${langStage} (${individual.language?.stage_name ?? 'pre-linguistic'}), Intelligence: ${individual.phenotype?.fluid_intelligence?.toFixed(2)}/1.0. If stage 0-1: only grunts/gestures. If stage 2: proto-sounds. If stage 3: max 10 simple words. If stage 4+: simple sentences. Never break character.`,
       messages: [{ role: 'user', content: message }],
     });

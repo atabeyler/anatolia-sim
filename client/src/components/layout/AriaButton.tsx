@@ -22,6 +22,7 @@ export default function AriaButton() {
 
   const [uiState, setUiState]       = useState<AriaState>('idle');
   const [transcript, setTranscript] = useState('');
+  const [lastAction, setLastAction] = useState<string | null>(null);
   const [pos, setPos]               = useState({
     x: 20,
     y: typeof window !== 'undefined' ? window.innerHeight - 100 : 600,
@@ -197,7 +198,21 @@ export default function AriaButton() {
           },
         }, { headers: { Authorization: `Bearer ${accessToken}` } });
 
-        if (data.action) executeAction(data.action);
+        if (data.action) {
+          executeAction(data.action);
+          const at = data.action.type;
+          const label = at === 'navigate_panel' ? `📂 ${data.action.panel}`
+            : at === 'change_speed'  ? `⚡ x${data.action.speed}`
+            : at === 'apply_disaster' ? `⚠ ${data.action.disaster}`
+            : at === 'start_simulation' ? '▶ start'
+            : at === 'pause_simulation' ? '⏸ pause'
+            : at === 'god_mode'      ? '✦ god mode'
+            : at === 'set_tab'       ? `🗂 ${data.action.tab}`
+            : at === 'navigate_to'   ? `→ ${data.action.route}`
+            : at;
+          setLastAction(label);
+          setTimeout(() => setLastAction(null), 3000);
+        }
         responseText = data.text ?? (lang === 'tr' ? 'Tamam.' : 'Done.');
       } catch {
         responseText = lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.';
@@ -440,6 +455,28 @@ export default function AriaButton() {
           }}>
             {store.lang === 'tr' ? '[ tekrar bas = durdur ]' : '[ press again = stop ]'}
           </div>
+        </div>
+      )}
+
+      {/* Action feedback badge */}
+      {lastAction && (
+        <div style={{
+          position: 'fixed',
+          left: Math.max(0, Math.min(window.innerWidth - 180, pos.x + PILL_W + 8)),
+          top: pos.y + (PILL_H - 26) / 2,
+          zIndex: 9998,
+          background: 'rgba(0,232,135,0.12)',
+          border: '1px solid #00e88766',
+          borderRadius: 6,
+          padding: '4px 10px',
+          fontSize: 10,
+          color: '#00e887',
+          fontFamily: 'Share Tech Mono, monospace',
+          letterSpacing: '0.08em',
+          pointerEvents: 'none',
+          whiteSpace: 'nowrap',
+        }}>
+          ✓ {lastAction}
         </div>
       )}
     </>
