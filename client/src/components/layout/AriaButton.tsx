@@ -122,12 +122,19 @@ export default function AriaButton() {
         }
       } catch {}
       activeRef.current = true;
+      processingRef.current = false;  // ensure clean state on (re)activate
       startRecognition();
     }
   }
 
   function startRecognition() {
     if (!activeRef.current) return;
+
+    // Always stop any lingering session before starting fresh
+    try { recRef.current?.abort(); } catch {}
+    try { recRef.current?.stop();  } catch {}
+    recRef.current = null;
+
     if (!SR) { processCommand('__summary__'); return; }
 
     setUI('command');
@@ -178,7 +185,8 @@ export default function AriaButton() {
   }
 
   async function processCommand(cmd: string) {
-    if (!activeRef.current) return;
+    // Guard: if deactivated while waiting in onresult, release lock and bail
+    if (!activeRef.current) { processingRef.current = false; return; }
     setUI('processing');
 
     const { currentSim, accessToken, stats, events, lang } = storeRef.current;
@@ -239,10 +247,13 @@ export default function AriaButton() {
     }
 
     setTranscript('');
-    await speakText(responseText);
-
-    processingRef.current = false;
-    if (activeRef.current) startRecognition(); else setUI('idle');
+    // Always reset state after speaking, even if speakText throws
+    try {
+      await speakText(responseText);
+    } finally {
+      processingRef.current = false;
+      if (activeRef.current) startRecognition(); else setUI('idle');
+    }
   }
 
   async function speakText(text: string) {
@@ -255,16 +266,33 @@ export default function AriaButton() {
       const ab = resp.data as ArrayBuffer;
       if (ab.byteLength > 800 && audioCtxRef.current) {
         const ctx = audioCtxRef.current as AudioContext;
-        await ctx.resume();
-        const buf = await ctx.decodeAudioData(ab);
-        const src = ctx.createBufferSource();
-        src.buffer = buf;
-        src.connect(ctx.destination);
-        src.start();
-        await new Promise<void>(res => { src.onended = () => res(); });
-        return;
+        if (ctx.state !== 'closed') {
+          try {
+            await ctx.resume();
+            // Use a copy so the buffer isn't detached on repeated use
+            const buf = await ctx.decodeAudioData((ab as any).slice ? (ab as any).slice(0) : ab);
+            const src = ctx.createBufferSource();
+            src.buffer = buf;
+            src.connect(ctx.destination);
+            src.start();
+            // onended can silently never fire — cap at 15 s or 80 ms/char, whichever is larger
+            await new Promise<void>(res => {
+              const ms = Math.min(Math.max(4000, text.length * 80), 15000);
+              const t  = setTimeout(res, ms);
+              src.onended = () => { clearTimeout(t); res(); };
+            });
+            return;
+          } catch {
+            // AudioContext bad — rebuild it for next command
+            try { audioCtxRef.current?.close(); } catch {}
+            try {
+              const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+              if (Ctx) { audioCtxRef.current = new Ctx(); audioCtxRef.current.resume().catch(() => {}); }
+            } catch { audioCtxRef.current = null; }
+          }
+        }
       }
-    } catch { /* fall through */ }
+    } catch { /* fall through to browser TTS */ }
 
     await browserSpeak(text);
   }
@@ -283,7 +311,8 @@ export default function AriaButton() {
 
       let done = false;
       const finish = () => { if (!done) { done = true; res(); } };
-      const guard = setTimeout(finish, Math.max(5000, text.length * 80));
+      // Cap at 12 s — long pauses in synthesis shouldn't freeze the whole loop
+      const guard = setTimeout(finish, Math.min(Math.max(3000, text.length * 60), 12000));
       utt.onend   = () => { clearTimeout(guard); finish(); };
       utt.onerror = () => { clearTimeout(guard); finish(); };
 
