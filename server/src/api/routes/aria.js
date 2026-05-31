@@ -3,7 +3,6 @@ import { authenticate } from '../middleware/auth.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const router = Router();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 function buildStatsContext(stats, events, context) {
   const page = context?.page ?? '/';
@@ -41,6 +40,10 @@ function buildStatsContext(stats, events, context) {
 
 router.post('/command', authenticate, async (req, res) => {
   try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return res.status(503).json({ text: 'GEMINI_API_KEY sunucuda tanımlı değil.', actions: [] });
+    const genAI = new GoogleGenerativeAI(apiKey);
+
     const { message, lang, stats, events, context } = req.body;
     const statsCtx = buildStatsContext(stats, events, context);
     const respondIn = lang === 'tr' ? 'Turkish' : 'English';

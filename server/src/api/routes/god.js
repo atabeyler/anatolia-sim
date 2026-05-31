@@ -5,7 +5,6 @@ import { simulationManager } from '../simulationManager.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const router = Router();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 function markDead(individual, day, cause) {
   individual.is_dead = true;
@@ -128,6 +127,7 @@ router.post('/:simId/talk/:individualId', authenticate, requireSimulationOwner, 
     if (!individual) return res.status(404).json({ error: 'Individual not found' });
     const age = Math.floor((engine.currentDay - individual.birth_day) / 365);
     const langStage = individual.language?.stage ?? 0;
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? '');
     const talkModel = genAI.getGenerativeModel({
       model: 'gemini-1.5-flash',
       systemInstruction: `You are roleplaying as a simulated human in a civilization simulation. Age: ${age}, Sex: ${individual.sex}, Language stage: ${langStage} (${individual.language?.stage_name ?? 'pre-linguistic'}), Intelligence: ${individual.phenotype?.fluid_intelligence?.toFixed(2)}/1.0. If stage 0-1: only grunts/gestures. If stage 2: proto-sounds. If stage 3: max 10 simple words. If stage 4+: simple sentences. Never break character.`,
