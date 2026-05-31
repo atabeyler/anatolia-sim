@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Globe, Plus, Play, LogOut, BarChart2, Trash2 } from 'lucide-react';
 import axios from 'axios';
@@ -17,6 +17,27 @@ export default function DashboardPage() {
   const headers = { Authorization: `Bearer ${accessToken}` };
 
   useEffect(() => { axios.get('/api/simulations', { headers }).then(r => setSims(r.data)); }, []);
+
+  const simsRef = useRef<any[]>([]);
+  simsRef.current = sims;
+
+  useEffect(() => {
+    function onAriaDashboard(e: Event) {
+      const { action, index } = (e as CustomEvent).detail;
+      switch (action) {
+        case 'create_simulation': setShowNew(true); break;
+        case 'open_simulation': {
+          const sim = simsRef.current[index ?? 0];
+          if (sim) navigate(`/simulation/${sim.id}`);
+          break;
+        }
+        case 'toggle_compare': setCompareMode(c => !c); break;
+        case 'wizard_exit': setShowNew(false); break;
+      }
+    }
+    window.addEventListener('aria-dashboard', onAriaDashboard);
+    return () => window.removeEventListener('aria-dashboard', onAriaDashboard);
+  }, [navigate]);
 
   async function deleteSim(id: string, name: string) {
     if (!confirm(lang === 'en' ? `Delete "${name}"? This cannot be undone.` : `"${name}" silinsin mi? Bu işlem geri alınamaz.`)) return;

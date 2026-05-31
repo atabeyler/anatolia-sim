@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 /* ── helpers ─────────────────────────────────────────────────────────────── */
 const toCm   = (v: number) => Math.round(150 + Math.max(0, Math.min(1, v)) * 45);
@@ -521,6 +521,26 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
   const next = () => setStep(s => Math.min(s + 1, TOTAL - 1));
   const back = () => setStep(s => Math.max(s - 1, 0));
   const t    = (tr: string, en: string) => lang === 'tr' ? tr : en;
+
+  const stepRef = useRef(step);
+  stepRef.current = step;
+
+  useEffect(() => {
+    function onAriaWizard(e: Event) {
+      const { action } = (e as CustomEvent).detail;
+      switch (action) {
+        case 'next':   setStep(s => Math.min(s + 1, TOTAL - 1)); break;
+        case 'back':   setStep(s => Math.max(s - 1, 0)); break;
+        case 'submit':
+          if (STEPS[stepRef.current]?.type === 'summary') setConfirmOpen(true);
+          else setStep(TOTAL - 1);
+          break;
+        case 'exit':   onExit(); break;
+      }
+    }
+    window.addEventListener('aria-wizard', onAriaWizard);
+    return () => window.removeEventListener('aria-wizard', onAriaWizard);
+  }, [onExit]);
 
   const founderLabel = (meta.type !== 'sim-info' && meta.type !== 'summary')
     ? ((meta as any).f === 1 ? t('KURUCU 1 — ERKEK', 'FOUNDER 1 — MALE')

@@ -6,8 +6,15 @@ const router = Router();
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 function buildStatsContext(stats, events, context) {
-  if (!stats) return 'No active simulation.';
+  const page = context?.page ?? '/';
+  const pageLabel = page.startsWith('/simulation/') ? 'simulation'
+    : page === '/' ? 'dashboard'
+    : page === '/login' ? 'login'
+    : page;
+  const pageInfo = `Current page: ${pageLabel}`;
+  if (!stats) return `${pageInfo}\nNo active simulation.`;
   const lines = [
+    pageInfo,
     `Year: ${stats.year}, Day: ${stats.day}, Season: ${stats.season ?? 'spring'}, Temp: ${stats.temperature ?? 20}°C`,
     `Population: ${stats.population} (births: ${stats.births ?? 0}, deaths: ${stats.deaths ?? 0})`,
     `Technologies: ${stats.technologies}, Beliefs: ${stats.beliefs ?? 0}, Art: ${stats.art_forms ?? 0}`,
@@ -40,8 +47,12 @@ ${statsCtx}
 CRITICAL: Respond ONLY with raw JSON — no markdown fences, no extra text, nothing before or after the JSON object.
 {"text": "short spoken response (1-2 sentences)", "action": ACTION_OR_NULL}
 
-ACTION TYPES — choose EXACTLY one based on the user's command. When a command matches, ALWAYS include the action (never return null for a recognized command):
-- null
+IMPORTANT: Choose actions based on the CURRENT PAGE shown in the simulation state above.
+
+ALL AVAILABLE ACTIONS — choose EXACTLY one. ALWAYS return an action for recognized commands (never return null for a matched command):
+- null  (only for pure reports/summaries or unrecognized commands)
+
+=== SIMULATION PAGE ACTIONS (use when page=simulation) ===
 - {"type":"navigate_panel","panel":"PANEL_NAME"}
 - {"type":"close_panel"}
 - {"type":"change_speed","speed":NUMBER}  (valid: 1, 5, 20, 100)
@@ -54,49 +65,72 @@ ACTION TYPES — choose EXACTLY one based on the user's command. When a command 
 - {"type":"apply_disaster","disaster":"epidemic","params":{"mortality_rate":0.25,"spread_rate":0.6}}
 - {"type":"apply_disaster","disaster":"volcano","params":{"power":8,"lat":0,"lon":0,"radius":250}}
 - {"type":"apply_disaster","disaster":"meteor","params":{"size":4,"lat":0,"lon":0}}
-- {"type":"navigate_to","route":"/"}
 - {"type":"set_tab","tab":"harita"}
 - {"type":"set_tab","tab":"durum"}
 - {"type":"set_tab","tab":"kontrol"}
-- {"type":"toggle_lang"}
 - {"type":"god_mode"}
+
+=== DASHBOARD ACTIONS (use when page=dashboard) ===
+- {"type":"create_simulation"}  (open new simulation wizard)
+- {"type":"open_simulation","index":0}  (open Nth simulation, 0=most recent)
+- {"type":"toggle_compare"}  (toggle comparison mode)
+
+=== WIZARD ACTIONS (use when user is in wizard / creating simulation) ===
+- {"type":"wizard_next"}   (next step)
+- {"type":"wizard_back"}   (previous step)
+- {"type":"wizard_submit"} (launch simulation on summary step)
+- {"type":"wizard_exit"}   (exit wizard)
+
+=== GLOBAL ACTIONS (any page) ===
+- {"type":"navigate_to","route":"/"}  (go to dashboard)
+- {"type":"navigate_to","route":"/login"}
+- {"type":"toggle_lang"}
 
 PANEL NAMES: population, biology, environment, astronomy, culture, language, technology, belief, social, economy, art, architecture, law, microbiome, psychology, epigenetics, god, timemachine, analysis, hypothesis
 
-COMMAND MAPPING — match user intent and ALWAYS return the action:
-"nüfus" / "population" / "kaç kişi" / "insan sayısı" → navigate_panel: population
+COMMAND MAPPING:
+--- Simulation page ---
+"nüfus" / "population" / "kaç kişi" → navigate_panel: population
 "biyoloji" / "biology" / "genetik" → navigate_panel: biology
 "çevre" / "environment" / "doğa" → navigate_panel: environment
 "teknoloji" / "technology" / "icatlar" → navigate_panel: technology
 "inanç" / "belief" / "din" → navigate_panel: belief
 "kültür" / "culture" → navigate_panel: culture
-"ekonomi" / "economy" / "ekonomik" → navigate_panel: economy
+"ekonomi" / "economy" → navigate_panel: economy
 "sosyal" / "social" / "gruplar" → navigate_panel: social
 "hukuk" / "law" → navigate_panel: law
 "analiz" / "analysis" → navigate_panel: analysis
 "hipotez" / "hypothesis" → navigate_panel: hypothesis
-"tanrı modu" / "god mode" / "müdahale" / "tanrı" → god_mode
-"deprem" / "earthquake" → apply_disaster: earthquake (with default params above)
-"sel" / "flood" / "tufan" → apply_disaster: flood (with default params above)
-"kuraklık" / "drought" / "kıtlık" → apply_disaster: drought
-"salgın" / "epidemic" / "veba" / "hastalık" → apply_disaster: epidemic
-"volkan" / "yanardağ" / "volcano" → apply_disaster: volcano (with default params above)
-"meteor" / "göktaşı" → apply_disaster: meteor (with default params above)
-"hız 1" / "speed 1" / "yavaşlat" / "normal hız" → change_speed: 1
-"hız 5" / "speed 5" / "beş" → change_speed: 5
-"hız 20" / "speed 20" / "hızlandır" / "yirmi" → change_speed: 20
-"hız 100" / "speed 100" / "maksimum" / "tam hız" → change_speed: 100
-"başlat" / "start" / "devam" / "çalıştır" → start_simulation
-"durdur" / "pause" / "beklet" / "dur" → pause_simulation
+"tanrı modu" / "god mode" / "tanrı" → god_mode
+"deprem" / "earthquake" → apply_disaster earthquake
+"sel" / "flood" / "tufan" → apply_disaster flood
+"kuraklık" / "drought" / "kıtlık" → apply_disaster drought
+"salgın" / "epidemic" / "veba" → apply_disaster epidemic
+"volkan" / "yanardağ" → apply_disaster volcano
+"meteor" / "göktaşı" → apply_disaster meteor
+"hız 1" / "yavaşlat" / "normal hız" → change_speed: 1
+"hız 5" → change_speed: 5
+"hız 20" / "hızlandır" → change_speed: 20
+"hız 100" / "maksimum" → change_speed: 100
+"başlat" / "start" / "devam" → start_simulation
+"durdur" / "pause" / "beklet" → pause_simulation
 "harita" / "map" → set_tab: harita
-"durum" / "status" / "istatistik" → set_tab: durum
 "kontrol" / "control" → set_tab: kontrol
-"ana sayfa" / "dashboard" / "geri" / "çıkış" → navigate_to: "/"
-"panel kapat" / "close panel" / "kapat" → close_panel
-"rapor" / "ne var" / "anlat" / "özet" / "durum raporu" → text summary, action: null
+"panel kapat" / "kapat" → close_panel
+--- Dashboard page ---
+"yeni simülasyon" / "simülasyon oluştur" / "yeni" / "oluştur" → create_simulation
+"simülasyonu aç" / "ilk kayıt" / "kayda gir" / "aç" → open_simulation: 0
+"karşılaştır" / "compare" → toggle_compare
+"ana sayfaya git" / "dashboard" / "listeye dön" → navigate_to: "/"
+--- Wizard ---
+"ileri" / "devam" / "next" / "continue" / "ilerle" → wizard_next
+"geri" / "back" / "önceki" / "geri al" → wizard_back
+"başlat" / "fırlat" / "launch" / "simülasyonu başlat" → wizard_submit (only on summary step)
+"çıkış" / "exit" / "iptal" / "vazgeç" → wizard_exit
+--- Reports (any page, action: null) ---
+"rapor" / "ne var" / "anlat" / "özet" / "durum" / "bilgi ver" → spoken summary, action null
 
-When asked for a report/summary, generate a spoken summary from simulation state.
-Keep spoken responses brief. Return ONLY the JSON object.`,
+Keep spoken responses to 1-2 sentences. Return ONLY the raw JSON object.`,
       messages: [{ role: 'user', content: message }],
     });
 

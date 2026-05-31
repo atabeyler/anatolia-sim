@@ -195,20 +195,28 @@ export default function AriaButton() {
             simStatus: currentSim?.status ?? 'none',
             simId: currentSim?.id ?? null,
             hasActiveSim: !!currentSim,
+            page: window.location.pathname,
           },
         }, { headers: { Authorization: `Bearer ${accessToken}` } });
 
         if (data.action) {
           executeAction(data.action);
           const at = data.action.type;
-          const label = at === 'navigate_panel' ? `📂 ${data.action.panel}`
-            : at === 'change_speed'  ? `⚡ x${data.action.speed}`
-            : at === 'apply_disaster' ? `⚠ ${data.action.disaster}`
-            : at === 'start_simulation' ? '▶ start'
-            : at === 'pause_simulation' ? '⏸ pause'
-            : at === 'god_mode'      ? '✦ god mode'
-            : at === 'set_tab'       ? `🗂 ${data.action.tab}`
-            : at === 'navigate_to'   ? `→ ${data.action.route}`
+          const label = at === 'navigate_panel'    ? `📂 ${data.action.panel}`
+            : at === 'change_speed'      ? `⚡ x${data.action.speed}`
+            : at === 'apply_disaster'    ? `⚠ ${data.action.disaster}`
+            : at === 'start_simulation'  ? '▶ başlat'
+            : at === 'pause_simulation'  ? '⏸ duraklat'
+            : at === 'god_mode'          ? '✦ tanrı modu'
+            : at === 'set_tab'           ? `🗂 ${data.action.tab}`
+            : at === 'navigate_to'       ? `→ ${data.action.route}`
+            : at === 'create_simulation' ? '✚ yeni sim'
+            : at === 'open_simulation'   ? `▶ sim #${(data.action.index ?? 0) + 1}`
+            : at === 'toggle_compare'    ? '⇄ karşılaştır'
+            : at === 'wizard_next'       ? '→ ileri'
+            : at === 'wizard_back'       ? '← geri'
+            : at === 'wizard_submit'     ? '🚀 başlat'
+            : at === 'wizard_exit'       ? '✕ çıkış'
             : at;
           setLastAction(label);
           setTimeout(() => setLastAction(null), 3000);
@@ -342,6 +350,23 @@ export default function AriaButton() {
         toggleLang(); break;
       case 'god_mode':
         setActivePanel('god'); break;
+      /* ── Dashboard actions ── */
+      case 'create_simulation':
+        window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'create_simulation' } })); break;
+      case 'open_simulation':
+        window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'open_simulation', index: action.index ?? 0 } })); break;
+      case 'toggle_compare':
+        window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'toggle_compare' } })); break;
+      /* ── Wizard actions ── */
+      case 'wizard_next':
+        window.dispatchEvent(new CustomEvent('aria-wizard', { detail: { action: 'next' } })); break;
+      case 'wizard_back':
+        window.dispatchEvent(new CustomEvent('aria-wizard', { detail: { action: 'back' } })); break;
+      case 'wizard_submit':
+        window.dispatchEvent(new CustomEvent('aria-wizard', { detail: { action: 'submit' } })); break;
+      case 'wizard_exit':
+        window.dispatchEvent(new CustomEvent('aria-wizard', { detail: { action: 'exit' } }));
+        window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'wizard_exit' } })); break;
     }
   }
 
