@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSimStore } from '../../store/simStore';
 import axios from 'axios';
-import { Mic, MicOff, Volume2, Loader2 } from 'lucide-react';
+import { Mic, MicOff, Loader2 } from 'lucide-react';
 
-type AriaState = 'idle' | 'command' | 'processing' | 'speaking';
+type AriaState = 'idle' | 'command' | 'processing';
 
 const SR: any = typeof window !== 'undefined'
   ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null)
@@ -22,6 +22,7 @@ export default function AriaButton() {
 
   const [uiState, setUiState]       = useState<AriaState>('idle');
   const [transcript, setTranscript] = useState('');
+  const [ariaText, setAriaText]     = useState('');
   const [lastAction, setLastAction] = useState<string | null>(null);
   const [pos, setPos]               = useState({
     x: 20,
@@ -88,51 +89,52 @@ export default function AriaButton() {
   const activeRef     = useRef(false);
   const processingRef = useRef(false);
   const recRef        = useRef<any>(null);
-  const audioCtxRef   = useRef<any>(null);
+  const watchdogRef   = useRef<any>(null);
+  const pendingCmdRef = useRef<string | null>(null);
 
   function setUI(s: AriaState) { uiRef.current = s; setUiState(s); }
+
+  function armWatchdog() {
+    clearTimeout(watchdogRef.current);
+    watchdogRef.current = setTimeout(() => {
+      if (activeRef.current && processingRef.current) {
+        processingRef.current = false;
+        startRecognition();
+      }
+    }, 20000);
+  }
+  function disarmWatchdog() { clearTimeout(watchdogRef.current); }
 
   function toggle() {
     if (activeRef.current) {
       activeRef.current     = false;
       processingRef.current = false;
-      try { recRef.current?.stop(); } catch {}
-      recRef.current = null;
-      window.speechSynthesis?.cancel();
-      try { audioCtxRef.current?.close(); } catch {}
-      audioCtxRef.current = null;
+      disarmWatchdog();
+      killRec(recRef.current); recRef.current = null;
       setUI('idle');
       setTranscript('');
+      setAriaText('');
     } else {
-      try {
-        const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
-        if (Ctx) {
-          const ctx = new Ctx();
-          ctx.resume().catch(() => {});
-          audioCtxRef.current = ctx;
-        }
-      } catch {}
-      try {
-        const synth = window.speechSynthesis;
-        if (synth) {
-          synth.getVoices();
-          const dummy = new SpeechSynthesisUtterance('');
-          synth.speak(dummy);
-          synth.cancel();
-        }
-      } catch {}
-      activeRef.current = true;
-      processingRef.current = false;  // ensure clean state on (re)activate
+      activeRef.current     = true;
+      processingRef.current = false;
+      pendingCmdRef.current = null;
       startRecognition();
     }
+  }
+
+  function killRec(rec: any) {
+    if (!rec) return;
+    rec.onresult = null;
+    rec.onerror  = null;
+    rec.onend    = null;
+    try { rec.abort(); } catch {}
+    try { rec.stop();  } catch {}
   }
 
   function startRecognition() {
     if (!activeRef.current) return;
 
-    // Always stop any lingering session before starting fresh
-    try { recRef.current?.abort(); } catch {}
-    try { recRef.current?.stop();  } catch {}
+    killRec(recRef.current);
     recRef.current = null;
 
     if (!SR) { processCommand('__summary__'); return; }
@@ -148,20 +150,23 @@ export default function AriaButton() {
     let resultIdx = 0;
 
     rec.onresult = (e: any) => {
-      if (!activeRef.current || processingRef.current) return;
-
+      if (!activeRef.current) return;
       const results: any[] = Array.from(e.results);
       const live = results.slice(resultIdx).map((r: any) => r[0].transcript).join(' ');
       if (live) setTranscript(live);
-
       for (let i = resultIdx; i < results.length; i++) {
         if (results[i].isFinal) {
           const cmd = results[i][0].transcript.trim();
           if (!cmd) continue;
           resultIdx = i + 1;
-          processingRef.current = true;
-          try { rec.stop(); } catch {}
-          processCommand(cmd);
+          if (processingRef.current) {
+            pendingCmdRef.current = cmd;
+          } else {
+            processingRef.current = true;
+            armWatchdog();
+            killRec(rec);
+            processCommand(cmd);
+          }
           return;
         }
       }
@@ -185,7 +190,6 @@ export default function AriaButton() {
   }
 
   async function processCommand(cmd: string) {
-    // Guard: if deactivated while waiting in onresult, release lock and bail
     if (!activeRef.current) { processingRef.current = false; return; }
     setUI('processing');
 
@@ -217,126 +221,72 @@ export default function AriaButton() {
           })(),
         }, { headers: { Authorization: `Bearer ${accessToken}` } });
 
-        if (data.action) {
-          executeAction(data.action);
-          const at = data.action.type;
-          const label = at === 'navigate_panel'    ? `📂 ${data.action.panel}`
-            : at === 'change_speed'      ? `⚡ x${data.action.speed}`
-            : at === 'apply_disaster'    ? `⚠ ${data.action.disaster}`
-            : at === 'start_simulation'  ? '▶ başlat'
-            : at === 'pause_simulation'  ? '⏸ duraklat'
-            : at === 'god_mode'          ? '✦ tanrı modu'
-            : at === 'set_tab'           ? `🗂 ${data.action.tab}`
-            : at === 'navigate_to'       ? `→ ${data.action.route}`
-            : at === 'create_simulation' ? '✚ yeni sim'
-            : at === 'open_simulation'   ? `▶ sim #${(data.action.index ?? 0) + 1}`
-            : at === 'toggle_compare'    ? '⇄ karşılaştır'
-            : at === 'wizard_next'       ? '→ ileri'
-            : at === 'wizard_back'       ? '← geri'
-            : at === 'wizard_submit'     ? '🚀 başlat'
-            : at === 'wizard_exit'       ? '✕ çıkış'
-            : at === 'wizard_set'        ? `✎ ${data.action.field}=${data.action.value}`
+        const acts: any[] = (data.actions ?? (data.action != null ? [data.action] : [])).filter(Boolean);
+        acts.forEach((a: any) => executeAction(a));
+        if (acts.length === 1) {
+          const at = acts[0].type;
+          const label = at === 'navigate_panel'       ? `📂 ${acts[0].panel}`
+            : at === 'change_speed'         ? `⚡ x${acts[0].speed}`
+            : at === 'apply_disaster'       ? `⚠ ${acts[0].disaster}`
+            : at === 'start_simulation'     ? '▶ başlat'
+            : at === 'pause_simulation'     ? '⏸ duraklat'
+            : at === 'toggle_simulation'    ? '⏯ sim'
+            : at === 'terminate_simulation' ? '⏹ sonlandır'
+            : at === 'toggle_sidebar'       ? '◀▶ sidebar'
+            : at === 'god_mode'             ? '✦ tanrı modu'
+            : at === 'set_tab'              ? `🗂 ${acts[0].tab}`
+            : at === 'navigate_to'          ? `→ ${acts[0].route}`
+            : at === 'create_simulation'    ? '✚ yeni sim'
+            : at === 'open_simulation'      ? `▶ sim #${(acts[0].index ?? 0) + 1}`
+            : at === 'delete_simulation'    ? `🗑 sim #${(acts[0].index ?? 0) + 1}`
+            : at === 'toggle_compare'       ? '⇄ karşılaştır'
+            : at === 'logout'               ? '🔓 çıkış'
+            : at === 'toggle_lang'          ? '🌐 dil'
+            : at === 'set_lang'             ? `🌐 ${acts[0].lang}`
+            : at === 'wizard_next'          ? '→ ileri'
+            : at === 'wizard_back'          ? '← geri'
+            : at === 'wizard_submit'        ? '🚀 başlat'
+            : at === 'wizard_exit'          ? '✕ çıkış'
+            : at === 'wizard_set'           ? `✎ ${acts[0].field}=${acts[0].value}`
             : at;
           setLastAction(label);
           setTimeout(() => setLastAction(null), 3000);
+        } else if (acts.length > 1) {
+          setLastAction(`✓ ${acts.length} komut`);
+          setTimeout(() => setLastAction(null), 3000);
         }
         responseText = data.text ?? (lang === 'tr' ? 'Tamam.' : 'Done.');
-      } catch {
-        responseText = lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.';
+      } catch (err: any) {
+        const serverMsg = err?.response?.data?.text;
+        responseText = serverMsg ?? (lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.');
       }
     }
 
     setTranscript('');
-    // Always reset state after speaking, even if speakText throws
-    try {
-      await speakText(responseText);
-    } finally {
-      processingRef.current = false;
-      if (activeRef.current) startRecognition(); else setUI('idle');
+    setAriaText(responseText);
+    disarmWatchdog();
+    processingRef.current = false;
+    if (activeRef.current) {
+      const pending = pendingCmdRef.current;
+      pendingCmdRef.current = null;
+      if (pending) {
+        processingRef.current = true;
+        armWatchdog();
+        killRec(recRef.current); recRef.current = null;
+        processCommand(pending);
+      } else {
+        startRecognition();
+      }
+      const ms = Math.min(Math.max(2500, responseText.length * 70), 8000);
+      setTimeout(() => setAriaText(t => t === responseText ? '' : t), ms);
+    } else {
+      setAriaText('');
+      setUI('idle');
     }
   }
 
-  async function speakText(text: string) {
-    setUI('speaking');
-    const { accessToken } = storeRef.current;
-
-    try {
-      const resp = await axios.post('/api/aria/speak', { text },
-        { headers: { Authorization: `Bearer ${accessToken}` }, responseType: 'arraybuffer', timeout: 9000 });
-      const ab = resp.data as ArrayBuffer;
-      if (ab.byteLength > 800 && audioCtxRef.current) {
-        const ctx = audioCtxRef.current as AudioContext;
-        if (ctx.state !== 'closed') {
-          try {
-            await ctx.resume();
-            // Use a copy so the buffer isn't detached on repeated use
-            const buf = await ctx.decodeAudioData((ab as any).slice ? (ab as any).slice(0) : ab);
-            const src = ctx.createBufferSource();
-            src.buffer = buf;
-            src.connect(ctx.destination);
-            src.start();
-            // onended can silently never fire — cap at 15 s or 80 ms/char, whichever is larger
-            await new Promise<void>(res => {
-              const ms = Math.min(Math.max(4000, text.length * 80), 15000);
-              const t  = setTimeout(res, ms);
-              src.onended = () => { clearTimeout(t); res(); };
-            });
-            return;
-          } catch {
-            // AudioContext bad — rebuild it for next command
-            try { audioCtxRef.current?.close(); } catch {}
-            try {
-              const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
-              if (Ctx) { audioCtxRef.current = new Ctx(); audioCtxRef.current.resume().catch(() => {}); }
-            } catch { audioCtxRef.current = null; }
-          }
-        }
-      }
-    } catch { /* fall through to browser TTS */ }
-
-    await browserSpeak(text);
-  }
-
-  function browserSpeak(text: string): Promise<void> {
-    return new Promise(res => {
-      const synth = window.speechSynthesis;
-      if (!synth) { setTimeout(res, 800); return; }
-
-      synth.cancel();
-
-      const utt  = new SpeechSynthesisUtterance(text);
-      utt.lang   = storeRef.current.lang === 'tr' ? 'tr-TR' : 'en-US';
-      utt.volume = 1.0;
-      utt.rate   = 0.92;
-
-      let done = false;
-      const finish = () => { if (!done) { done = true; res(); } };
-      // Cap at 12 s — long pauses in synthesis shouldn't freeze the whole loop
-      const guard = setTimeout(finish, Math.min(Math.max(3000, text.length * 60), 12000));
-      utt.onend   = () => { clearTimeout(guard); finish(); };
-      utt.onerror = () => { clearTimeout(guard); finish(); };
-
-      const go = () => {
-        if (done) return;
-        const voices = synth.getVoices();
-        const lng    = utt.lang.split('-')[0];
-        const match  = voices.find(v => v.lang.startsWith(lng) && !v.name.toLowerCase().includes('whisper'));
-        if (match) utt.voice = match;
-        synth.speak(utt);
-      };
-
-      if (synth.getVoices().length > 0) {
-        go();
-      } else {
-        let called = false;
-        synth.onvoiceschanged = () => { if (!called) { called = true; go(); } };
-        setTimeout(() => { if (!called) { called = true; go(); } }, 500);
-      }
-    });
-  }
-
   function executeAction(action: any) {
-    const { currentSim, accessToken, setActivePanel, setSpeed, toggleLang, setCurrentSim } = storeRef.current;
+    const { currentSim, accessToken, setActivePanel, setSpeed, toggleLang, setLang, setCurrentSim, logout } = storeRef.current;
     if (!action?.type) return;
     switch (action.type) {
       case 'navigate_panel':
@@ -388,16 +338,26 @@ export default function AriaButton() {
         window.dispatchEvent(new CustomEvent('aria-set-tab', { detail: action.tab })); break;
       case 'toggle_lang':
         toggleLang(); break;
+      case 'set_lang':
+        if (action.lang) setLang(action.lang); break;
       case 'god_mode':
         setActivePanel('god'); break;
-      /* ── Dashboard actions ── */
+      case 'toggle_sidebar':
+        window.dispatchEvent(new CustomEvent('aria-simulation', { detail: { action: 'toggle_sidebar' } })); break;
+      case 'terminate_simulation':
+        window.dispatchEvent(new CustomEvent('aria-simulation', { detail: { action: 'terminate_simulation' } })); break;
+      case 'logout':
+        logout();
+        navigate('/login');
+        break;
       case 'create_simulation':
         window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'create_simulation' } })); break;
       case 'open_simulation':
         window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'open_simulation', index: action.index ?? 0 } })); break;
       case 'toggle_compare':
         window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'toggle_compare' } })); break;
-      /* ── Wizard actions ── */
+      case 'delete_simulation':
+        window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'delete_simulation', index: action.index ?? 0 } })); break;
       case 'wizard_next':
         window.dispatchEvent(new CustomEvent('aria-wizard', { detail: { action: 'next' } })); break;
       case 'wizard_back':
@@ -417,33 +377,30 @@ export default function AriaButton() {
   function buildSummary(stats: any, lang: string): string {
     if (!stats) return lang === 'tr' ? 'Simülasyon verisi yok.' : 'No simulation data.';
     if (lang === 'tr')
-      return `Asistan rapor veriyor. Yıl ${stats.year}, nüfus ${stats.population}. ` +
+      return `Yıl ${stats.year}, nüfus ${stats.population}. ` +
         `${stats.technologies} teknoloji keşfedildi. ` +
-        `Ortalama mutluluk yüzde ${Math.round((stats.happiness_index ?? 0.5) * 100)}. ` +
-        `Mevsim ${stats.season ?? 'bilinmiyor'}, sıcaklık ${stats.temperature ?? 20} derece. ` +
-        `${stats.beliefs ?? 0} inanç sistemi, ${stats.groups ?? 0} sosyal grup mevcut.`;
-    return `Assistant reporting. Year ${stats.year}, population ${stats.population}. ` +
-      `${stats.technologies} technologies discovered. ` +
-      `Average happiness ${Math.round((stats.happiness_index ?? 0.5) * 100)} percent. ` +
-      `Season ${stats.season ?? 'unknown'}, temperature ${stats.temperature ?? 20} degrees. ` +
-      `${stats.beliefs ?? 0} belief systems, ${stats.groups ?? 0} social groups active.`;
+        `Mutluluk %${Math.round((stats.happiness_index ?? 0.5) * 100)}, ` +
+        `mevsim ${stats.season ?? '?'}, ${stats.temperature ?? 20}°C.`;
+    return `Year ${stats.year}, population ${stats.population}. ` +
+      `${stats.technologies} technologies. ` +
+      `Happiness ${Math.round((stats.happiness_index ?? 0.5) * 100)}%, ` +
+      `season ${stats.season ?? '?'}, ${stats.temperature ?? 20}°C.`;
   }
 
   /* ── Visuals ────────────────────────────────────────────────────────────── */
   const COLORS: Record<AriaState, string> = {
-    idle: '#00e887', command: '#f97316', processing: '#a855f7', speaking: '#4ecb71',
+    idle: '#00e887', command: '#f97316', processing: '#a855f7',
   };
   const color = COLORS[uiState];
-  const Icon  = uiState === 'idle'       ? MicOff
-    : uiState === 'command'    ? Mic
-    : uiState === 'processing' ? Loader2
-    : Volume2;
+  const Icon  = uiState === 'processing' ? Loader2 : uiState === 'command' ? Mic : MicOff;
 
   const langKey = store.lang === 'tr' ? 'tr' : 'en';
   const stateLabel = {
-    tr: { idle: 'ASİSTAN', command: 'DİNLİYOR…', processing: 'İŞLENİYOR…', speaking: 'KONUŞUYOR…' },
-    en: { idle: 'ASSISTANT', command: 'LISTENING…', processing: 'PROCESSING…', speaking: 'SPEAKING…' },
+    tr: { idle: 'ASİSTAN', command: 'DİNLİYOR…', processing: 'İŞLENİYOR…' },
+    en: { idle: 'ASSISTANT', command: 'LISTENING…', processing: 'PROCESSING…' },
   }[langKey][uiState];
+
+  const hasOverlay = uiState !== 'idle' && (transcript || ariaText);
 
   return (
     <>
@@ -495,27 +452,40 @@ export default function AriaButton() {
         )}
       </button>
 
-      {/* Active state overlay: transcript + hint */}
+      {/* Overlay bubble: transcript while listening, ARIA reply after processing */}
       {uiState !== 'idle' && (
         <div style={{
           position: 'fixed',
-          left: Math.max(0, Math.min(window.innerWidth - 240, pos.x)),
-          top: Math.max(0, pos.y - (transcript ? 72 : 48)),
+          left: Math.max(0, Math.min(window.innerWidth - 280, pos.x)),
+          top: Math.max(0, pos.y - (hasOverlay ? 90 : 48)),
           zIndex: 9998,
           background: '#07071aee',
           border: `1px solid ${color}55`,
           borderRadius: 8,
-          padding: '6px 10px',
-          maxWidth: 240,
+          padding: '7px 11px',
+          maxWidth: 280,
           boxShadow: `0 0 12px ${color}33`,
           pointerEvents: 'none',
         }}>
           {transcript && (
             <div style={{
-              color: '#a0b4ff', fontSize: 10, marginBottom: 4,
+              color: '#a0b4ff', fontSize: 10, marginBottom: ariaText ? 6 : 0,
               fontFamily: 'Share Tech Mono, monospace',
             }}>
-              "{transcript.slice(0, 100)}{transcript.length > 100 ? '…' : ''}"
+              "{transcript.slice(0, 120)}{transcript.length > 120 ? '…' : ''}"
+            </div>
+          )}
+          {ariaText && (
+            <div style={{
+              color: '#00e887',
+              fontSize: 11,
+              fontFamily: 'Share Tech Mono, monospace',
+              lineHeight: 1.5,
+              marginBottom: 4,
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}>
+              {ariaText}
             </div>
           )}
           <div style={{
