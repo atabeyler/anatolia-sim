@@ -200,6 +200,12 @@ export default function SimulationPage() {
         case 'toggle_sidebar':
           setSidebarExpanded(v => !v);
           break;
+        case 'open_menu':
+          setMenuOpen(true);
+          break;
+        case 'close_menu':
+          setMenuOpen(false);
+          break;
         case 'terminate_simulation': {
           const { currentSim: sim, accessToken: tok, lang: l, setCurrentSim: setSim } = useSimStore.getState();
           if (!sim || !tok) return;

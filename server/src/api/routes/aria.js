@@ -70,6 +70,8 @@ Multiple wizard_set actions MUST be combined when user sets multiple fields at o
 - {"type":"toggle_simulation"}
 - {"type":"toggle_sidebar"}
 - {"type":"terminate_simulation"}
+- {"type":"open_menu"}
+- {"type":"close_menu"}
 - {"type":"apply_disaster","disaster":"earthquake","params":{"magnitude":7,"lat":0,"lon":0,"radius":300}}
 - {"type":"apply_disaster","disaster":"flood","params":{"severity":0.8,"lat":0,"lon":0,"radius":300}}
 - {"type":"apply_disaster","disaster":"drought","params":{}}
@@ -156,6 +158,8 @@ COMMAND MAPPING:
 "tanrı modu" / "god mode" / "tanrı" → god_mode
 "kenar çubuğunu aç/kapat" / "sidebar" / "menüyü gizle" → toggle_sidebar
 "simülasyonu sonlandır" / "bitir" / "terminate" → terminate_simulation
+"menüyü aç" / "menü" / "ayarlar" / "open menu" → open_menu
+"menüyü kapat" / "kapat menü" → close_menu
 "deprem" / "earthquake" → apply_disaster earthquake
 "sel" / "flood" / "tufan" → apply_disaster flood
 "kuraklık" / "drought" / "kıtlık" → apply_disaster drought
@@ -173,6 +177,7 @@ COMMAND MAPPING:
 "kontrol" / "control" → set_tab: kontrol
 "panel kapat" / "kapat" → close_panel
 --- Dashboard page ---
+"menüyü aç" / "menü" / "ayarlar" / "open menu" → open_menu
 "yeni simülasyon" / "simülasyon oluştur" / "yeni" / "oluştur" → create_simulation
 "simülasyonu aç" / "ilk kayıt" / "aç" → open_simulation: 0
 "karşılaştır" / "compare" → toggle_compare

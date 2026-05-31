@@ -39,6 +39,8 @@ export default function DashboardPage() {
         }
         case 'toggle_compare': setCompareMode(c => !c); break;
         case 'wizard_exit': setShowNew(false); break;
+        case 'open_menu': setMenuOpen(true); break;
+        case 'close_menu': setMenuOpen(false); break;
         case 'delete_simulation': {
           const sim = simsRef.current[index ?? 0];
           if (!sim) break;
