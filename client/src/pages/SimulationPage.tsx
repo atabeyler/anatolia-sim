@@ -173,6 +173,7 @@ export default function SimulationPage() {
   const [selectedInd, setSelectedInd] = useState<any>(null);
   const [globeCoord, setGlobeCoord] = useState<{ lat: number; lon: number } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPage, setMenuPage] = useState<'language' | 'guide' | 'about' | 'mission' | 'contact' | null>(null);
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
 
   // Responsive breakpoint
@@ -203,8 +204,13 @@ export default function SimulationPage() {
         case 'open_menu':
           setMenuOpen(true);
           break;
+        case 'open_menu_page':
+          setMenuPage((e as CustomEvent).detail.menuPage ?? null);
+          setMenuOpen(true);
+          break;
         case 'close_menu':
           setMenuOpen(false);
+          setMenuPage(null);
           break;
         case 'terminate_simulation': {
           const { currentSim: sim, accessToken: tok, lang: l, setCurrentSim: setSim } = useSimStore.getState();
@@ -688,7 +694,9 @@ export default function SimulationPage() {
       {/* ═══ MENU OVERLAY ═══ */}
       <SimMenuOverlay
         isOpen={menuOpen}
-        onClose={() => setMenuOpen(false)}
+        onClose={() => { setMenuOpen(false); setMenuPage(null); }}
+        menuPage={menuPage}
+        onMenuPageChange={setMenuPage}
         mobileActions={isMobile ? (
           <div style={{ padding: '8px 14px', borderTop: '1px solid #cc2222', display: 'flex', gap: 8 }}>
             <button onClick={() => { setMenuOpen(false); navigate('/'); }}

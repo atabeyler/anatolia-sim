@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useSimStore } from '../../store/simStore';
 
@@ -51,13 +51,25 @@ function Bullet({ children }: { children: React.ReactNode }) {
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  /** Controlled page — set from outside to navigate to a specific sub-page */
+  menuPage?: Page;
+  onMenuPageChange?: (p: Page) => void;
   /** Extra items shown at the bottom of the main menu list (e.g. mobile EXIT/TERMINATE for SimulationPage) */
   mobileActions?: React.ReactNode;
 }
 
-export default function SimMenuOverlay({ isOpen, onClose, mobileActions }: Props) {
+export default function SimMenuOverlay({ isOpen, onClose, mobileActions, menuPage, onMenuPageChange }: Props) {
   const { lang, setLang } = useSimStore();
-  const [page, setPage] = useState<Page>(null);
+  const [internalPage, setInternalPage] = useState<Page>(null);
+
+  const page = menuPage !== undefined ? menuPage : internalPage;
+  function setPage(p: Page) {
+    if (onMenuPageChange) onMenuPageChange(p);
+    else setInternalPage(p);
+  }
+
+  // Reset internal page when menu closes
+  useEffect(() => { if (!isOpen) setInternalPage(null); }, [isOpen]);
 
   if (!isOpen) return null;
 

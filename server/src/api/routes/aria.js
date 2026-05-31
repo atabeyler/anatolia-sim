@@ -71,6 +71,7 @@ Multiple wizard_set actions MUST be combined when user sets multiple fields at o
 - {"type":"toggle_sidebar"}
 - {"type":"terminate_simulation"}
 - {"type":"open_menu"}
+- {"type":"open_menu_page","menuPage":"language"}   (menuPage: language/guide/about/mission/contact)
 - {"type":"close_menu"}
 - {"type":"apply_disaster","disaster":"earthquake","params":{"magnitude":7,"lat":0,"lon":0,"radius":300}}
 - {"type":"apply_disaster","disaster":"flood","params":{"severity":0.8,"lat":0,"lon":0,"radius":300}}
@@ -159,6 +160,11 @@ COMMAND MAPPING:
 "kenar çubuğunu aç/kapat" / "sidebar" / "menüyü gizle" → toggle_sidebar
 "simülasyonu sonlandır" / "bitir" / "terminate" → terminate_simulation
 "menüyü aç" / "menü" / "ayarlar" / "open menu" → open_menu
+"dil seçenekleri" / "dili değiştir" / "dil menüsü" → open_menu_page: language
+"kılavuzu aç" / "kullanım kılavuzu" / "yardım" / "nasıl kullanılır" → open_menu_page: guide
+"hakkımızda" / "about" → open_menu_page: about
+"misyon vizyon" / "misyon" / "vizyon" → open_menu_page: mission
+"iletişim" / "contact" → open_menu_page: contact
 "menüyü kapat" / "kapat menü" → close_menu
 "deprem" / "earthquake" → apply_disaster earthquake
 "sel" / "flood" / "tufan" → apply_disaster flood
@@ -177,7 +183,12 @@ COMMAND MAPPING:
 "kontrol" / "control" → set_tab: kontrol
 "panel kapat" / "kapat" → close_panel
 --- Dashboard page ---
-"menüyü aç" / "menü" / "ayarlar" / "open menu" → open_menu
+"menüyü aç" / "menü" / "ayarlar" → open_menu
+"dil seçenekleri" / "dili değiştir" → open_menu_page: language
+"kılavuzu aç" / "yardım" → open_menu_page: guide
+"hakkımızda" → open_menu_page: about
+"misyon" / "vizyon" → open_menu_page: mission
+"iletişim" → open_menu_page: contact
 "yeni simülasyon" / "simülasyon oluştur" / "yeni" / "oluştur" → create_simulation
 "simülasyonu aç" / "ilk kayıt" / "aç" → open_simulation: 0
 "karşılaştır" / "compare" → toggle_compare

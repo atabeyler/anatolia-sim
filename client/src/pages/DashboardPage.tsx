@@ -10,6 +10,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { user, accessToken, logout, lang } = useSimStore();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPage, setMenuPage] = useState<'language' | 'guide' | 'about' | 'mission' | 'contact' | null>(null);
   const [sims, setSims]             = useState<any[]>([]);
   const [showNew, setShowNew]       = useState(false);
   const [compareMode, setCompareMode] = useState(false);
@@ -40,7 +41,11 @@ export default function DashboardPage() {
         case 'toggle_compare': setCompareMode(c => !c); break;
         case 'wizard_exit': setShowNew(false); break;
         case 'open_menu': setMenuOpen(true); break;
-        case 'close_menu': setMenuOpen(false); break;
+        case 'open_menu_page':
+          setMenuPage((e as CustomEvent).detail.menuPage ?? null);
+          setMenuOpen(true);
+          break;
+        case 'close_menu': setMenuOpen(false); setMenuPage(null); break;
         case 'delete_simulation': {
           const sim = simsRef.current[index ?? 0];
           if (!sim) break;
@@ -342,7 +347,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Menu Overlay */}
-      <SimMenuOverlay isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      <SimMenuOverlay isOpen={menuOpen} onClose={() => { setMenuOpen(false); setMenuPage(null); }} menuPage={menuPage} onMenuPageChange={setMenuPage} />
 
       {/* Footer */}
       <div className="text-center py-6 px-4 relative z-1">

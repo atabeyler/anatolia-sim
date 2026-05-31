@@ -234,6 +234,7 @@ export default function AriaButton() {
             : at === 'terminate_simulation' ? '⏹ sonlandır'
             : at === 'toggle_sidebar'       ? '◀▶ sidebar'
             : at === 'open_menu'            ? '☰ menü aç'
+            : at === 'open_menu_page'       ? `☰ ${acts[0].menuPage}`
             : at === 'close_menu'           ? '✕ menü kapat'
             : at === 'god_mode'             ? '✦ tanrı modu'
             : at === 'set_tab'              ? `🗂 ${acts[0].tab}`
@@ -352,6 +353,12 @@ export default function AriaButton() {
         window.dispatchEvent(new CustomEvent('aria-simulation', { detail: { action: 'open_menu' } }));
         window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'open_menu' } }));
         break;
+      case 'open_menu_page': {
+        const detail = { action: 'open_menu_page', menuPage: action.menuPage };
+        window.dispatchEvent(new CustomEvent('aria-simulation', { detail }));
+        window.dispatchEvent(new CustomEvent('aria-dashboard', { detail }));
+        break;
+      }
       case 'close_menu':
         window.dispatchEvent(new CustomEvent('aria-simulation', { detail: { action: 'close_menu' } }));
         window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'close_menu' } }));
