@@ -249,8 +249,9 @@ export default function AriaButton() {
           setTimeout(() => setLastAction(null), 3000);
         }
         responseText = data.text ?? (lang === 'tr' ? 'Tamam.' : 'Done.');
-      } catch {
-        responseText = lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.';
+      } catch (err: any) {
+        const serverMsg = err?.response?.data?.text;
+        responseText = serverMsg ?? (lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.');
       }
     }
 
