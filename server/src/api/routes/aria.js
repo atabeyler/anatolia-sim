@@ -142,11 +142,12 @@ Keep spoken responses to 1-2 sentences. Return ONLY the JSON object.`;
 
     res.json(parsed);
   } catch (err) {
-    console.error('ARIA error:', err?.message ?? err);
-    const msg = !process.env.GEMINI_API_KEY
-      ? (req.body?.lang === 'tr' ? 'GEMINI_API_KEY ayarlanmamış.' : 'GEMINI_API_KEY not set.')
-      : (req.body?.lang === 'tr' ? 'ARIA yanıt veremedi.' : 'ARIA could not respond.');
-    res.status(500).json({ text: msg, actions: [] });
+    const detail = err?.message ?? String(err);
+    console.error('ARIA error:', detail);
+    res.status(500).json({
+      text: `ARIA hata: ${detail.slice(0, 120)}`,
+      actions: [],
+    });
   }
 });
 
