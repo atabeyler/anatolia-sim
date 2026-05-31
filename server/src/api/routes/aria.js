@@ -228,7 +228,7 @@ For founder 1 vs 2: if user says "kurucu bir/birinci" use founder:1, "kurucu iki
 Keep spoken responses to 1-2 sentences. Return ONLY the JSON object.`;
 
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'llama-3.1-8b-instant',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message },
@@ -251,8 +251,12 @@ Keep spoken responses to 1-2 sentences. Return ONLY the JSON object.`;
 
     res.json(parsed);
   } catch (err) {
+    const status = err?.status ?? err?.response?.status;
     const detail = err?.message ?? String(err);
     console.error('ARIA error:', detail);
+    if (status === 429) {
+      return res.status(429).json({ text: 'Çok fazla istek. Birkaç saniye bekleyip tekrar deneyin.', actions: [] });
+    }
     res.status(500).json({ text: `ARIA hata: ${detail.slice(0, 120)}`, actions: [] });
   }
 });
