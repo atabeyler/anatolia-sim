@@ -118,7 +118,7 @@ PANEL NAMES: population, biology, environment, astronomy, culture, language, tec
 Keep spoken responses to 1-2 sentences. Return ONLY the JSON object.`;
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-1.5-flash',
       systemInstruction,
       generationConfig: {
         responseMimeType: 'application/json',
@@ -142,11 +142,11 @@ Keep spoken responses to 1-2 sentences. Return ONLY the JSON object.`;
 
     res.json(parsed);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      text: req.body?.lang === 'tr' ? 'ARIA yanıt veremedi.' : 'ARIA could not respond.',
-      actions: [],
-    });
+    console.error('ARIA error:', err?.message ?? err);
+    const msg = !process.env.GEMINI_API_KEY
+      ? (req.body?.lang === 'tr' ? 'GEMINI_API_KEY ayarlanmamış.' : 'GEMINI_API_KEY not set.')
+      : (req.body?.lang === 'tr' ? 'ARIA yanıt veremedi.' : 'ARIA could not respond.');
+    res.status(500).json({ text: msg, actions: [] });
   }
 });
 

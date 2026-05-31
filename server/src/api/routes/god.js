@@ -129,7 +129,7 @@ router.post('/:simId/talk/:individualId', authenticate, requireSimulationOwner, 
     const age = Math.floor((engine.currentDay - individual.birth_day) / 365);
     const langStage = individual.language?.stage ?? 0;
     const talkModel = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-1.5-flash',
       systemInstruction: `You are roleplaying as a simulated human in a civilization simulation. Age: ${age}, Sex: ${individual.sex}, Language stage: ${langStage} (${individual.language?.stage_name ?? 'pre-linguistic'}), Intelligence: ${individual.phenotype?.fluid_intelligence?.toFixed(2)}/1.0. If stage 0-1: only grunts/gestures. If stage 2: proto-sounds. If stage 3: max 10 simple words. If stage 4+: simple sentences. Never break character.`,
       generationConfig: { maxOutputTokens: 500 },
     });
