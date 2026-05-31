@@ -89,15 +89,28 @@ export default function AriaButton() {
   const processingRef = useRef(false);
   const recRef        = useRef<any>(null);
   const audioCtxRef   = useRef<any>(null);
+  const watchdogRef   = useRef<any>(null);
 
   function setUI(s: AriaState) { uiRef.current = s; setUiState(s); }
+
+  /** Arm a watchdog: if processing stays true for 20 s, force-reset. */
+  function armWatchdog() {
+    clearTimeout(watchdogRef.current);
+    watchdogRef.current = setTimeout(() => {
+      if (activeRef.current && processingRef.current) {
+        processingRef.current = false;
+        startRecognition();
+      }
+    }, 20000);
+  }
+  function disarmWatchdog() { clearTimeout(watchdogRef.current); }
 
   function toggle() {
     if (activeRef.current) {
       activeRef.current     = false;
       processingRef.current = false;
-      try { recRef.current?.stop(); } catch {}
-      recRef.current = null;
+      disarmWatchdog();
+      killRec(recRef.current); recRef.current = null;
       window.speechSynthesis?.cancel();
       try { audioCtxRef.current?.close(); } catch {}
       audioCtxRef.current = null;
@@ -121,18 +134,28 @@ export default function AriaButton() {
           synth.cancel();
         }
       } catch {}
-      activeRef.current = true;
-      processingRef.current = false;  // ensure clean state on (re)activate
+      activeRef.current     = true;
+      processingRef.current = false;
       startRecognition();
     }
+  }
+
+  /** Safely detach all handlers then stop a recognition instance. */
+  function killRec(rec: any) {
+    if (!rec) return;
+    rec.onresult = null;
+    rec.onerror  = null;
+    rec.onend    = null;
+    try { rec.abort(); } catch {}
+    try { rec.stop();  } catch {}
   }
 
   function startRecognition() {
     if (!activeRef.current) return;
 
-    // Always stop any lingering session before starting fresh
-    try { recRef.current?.abort(); } catch {}
-    try { recRef.current?.stop();  } catch {}
+    // Kill the old session cleanly — null handlers first so onend can't
+    // trigger another startRecognition call (double-start race condition).
+    killRec(recRef.current);
     recRef.current = null;
 
     if (!SR) { processCommand('__summary__'); return; }
@@ -160,7 +183,8 @@ export default function AriaButton() {
           if (!cmd) continue;
           resultIdx = i + 1;
           processingRef.current = true;
-          try { rec.stop(); } catch {}
+          armWatchdog();
+          killRec(rec); // detach handlers so onend won't restart while processing
           processCommand(cmd);
           return;
         }
@@ -217,27 +241,31 @@ export default function AriaButton() {
           })(),
         }, { headers: { Authorization: `Bearer ${accessToken}` } });
 
-        if (data.action) {
-          executeAction(data.action);
-          const at = data.action.type;
-          const label = at === 'navigate_panel'    ? `📂 ${data.action.panel}`
-            : at === 'change_speed'      ? `⚡ x${data.action.speed}`
-            : at === 'apply_disaster'    ? `⚠ ${data.action.disaster}`
+        const acts: any[] = (data.actions ?? (data.action != null ? [data.action] : [])).filter(Boolean);
+        acts.forEach((a: any) => executeAction(a));
+        if (acts.length === 1) {
+          const at = acts[0].type;
+          const label = at === 'navigate_panel'    ? `📂 ${acts[0].panel}`
+            : at === 'change_speed'      ? `⚡ x${acts[0].speed}`
+            : at === 'apply_disaster'    ? `⚠ ${acts[0].disaster}`
             : at === 'start_simulation'  ? '▶ başlat'
             : at === 'pause_simulation'  ? '⏸ duraklat'
             : at === 'god_mode'          ? '✦ tanrı modu'
-            : at === 'set_tab'           ? `🗂 ${data.action.tab}`
-            : at === 'navigate_to'       ? `→ ${data.action.route}`
+            : at === 'set_tab'           ? `🗂 ${acts[0].tab}`
+            : at === 'navigate_to'       ? `→ ${acts[0].route}`
             : at === 'create_simulation' ? '✚ yeni sim'
-            : at === 'open_simulation'   ? `▶ sim #${(data.action.index ?? 0) + 1}`
+            : at === 'open_simulation'   ? `▶ sim #${(acts[0].index ?? 0) + 1}`
             : at === 'toggle_compare'    ? '⇄ karşılaştır'
             : at === 'wizard_next'       ? '→ ileri'
             : at === 'wizard_back'       ? '← geri'
             : at === 'wizard_submit'     ? '🚀 başlat'
             : at === 'wizard_exit'       ? '✕ çıkış'
-            : at === 'wizard_set'        ? `✎ ${data.action.field}=${data.action.value}`
+            : at === 'wizard_set'        ? `✎ ${acts[0].field}=${acts[0].value}`
             : at;
           setLastAction(label);
+          setTimeout(() => setLastAction(null), 3000);
+        } else if (acts.length > 1) {
+          setLastAction(`✓ ${acts.length} komut`);
           setTimeout(() => setLastAction(null), 3000);
         }
         responseText = data.text ?? (lang === 'tr' ? 'Tamam.' : 'Done.');
@@ -251,6 +279,7 @@ export default function AriaButton() {
     try {
       await speakText(responseText);
     } finally {
+      disarmWatchdog();
       processingRef.current = false;
       if (activeRef.current) startRecognition(); else setUI('idle');
     }

@@ -47,7 +47,7 @@ router.post('/command', authenticate, async (req, res) => {
 
     const response = await anthropic.messages.create({
       model: 'claude-opus-4-8',
-      max_tokens: 400,
+      max_tokens: 600,
       system: `You are ARIA, the omnipotent AI controller of ANATOLİA-SİM civilization simulation.
 You have full command over the application. Respond in ${respondIn}.
 
@@ -55,12 +55,15 @@ SIMULATION STATE:
 ${statsCtx}
 
 CRITICAL: Respond ONLY with raw JSON — no markdown fences, no extra text, nothing before or after the JSON object.
-{"text": "short spoken response (1-2 sentences)", "action": ACTION_OR_NULL}
+{"text": "short spoken response (1-2 sentences)", "actions": [ACTION, ACTION, ...] or []}
+
+The "actions" field is ALWAYS an array. If the user requests multiple things in one sentence, include ALL of them in the array in order. If only one action, put it alone in the array. If no action, use an empty array [].
+Example multi-command: {"text": "Tamam, simülasyon adı ve koordinatlar ayarlandı.", "actions": [{"type":"wizard_set","field":"sim_name","value":"Yalçın"}, {"type":"wizard_set","field":"sim_latitude","value":"30"}, {"type":"wizard_set","field":"sim_longitude","value":"40"}]}
 
 IMPORTANT: Choose actions based on the CURRENT PAGE shown in the simulation state above.
 
-ALL AVAILABLE ACTIONS — choose EXACTLY one. ALWAYS return an action for recognized commands (never return null for a matched command):
-- null  (only for pure reports/summaries or unrecognized commands)
+ALL AVAILABLE ACTIONS — include ALL that apply for a single utterance. For reports/summaries or unrecognized commands use an empty actions array [].
+Multiple wizard_set actions CAN and SHOULD be combined when the user sets multiple fields at once.
 
 === SIMULATION PAGE ACTIONS (use when page=simulation) ===
 - {"type":"navigate_panel","panel":"PANEL_NAME"}
@@ -207,16 +210,24 @@ Keep spoken responses to 1-2 sentences. Return ONLY the raw JSON object.`,
     let result;
     try {
       const match = raw.match(/\{[\s\S]*\}/);
-      result = match ? JSON.parse(match[0]) : { text: raw, action: null };
+      const parsed = match ? JSON.parse(match[0]) : { text: raw, actions: [] };
+      // Normalise: if model returned old-style "action" field, convert to array
+      if (!parsed.actions && parsed.action != null) {
+        parsed.actions = [parsed.action];
+        delete parsed.action;
+      } else if (!parsed.actions) {
+        parsed.actions = [];
+      }
+      result = parsed;
     } catch {
-      result = { text: raw, action: null };
+      result = { text: raw, actions: [] };
     }
     res.json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({
       text: req.body?.lang === 'tr' ? 'ARIA yanıt veremedi.' : 'ARIA could not respond.',
-      action: null,
+      actions: [],
     });
   }
 });
