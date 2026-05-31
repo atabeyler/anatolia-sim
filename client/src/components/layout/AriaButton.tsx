@@ -10,6 +10,9 @@ const SR: any = typeof window !== 'undefined'
   ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null)
   : null;
 
+const PILL_W = 148;
+const PILL_H = 48;
+
 export default function AriaButton() {
   const store = useSimStore();
   const navigate = useNavigate();
@@ -17,41 +20,69 @@ export default function AriaButton() {
   const storeRef = useRef(store);
   storeRef.current = store;
 
-  const [uiState, setUiState]     = useState<AriaState>('idle');
+  const [uiState, setUiState]       = useState<AriaState>('idle');
   const [transcript, setTranscript] = useState('');
-  const [tooltip, setTooltip]     = useState(false);
-  const [isMobile, setIsMobile]   = useState(false);
-  const [pos, setPos]             = useState({ x: 20, y: 600 });
-  const dragOffset = useRef({ dx: 0, dy: 0 });
-  const dragging   = useRef(false);
+  const [pos, setPos]               = useState({
+    x: 20,
+    y: typeof window !== 'undefined' ? window.innerHeight - 100 : 600,
+  });
 
+  const posRef       = useRef(pos);
+  posRef.current     = pos;
+  const dragOffset   = useRef({ dx: 0, dy: 0 });
+  const dragging     = useRef(false);
+  const didDrag      = useRef(false);
+  const dragStart    = useRef({ x: 0, y: 0 });
+
+  /* ── Mouse drag ─────────────────────────────────────────────────────────── */
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 639px)');
-    const update = (m: MediaQueryList | MediaQueryListEvent) => {
-      setIsMobile(m.matches);
-      if (m.matches) setPos({ x: 20, y: window.innerHeight - 100 });
+    function onMouseMove(e: MouseEvent) {
+      if (!dragging.current) return;
+      const moved = Math.hypot(e.clientX - dragStart.current.x, e.clientY - dragStart.current.y);
+      if (moved > 4) didDrag.current = true;
+      setPos({
+        x: Math.max(0, Math.min(window.innerWidth  - PILL_W, e.clientX - dragOffset.current.dx)),
+        y: Math.max(0, Math.min(window.innerHeight - PILL_H, e.clientY - dragOffset.current.dy)),
+      });
+    }
+    function onMouseUp() { dragging.current = false; }
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup',   onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup',   onMouseUp);
     };
-    update(mq);
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
   }, []);
 
+  function onMouseDown(e: React.MouseEvent) {
+    didDrag.current    = false;
+    dragStart.current  = { x: e.clientX, y: e.clientY };
+    dragOffset.current = { dx: e.clientX - posRef.current.x, dy: e.clientY - posRef.current.y };
+    dragging.current   = true;
+  }
+
+  /* ── Touch drag ─────────────────────────────────────────────────────────── */
   function onTouchStart(e: React.TouchEvent) {
-    dragging.current = true;
+    didDrag.current    = false;
+    dragging.current   = true;
     const t = e.touches[0];
-    dragOffset.current = { dx: t.clientX - pos.x, dy: t.clientY - pos.y };
+    dragStart.current  = { x: t.clientX, y: t.clientY };
+    dragOffset.current = { dx: t.clientX - posRef.current.x, dy: t.clientY - posRef.current.y };
   }
   function onTouchMove(e: React.TouchEvent) {
     if (!dragging.current) return;
     e.preventDefault();
     const t = e.touches[0];
+    const moved = Math.hypot(t.clientX - dragStart.current.x, t.clientY - dragStart.current.y);
+    if (moved > 4) didDrag.current = true;
     setPos({
-      x: Math.max(0, Math.min(window.innerWidth  - 56, t.clientX - dragOffset.current.dx)),
-      y: Math.max(0, Math.min(window.innerHeight - 56, t.clientY - dragOffset.current.dy)),
+      x: Math.max(0, Math.min(window.innerWidth  - PILL_W, t.clientX - dragOffset.current.dx)),
+      y: Math.max(0, Math.min(window.innerHeight - PILL_H, t.clientY - dragOffset.current.dy)),
     });
   }
   function onTouchEnd() { dragging.current = false; }
 
+  /* ── Core logic refs ────────────────────────────────────────────────────── */
   const uiRef         = useRef<AriaState>('idle');
   const activeRef     = useRef(false);
   const processingRef = useRef(false);
@@ -62,7 +93,7 @@ export default function AriaButton() {
 
   function toggle() {
     if (activeRef.current) {
-      activeRef.current   = false;
+      activeRef.current     = false;
       processingRef.current = false;
       try { recRef.current?.stop(); } catch {}
       recRef.current = null;
@@ -89,7 +120,6 @@ export default function AriaButton() {
           synth.cancel();
         }
       } catch {}
-
       activeRef.current = true;
       startRecognition();
     }
@@ -220,14 +250,14 @@ export default function AriaButton() {
       let done = false;
       const finish = () => { if (!done) { done = true; res(); } };
       const guard = setTimeout(finish, Math.max(5000, text.length * 80));
-      utt.onend  = () => { clearTimeout(guard); finish(); };
+      utt.onend   = () => { clearTimeout(guard); finish(); };
       utt.onerror = () => { clearTimeout(guard); finish(); };
 
       const go = () => {
         if (done) return;
         const voices = synth.getVoices();
-        const lang   = utt.lang.split('-')[0];
-        const match  = voices.find(v => v.lang.startsWith(lang) && !v.name.toLowerCase().includes('whisper'));
+        const lng    = utt.lang.split('-')[0];
+        const match  = voices.find(v => v.lang.startsWith(lng) && !v.name.toLowerCase().includes('whisper'));
         if (match) utt.voice = match;
         synth.speak(utt);
       };
@@ -315,6 +345,7 @@ export default function AriaButton() {
       `${stats.beliefs ?? 0} belief systems, ${stats.groups ?? 0} social groups active.`;
   }
 
+  /* ── Visuals ────────────────────────────────────────────────────────────── */
   const COLORS: Record<AriaState, string> = {
     idle: '#00e887', command: '#f97316', processing: '#a855f7', speaking: '#4ecb71',
   };
@@ -325,96 +356,92 @@ export default function AriaButton() {
     : Volume2;
 
   const langKey = store.lang === 'tr' ? 'tr' : 'en';
-  const label = {
-    tr: { idle: 'Asistan', command: '🎙 Konuşun…', processing: 'İşleniyor…', speaking: 'Konuşuyor…' },
-    en: { idle: 'Assistant', command: '🎙 Speak…', processing: 'Processing…', speaking: 'Speaking…' },
+  const stateLabel = {
+    tr: { idle: 'ASİSTAN', command: 'DİNLİYOR…', processing: 'İŞLENİYOR…', speaking: 'KONUŞUYOR…' },
+    en: { idle: 'ASSISTANT', command: 'LISTENING…', processing: 'PROCESSING…', speaking: 'SPEAKING…' },
   }[langKey][uiState];
 
-  /* ── Mobile: sürüklenebilir yüzen ikon ─────────────────────────────────── */
-  if (isMobile) {
-    return (
+  return (
+    <>
       <button
-        onClick={toggle}
+        onClick={() => { if (!didDrag.current) toggle(); didDrag.current = false; }}
+        onMouseDown={onMouseDown}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         style={{
-          position: 'fixed', left: pos.x, top: pos.y, zIndex: 1000,
-          width: 52, height: 52, borderRadius: '50%',
+          position: 'fixed',
+          left: pos.x,
+          top: pos.y,
+          zIndex: 9999,
+          height: PILL_H,
+          borderRadius: 24,
+          padding: '0 16px 0 10px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
           background: uiState !== 'idle' ? `${color}22` : 'rgba(4,4,18,0.92)',
           border: `2px solid ${color}`,
-          color, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color,
+          fontFamily: 'Share Tech Mono, monospace',
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: '0.1em',
           boxShadow: uiState !== 'idle'
             ? `0 0 18px ${color}90, 0 0 36px ${color}40`
             : `0 0 10px ${color}50`,
-          touchAction: 'none', cursor: 'grab',
-          transition: 'box-shadow 0.3s, background 0.3s',
+          touchAction: 'none',
+          cursor: 'grab',
+          transition: 'box-shadow 0.3s, background 0.3s, border-color 0.3s',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
         }}>
-        <Icon size={22}
+        <Icon
+          size={18}
           className={uiState === 'processing' ? 'animate-spin' : ''}
-          style={{ filter: `drop-shadow(0 0 7px ${color})` }} />
+          style={{ filter: `drop-shadow(0 0 6px ${color})`, flexShrink: 0 }}
+        />
+        <span style={{ whiteSpace: 'nowrap' }}>{stateLabel}</span>
         {uiState !== 'idle' && (
           <span style={{
-            position: 'absolute', top: -3, right: -3,
-            width: 13, height: 13, borderRadius: '50%',
+            width: 7, height: 7, borderRadius: '50%',
             background: color, boxShadow: `0 0 8px ${color}`,
-            animation: 'pulse 1s infinite',
-          }} />
-        )}
-      </button>
-    );
-  }
-
-  /* ── Desktop: header inline butonu ─────────────────────────────────────── */
-  return (
-    <div style={{ position: 'relative', flexShrink: 0 }}>
-      <button
-        onClick={toggle}
-        onMouseEnter={() => setTooltip(true)}
-        onMouseLeave={() => setTooltip(false)}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 5, padding: '4px 8px',
-          fontSize: 14, fontWeight: 700, letterSpacing: '0.1em', cursor: 'pointer',
-          border: `1px solid ${color}`,
-          color, fontFamily: 'Share Tech Mono, monospace',
-          background: uiState === 'idle' ? 'transparent' : `${color}18`,
-          boxShadow: uiState !== 'idle' ? `0 0 8px ${color}55` : 'none',
-          transition: 'all 0.2s',
-        }}>
-        <Icon size={14}
-          className={uiState === 'processing' ? 'animate-spin' : ''}
-          style={{ filter: uiState !== 'idle' ? `drop-shadow(0 0 4px ${color})` : 'none' }} />
-        <span>{store.lang === 'tr' ? 'Asistan' : 'Assistant'}</span>
-        {uiState !== 'idle' && (
-          <span style={{
-            width: 4, height: 4, borderRadius: '50%', background: color,
-            animation: 'pulse 1s infinite', boxShadow: `0 0 6px ${color}`,
+            animation: 'pulse 1s infinite', flexShrink: 0,
           }} />
         )}
       </button>
 
-      {(tooltip || uiState !== 'idle') && (
+      {/* Active state overlay: transcript + hint */}
+      {uiState !== 'idle' && (
         <div style={{
-          position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%',
-          transform: 'translateX(-50%)', background: '#07071a',
-          border: `1px solid ${color}66`, padding: '4px 8px',
-          zIndex: 9999, fontSize: 9, color, letterSpacing: '0.05em',
-          fontFamily: 'Share Tech Mono, monospace', boxShadow: `0 0 10px ${color}33`,
-          whiteSpace: 'nowrap', maxWidth: 240,
+          position: 'fixed',
+          left: Math.max(0, Math.min(window.innerWidth - 240, pos.x)),
+          top: Math.max(0, pos.y - (transcript ? 72 : 48)),
+          zIndex: 9998,
+          background: '#07071aee',
+          border: `1px solid ${color}55`,
+          borderRadius: 8,
+          padding: '6px 10px',
+          maxWidth: 240,
+          boxShadow: `0 0 12px ${color}33`,
+          pointerEvents: 'none',
         }}>
-          {label}
           {transcript && (
-            <div style={{ color: '#a0b4ff', fontSize: 7.5, marginTop: 2, whiteSpace: 'normal', maxWidth: 220 }}>
-              "{transcript.slice(0, 90)}{transcript.length > 90 ? '…' : ''}"
+            <div style={{
+              color: '#a0b4ff', fontSize: 10, marginBottom: 4,
+              fontFamily: 'Share Tech Mono, monospace',
+            }}>
+              "{transcript.slice(0, 100)}{transcript.length > 100 ? '…' : ''}"
             </div>
           )}
-          {uiState !== 'idle' && (
-            <div style={{ fontSize: 7, color: '#2a4a38', marginTop: 2 }}>
-              {store.lang === 'tr' ? '[ tekrar bas = durdur ]' : '[ press again = stop ]'}
-            </div>
-          )}
+          <div style={{
+            fontSize: 9, color: '#2a6a48',
+            fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.04em',
+          }}>
+            {store.lang === 'tr' ? '[ tekrar bas = durdur ]' : '[ press again = stop ]'}
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
