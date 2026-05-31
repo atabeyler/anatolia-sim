@@ -121,7 +121,7 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
   return (
     <div style={{
       position: 'absolute', left: pos.x, top: pos.y, zIndex: 30,
-      width: panelW, background: 'rgba(0,4,2,0.93)', border: '1px solid #2a4a2a',
+      width: panelW, background: 'rgba(0,4,2,0.93)', border: '1px solid #cc2222',
       userSelect: 'none', cursor: dragging ? 'grabbing' : 'default',
       boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
     }}>
@@ -129,7 +129,7 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
       <div
         onMouseDown={e => { startDrag(e.clientX, e.clientY); e.preventDefault(); }}
         onTouchStart={e => { startDrag(e.touches[0].clientX, e.touches[0].clientY); }}
-        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderBottom: '1px solid #2a4a2a', cursor: 'grab', background: 'rgba(0,20,10,0.9)', touchAction: 'none' }}>
+        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderBottom: '1px solid #cc2222', cursor: 'grab', background: 'rgba(0,20,10,0.9)', touchAction: 'none' }}>
         <div style={{ width: 3, height: 12, background: '#00e887', boxShadow: '0 0 4px #00e887', flexShrink: 0 }} />
         <span style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.2em', fontFamily: 'Share Tech Mono, monospace', flex: 1 }}>
           {lang === 'tr' ? 'OLAY KAYDI' : 'EVENT LOG'}
@@ -142,7 +142,7 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
       {/* Events — 3 rows max */}
       <div style={{ padding: '2px 6px' }}>
         {filtered.length === 0 ? (
-          <div style={{ fontSize: 14, color: '#4ecb71', padding: '4px 0', fontFamily: 'Share Tech Mono, monospace', fontStyle: 'italic' }}>
+          <div style={{ fontSize: 14, color: '#6a9a80', padding: '4px 0', fontFamily: 'Share Tech Mono, monospace', fontStyle: 'italic' }}>
             {lang === 'tr' ? 'Olay bekleniyor...' : 'Awaiting events...'}
           </div>
         ) : filtered.map((ev, i) => (
@@ -275,16 +275,16 @@ export default function SimulationPage() {
     <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', overflow: 'hidden', background: '#000', color: '#fff', fontFamily: 'Share Tech Mono, monospace' }}>
 
       {/* ═══ HEADER (3 rows) ═══ */}
-      <div style={{ flexShrink: 0, background: 'rgba(0,0,0,0.97)', borderBottom: '1px solid #2a4a2a' }}>
+      <div style={{ flexShrink: 0, background: 'rgba(0,0,0,0.97)', borderBottom: '1px solid #cc2222' }}>
 
         {/* Row 1: Logo | SIM time | [ARIA desktop] | [clock desktop] | BAŞLAT/DURDUR */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 8, padding: isMobile ? '4px 8px' : '5px 10px', borderBottom: '1px solid #2a4a2a' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 8, padding: isMobile ? '4px 8px' : '5px 10px', borderBottom: '1px solid #cc2222' }}>
           <span style={{ fontSize: 14, fontFamily: 'Orbitron, monospace', fontWeight: 900, color: '#00e887', letterSpacing: isMobile ? '0.08em' : '0.15em', flexShrink: 0 }}>
             ANATOLIA-SIM
           </span>
 
           <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: isMobile ? 3 : 6 }}>
-            <span style={{ fontSize: 14, color: '#4ecb71', letterSpacing: '0.1em' }}>SİM</span>
+            <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>SİM</span>
             <span style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.04em', fontFamily: 'Orbitron, monospace' }}>
               Y{String(simYear).padStart(4, '0')} G{String(simDay % 365).padStart(3, '0')}
             </span>
@@ -294,8 +294,8 @@ export default function SimulationPage() {
 
           {!isMobile && (
             <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: 6 }}>
-              <span style={{ fontSize: 14, color: '#4ecb71', letterSpacing: '0.1em' }}>GERÇEK</span>
-              <span style={{ fontSize: 14, color: '#4ecb71', letterSpacing: '0.05em' }}>{realTime}</span>
+              <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>GERÇEK</span>
+              <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.05em' }}>{realTime}</span>
             </div>
           )}
 
@@ -322,7 +322,7 @@ export default function SimulationPage() {
         </div>
 
         {/* Row 2: Stats (scrollable on mobile) | TR▸EN */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 0, padding: '0 10px', borderBottom: '1px solid #2a4a2a', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 0, padding: '0 10px', borderBottom: '1px solid #cc2222', overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', overflowX: isMobile ? 'auto' : 'visible', flex: 1, scrollbarWidth: 'none' }}>
             {[
               { key: 'pop',  label: lang === 'tr' ? 'NÜFUS'  : 'POP',   value: stats?.population ?? '—',   color: '#00e887' },
@@ -332,8 +332,8 @@ export default function SimulationPage() {
               { key: 'tech', label: lang === 'tr' ? 'TECH' : 'TECH',    value: stats?.technologies ?? '—',  color: '#d4a838' },
               { key: 'temp', label: lang === 'tr' ? 'SICAK' : 'TEMP',   value: stats?.temperature !== undefined ? `${stats.temperature}°` : '—', color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
             ].map(({ key, label, value, color }) => (
-              <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '2px 7px' : '2px 10px', borderRight: '1px solid #2a4a2a', flexShrink: 0, minWidth: isMobile ? 42 : 52 }}>
-                <span style={{ fontSize: 14, color: '#4ecb71', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{label}</span>
+              <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '2px 7px' : '2px 10px', borderRight: '1px solid #cc2222', flexShrink: 0, minWidth: isMobile ? 42 : 52 }}>
+                <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{label}</span>
                 <span style={{ fontSize: 14, color, fontFamily: 'Orbitron, monospace', fontWeight: 700, lineHeight: 1.2 }}>{value}</span>
               </div>
             ))}
@@ -342,15 +342,15 @@ export default function SimulationPage() {
 
         {/* Row 3: HIZ buttons | [ARIA mobile] | SONLANDIR | ÇIKIŞ | MENÜ */}
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 3 : 4, padding: isMobile ? '3px 8px' : '3px 10px' }}>
-          {!isMobile && <span style={{ fontSize: 14, color: '#4ecb71', letterSpacing: '0.1em', marginRight: 2, flexShrink: 0 }}>HIZ</span>}
+          {!isMobile && <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em', marginRight: 2, flexShrink: 0 }}>HIZ</span>}
           {SPEEDS.map(s => (
             <button key={s} onClick={() => changeSpeed(s)}
               style={{
                 padding: isMobile ? '2px 5px' : '2px 6px', fontSize: 14,
                 fontFamily: 'Orbitron, monospace', cursor: 'pointer',
                 background: speedMultiplier === s ? 'rgba(0,232,135,0.2)' : 'transparent',
-                border: `1px solid ${speedMultiplier === s ? '#00e887' : '#2a4a2a'}`,
-                color: speedMultiplier === s ? '#00e887' : '#4ecb71',
+                border: `1px solid ${speedMultiplier === s ? '#00e887' : '#cc2222'}`,
+                color: speedMultiplier === s ? '#00e887' : '#4a6a5a',
                 flexShrink: 0,
               }}>
               {s}×
@@ -361,21 +361,21 @@ export default function SimulationPage() {
 
           {!isMobile && (
             <button onClick={terminateSim}
-              style={{ padding: '2px 6px', fontSize: 14, border: '1px solid #4a1515', color: '#c05050', background: 'transparent', letterSpacing: '0.05em', cursor: 'pointer', flexShrink: 0 }}>
+              style={{ padding: '2px 6px', fontSize: 14, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.05em', cursor: 'pointer', flexShrink: 0 }}>
               {lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
             </button>
           )}
           {!isMobile && (
             <button
               onClick={() => navigate('/')}
-              style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', border: '1px solid #2a4a2a', color: '#4ecb71', background: 'transparent', fontSize: 14, letterSpacing: '0.05em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', border: '1px solid #cc2222', color: '#7aaa88', background: 'transparent', fontSize: 14, letterSpacing: '0.05em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
               <FolderOpen size={9} />
               {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
             </button>
           )}
           <button
             onClick={() => setMenuOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid #2a4a2a', color: '#4ecb71', background: 'transparent', fontSize: 14, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid #cc2222', color: '#7aaa88', background: 'transparent', fontSize: 14, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
             ☰ {!isMobile && (lang === 'tr' ? 'MENÜ' : 'MENU')}
           </button>
         </div>
@@ -391,7 +391,7 @@ export default function SimulationPage() {
           display: 'flex',
           flexDirection: 'column',
           background: 'rgba(0,0,0,0.97)',
-          borderRight: '1px solid #2a4a2a',
+          borderRight: '1px solid #cc2222',
           overflow: 'hidden',
           transition: 'width 0.2s ease',
           position: 'relative',
@@ -421,8 +421,8 @@ export default function SimulationPage() {
                     borderLeft: `2px solid ${isActive ? accent : 'transparent'}`,
                     borderTop: 'none',
                     borderRight: 'none',
-                    borderBottom: '1px solid #2a4a2a',
-                    color: isActive ? accent : '#4ecb71',
+                    borderBottom: '1px solid #cc2222',
+                    color: isActive ? accent : '#4a7060',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -443,7 +443,7 @@ export default function SimulationPage() {
 
           {/* Collapsed population indicator */}
           {!sidebarExpanded && (
-            <div style={{ padding: '6px 0', borderTop: '1px solid #2a4a2a', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <div style={{ padding: '6px 0', borderTop: '1px solid #cc2222', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
               <Users size={10} color="#00e887" />
               <span style={{ fontSize: 14, color: '#00e887', fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
                 {stats?.population !== undefined ? (stats.population > 999 ? `${Math.floor(stats.population / 1000)}k` : stats.population) : '—'}
@@ -464,8 +464,8 @@ export default function SimulationPage() {
               padding: '6px 0',
               background: 'rgba(0,20,10,0.8)',
               border: 'none',
-              borderTop: '1px solid #2a4a2a',
-              color: '#4ecb71',
+              borderTop: '1px solid #cc2222',
+              color: '#6a9a78',
               cursor: 'pointer',
               fontSize: 14,
               gap: 4,
@@ -479,7 +479,7 @@ export default function SimulationPage() {
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
           {/* Tab bar */}
-          <div style={{ display: 'flex', flexShrink: 0, borderBottom: '1px solid #2a4a2a' }}>
+          <div style={{ display: 'flex', flexShrink: 0, borderBottom: '1px solid #cc2222' }}>
             {TABS.map(tab => {
               const isActive = activeTab === tab.id;
               return (
@@ -491,11 +491,11 @@ export default function SimulationPage() {
                     fontSize: 14,
                     letterSpacing: '0.15em',
                     fontFamily: 'Share Tech Mono, monospace',
-                    color: isActive ? '#00e887' : '#4ecb71',
+                    color: isActive ? '#00e887' : '#3a5040',
                     background: isActive ? 'rgba(0,232,135,0.06)' : 'transparent',
                     border: 'none',
                     borderBottom: `2px solid ${isActive ? '#00e887' : 'transparent'}`,
-                    borderRight: '1px solid #2a4a2a',
+                    borderRight: '1px solid #cc2222',
                     cursor: 'pointer',
                   }}>
                   {lang === 'tr' ? tab.label : tab.labelEn}
@@ -522,8 +522,8 @@ export default function SimulationPage() {
 
                 {/* Sim start coord (bottom-left) */}
                 {currentSim && (
-                  <div style={{ position: 'absolute', bottom: 8, left: 8, zIndex: 10, background: 'rgba(0,0,0,0.7)', border: '1px solid #2a4a2a', padding: '3px 8px' }}>
-                    <span style={{ fontSize: 14, color: '#4ecb71', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.05em' }}>
+                  <div style={{ position: 'absolute', bottom: 8, left: 8, zIndex: 10, background: 'rgba(0,0,0,0.7)', border: '1px solid #cc2222', padding: '3px 8px' }}>
+                    <span style={{ fontSize: 14, color: '#6a9a78', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.05em' }}>
                       {lang === 'tr' ? 'BAŞLANGIÇ' : 'ORIGIN'}: {currentSim.start_latitude?.toFixed(3)}°{(currentSim.start_latitude ?? 0) >= 0 ? 'K' : 'G'}  {currentSim.start_longitude?.toFixed(3)}°{(currentSim.start_longitude ?? 0) >= 0 ? 'D' : 'B'}
                     </span>
                   </div>
@@ -531,8 +531,8 @@ export default function SimulationPage() {
 
                 {/* Globe click coordinate overlay (bottom-right) */}
                 {globeCoord && (
-                  <div style={{ position: 'absolute', bottom: 8, right: 8, zIndex: 20, background: 'rgba(0,5,2,0.92)', border: '1px solid #2a4a2a', padding: '5px 10px', fontFamily: 'Share Tech Mono, monospace' }}>
-                    <div style={{ fontSize: 14, color: '#4ecb71', letterSpacing: '0.1em', marginBottom: 2 }}>
+                  <div style={{ position: 'absolute', bottom: 8, right: 8, zIndex: 20, background: 'rgba(0,5,2,0.92)', border: '1px solid #cc2222', padding: '5px 10px', fontFamily: 'Share Tech Mono, monospace' }}>
+                    <div style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em', marginBottom: 2 }}>
                       {lang === 'tr' ? '// KONUM' : '// COORDS'}
                     </div>
                     <div style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.06em' }}>
@@ -540,19 +540,19 @@ export default function SimulationPage() {
                       {'  '}
                       {Math.abs(globeCoord.lon).toFixed(3)}°{globeCoord.lon >= 0 ? (lang === 'tr' ? 'D' : 'E') : (lang === 'tr' ? 'B' : 'W')}
                     </div>
-                    <button onClick={() => setGlobeCoord(null)} style={{ marginTop: 3, fontSize: 14, color: '#4ecb71', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}>✕</button>
+                    <button onClick={() => setGlobeCoord(null)} style={{ marginTop: 3, fontSize: 14, color: '#6a9a80', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}>✕</button>
                   </div>
                 )}
 
                 {/* Selected individual overlay */}
                 {selectedInd && (
                   <div style={{ position: 'absolute', top: 80, right: 8, zIndex: 50, background: 'rgba(0,5,2,0.97)', border: '1px solid #00e887', padding: 12, minWidth: 160, fontFamily: 'Share Tech Mono, monospace' }}>
-                    <div style={{ fontSize: 14, color: '#4ecb71', marginBottom: 4 }}>// {lang === 'tr' ? 'BİREY' : 'INDIVIDUAL'}</div>
+                    <div style={{ fontSize: 14, color: '#6a9a78', marginBottom: 4 }}>// {lang === 'tr' ? 'BİREY' : 'INDIVIDUAL'}</div>
                     <div style={{ fontSize: 14, color: '#00e887', marginBottom: 2 }}>
                       {selectedInd.name ?? `${selectedInd.sex === 'male' ? '♂' : '♀'}-${selectedInd.id?.slice(-4).toUpperCase()}`}
                     </div>
                     {!selectedInd.name && (
-                      <div style={{ fontSize: 14, color: '#4ecb71', marginBottom: 4, fontStyle: 'italic' }}>
+                      <div style={{ fontSize: 14, color: '#4a6a40', marginBottom: 4, fontStyle: 'italic' }}>
                         {lang === 'tr' ? '// dil henüz gelişmedi' : '// pre-linguistic era'}
                       </div>
                     )}
@@ -561,7 +561,7 @@ export default function SimulationPage() {
                     <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Boy' : 'Height'}: <span style={{ color: '#a0e887' }}>{selectedInd.height_cm ?? selectedInd.phenotype?.height_cm ?? '—'} cm</span></div>
                     <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Kilo' : 'Weight'}: <span style={{ color: '#a0e887' }}>{selectedInd.weight_kg ?? '—'} kg</span></div>
                     <div style={{ fontSize: 14, color: '#6090a0' }}>HP: <span style={{ color: selectedInd.health?.hp > 0.6 ? '#4ecb71' : '#e05a5a' }}>{selectedInd.health?.hp !== undefined ? (selectedInd.health.hp * 100).toFixed(0) + '%' : '—'}</span></div>
-                    <button onClick={() => setSelectedInd(null)} style={{ marginTop: 8, fontSize: 14, color: '#4ecb71', border: '1px solid #2a4a2a', padding: '2px 8px', background: 'transparent', width: '100%', cursor: 'pointer' }}>
+                    <button onClick={() => setSelectedInd(null)} style={{ marginTop: 8, fontSize: 14, color: '#6a9a78', border: '1px solid #cc2222', padding: '2px 8px', background: 'transparent', width: '100%', cursor: 'pointer' }}>
                       {lang === 'tr' ? 'KAPAT' : 'CLOSE'}
                     </button>
                   </div>
@@ -597,8 +597,8 @@ export default function SimulationPage() {
                     { l: 'SICAKLIK', v: stats?.temperature !== undefined ? `${stats.temperature}°` : '—',                                        c: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
                     { l: 'GRUPLAR',  v: stats?.groups ?? '—',                                                                                   c: '#d4a838' },
                   ].map(({ l, v, c }) => (
-                    <div key={l} style={{ background: 'rgba(0,20,10,0.6)', border: '1px solid #2a4a2a', padding: '8px 12px' }}>
-                      <div style={{ fontSize: 14, color: '#4ecb71', letterSpacing: '0.1em' }}>{l}</div>
+                    <div key={l} style={{ background: 'rgba(0,20,10,0.6)', border: '1px solid #cc2222', padding: '8px 12px' }}>
+                      <div style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>{l}</div>
                       <div style={{ fontSize: 18, color: c, fontFamily: 'Orbitron, monospace', fontWeight: 700, marginTop: 2 }}>{v}</div>
                     </div>
                   ))}
@@ -610,16 +610,16 @@ export default function SimulationPage() {
             {activeTab === 'kontrol' && (
               <div style={{ height: '100%', overflowY: 'auto', padding: 12, background: '#000' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ border: '1px solid #2a4a2a', padding: 12 }}>
-                    <div style={{ fontSize: 14, color: '#4ecb71', letterSpacing: '0.15em', marginBottom: 8 }}>SİMÜLASYON HIZI</div>
+                  <div style={{ border: '1px solid #cc2222', padding: 12 }}>
+                    <div style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.15em', marginBottom: 8 }}>SİMÜLASYON HIZI</div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       {SPEEDS.map(s => (
                         <button key={s} onClick={() => changeSpeed(s)}
                           style={{
                             flex: 1, padding: '8px 0', fontSize: 14, fontFamily: 'Orbitron, monospace', fontWeight: 700, cursor: 'pointer',
                             background: speedMultiplier === s ? 'rgba(0,232,135,0.2)' : 'rgba(0,10,5,0.8)',
-                            border: `1px solid ${speedMultiplier === s ? '#00e887' : '#2a4a2a'}`,
-                            color: speedMultiplier === s ? '#00e887' : '#4ecb71',
+                            border: `1px solid ${speedMultiplier === s ? '#00e887' : '#cc2222'}`,
+                            color: speedMultiplier === s ? '#00e887' : '#2a5040',
                             boxShadow: speedMultiplier === s ? '0 0 12px rgba(0,232,135,0.3)' : 'none',
                           }}>
                           {s}×
@@ -629,17 +629,17 @@ export default function SimulationPage() {
                   </div>
 
                   {currentSim && (
-                    <div style={{ border: '1px solid #1a1515', padding: 12 }}>
-                      <div style={{ fontSize: 14, color: '#c05050', letterSpacing: '0.15em', marginBottom: 8 }}>TEHLİKELİ BÖLGE</div>
+                    <div style={{ border: '1px solid #2a0d0d', padding: 12 }}>
+                      <div style={{ fontSize: 14, color: '#6a3030', letterSpacing: '0.15em', marginBottom: 8 }}>TEHLİKELİ BÖLGE</div>
                       <button onClick={terminateSim}
-                        style={{ width: '100%', padding: '8px 0', fontSize: 14, border: '1px solid #4a1515', color: '#e05a5a', background: 'rgba(100,20,20,0.15)', letterSpacing: '0.1em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
+                        style={{ width: '100%', padding: '8px 0', fontSize: 14, border: '1px solid #6a2020', color: '#e05a5a', background: 'rgba(100,20,20,0.15)', letterSpacing: '0.1em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
                         SİMÜLASYONU SONLANDIR
                       </button>
                     </div>
                   )}
 
                   <button onClick={() => navigate('/')}
-                    style={{ width: '100%', padding: '8px 0', fontSize: 14, border: '1px solid #2a4a2a', color: '#4ecb71', background: 'transparent', letterSpacing: '0.1em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
+                    style={{ width: '100%', padding: '8px 0', fontSize: 14, border: '1px solid #cc2222', color: '#6a9a78', background: 'transparent', letterSpacing: '0.1em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
                     ANA SAYFAYA DÖN
                   </button>
                 </div>
@@ -651,7 +651,7 @@ export default function SimulationPage() {
 
       {/* ── FOOTER ── */}
       <div style={{ flexShrink: 0, textAlign: 'center', padding: '2px 10px', background: 'rgba(0,0,0,0.97)', borderTop: '1px solid #0a1a10' }}>
-        <span style={{ fontSize: 14, color: '#3a6a4a', letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace' }}>
+        <span style={{ fontSize: 14, color: '#1e3a28', letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace' }}>
           Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026 Tüm hakları saklıdır. · RST Q-Nation 200120401018 · Yalçın Atabey
         </span>
       </div>
@@ -661,13 +661,13 @@ export default function SimulationPage() {
         isOpen={menuOpen}
         onClose={() => setMenuOpen(false)}
         mobileActions={isMobile ? (
-          <div style={{ padding: '8px 14px', borderTop: '1px solid #2a4a2a', display: 'flex', gap: 8 }}>
+          <div style={{ padding: '8px 14px', borderTop: '1px solid #cc2222', display: 'flex', gap: 8 }}>
             <button onClick={() => { setMenuOpen(false); navigate('/'); }}
-              style={{ flex: 1, padding: '7px 0', fontSize: 14, border: '1px solid #2a4a2a', color: '#4ecb71', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
+              style={{ flex: 1, padding: '7px 0', fontSize: 14, border: '1px solid #cc2222', color: '#7aaa88', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
               ← {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
             </button>
             <button onClick={() => { setMenuOpen(false); terminateSim(); }}
-              style={{ flex: 1, padding: '7px 0', fontSize: 14, border: '1px solid #4a1515', color: '#c05050', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
+              style={{ flex: 1, padding: '7px 0', fontSize: 14, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
               {lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
             </button>
           </div>
