@@ -90,6 +90,7 @@ export default function AriaButton() {
   const processingRef = useRef(false);
   const recRef        = useRef<any>(null);
   const watchdogRef   = useRef<any>(null);
+  const pendingCmdRef = useRef<string | null>(null);
 
   function setUI(s: AriaState) { uiRef.current = s; setUiState(s); }
 
@@ -148,7 +149,7 @@ export default function AriaButton() {
     let resultIdx = 0;
 
     rec.onresult = (e: any) => {
-      if (!activeRef.current || processingRef.current) return;
+      if (!activeRef.current) return;
       const results: any[] = Array.from(e.results);
       const live = results.slice(resultIdx).map((r: any) => r[0].transcript).join(' ');
       if (live) setTranscript(live);
@@ -157,10 +158,15 @@ export default function AriaButton() {
           const cmd = results[i][0].transcript.trim();
           if (!cmd) continue;
           resultIdx = i + 1;
-          processingRef.current = true;
-          armWatchdog();
-          killRec(rec);
-          processCommand(cmd);
+          if (processingRef.current) {
+            // Queue — will be picked up when current command finishes
+            pendingCmdRef.current = cmd;
+          } else {
+            processingRef.current = true;
+            armWatchdog();
+            killRec(rec);
+            processCommand(cmd);
+          }
           return;
         }
       }
@@ -248,13 +254,23 @@ export default function AriaButton() {
       }
     }
 
-    // Show response in bubble and immediately resume listening
+    // Show response in bubble, then resume listening (or run queued command)
     setTranscript('');
     setAriaText(responseText);
     disarmWatchdog();
     processingRef.current = false;
     if (activeRef.current) {
-      startRecognition();
+      const pending = pendingCmdRef.current;
+      pendingCmdRef.current = null;
+      if (pending) {
+        // A command arrived while we were processing — run it immediately
+        processingRef.current = true;
+        armWatchdog();
+        killRec(recRef.current); recRef.current = null;
+        processCommand(pending);
+      } else {
+        startRecognition();
+      }
       // Auto-clear after reading time (70 ms per char, 2.5–8 s range)
       const ms = Math.min(Math.max(2500, responseText.length * 70), 8000);
       setTimeout(() => setAriaText(t => t === responseText ? '' : t), ms);
