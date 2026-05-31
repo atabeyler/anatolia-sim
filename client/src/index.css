@@ -20,28 +20,28 @@ html { height: 100%; }
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: #05050f; }
 ::-webkit-scrollbar-thumb { background: #3a0a0a; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: #cc2222; }
+::-webkit-scrollbar-thumb:hover { background: #2a4a2a; }
 
 /* ─── Panel Glass ────────────────────────────────────────── */
 .panel-glass {
   background: rgba(5, 5, 18, 0.94);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(200, 34, 34, 0.7);
+  border: 1px solid rgba(42, 74, 42,0.7);
   box-shadow:
-    0 0 20px rgba(200, 34, 34, 0.2),
-    inset 0 1px 0 rgba(200, 34, 34, 0.08);
+    0 0 20px rgba(42, 74, 42,0.2),
+    inset 0 1px 0 rgba(42, 74, 42,0.08);
 }
 
 /* ─── HUD Panel ──────────────────────────────────────────── */
 .hud-panel {
   background: rgba(4, 4, 15, 0.97);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(200, 34, 34, 0.8);
+  border: 1px solid rgba(42, 74, 42,0.8);
   box-shadow:
-    0 0 40px rgba(200, 34, 34, 0.2),
-    0 0 80px rgba(200, 34, 34, 0.03),
-    inset 0 0 30px rgba(200, 34, 34, 0.025),
-    inset 0 1px 0 rgba(200, 34, 34, 0.4);
+    0 0 40px rgba(42, 74, 42,0.2),
+    0 0 80px rgba(42, 74, 42,0.03),
+    inset 0 0 30px rgba(42, 74, 42,0.025),
+    inset 0 1px 0 rgba(42, 74, 42,0.4);
   position: relative;
 }
 .hud-panel::before,
@@ -50,7 +50,7 @@ html { height: 100%; }
   position: absolute;
   width: 14px;
   height: 14px;
-  border-color: rgba(200, 34, 34, 0.9);
+  border-color: rgba(42, 74, 42,0.9);
   border-style: solid;
   z-index: 2;
   animation: corner-blink 4s ease-in-out infinite;
@@ -62,16 +62,16 @@ html { height: 100%; }
 .hud-corner-tr {
   position: absolute; top: -1px; right: -1px;
   width: 14px; height: 14px;
-  border-top: 2px solid rgba(200, 34, 34, 0.9);
-  border-right: 2px solid rgba(200, 34, 34, 0.9);
+  border-top: 2px solid rgba(42, 74, 42,0.9);
+  border-right: 2px solid rgba(42, 74, 42,0.9);
   animation: corner-blink 4s ease-in-out infinite 1s;
   pointer-events: none;
 }
 .hud-corner-bl {
   position: absolute; bottom: -1px; left: -1px;
   width: 14px; height: 14px;
-  border-bottom: 2px solid rgba(200, 34, 34, 0.9);
-  border-left: 2px solid rgba(200, 34, 34, 0.9);
+  border-bottom: 2px solid rgba(42, 74, 42,0.9);
+  border-left: 2px solid rgba(42, 74, 42,0.9);
   animation: corner-blink 4s ease-in-out infinite 2s;
   pointer-events: none;
 }
@@ -162,8 +162,8 @@ html { height: 100%; }
 }
 
 @keyframes neon-breathe {
-  0%, 100% { box-shadow: 0 0 6px rgba(200,34,34,0.35), 0 0 18px rgba(200,34,34,0.15); }
-  50%       { box-shadow: 0 0 12px rgba(200,34,34,0.7), 0 0 35px rgba(200,34,34,0.35), 0 0 70px rgba(200,34,34,0.12); }
+  0%, 100% { box-shadow: 0 0 6px rgba(42,74,42,0.35), 0 0 18px rgba(42,74,42,0.15); }
+  50%       { box-shadow: 0 0 12px rgba(42,74,42,0.7), 0 0 35px rgba(42,74,42,0.35), 0 0 70px rgba(42,74,42,0.12); }
 }
 
 @keyframes corner-blink {
@@ -235,8 +235,8 @@ html { height: 100%; }
   white-space: nowrap;
   z-index: 1000;
   pointer-events: none;
-  border: 1px solid rgba(200,34,34,0.4);
-  box-shadow: 0 0 10px rgba(200,34,34,0.2);
+  border: 1px solid rgba(42,74,42,0.4);
+  box-shadow: 0 0 10px rgba(42,74,42,0.2);
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: 0.05em;
 }
