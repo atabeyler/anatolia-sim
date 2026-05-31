@@ -88,11 +88,9 @@ export default function AriaButton() {
   const activeRef     = useRef(false);
   const processingRef = useRef(false);
   const recRef        = useRef<any>(null);
-  const audioCtxRef      = useRef<any>(null);
-  const watchdogRef      = useRef<any>(null);
-  const bargeInRecRef    = useRef<any>(null);
-  const ttsSourceRef     = useRef<any>(null);
-  const bargeInCancelRef = useRef<(() => void) | null>(null);
+  const audioCtxRef   = useRef<any>(null);
+  const watchdogRef   = useRef<any>(null);
+  const ttsSourceRef  = useRef<any>(null);
 
   function setUI(s: AriaState) { uiRef.current = s; setUiState(s); }
 
@@ -116,63 +114,58 @@ export default function AriaButton() {
   }
 
   /**
-   * Starts a background SR session while ARIA is speaking.
-   * On first interim result: calls abortTTS() so ARIA stops immediately.
-   * On final result: resolves the promise with the transcript.
-   * Returns { promise, cancel, detected } — call cancel() to clean up.
+   * Monitors echo-cancelled mic energy via getUserMedia.
+   * Fires onDetect() the moment the user starts speaking (ARIA's own voice
+   * is removed by the browser's AEC before we ever see the audio data).
+   * Returns a stop/cleanup function.
    */
-  function startBargeIn(): { promise: Promise<string | null>; cancel: () => void; detected: () => boolean } {
-    let resolve!: (v: string | null) => void;
-    const promise = new Promise<string | null>(r => { resolve = r; });
-    let done           = false;
-    let speechDetected = false;
-    let timer: any     = null;
+  function startVAD(onDetect: () => void): () => void {
+    if (!navigator.mediaDevices?.getUserMedia) return () => {};
+    let stopped   = false;
+    let stream: any  = null;
+    let vadCtx: any  = null;
+    let interval: any = null;
 
-    const finish = (v: string | null) => {
-      if (done) return; done = true;
-      clearTimeout(timer);
-      const r = bargeInRecRef.current;
-      if (r) { r.onresult = null; r.onerror = null; r.onend = null; try { r.abort(); } catch {} }
-      bargeInRecRef.current    = null;
-      bargeInCancelRef.current = null;
-      resolve(v);
+    const stop = () => {
+      stopped = true;
+      clearInterval(interval);
+      try { stream?.getTracks().forEach((t: any) => t.stop()); } catch {}
+      try { vadCtx?.close(); } catch {}
+      stream = null; vadCtx = null;
     };
 
-    const cancel = () => finish(null);
+    navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    }).then(s => {
+      if (stopped) { s.getTracks().forEach((t: any) => t.stop()); return; }
+      stream = s;
+      const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!Ctx) { stop(); return; }
+      vadCtx = new Ctx();
+      const src = vadCtx.createMediaStreamSource(s);
+      const analyser = vadCtx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.5;
+      src.connect(analyser);
+      const data = new Uint8Array(analyser.frequencyBinCount);
 
-    if (!SR || !activeRef.current) {
-      finish(null);
-      return { promise, cancel, detected: () => false };
-    }
-
-    // Delay 350 ms so TTS audio starts before mic opens (helps echo cancellation)
-    timer = setTimeout(() => {
-      if (done || !activeRef.current) { finish(null); return; }
-      const rec = new SR();
-      bargeInRecRef.current = rec;
-      rec.continuous     = false;
-      rec.interimResults = true;
-      rec.lang = storeRef.current.lang === 'tr' ? 'tr-TR' : 'en-US';
-
-      rec.onresult = (e: any) => {
-        if (done) return;
-        const results = Array.from(e.results) as any[];
-        for (const r of results) {
-          const t = r[0].transcript.trim();
-          if (!speechDetected && t.length >= 1) {
-            speechDetected = true;
-            abortTTS(); // user started speaking — cut ARIA off immediately
+      // Wait 500 ms before monitoring so AEC can lock on to the TTS output
+      setTimeout(() => {
+        if (stopped) return;
+        interval = setInterval(() => {
+          if (stopped) return;
+          analyser.getByteFrequencyData(data);
+          let sum = 0;
+          for (let i = 2; i < 38; i++) sum += data[i]; // ~170–3300 Hz voice range
+          if (sum / 36 > 22) { // energy threshold (0–255 scale)
+            stop();
+            onDetect();
           }
-          if (r.isFinal && t.length >= 2) { finish(t); return; }
-        }
-      };
-      rec.onerror = () => finish(null);
-      rec.onend   = () => finish(null);
-      try { rec.start(); } catch { finish(null); }
-    }, 350);
+        }, 40);
+      }, 500);
+    }).catch(() => {}); // mic already in use or denied — silently skip VAD
 
-    bargeInCancelRef.current = cancel;
-    return { promise, cancel, detected: () => speechDetected };
+    return stop;
   }
 
   function toggle() {
@@ -181,7 +174,6 @@ export default function AriaButton() {
       processingRef.current = false;
       disarmWatchdog();
       killRec(recRef.current); recRef.current = null;
-      bargeInCancelRef.current?.(); bargeInCancelRef.current = null;
       abortTTS();
       try { audioCtxRef.current?.close(); } catch {}
       audioCtxRef.current = null;
@@ -346,34 +338,17 @@ export default function AriaButton() {
     }
 
     setTranscript('');
-    // Start barge-in listener: if user speaks during TTS, ARIA stops and processes the new command
-    const bi = startBargeIn();
-    let biCmd: string | null = null;
+    // VAD: echo-cancelled energy detection. When user speaks, TTS is cut immediately.
+    // startVAD uses getUserMedia({echoCancellation:true}) so ARIA's own voice is
+    // removed by the browser's AEC before the analyser ever sees it.
+    const stopVAD = startVAD(() => { abortTTS(); });
     try {
       await speakText(responseText);
-      // If user started speaking during TTS, wait up to 1.5 s for the final SR result
-      if (bi.detected()) {
-        biCmd = await Promise.race([
-          bi.promise,
-          new Promise<null>(r => setTimeout(r, 1500)),
-        ]);
-      }
     } finally {
-      bi.cancel();
+      stopVAD();
       disarmWatchdog();
       processingRef.current = false;
-      if (activeRef.current) {
-        if (biCmd) {
-          // Barge-in: immediately process what the user said
-          processingRef.current = true;
-          armWatchdog();
-          processCommand(biCmd);
-        } else {
-          startRecognition();
-        }
-      } else {
-        setUI('idle');
-      }
+      if (activeRef.current) startRecognition(); else setUI('idle');
     }
   }
 
