@@ -263,14 +263,14 @@ export default function AriaButton() {
         if (status === 429) {
           if (!activeRef.current) { processingRef.current = false; return; }
           clearTimeout(retryTimerRef.current);
-          const msg = lang === 'tr' ? 'Limit - 60s sonra tekrar deniyor.' : 'Rate limited - retrying in 60s.';
+          const retryAfter = Number(err?.response?.data?.retry_after ?? 60);
+          const msg = lang === 'tr'
+            ? `Limit - ${retryAfter}s sonra tekrar deneyin.`
+            : `Rate limited - try again in ${retryAfter}s.`;
           setTranscript(''); setAriaText(msg); speak(msg); disarmWatchdog();
           setUI('listening');
           if (SpeechRec) startListening(); else setTimeout(() => textInputRef.current?.focus(), 50);
           setTimeout(() => setAriaText(t => t === msg ? '' : t), 8000);
-          retryTimerRef.current = setTimeout(() => {
-            if (activeRef.current && processingRef.current) { armWatchdog(); processCommand(cmd); }
-          }, 60000);
           return;
         }
         responseText = err?.response?.data?.text ?? (lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.');
