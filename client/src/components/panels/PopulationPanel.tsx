@@ -168,38 +168,39 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
                 <div style={{ fontSize: 7.5, color: '#7a9a88', letterSpacing: '0.08em', marginBottom: 4 }}>
                   {lang === 'tr' ? 'EBEVEYNLER' : 'PARENTS'}
                 </div>
-                {(parent1 ?? ind.parent_1_id) && (
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: '#6090ff' }} />
-                    <div className="font-share-tech" style={{ fontSize: 9 }}>
-                      <span style={{ color: '#5070c0' }}>{lang === 'tr' ? 'Baba' : 'Father'}: </span>
-                      <span style={{ color: parent1 ? '#8ab0ff' : '#3a5a78' }}>
-                        {parent1 ? nameFromId(parent1.id, parent1.sex, parent1.phenotype?.name ?? parent1.name) : `ID:${ind.parent_1_id?.slice(-6)}`}
-                      </span>
-                      {parent1 && (
-                        <span style={{ color: '#7a9a88', marginLeft: 4 }}>
-                          {parseFloat(parent1.age_years ?? 0).toFixed(0)}{lang === 'tr' ? ' yaş' : ' yr'}
+                {[
+                  { obj: parent1, id: ind.parent_1_id },
+                  { obj: parent2, id: ind.parent_2_id },
+                ].filter(p => p.obj || p.id).map(({ obj, id }, idx) => {
+                  const sex = obj?.sex;
+                  const isMale = sex === 'male';
+                  const isFemale = sex === 'female';
+                  const label = isMale ? (lang === 'tr' ? 'Baba' : 'Father')
+                              : isFemale ? (lang === 'tr' ? 'Anne' : 'Mother')
+                              : (lang === 'tr' ? 'Ebeveyn' : 'Parent');
+                  const labelColor = isMale ? '#5070c0' : isFemale ? '#c06080' : '#7a9a88';
+                  const dotColor   = isMale ? '#6090ff' : isFemale ? '#ff8ab0' : '#9090b0';
+                  const nameColor  = isMale ? '#8ab0ff' : isFemale ? '#ffaac8' : '#a0a8c8';
+                  const alive = !!obj;
+                  return (
+                    <div key={idx} className="flex items-center gap-2 mb-1">
+                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: dotColor }} />
+                      <div className="font-share-tech" style={{ fontSize: 9 }}>
+                        <span style={{ color: labelColor }}>{label}: </span>
+                        <span style={{ color: alive ? nameColor : '#5a3a3a' }}>
+                          {alive ? nameFromId(obj.id, obj.sex, obj.phenotype?.name ?? obj.name) : `ID:${id?.slice(-6)}`}
                         </span>
-                      )}
+                        {alive ? (
+                          <span style={{ color: '#7a9a88', marginLeft: 4 }}>
+                            {parseFloat(obj.age_years ?? 0).toFixed(0)}{lang === 'tr' ? ' yaş' : ' yr'}
+                          </span>
+                        ) : (
+                          <span style={{ color: '#a05050', marginLeft: 4 }}>† {lang === 'tr' ? 'ölü' : 'dec.'}</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-                {(parent2 ?? ind.parent_2_id) && (
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: '#ff8ab0' }} />
-                    <div className="font-share-tech" style={{ fontSize: 9 }}>
-                      <span style={{ color: '#c06080' }}>{lang === 'tr' ? 'Anne' : 'Mother'}: </span>
-                      <span style={{ color: parent2 ? '#ffaac8' : '#7a3a58' }}>
-                        {parent2 ? nameFromId(parent2.id, parent2.sex, parent2.phenotype?.name ?? parent2.name) : `ID:${ind.parent_2_id?.slice(-6)}`}
-                      </span>
-                      {parent2 && (
-                        <span style={{ color: '#7a9a88', marginLeft: 4 }}>
-                          {parseFloat(parent2.age_years ?? 0).toFixed(0)}{lang === 'tr' ? ' yaş' : ' yr'}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
+                  );
+                })}
               </div>
             )}
 
