@@ -253,6 +253,7 @@ export default function LoginPage() {
       } else {
         const { data } = await axios.post('/api/auth/login', { user_code: form.user_code, password: form.password });
         setUser(data.user, data.access_token);
+        sessionStorage.setItem('anatolia_session_active', '1');
         navigate(data.user.role === 'admin' ? '/admin' : '/');
       }
     } catch (err: any) {

@@ -87,7 +87,10 @@ export const useSimStore = create<SimStore>((set) => ({
   user: null,
   accessToken: null,
   setUser: (user, token) => set({ user, accessToken: token }),
-  logout: () => set({ user: null, accessToken: null, currentSim: null }),
+  logout: () => {
+    try { sessionStorage.removeItem('anatolia_session_active'); } catch {}
+    set({ user: null, accessToken: null, currentSim: null });
+  },
 
   currentSim: null,
   setCurrentSim: (sim) => set({ currentSim: sim }),

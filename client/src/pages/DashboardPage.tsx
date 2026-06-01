@@ -21,8 +21,17 @@ export default function DashboardPage() {
 
   // Keep ARIA informed of wizard open/closed state
   useEffect(() => {
+    (window as any).__ariaDashboardReady = true;
     (window as any).__ariaWizardOpen = showNew;
     if (!showNew) (window as any).__ariaWizardStep = -1;
+    return () => {
+      (window as any).__ariaDashboardReady = false;
+      (window as any).__ariaWizardOpen = false;
+      (window as any).__ariaWizardStep = -1;
+      (window as any).__ariaWizardStepType = null;
+      (window as any).__ariaWizardFounder = null;
+      (window as any).__ariaWizardTraitName = null;
+    };
   }, [showNew]);
 
   const simsRef = useRef<any[]>([]);

@@ -546,6 +546,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
   }, [step]);
 
   useEffect(() => {
+    (window as any).__ariaWizardReady = true;
     function onAriaWizard(e: Event) {
       const detail = (e as CustomEvent).detail;
       const { action, field, value, founder } = detail;
@@ -620,7 +621,10 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
       }
     }
     window.addEventListener('aria-wizard', onAriaWizard);
-    return () => window.removeEventListener('aria-wizard', onAriaWizard);
+    return () => {
+      (window as any).__ariaWizardReady = false;
+      window.removeEventListener('aria-wizard', onAriaWizard);
+    };
   }, [onExit]);
 
   const founderLabel = (meta.type !== 'sim-info' && meta.type !== 'summary')

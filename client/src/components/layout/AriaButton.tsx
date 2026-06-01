@@ -70,6 +70,23 @@ export default function AriaButton() {
   const retryTimerRef = useRef<any>(null);
   const speakingRef = useRef(false);
 
+  function emitWhenReady(eventName: string, detail: any, readyFlag?: string, tries = 6) {
+    if (!readyFlag || (window as any)[readyFlag]) {
+      window.dispatchEvent(new CustomEvent(eventName, { detail }));
+      return;
+    }
+    let attempt = 0;
+    const tick = () => {
+      attempt += 1;
+      if ((window as any)[readyFlag]) {
+        window.dispatchEvent(new CustomEvent(eventName, { detail }));
+        return;
+      }
+      if (attempt < tries) setTimeout(tick, 120);
+    };
+    setTimeout(tick, 120);
+  }
+
   function setUI(s: AriaState) { uiRef.current = s; setUiState(s); }
   function armWatchdog() {
     clearTimeout(watchdogRef.current);
@@ -78,6 +95,17 @@ export default function AriaButton() {
     }, 20000);
   }
   function disarmWatchdog() { clearTimeout(watchdogRef.current); }
+
+  useEffect(() => {
+    return () => {
+      activeRef.current = false;
+      processingRef.current = false;
+      disarmWatchdog();
+      clearTimeout(retryTimerRef.current);
+      killRec();
+      stopSpeech();
+    };
+  }, []);
 
   /* ── Drag mouse ─────────────────────────────────────────────────────────── */
   useEffect(() => {
@@ -365,28 +393,28 @@ export default function AriaButton() {
       case 'terminate_simulation': window.dispatchEvent(new CustomEvent('aria-simulation', { detail: { action: 'terminate_simulation' } })); break;
       case 'open_menu':
         window.dispatchEvent(new CustomEvent('aria-simulation', { detail: { action: 'open_menu' } }));
-        window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'open_menu' } })); break;
+        emitWhenReady('aria-dashboard', { action: 'open_menu' }, '__ariaDashboardReady'); break;
       case 'open_menu_page': {
         const d = { action: 'open_menu_page', menuPage: action.menuPage };
         window.dispatchEvent(new CustomEvent('aria-simulation', { detail: d }));
-        window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: d })); break;
+        emitWhenReady('aria-dashboard', d, '__ariaDashboardReady'); break;
       }
       case 'close_menu':
         window.dispatchEvent(new CustomEvent('aria-simulation', { detail: { action: 'close_menu' } }));
-        window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'close_menu' } })); break;
+        emitWhenReady('aria-dashboard', { action: 'close_menu' }, '__ariaDashboardReady'); break;
       case 'logout': logout(); navigate('/login'); break;
-      case 'create_simulation': window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'create_simulation' } })); break;
-      case 'open_simulation': window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'open_simulation', index: action.index ?? 0 } })); break;
-      case 'toggle_compare': window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'toggle_compare' } })); break;
-      case 'delete_simulation': window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'delete_simulation', index: action.index ?? 0 } })); break;
-      case 'wizard_next': window.dispatchEvent(new CustomEvent('aria-wizard', { detail: { action: 'next' } })); break;
-      case 'wizard_back': window.dispatchEvent(new CustomEvent('aria-wizard', { detail: { action: 'back' } })); break;
-      case 'wizard_submit': window.dispatchEvent(new CustomEvent('aria-wizard', { detail: { action: 'submit' } })); break;
+      case 'create_simulation': emitWhenReady('aria-dashboard', { action: 'create_simulation' }, '__ariaDashboardReady'); break;
+      case 'open_simulation': emitWhenReady('aria-dashboard', { action: 'open_simulation', index: action.index ?? 0 }, '__ariaDashboardReady'); break;
+      case 'toggle_compare': emitWhenReady('aria-dashboard', { action: 'toggle_compare' }, '__ariaDashboardReady'); break;
+      case 'delete_simulation': emitWhenReady('aria-dashboard', { action: 'delete_simulation', index: action.index ?? 0 }, '__ariaDashboardReady'); break;
+      case 'wizard_next': emitWhenReady('aria-wizard', { action: 'next' }, '__ariaWizardReady'); break;
+      case 'wizard_back': emitWhenReady('aria-wizard', { action: 'back' }, '__ariaWizardReady'); break;
+      case 'wizard_submit': emitWhenReady('aria-wizard', { action: 'submit' }, '__ariaWizardReady'); break;
       case 'wizard_exit':
-        window.dispatchEvent(new CustomEvent('aria-wizard', { detail: { action: 'exit' } }));
-        window.dispatchEvent(new CustomEvent('aria-dashboard', { detail: { action: 'wizard_exit' } })); break;
+        emitWhenReady('aria-wizard', { action: 'exit' }, '__ariaWizardReady');
+        emitWhenReady('aria-dashboard', { action: 'wizard_exit' }, '__ariaDashboardReady'); break;
       case 'wizard_set':
-        window.dispatchEvent(new CustomEvent('aria-wizard', { detail: { action: 'set', field: action.field, value: action.value, founder: action.founder } })); break;
+        emitWhenReady('aria-wizard', { action: 'set', field: action.field, value: action.value, founder: action.founder }, '__ariaWizardReady'); break;
     }
   }
 
