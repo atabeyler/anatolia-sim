@@ -119,6 +119,7 @@ function serializeIndividual(ind, currentDay) {
     weight_kg: weightKg,
     parent_1_id: ind.parent_1_id ?? null,
     parent_2_id: ind.parent_2_id ?? null,
+    death_cause: ind.death_cause ?? null,
     genome: ind.genome,
     phenotype: ind.phenotype,
     health: ind.health,
@@ -231,14 +232,19 @@ router.get('/:id/population', authenticate, requireSimulationOwner, async (req, 
     const engine = simulationManager.getEngine(req.params.id);
     if (engine) {
       const individuals = [...engine.population.values()]
-        .filter(ind => req.query.alive !== 'true' || !ind.is_dead)
+        .filter(ind => {
+          if (req.query.alive === 'true') return !ind.is_dead;
+          if (req.query.alive === 'false') return ind.is_dead;
+          return true;
+        })
         .slice(0, 5000)
         .map(ind => serializeIndividual(ind, engine.currentDay));
       return res.json(individuals);
     }
 
-    let sql = 'SELECT id, sex, birth_day, death_day, alive, x, y, genome, phenotype, health, mind, social, skills, beliefs, language, parent_1_id, parent_2_id FROM individuals WHERE simulation_id = $1';
+    let sql = 'SELECT id, sex, birth_day, death_day, alive, x, y, genome, phenotype, health, mind, social, skills, beliefs, language, parent_1_id, parent_2_id, death_cause FROM individuals WHERE simulation_id = $1';
     if (req.query.alive === 'true') sql += ' AND alive = true';
+    else if (req.query.alive === 'false') sql += ' AND alive = false';
     sql += ' LIMIT 5000';
     const { rows } = await query(sql, [req.params.id]);
     res.json(rows.map(row => serializeIndividual({ ...row, is_dead: row.alive === false }, req.simulation.current_day ?? 0)));
