@@ -75,7 +75,7 @@ ${isDash ? `DASH actions: create_simulation|open_simulation{"index":0}|delete_si
 GLOBAL: navigate_to{"route":"/"}|toggle_lang|set_lang{"lang":"tr/en"}`;
 
     const completion = await client.chat.completions.create({
-      model: 'deepseek/deepseek-chat-v3-0324:free',
+      model: 'google/gemini-2.0-flash-exp:free',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message },

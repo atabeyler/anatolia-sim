@@ -20,7 +20,7 @@ router.post('/:simId', authenticate, requireSimulationOwner, async (req, res) =>
     const { message, stats, events } = req.body;
     const client = new OpenAI({ apiKey, baseURL: 'https://openrouter.ai/api/v1', maxRetries: 0, defaultHeaders: { 'HTTP-Referer': 'https://anatolia-sim.onrender.com', 'X-Title': 'ANATOLIA-SIM' } });
     const completion = await client.chat.completions.create({
-      model: 'deepseek/deepseek-chat-v3-0324:free',
+      model: 'google/gemini-2.0-flash-exp:free',
       max_tokens: 800,
       messages: [
         { role: 'system', content: `Sen ANATOLİA-SİM MEDENİYET simülasyonunu analiz eden uzman bir yapay zeka asistanısın. Simülasyon verilerine tam erişimin var. Bilimsel, tarafsız ve detaylı analizler yaparsın. Hem Türkçe hem İngilizce akıcı biçimde yanıt verirsin — kullanıcının dilinde yanıtla.\n\n${buildContext(stats, events)}\n\nYanıtları kısa, net ve veriye dayalı tut.` },
@@ -38,7 +38,7 @@ router.post('/:simId/hypothesis', authenticate, requireSimulationOwner, async (r
     const { hypothesis, stats, events } = req.body;
     const client = new OpenAI({ apiKey, baseURL: 'https://openrouter.ai/api/v1', maxRetries: 0, defaultHeaders: { 'HTTP-Referer': 'https://anatolia-sim.onrender.com', 'X-Title': 'ANATOLIA-SIM' } });
     const completion = await client.chat.completions.create({
-      model: 'deepseek/deepseek-chat-v3-0324:free',
+      model: 'google/gemini-2.0-flash-exp:free',
       max_tokens: 600,
       response_format: { type: 'json_object' },
       messages: [
