@@ -119,12 +119,12 @@ epigenetics, architecture, law, microbiome
 TR aliases: nüfus→population, analiz→analysis, tanrı→god, çevre→environment, inanç→belief`;
 
     const completion = await client.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'llama-3.1-8b-instant',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message },
       ],
-      max_tokens: 600,
+      max_tokens: 300,
       response_format: { type: 'json_object' },
     });
 
