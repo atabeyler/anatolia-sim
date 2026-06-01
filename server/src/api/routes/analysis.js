@@ -15,12 +15,12 @@ function buildContext(stats, events) {
 
 router.post('/:simId', authenticate, requireSimulationOwner, async (req, res) => {
   try {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) return res.status(503).json({ error: 'GROQ_API_KEY not configured' });
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) return res.status(503).json({ error: 'OPENAI_API_KEY not configured' });
     const { message, stats, events } = req.body;
-    const client = new OpenAI({ apiKey, baseURL: 'https://openrouter.ai/api/v1', maxRetries: 0, defaultHeaders: { 'HTTP-Referer': 'https://anatolia-sim.onrender.com', 'X-Title': 'ANATOLIA-SIM' } });
+    const client = new OpenAI({ apiKey, maxRetries: 0 });
     const completion = await client.chat.completions.create({
-      model: 'google/gemini-2.0-flash-exp:free',
+      model: 'gpt-4o-mini',
       max_tokens: 800,
       messages: [
         { role: 'system', content: `Sen ANATOLİA-SİM MEDENİYET simülasyonunu analiz eden uzman bir yapay zeka asistanısın. Simülasyon verilerine tam erişimin var. Bilimsel, tarafsız ve detaylı analizler yaparsın. Hem Türkçe hem İngilizce akıcı biçimde yanıt verirsin — kullanıcının dilinde yanıtla.\n\n${buildContext(stats, events)}\n\nYanıtları kısa, net ve veriye dayalı tut.` },
@@ -33,12 +33,12 @@ router.post('/:simId', authenticate, requireSimulationOwner, async (req, res) =>
 
 router.post('/:simId/hypothesis', authenticate, requireSimulationOwner, async (req, res) => {
   try {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) return res.status(503).json({ error: 'GROQ_API_KEY not configured' });
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) return res.status(503).json({ error: 'OPENAI_API_KEY not configured' });
     const { hypothesis, stats, events } = req.body;
-    const client = new OpenAI({ apiKey, baseURL: 'https://openrouter.ai/api/v1', maxRetries: 0, defaultHeaders: { 'HTTP-Referer': 'https://anatolia-sim.onrender.com', 'X-Title': 'ANATOLIA-SIM' } });
+    const client = new OpenAI({ apiKey, maxRetries: 0 });
     const completion = await client.chat.completions.create({
-      model: 'google/gemini-2.0-flash-exp:free',
+      model: 'gpt-4o-mini',
       max_tokens: 600,
       response_format: { type: 'json_object' },
       messages: [
