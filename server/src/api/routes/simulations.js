@@ -296,6 +296,17 @@ router.post('/:id/restore/:checkpointId', authenticate, requireSimulationOwner, 
   } catch (err) { console.error(err); res.status(500).json({ error: 'Restore failed' }); }
 });
 
+router.post('/:id/terminate', authenticate, requireSimulationOwner, async (req, res) => {
+  try {
+    simulationManager.pause(req.params.id);
+    await query('DELETE FROM simulation_events WHERE simulation_id = $1', [req.params.id]);
+    await query('DELETE FROM checkpoints WHERE simulation_id = $1', [req.params.id]);
+    await query('DELETE FROM individuals WHERE simulation_id = $1', [req.params.id]);
+    await query('DELETE FROM simulations WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Simulation terminated' });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to terminate simulation' }); }
+});
+
 router.delete('/:id', authenticate, async (req, res) => {
   try {
     const { rows } = await query('SELECT id FROM simulations WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
