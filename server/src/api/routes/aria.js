@@ -113,7 +113,7 @@ TR aliases: nüfus→population, analiz→analysis, tanrı→god, çevre→envir
       parsed.actions = [];
     }
     // Normalize each action: some models use 'name' or 'action' instead of 'type'
-    parsed.actions = parsed.actions.map((a: any) => {
+    parsed.actions = parsed.actions.map((a) => {
       if (typeof a === 'string') return { type: a };
       if (a && !a.type) {
         a.type = a.name ?? a.action ?? a.command ?? a.function;
