@@ -7,7 +7,7 @@ import { Mic, MicOff, Loader2 } from 'lucide-react';
 type AriaState = 'idle' | 'listening' | 'processing';
 
 const GEMINI_URL = (key: string) =>
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
 const SpeechRec: any = typeof window !== 'undefined'
   ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null)
   : null;
