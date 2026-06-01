@@ -29,12 +29,20 @@ const app = express();
 const server = createServer(app);
 const PORT = process.env.PORT ?? 3001;
 
+app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:3001'],
   credentials: true,
 }));
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 500 }));
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 500,
+  handler: (req, res) => {
+    console.warn('Rate limit hit:', req.ip, req.path);
+    res.status(429).json({ text: 'Rate limit (900s)', actions: [], retry_after: 900 });
+  },
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
