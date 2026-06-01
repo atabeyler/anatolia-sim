@@ -22,17 +22,17 @@ export default function SocialPanel() {
       </div>
 
       <div>
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Social Hierarchy Model' : 'Sosyal Hiyerarşi Modeli'}
         </h4>
-        <p className="text-sim-muted text-xs italic mb-2">
+        <p className="text-sim-muted text-sm italic mb-2">
           {lang === 'en'
             ? 'Dominance × strength → leadership. High independence → fission. MHC × aggression → conflict.'
             : 'Baskınlık × güç → liderlik. Yüksek bağımsızlık → bölünme. MHC × saldırganlık → çatışma.'}
         </p>
         <div className="space-y-1">
           {['Leader', 'Elder', 'Warrior', 'Healer', 'Member'].map(role => (
-            <div key={role} className="flex justify-between py-0.5 text-xs border-b border-sim-border/30">
+            <div key={role} className="flex justify-between py-0.5 text-sm border-b border-sim-border/30">
               <span className="text-sim-text">{role}</span>
               <span className="text-sim-muted">{lang === 'en' ? 'Trait-driven assignment' : 'Özellik tabanlı'}</span>
             </div>
@@ -41,19 +41,19 @@ export default function SocialPanel() {
       </div>
 
       <div>
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Recent Social Events' : 'Son Sosyal Olaylar'}
         </h4>
         {socialEvents.length === 0 ? (
-          <p className="text-sim-muted italic text-xs">{lang === 'en' ? 'No social events yet.' : 'Henüz sosyal olay yok.'}</p>
+          <p className="text-sim-muted italic text-sm">{lang === 'en' ? 'No social events yet.' : 'Henüz sosyal olay yok.'}</p>
         ) : (
           <div className="space-y-1 max-h-48 overflow-y-auto">
             {socialEvents.slice(0, 12).map((ev, i) => (
               <div key={i} className="flex items-start gap-2 py-1 border-b border-sim-border/30">
-                <span className="text-sim-accent font-mono text-xs flex-shrink-0">
+                <span className="text-sim-accent font-mono text-sm flex-shrink-0">
                   Y{ev.sim_year}
                 </span>
-                <span className="text-sim-muted text-xs">{ev.description}</span>
+                <span className="text-sim-muted text-sm">{ev.description}</span>
               </div>
             ))}
           </div>
@@ -68,7 +68,7 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
     <div className="bg-sim-surface rounded-lg p-2 flex flex-col items-center gap-1">
       <div className={color}>{icon}</div>
       <div className={`font-bold text-lg ${color}`}>{value}</div>
-      <div className="text-sim-muted text-xs text-center">{label}</div>
+      <div className="text-sim-muted text-sm text-center">{label}</div>
     </div>
   );
 }

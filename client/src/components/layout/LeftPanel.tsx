@@ -75,7 +75,7 @@ export default function LeftPanel() {
                 <Icon size={14} style={{ flexShrink: 0, filter: isActive ? `drop-shadow(0 0 4px ${accent})` : 'none' }} />
                 {sidebarExpanded && (
                   <span className="font-share-tech tracking-wider whitespace-nowrap overflow-hidden text-ellipsis"
-                    style={{ fontSize: 10, color: isActive ? accent : '#9aabcf' }}>
+                    style={{ fontSize: 12, color: isActive ? accent : '#9aabcf' }}>
                     {lang === 'en' ? mod.label : mod.labelTr}
                   </span>
                 )}
@@ -99,7 +99,7 @@ export default function LeftPanel() {
           onMouseEnter={e => (e.currentTarget.style.color = '#a0b4ff')}
           onMouseLeave={e => (e.currentTarget.style.color = '#6070a0')}>
           {sidebarExpanded
-            ? <><ChevronLeft size={12} /><span className="font-share-tech text-xs ml-2 tracking-wider">DARALT</span></>
+            ? <><ChevronLeft size={12} /><span className="font-share-tech text-sm ml-2 tracking-wider">DARALT</span></>
             : <ChevronRight size={12} />}
         </button>
       </div>

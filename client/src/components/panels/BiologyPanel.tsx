@@ -50,7 +50,7 @@ export default function BiologyPanel() {
       </Section>
 
       <Section title={lang === 'en' ? 'Genome Activity' : 'Genom Aktivitesi'}>
-        <p className="text-sim-muted text-xs italic mb-2">
+        <p className="text-sim-muted text-sm italic mb-2">
           {lang === 'en'
             ? '25 gene loci drive all behavior. Values emerge from meiosis + mutation.'
             : '25 gen lokusu tüm davranışı yönlendirir. Değerler mayoz + mutasyondan ortaya çıkar.'}
@@ -73,7 +73,7 @@ export default function BiologyPanel() {
 
       <Section title={lang === 'en' ? 'Living Individuals' : 'Yasayan Bireyler'}>
         {individuals.length === 0 ? (
-          <p className="text-sim-muted text-xs italic">
+          <p className="text-sim-muted text-sm italic">
             {lang === 'en' ? 'No live population loaded yet.' : 'Canli nufus henuz yuklenmedi.'}
           </p>
         ) : (
@@ -107,7 +107,7 @@ export default function BiologyPanel() {
             <span className="text-sim-text">—</span>
           </div>
         ))}
-        <p className="text-sim-muted text-xs italic mt-2">
+        <p className="text-sim-muted text-sm italic mt-2">
           {lang === 'en' ? 'Breakdown requires live population data.' : 'Dağılım için canlı nüfus verisi gerekir.'}
         </p>
       </Section>
@@ -118,7 +118,7 @@ export default function BiologyPanel() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">{title}</h4>
+      <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">{title}</h4>
       {children}
     </div>
   );

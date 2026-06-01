@@ -47,7 +47,7 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
       <div className="flex items-center gap-2 px-3 py-2 flex-shrink-0"
         style={{ background: 'rgba(10,0,0,0.95)', borderBottom: '1px solid #cc2222' }}>
         <div className="w-1 h-4 flex-shrink-0" style={{ background: '#00e887', boxShadow: '0 0 6px #00e887' }} />
-        <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', color: '#00e887' }}>
+        <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 12, fontWeight: 700, letterSpacing: '0.2em', color: '#00e887' }}>
           {displayTitle.toUpperCase()}
         </span>
         <div className="flex-1" />
@@ -65,7 +65,7 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
       {/* Footer bar */}
       <div className="px-3 py-1 flex-shrink-0"
         style={{ borderTop: '1px solid #cc2222', background: 'rgba(0,8,4,0.9)' }}>
-        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 7, color: '#3a1a1a', letterSpacing: '0.15em' }}>
+        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 12, color: '#3a1a1a', letterSpacing: '0.15em' }}>
           MODULE/{displayTitle.toUpperCase().replace(/ /g, '_')}
         </span>
       </div>

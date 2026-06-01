@@ -7,8 +7,8 @@ function GaugeBar({ label, value, color, max }: { label: string; value: number; 
   return (
     <div className="mb-2">
       <div className="flex justify-between items-center mb-1">
-        <span className="font-share-tech text-xs tracking-widest text-sim-muted">{label}</span>
-        <span className="font-share-tech text-xs" style={{ color }}>{typeof max === 'number' ? value.toLocaleString() : `${(value * 100).toFixed(0)}%`}</span>
+        <span className="font-share-tech text-sm tracking-widest text-sim-muted">{label}</span>
+        <span className="font-share-tech text-sm" style={{ color }}>{typeof max === 'number' ? value.toLocaleString() : `${(value * 100).toFixed(0)}%`}</span>
       </div>
       <div className="h-1 bg-sim-border/60 rounded-full overflow-hidden relative">
         <div
@@ -32,7 +32,7 @@ function StatBox({ label, value, color, unit }: any) {
   return (
     <div className="relative p-2 border border-sim-border/50 hover:border-sim-accent/40 transition-colors"
       style={{ background: 'rgba(4,4,15,0.8)', clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))' }}>
-      <div className="font-share-tech text-xs text-sim-muted tracking-widest mb-1">{label}</div>
+      <div className="font-share-tech text-sm text-sim-muted tracking-widest mb-1">{label}</div>
       <div className="font-orbitron text-base font-bold" style={{ color, textShadow: `0 0 12px ${color}88` }}>
         {disp}{unit ?? ''}
       </div>
@@ -67,10 +67,10 @@ export default function StatsPanel() {
         {/* Header */}
         <div className="flex items-center gap-2 mb-3">
           <div className="w-1 h-4 bg-sim-accent" style={{ boxShadow: '0 0 6px rgba(79,110,247,0.8)' }} />
-          <span className="font-orbitron text-xs font-semibold tracking-[0.25em] text-sim-accent">POPULATION TELEMETRY</span>
+          <span className="font-orbitron text-sm font-semibold tracking-[0.25em] text-sim-accent">POPULATION TELEMETRY</span>
           <div className="flex-1" />
           <div className="w-1.5 h-1.5 rounded-full bg-sim-green pulse-live" />
-          <span className="font-share-tech text-xs text-sim-green tracking-widest">LIVE</span>
+          <span className="font-share-tech text-sm text-sim-green tracking-widest">LIVE</span>
         </div>
 
         {/* Chart */}
@@ -81,7 +81,7 @@ export default function StatsPanel() {
                 <XAxis dataKey="year" hide />
                 <YAxis hide />
                 <Tooltip
-                  contentStyle={{ background: '#07071a', border: '1px solid rgba(79,110,247,0.3)', borderRadius: 2, fontSize: 10, fontFamily: 'Share Tech Mono' }}
+                  contentStyle={{ background: '#07071a', border: '1px solid rgba(79,110,247,0.3)', borderRadius: 2, fontSize: 12, fontFamily: 'Share Tech Mono' }}
                   labelStyle={{ color: '#6070a0' }}
                   itemStyle={{ color: '#4f6ef7' }}
                 />
@@ -91,7 +91,7 @@ export default function StatsPanel() {
           </div>
         ) : (
           <div className="h-16 flex items-center justify-center mb-3">
-            <span className="font-share-tech text-xs text-sim-muted/50 tracking-widest animate-pulse">COLLECTING DATA…</span>
+            <span className="font-share-tech text-sm text-sim-muted/50 tracking-widest animate-pulse">COLLECTING DATA…</span>
           </div>
         )}
 

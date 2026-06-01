@@ -26,13 +26,13 @@ export default function BeliefPanel() {
       <div className="bg-sim-surface rounded-lg p-3 mb-2 text-center">
         <Flame size={24} className="text-orange-400 mx-auto mb-1" />
         <div className="text-sim-gold font-bold text-lg">{discoveredBeliefs.size}</div>
-        <div className="text-sim-muted text-xs">
+        <div className="text-sim-muted text-sm">
           {lang === 'en' ? 'Belief systems emerged' : 'Ortaya çıkan inanç sistemleri'}
         </div>
       </div>
 
       <div className="mb-3">
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Belief Archetypes' : 'İnanç Arketipleri'}
         </h4>
         <div className="space-y-1.5">
@@ -50,12 +50,12 @@ export default function BeliefPanel() {
                 }`}
               >
                 <div className="flex justify-between items-center mb-0.5">
-                  <span className="text-xs font-medium" style={{ color: discovered ? info.color : '#555' }}>
+                  <span className="text-sm font-medium" style={{ color: discovered ? info.color : '#555' }}>
                     {id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                   </span>
-                  <span className="text-xs text-sim-muted">Stage {info.stage}</span>
+                  <span className="text-sm text-sim-muted">Stage {info.stage}</span>
                 </div>
-                <div className="text-xs text-sim-muted">
+                <div className="text-sm text-sim-muted">
                   {lang === 'en' ? info.desc : info.descTr}
                 </div>
               </div>
@@ -65,10 +65,10 @@ export default function BeliefPanel() {
       </div>
 
       <div>
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Emergence Conditions' : 'Ortaya Çıkış Koşulları'}
         </h4>
-        <p className="text-sim-muted text-xs italic">
+        <p className="text-sim-muted text-sm italic">
           {lang === 'en'
             ? 'Belief forms when religiosity gene + anxiety + environmental stress overcome skepticism threshold. Writing unlocks higher stages.'
             : 'İnanç; dindar gen + kaygı + çevre stresi şüphecilik eşiğini aştığında oluşur. Yazı sistemi yüksek aşamaları açar.'}
@@ -76,19 +76,19 @@ export default function BeliefPanel() {
       </div>
 
       <div>
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Ritual Events' : 'Ritüel Olayları'}
         </h4>
         {beliefEvents.length === 0 ? (
-          <p className="text-sim-muted italic text-xs">
+          <p className="text-sim-muted italic text-sm">
             {lang === 'en' ? 'No belief events yet.' : 'Henüz inanç olayı yok.'}
           </p>
         ) : (
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {beliefEvents.slice(0, 8).map((ev, i) => (
               <div key={i} className="flex gap-2 py-0.5 border-b border-sim-border/30">
-                <span className="text-orange-400 font-mono text-xs">Y{ev.sim_year}</span>
-                <span className="text-sim-muted text-xs">{ev.description}</span>
+                <span className="text-orange-400 font-mono text-sm">Y{ev.sim_year}</span>
+                <span className="text-sim-muted text-sm">{ev.description}</span>
               </div>
             ))}
           </div>

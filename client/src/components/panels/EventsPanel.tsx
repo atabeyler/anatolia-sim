@@ -83,7 +83,7 @@ export default function EventsPanel() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 3, marginBottom: 8 }}>
         {FILTERS.slice(1).map(f => (
           <div key={f.id} style={{ background: 'rgba(15,0,0,0.7)', border: `1px solid ${f.color}22`, padding: '3px 5px' }}>
-            <div style={{ fontSize: 6, color: f.color, letterSpacing: '0.08em', opacity: 0.7, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+            <div style={{ fontSize: 12, color: f.color, letterSpacing: '0.08em', opacity: 0.7, whiteSpace: 'nowrap', overflow: 'hidden' }}>
               {lang === 'tr' ? f.labelTr.toUpperCase() : f.labelEn.toUpperCase()}
             </div>
             <div style={{ fontSize: 14, color: f.color, fontFamily: 'Orbitron, monospace', fontWeight: 700, lineHeight: 1 }}>
@@ -98,7 +98,7 @@ export default function EventsPanel() {
         {FILTERS.map(f => (
           <button key={f.id} onClick={() => setFilter(f.id)}
             style={{
-              padding: '2px 6px', fontSize: 7.5,
+              padding: '2px 6px', fontSize: 12,
               border: `1px solid ${filter === f.id ? f.color : '#cc2222'}`,
               color: filter === f.id ? f.color : '#3a6040',
               background: filter === f.id ? `${f.color}14` : 'transparent',
@@ -111,13 +111,13 @@ export default function EventsPanel() {
       </div>
 
       {/* Total */}
-      <div style={{ fontSize: 7.5, color: '#2a5040', marginBottom: 6, letterSpacing: '0.06em' }}>
+      <div style={{ fontSize: 12, color: '#2a5040', marginBottom: 6, letterSpacing: '0.06em' }}>
         {visible.length} / {events.length} {lang === 'tr' ? 'olay' : 'events'}
       </div>
 
       {/* Event list */}
       {visible.length === 0 ? (
-        <div style={{ fontSize: 9, color: '#2a4a3a', textAlign: 'center', padding: '24px 0', fontStyle: 'italic' }}>
+        <div style={{ fontSize: 12, color: '#2a4a3a', textAlign: 'center', padding: '24px 0', fontStyle: 'italic' }}>
           {lang === 'tr' ? 'Olay bulunamadı.' : 'No events found.'}
         </div>
       ) : visible.map((ev, i) => {
@@ -137,14 +137,14 @@ export default function EventsPanel() {
             <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1.1, color, marginTop: 1 }}>{icon}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', gap: 6, marginBottom: 2, alignItems: 'center' }}>
-                <span style={{ fontSize: 7, color: '#3a6040', fontFamily: 'Orbitron, monospace', flexShrink: 0 }}>
+                <span style={{ fontSize: 12, color: '#3a6040', fontFamily: 'Orbitron, monospace', flexShrink: 0 }}>
                   Y{String(ev.sim_year).padStart(4, '0')} G{String(ev.sim_day % 365).padStart(3, '0')}
                 </span>
-                <span style={{ fontSize: 6.5, color: `${color}88`, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: 12, color: `${color}88`, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                   {ev.event_type?.replace(/_/g, ' ')}
                 </span>
               </div>
-              <div style={{ fontSize: 8.5, color: i < 5 ? color : '#6a9a7a', lineHeight: 1.45, wordBreak: 'break-word' }}>
+              <div style={{ fontSize: 12, color: i < 5 ? color : '#6a9a7a', lineHeight: 1.45, wordBreak: 'break-word' }}>
                 {desc}
               </div>
             </div>

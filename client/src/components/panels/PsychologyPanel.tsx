@@ -25,14 +25,14 @@ export default function PsychologyPanel() {
         <div className={`font-bold text-xl ${happiness > 0.6 ? 'text-green-400' : happiness > 0.3 ? 'text-yellow-400' : 'text-red-400'}`}>
           {(happiness * 100).toFixed(0)}%
         </div>
-        <div className="text-sim-muted text-xs">{lang === 'en' ? 'Population Happiness' : 'Nüfus Mutluluğu'}</div>
+        <div className="text-sim-muted text-sm">{lang === 'en' ? 'Population Happiness' : 'Nüfus Mutluluğu'}</div>
       </div>
 
       <div className="mb-3 space-y-2">
         <div>
           <div className="flex justify-between mb-1">
-            <span className="text-sim-muted text-xs">{lang === 'en' ? 'Mean Wellbeing' : 'Ort. İyi Oluş'}</span>
-            <span className="text-green-400 text-xs font-mono">{(meanWellbeing * 100).toFixed(0)}%</span>
+            <span className="text-sim-muted text-sm">{lang === 'en' ? 'Mean Wellbeing' : 'Ort. İyi Oluş'}</span>
+            <span className="text-green-400 text-sm font-mono">{(meanWellbeing * 100).toFixed(0)}%</span>
           </div>
           <div className="h-2 bg-sim-border rounded-full overflow-hidden">
             <div className="h-full bg-green-500 rounded-full" style={{ width: `${meanWellbeing * 100}%` }} />
@@ -40,8 +40,8 @@ export default function PsychologyPanel() {
         </div>
         <div>
           <div className="flex justify-between mb-1">
-            <span className="text-sim-muted text-xs">{lang === 'en' ? 'Mean Stress' : 'Ort. Stres'}</span>
-            <span className="text-red-400 text-xs font-mono">{(meanStress * 100).toFixed(0)}%</span>
+            <span className="text-sim-muted text-sm">{lang === 'en' ? 'Mean Stress' : 'Ort. Stres'}</span>
+            <span className="text-red-400 text-sm font-mono">{(meanStress * 100).toFixed(0)}%</span>
           </div>
           <div className="h-2 bg-sim-border rounded-full overflow-hidden">
             <div className="h-full bg-red-500 rounded-full" style={{ width: `${meanStress * 100}%` }} />
@@ -50,21 +50,21 @@ export default function PsychologyPanel() {
       </div>
 
       <div className="mb-3">
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Mental State Distribution' : 'Zihinsel Durum Dağılımı'}
         </h4>
         <div className="grid grid-cols-2 gap-1">
           {Object.entries(MENTAL_STATES).map(([state, { emoji, color }]) => (
             <div key={state} className="flex items-center gap-1 bg-sim-surface rounded px-2 py-1">
               <span>{emoji}</span>
-              <span className={`text-xs capitalize ${color}`}>{state}</span>
+              <span className={`text-sm capitalize ${color}`}>{state}</span>
             </div>
           ))}
         </div>
       </div>
 
       <div>
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Drivers' : 'Etkenler'}
         </h4>
         <div className="space-y-1">
@@ -77,8 +77,8 @@ export default function PsychologyPanel() {
             { factor: 'Art & Music', tr: 'Sanat & Müzik', impact: '+' },
           ].map(f => (
             <div key={f.factor} className="flex justify-between py-0.5 border-b border-sim-border/30">
-              <span className="text-sim-muted text-xs">{lang === 'en' ? f.factor : f.tr}</span>
-              <span className={`text-xs font-bold ${f.impact.startsWith('+') ? 'text-green-400' : 'text-red-400'}`}>{f.impact}</span>
+              <span className="text-sim-muted text-sm">{lang === 'en' ? f.factor : f.tr}</span>
+              <span className={`text-sm font-bold ${f.impact.startsWith('+') ? 'text-green-400' : 'text-red-400'}`}>{f.impact}</span>
             </div>
           ))}
         </div>

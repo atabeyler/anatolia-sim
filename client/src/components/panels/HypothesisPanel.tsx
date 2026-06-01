@@ -49,7 +49,7 @@ export default function HypothesisPanel() {
     <DetailPanel panelId="hypothesis" title="Hypothesis Test" titleTr="Hipotez Testi">
       <div className="bg-sim-surface rounded-lg p-3 mb-3 flex items-start gap-2">
         <FlaskConical size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-        <p className="text-sim-muted text-xs">
+        <p className="text-sim-muted text-sm">
           {lang === 'en'
             ? 'State a hypothesis and Claude evaluates it against live simulation data.'
             : 'Bir hipotez belirtin; Claude bunu canlı simülasyon verileriyle değerlendirir.'}
@@ -57,13 +57,13 @@ export default function HypothesisPanel() {
       </div>
 
       <div className="mb-3">
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Examples' : 'Örnekler'}
         </h4>
         <div className="space-y-1">
           {examples.map(ex => (
             <button key={ex} onClick={() => setHypothesis(ex)}
-              className="w-full text-left text-xs text-sim-muted hover:text-sim-text bg-sim-surface hover:bg-sim-border rounded px-2 py-1 transition-colors">
+              className="w-full text-left text-sm text-sim-muted hover:text-sim-text bg-sim-surface hover:bg-sim-border rounded px-2 py-1 transition-colors">
               "{ex}"
             </button>
           ))}
@@ -74,10 +74,10 @@ export default function HypothesisPanel() {
         value={hypothesis}
         onChange={e => setHypothesis(e.target.value)}
         placeholder={lang === 'en' ? 'State your hypothesis…' : 'Hipotezinizi belirtin…'}
-        className="w-full bg-sim-bg border border-sim-border rounded-lg px-3 py-2 text-xs text-sim-text resize-none h-16 focus:border-sim-accent focus:outline-none mb-2"
+        className="w-full bg-sim-bg border border-sim-border rounded-lg px-3 py-2 text-sm text-sim-text resize-none h-16 focus:border-sim-accent focus:outline-none mb-2"
       />
       <button onClick={test} disabled={loading || !hypothesis.trim()}
-        className="w-full px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50 mb-3">
+        className="w-full px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 mb-3">
         {loading ? (lang === 'en' ? 'Testing…' : 'Test ediliyor…') : (lang === 'en' ? 'Test Hypothesis' : 'Hipotezi Test Et')}
       </button>
 
@@ -87,11 +87,11 @@ export default function HypothesisPanel() {
           <div className={`rounded-lg p-3 border ${verdictStyle.border} ${verdictStyle.bg}`}>
             <div className="flex items-center gap-2 mb-2">
               <Icon size={14} className={verdictStyle.color} />
-              <span className={`text-xs font-semibold uppercase ${verdictStyle.color}`}>
+              <span className={`text-sm font-semibold uppercase ${verdictStyle.color}`}>
                 {result.verdict} ({(result.confidence * 100).toFixed(0)}% {lang === 'en' ? 'confidence' : 'güven'})
               </span>
             </div>
-            <p className="text-xs text-sim-muted leading-relaxed">{result.reasoning}</p>
+            <p className="text-sm text-sim-muted leading-relaxed">{result.reasoning}</p>
           </div>
         );
       })()}

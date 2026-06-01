@@ -22,17 +22,17 @@ export default function LawPanel() {
         <div className="bg-sim-surface rounded-lg p-2 text-center">
           <ShieldCheck size={16} className="text-green-400 mx-auto mb-1" />
           <div className="text-green-400 font-bold text-lg">{normCount}</div>
-          <div className="text-sim-muted text-xs">{lang === 'en' ? 'Active Norms' : 'Aktif Normlar'}</div>
+          <div className="text-sim-muted text-sm">{lang === 'en' ? 'Active Norms' : 'Aktif Normlar'}</div>
         </div>
         <div className="bg-sim-surface rounded-lg p-2 text-center">
           <Scale size={16} className="text-yellow-400 mx-auto mb-1" />
           <div className="text-yellow-400 font-bold text-lg">{violationCount}</div>
-          <div className="text-sim-muted text-xs">{lang === 'en' ? 'Violations' : 'İhlaller'}</div>
+          <div className="text-sim-muted text-sm">{lang === 'en' ? 'Violations' : 'İhlaller'}</div>
         </div>
       </div>
 
       <div className="mb-3">
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Norm Progression' : 'Norm İlerlemesi'}
         </h4>
         <div className="space-y-3">
@@ -42,7 +42,7 @@ export default function LawPanel() {
             );
             return (
               <div key={stage.stage}>
-                <div className="text-xs text-sim-muted mb-1 font-medium">
+                <div className="text-sm text-sim-muted mb-1 font-medium">
                   Stage {stage.stage}: {lang === 'en' ? stage.label : stage.labelTr}
                 </div>
                 <div className="space-y-0.5">
@@ -51,7 +51,7 @@ export default function LawPanel() {
                     return (
                       <div
                         key={norm}
-                        className={`flex items-center gap-1.5 text-xs px-2 py-0.5 rounded ${active ? 'text-sim-text' : 'text-sim-muted opacity-50'}`}
+                        className={`flex items-center gap-1.5 text-sm px-2 py-0.5 rounded ${active ? 'text-sim-text' : 'text-sim-muted opacity-50'}`}
                       >
                         <div className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-green-400' : 'bg-sim-border'}`} />
                         {norm}
@@ -66,19 +66,19 @@ export default function LawPanel() {
       </div>
 
       <div>
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Legal Events' : 'Hukuki Olaylar'}
         </h4>
         {lawEvents.length === 0 ? (
-          <p className="text-sim-muted italic text-xs">
+          <p className="text-sim-muted italic text-sm">
             {lang === 'en' ? 'No legal events yet.' : 'Henüz hukuki olay yok.'}
           </p>
         ) : (
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {lawEvents.slice(0, 10).map((ev, i) => (
               <div key={i} className="flex gap-2 py-0.5 border-b border-sim-border/30">
-                <span className="text-green-400 font-mono text-xs">Y{ev.sim_year}</span>
-                <span className="text-sim-muted text-xs">{ev.description}</span>
+                <span className="text-green-400 font-mono text-sm">Y{ev.sim_year}</span>
+                <span className="text-sim-muted text-sm">{ev.description}</span>
               </div>
             ))}
           </div>

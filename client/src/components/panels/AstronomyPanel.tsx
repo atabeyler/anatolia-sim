@@ -22,14 +22,14 @@ export default function AstronomyPanel() {
         <Telescope size={24} className="text-blue-400" />
         <div>
           <div className="text-blue-400 font-bold text-lg">{discoveries.length}</div>
-          <div className="text-sim-muted text-xs">
+          <div className="text-sim-muted text-sm">
             {lang === 'en' ? 'Astronomical Discoveries' : 'Astronomik Keşifler'}
           </div>
         </div>
       </div>
 
       <div className="mb-3">
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Knowledge Tree' : 'Bilgi Ağacı'}
         </h4>
         <div className="space-y-1.5">
@@ -41,7 +41,7 @@ export default function AstronomyPanel() {
                 className={`flex items-center gap-2 p-2 rounded ${discovered ? 'bg-blue-500/15 border border-blue-500/30' : 'bg-sim-surface/30 opacity-50'}`}
               >
                 <span className="text-base">{item.icon}</span>
-                <span className={`text-xs ${discovered ? 'text-sim-text' : 'text-sim-muted'}`}>
+                <span className={`text-sm ${discovered ? 'text-sim-text' : 'text-sim-muted'}`}>
                   {lang === 'en' ? item.label : item.labelTr}
                 </span>
               </div>
@@ -51,30 +51,30 @@ export default function AstronomyPanel() {
       </div>
 
       <div className="mb-3">
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Observable Events' : 'Gözlemlenebilir Olaylar'}
         </h4>
         <div className="grid grid-cols-2 gap-1">
           {['Lunar cycles', 'Solstices', 'Equinoxes', 'Star risings', 'Eclipses', 'Comets'].map(ev => (
-            <div key={ev} className="text-xs text-sim-muted bg-sim-surface rounded px-2 py-1">{ev}</div>
+            <div key={ev} className="text-sm text-sim-muted bg-sim-surface rounded px-2 py-1">{ev}</div>
           ))}
         </div>
       </div>
 
       <div>
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Observation Log' : 'Gözlem Günlüğü'}
         </h4>
         {astroEvents.length === 0 ? (
-          <p className="text-sim-muted italic text-xs">
+          <p className="text-sim-muted italic text-sm">
             {lang === 'en' ? 'No astronomical events recorded.' : 'Kayıtlı astronomi olayı yok.'}
           </p>
         ) : (
           <div className="space-y-1 max-h-36 overflow-y-auto">
             {astroEvents.slice(0, 10).map((ev, i) => (
               <div key={i} className="flex gap-2 py-0.5 border-b border-sim-border/30">
-                <span className="text-blue-400 font-mono text-xs">Y{ev.sim_year}</span>
-                <span className="text-sim-muted text-xs">{ev.description}</span>
+                <span className="text-blue-400 font-mono text-sm">Y{ev.sim_year}</span>
+                <span className="text-sim-muted text-sm">{ev.description}</span>
               </div>
             ))}
           </div>

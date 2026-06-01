@@ -25,16 +25,16 @@ export default function CulturePanel() {
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div className="bg-sim-surface rounded-lg p-2 text-center">
           <div className="text-purple-400 font-bold text-lg">{totalMemes}</div>
-          <div className="text-sim-muted text-xs">{lang === 'en' ? 'Cultural Memes' : 'Kültürel Memler'}</div>
+          <div className="text-sim-muted text-sm">{lang === 'en' ? 'Cultural Memes' : 'Kültürel Memler'}</div>
         </div>
         <div className="bg-sim-surface rounded-lg p-2 text-center">
           <div className="text-pink-400 font-bold text-lg">{totalArts}</div>
-          <div className="text-sim-muted text-xs">{lang === 'en' ? 'Art Forms' : 'Sanat Formları'}</div>
+          <div className="text-sim-muted text-sm">{lang === 'en' ? 'Art Forms' : 'Sanat Formları'}</div>
         </div>
       </div>
 
       <div className="mb-3">
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Meme Stages' : 'Mem Aşamaları'}
         </h4>
         {[1, 2, 3, 4, 5].map(stage => {
@@ -46,7 +46,7 @@ export default function CulturePanel() {
             <div key={stage} className="mb-2">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STAGE_COLORS[stage] }} />
-                <span className="text-xs text-sim-muted">
+                <span className="text-sm text-sim-muted">
                   Stage {stage} ({emerged.length}/{stageMemes.length})
                 </span>
               </div>
@@ -65,19 +65,19 @@ export default function CulturePanel() {
       </div>
 
       <div>
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Culture Events' : 'Kültür Olayları'}
         </h4>
         {cultureEvents.length === 0 ? (
-          <p className="text-sim-muted italic text-xs">
+          <p className="text-sim-muted italic text-sm">
             {lang === 'en' ? 'No culture events yet.' : 'Henüz kültür olayı yok.'}
           </p>
         ) : (
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {cultureEvents.slice(0, 10).map((ev, i) => (
               <div key={i} className="flex gap-2 py-0.5 border-b border-sim-border/30">
-                <span className="text-purple-400 font-mono text-xs">Y{ev.sim_year}</span>
-                <span className="text-sim-muted text-xs">{ev.description}</span>
+                <span className="text-purple-400 font-mono text-sm">Y{ev.sim_year}</span>
+                <span className="text-sim-muted text-sm">{ev.description}</span>
               </div>
             ))}
           </div>

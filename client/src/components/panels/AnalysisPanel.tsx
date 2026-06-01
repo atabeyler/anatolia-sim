@@ -49,17 +49,17 @@ export default function AnalysisPanel() {
       <div className="flex flex-col gap-3" style={{ minHeight: '340px' }}>
         <div className="bg-sim-accent/10 border border-sim-accent/20 rounded-lg p-2 flex items-center gap-2">
           <Bot size={13} className="text-sim-accent flex-shrink-0" />
-          <span className="text-xs text-sim-muted">
+          <span className="text-sm text-sim-muted">
             {lang === 'en' ? 'BOLD analyzes your civilization using live simulation data.' : 'BOLD, canlı simülasyon verilerini kullanarak medeniyetinizi analiz eder.'}
           </span>
         </div>
 
         {messages.length === 0 && (
           <div>
-            <div className="text-xs text-sim-muted mb-2">{lang === 'en' ? 'Quick questions:' : 'Hızlı sorular:'}</div>
+            <div className="text-sm text-sim-muted mb-2">{lang === 'en' ? 'Quick questions:' : 'Hızlı sorular:'}</div>
             <div className="space-y-1">
               {quickQ.map(q => (
-                <button key={q} onClick={() => send(q)} className="w-full text-left text-xs text-sim-muted hover:text-sim-text bg-sim-surface hover:bg-sim-border rounded px-2 py-1 transition-colors">
+                <button key={q} onClick={() => send(q)} className="w-full text-left text-sm text-sim-muted hover:text-sim-text bg-sim-surface hover:bg-sim-border rounded px-2 py-1 transition-colors">
                   {q}
                 </button>
               ))}
@@ -69,12 +69,12 @@ export default function AnalysisPanel() {
 
         <div className="flex-1 space-y-2 overflow-y-auto max-h-52">
           {messages.map((m, i) => (
-            <div key={i} className={`text-xs px-3 py-2 rounded-lg leading-relaxed ${m.role === 'user' ? 'bg-sim-accent/20 text-sim-text ml-6' : 'bg-sim-surface text-sim-muted mr-2'}`}>
+            <div key={i} className={`text-sm px-3 py-2 rounded-lg leading-relaxed ${m.role === 'user' ? 'bg-sim-accent/20 text-sim-text ml-6' : 'bg-sim-surface text-sim-muted mr-2'}`}>
               {m.content}
             </div>
           ))}
           {loading && (
-            <div className="text-xs px-3 py-2 rounded-lg bg-sim-surface text-sim-muted mr-2 animate-pulse">
+            <div className="text-sm px-3 py-2 rounded-lg bg-sim-surface text-sim-muted mr-2 animate-pulse">
               {lang === 'en' ? 'Analyzing…' : 'Analiz ediliyor…'}
             </div>
           )}
@@ -87,7 +87,7 @@ export default function AnalysisPanel() {
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
             placeholder={lang === 'en' ? 'Ask BOLD…' : 'BOLD\'a sor…'}
-            className="flex-1 bg-sim-bg border border-sim-border rounded-lg px-3 py-1.5 text-xs text-sim-text focus:border-sim-accent focus:outline-none"
+            className="flex-1 bg-sim-bg border border-sim-border rounded-lg px-3 py-1.5 text-sm text-sim-text focus:border-sim-accent focus:outline-none"
           />
           <button onClick={() => send()} disabled={loading || !input.trim()} className="p-1.5 bg-sim-accent hover:bg-sim-accent/80 rounded-lg text-white transition-colors disabled:opacity-50 flex-shrink-0">
             <Send size={12} />

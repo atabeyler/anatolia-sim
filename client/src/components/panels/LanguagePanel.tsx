@@ -20,15 +20,15 @@ export default function LanguagePanel() {
   return (
     <DetailPanel panelId="language" title="Language" titleTr="Dil">
       <div className="bg-sim-surface rounded-lg p-3 mb-2">
-        <div className="text-sim-muted text-xs mb-1">{lang === 'en' ? 'Current Stage' : 'Mevcut Aşama'}</div>
+        <div className="text-sim-muted text-sm mb-1">{lang === 'en' ? 'Current Stage' : 'Mevcut Aşama'}</div>
         <div className="text-sim-gold font-bold text-base">
           Stage {currentStage}: {lang === 'en' ? LANGUAGE_STAGES[currentStage].name : LANGUAGE_STAGES[currentStage].nameTr}
         </div>
-        <div className="text-sim-muted text-xs mt-1">{LANGUAGE_STAGES[currentStage].desc}</div>
+        <div className="text-sim-muted text-sm mt-1">{LANGUAGE_STAGES[currentStage].desc}</div>
       </div>
 
       <div className="mb-3">
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Stage Progression' : 'Aşama İlerlemesi'}
         </h4>
         <div className="space-y-2">
@@ -48,10 +48,10 @@ export default function LanguagePanel() {
                   style={{ backgroundColor: isReached ? stage.color : '#333' }}
                 />
                 <div>
-                  <div className={`text-xs font-medium ${isReached ? 'text-sim-text' : 'text-sim-muted'}`}>
+                  <div className={`text-sm font-medium ${isReached ? 'text-sim-text' : 'text-sim-muted'}`}>
                     {lang === 'en' ? stage.name : stage.nameTr}
                   </div>
-                  <div className="text-sim-muted text-xs">{stage.desc}</div>
+                  <div className="text-sim-muted text-sm">{stage.desc}</div>
                 </div>
               </div>
             );
@@ -60,7 +60,7 @@ export default function LanguagePanel() {
       </div>
 
       <div>
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Language Events' : 'Dil Olayları'}
         </h4>
         {langEvents.length === 0 ? (
@@ -68,7 +68,7 @@ export default function LanguagePanel() {
         ) : (
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {langEvents.slice(0, 10).map((ev, i) => (
-              <div key={i} className="text-sim-muted text-xs py-0.5 border-b border-sim-border/30">
+              <div key={i} className="text-sim-muted text-sm py-0.5 border-b border-sim-border/30">
                 {ev.description}
               </div>
             ))}

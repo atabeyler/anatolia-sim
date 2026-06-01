@@ -38,17 +38,17 @@ export default function ArtPanel() {
         <Music size={24} className="text-pink-400" />
         <div>
           <div className="text-pink-400 font-bold text-lg">{totalForms}</div>
-          <div className="text-sim-muted text-xs">
+          <div className="text-sim-muted text-sm">
             {lang === 'en' ? 'Art Forms Discovered' : 'Keşfedilen Sanat Formları'}
           </div>
         </div>
       </div>
 
       <div className="mb-3">
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Emergence Requirements' : 'Ortaya Çıkış Gereksinimleri'}
         </h4>
-        <p className="text-sim-muted text-xs italic">
+        <p className="text-sim-muted text-sm italic">
           {lang === 'en'
             ? 'Art requires food surplus + artistic_sense gene × intelligence > threshold. Higher forms need cognitive prerequisites.'
             : 'Sanat; gıda fazlası + artistik_duyarlılık geni × zeka > eşiği gerektirir.'}
@@ -61,7 +61,7 @@ export default function ArtPanel() {
         );
         return (
           <div key={cat.medium} className="mb-3">
-            <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+            <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2 flex items-center gap-1.5">
               <span>{cat.emoji}</span>
               <span>{lang === 'en' ? cat.label : cat.labelTr}</span>
               <span className="text-sim-muted font-normal normal-case tracking-normal">
@@ -74,7 +74,7 @@ export default function ArtPanel() {
                 return (
                   <div
                     key={item}
-                    className={`text-xs px-2 py-1 rounded ${
+                    className={`text-sm px-2 py-1 rounded ${
                       isDiscovered ? 'text-sim-text bg-pink-500/10' : 'text-sim-muted opacity-40'
                     }`}
                   >
@@ -88,19 +88,19 @@ export default function ArtPanel() {
       })}
 
       <div>
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Art Events' : 'Sanat Olayları'}
         </h4>
         {artEvents.length === 0 ? (
-          <p className="text-sim-muted italic text-xs">
+          <p className="text-sim-muted italic text-sm">
             {lang === 'en' ? 'No art events yet.' : 'Henüz sanat olayı yok.'}
           </p>
         ) : (
           <div className="space-y-1 max-h-36 overflow-y-auto">
             {artEvents.slice(0, 8).map((ev, i) => (
               <div key={i} className="flex gap-2 py-0.5 border-b border-sim-border/30">
-                <span className="text-pink-400 font-mono text-xs">Y{ev.sim_year}</span>
-                <span className="text-sim-muted text-xs">{ev.description}</span>
+                <span className="text-pink-400 font-mono text-sm">Y{ev.sim_year}</span>
+                <span className="text-sim-muted text-sm">{ev.description}</span>
               </div>
             ))}
           </div>

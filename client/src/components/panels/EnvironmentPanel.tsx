@@ -44,8 +44,8 @@ function Bar({ value, color, max = 1 }: { value: number; color: string; max?: nu
 function StatRow({ label, value, unit = '', color = '#a0b4ff' }: { label: string; value: string | number; unit?: string; color?: string }) {
   return (
     <div className="flex justify-between items-center py-0.5">
-      <span className="font-share-tech" style={{ fontSize: 9, color: '#6878a8' }}>{label}</span>
-      <span className="font-orbitron font-bold" style={{ fontSize: 10, color }}>{value}{unit}</span>
+      <span className="font-share-tech" style={{ fontSize: 12, color: '#6878a8' }}>{label}</span>
+      <span className="font-orbitron font-bold" style={{ fontSize: 12, color }}>{value}{unit}</span>
     </div>
   );
 }
@@ -78,8 +78,8 @@ export default function EnvironmentPanel() {
 
       {/* Biome badge */}
       <div className="mb-3 px-2 py-1.5" style={{ background: `${biomeInfo.color}12`, border: `1px solid ${biomeInfo.color}40` }}>
-        <div className="font-share-tech tracking-widest" style={{ fontSize: 7, color: '#6878a8' }}>BİYOM</div>
-        <div className="font-orbitron font-bold mt-0.5" style={{ fontSize: 11, color: biomeInfo.color }}>
+        <div className="font-share-tech tracking-widest" style={{ fontSize: 12, color: '#6878a8' }}>BİYOM</div>
+        <div className="font-orbitron font-bold mt-0.5" style={{ fontSize: 12, color: biomeInfo.color }}>
           {lang === 'tr' ? biomeInfo.tr : biome.replace(/_/g, ' ').toUpperCase()}
         </div>
       </div>
@@ -90,7 +90,7 @@ export default function EnvironmentPanel() {
           <div className="font-orbitron font-bold" style={{ color: seasonInfo.color, fontSize: 13 }}>
             {lang === 'tr' ? seasonInfo.tr : season.charAt(0).toUpperCase() + season.slice(1)}
           </div>
-          <div className="font-share-tech text-sim-muted tracking-widest mt-0.5" style={{ fontSize: 7 }}>
+          <div className="font-share-tech text-sim-muted tracking-widest mt-0.5" style={{ fontSize: 12 }}>
             {lang === 'tr' ? 'MEVSİM' : 'SEASON'}
           </div>
         </div>
@@ -98,7 +98,7 @@ export default function EnvironmentPanel() {
           <div className="font-orbitron font-bold" style={{ color: temp > 35 ? '#e05a5a' : temp < 0 ? '#00d4ff' : '#a0b4ff', fontSize: 13 }}>
             {temp}°C
           </div>
-          <div className="font-share-tech text-sim-muted tracking-widest mt-0.5" style={{ fontSize: 7 }}>
+          <div className="font-share-tech text-sim-muted tracking-widest mt-0.5" style={{ fontSize: 12 }}>
             {lang === 'tr' ? 'SICAKLIK' : 'TEMP'}
           </div>
         </div>
@@ -106,7 +106,7 @@ export default function EnvironmentPanel() {
 
       {/* Weather metrics */}
       <div className="mb-3">
-        <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 8 }}>
+        <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 12 }}>
           {lang === 'tr' ? 'HAVA KOŞULLARI' : 'WEATHER'}
         </div>
         <div className="space-y-2">
@@ -131,7 +131,7 @@ export default function EnvironmentPanel() {
 
       {/* Resources */}
       <div className="mb-3">
-        <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 8 }}>
+        <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 12 }}>
           {lang === 'tr' ? 'KAYNAKLAR' : 'RESOURCES'}
         </div>
         <div className="space-y-2">
@@ -148,19 +148,19 @@ export default function EnvironmentPanel() {
 
       {/* Disaster log */}
       <div>
-        <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 8 }}>
+        <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 12 }}>
           {lang === 'tr' ? 'AFET GEÇMİŞİ' : 'DISASTER LOG'}
         </div>
         {disasterEvents.length === 0 ? (
-          <div className="font-share-tech text-sim-muted/40 italic" style={{ fontSize: 9 }}>
+          <div className="font-share-tech text-sim-muted/40 italic" style={{ fontSize: 12 }}>
             {lang === 'tr' ? 'Kayıtlı afet yok.' : 'No disasters recorded.'}
           </div>
         ) : (
           <div className="space-y-1 max-h-32 overflow-y-auto">
             {disasterEvents.slice(0, 10).map((ev, i) => (
               <div key={i} className="flex gap-2 py-0.5" style={{ borderBottom: '1px solid rgba(224,90,90,0.1)' }}>
-                <span className="font-share-tech" style={{ fontSize: 8, color: '#e05a5a' }}>Y{ev.sim_year}</span>
-                <span className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>{ev.description}</span>
+                <span className="font-share-tech" style={{ fontSize: 12, color: '#e05a5a' }}>Y{ev.sim_year}</span>
+                <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>{ev.description}</span>
               </div>
             ))}
           </div>

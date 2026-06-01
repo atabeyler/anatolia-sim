@@ -36,20 +36,20 @@ export default function TimeMachinePanel() {
         <Clock size={24} className="text-sim-accent" />
         <div>
           <div className="text-sim-accent font-bold text-lg">{checkpoints.length}</div>
-          <div className="text-sim-muted text-xs">
+          <div className="text-sim-muted text-sm">
             {lang === 'en' ? 'Saved Checkpoints' : 'Kayıtlı Kontrol Noktaları'}
           </div>
         </div>
       </div>
 
-      <p className="text-sim-muted text-xs italic mb-3">
+      <p className="text-sim-muted text-sm italic mb-3">
         {lang === 'en'
           ? 'Checkpoints auto-save every 100 days. Restore any past state.'
           : 'Kontrol noktaları her 100 günde otomatik kaydedilir. Herhangi bir geçmiş duruma geri dönün.'}
       </p>
 
       {done && (
-        <div className="bg-sim-accent/20 border border-sim-accent/40 rounded px-3 py-2 text-xs text-sim-text mb-3">
+        <div className="bg-sim-accent/20 border border-sim-accent/40 rounded px-3 py-2 text-sm text-sim-text mb-3">
           {done}
         </div>
       )}
@@ -57,7 +57,7 @@ export default function TimeMachinePanel() {
       {checkpoints.length === 0 ? (
         <div className="text-center py-8">
           <Clock size={32} className="text-sim-border mx-auto mb-2" />
-          <p className="text-sim-muted italic text-xs">
+          <p className="text-sim-muted italic text-sm">
             {lang === 'en' ? 'No checkpoints yet. Run the simulation.' : 'Henüz kontrol noktası yok.'}
           </p>
         </div>
@@ -66,17 +66,17 @@ export default function TimeMachinePanel() {
           {checkpoints.map(cp => (
             <div key={cp.id} className="bg-sim-surface rounded-lg p-3 flex items-center justify-between border border-sim-border hover:border-sim-accent/40 transition-colors">
               <div>
-                <div className="text-xs font-medium text-sim-text">
+                <div className="text-sm font-medium text-sim-text">
                   {lang === 'en' ? 'Year' : 'Yıl'} {cp.sim_year} · {lang === 'en' ? 'Day' : 'Gün'} {cp.sim_day}
                 </div>
-                <div className="text-xs text-sim-muted">
+                <div className="text-sm text-sim-muted">
                   {lang === 'en' ? 'Pop:' : 'Nüfus:'} {cp.population_count}
                 </div>
               </div>
               <button
                 onClick={() => restore(cp.id)}
                 disabled={restoring === cp.id}
-                className="flex items-center gap-1 px-2 py-1 rounded bg-sim-accent/20 hover:bg-sim-accent/40 text-sim-accent transition-colors text-xs"
+                className="flex items-center gap-1 px-2 py-1 rounded bg-sim-accent/20 hover:bg-sim-accent/40 text-sim-accent transition-colors text-sm"
               >
                 <RefreshCw size={11} className={restoring === cp.id ? 'animate-spin' : ''} />
                 {lang === 'en' ? 'Restore' : 'Geri Al'}

@@ -82,7 +82,7 @@ export default function TechnologyPanel() {
 
       {TECH_TIERS.map(tier => (
         <div key={tier.tier} className="mb-3">
-          <h4 className={`text-xs font-semibold uppercase tracking-widest mb-2 ${TIER_COLORS[tier.tier]}`}>
+          <h4 className={`text-sm font-semibold uppercase tracking-widest mb-2 ${TIER_COLORS[tier.tier]}`}>
             Tier {tier.tier} — {lang === 'en' ? tier.label : tier.labelTr}
           </h4>
           <div className="space-y-1">

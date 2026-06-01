@@ -16,7 +16,7 @@ export default function EpigeneticsPanel() {
   return (
     <DetailPanel panelId="epigenetics" title="Epigenetics" titleTr="Epigenetik">
       <div className="bg-sim-surface rounded-lg p-3 mb-3">
-        <p className="text-sim-muted text-xs italic">
+        <p className="text-sim-muted text-sm italic">
           {lang === 'en'
             ? 'Experience modifies gene expression without changing DNA sequence. Some marks are heritable across generations.'
             : 'Deneyim, DNA dizisini değiştirmeden gen ifadesini değiştirir. Bazı izler nesiller arasında aktarılır.'}
@@ -24,17 +24,17 @@ export default function EpigeneticsPanel() {
       </div>
 
       <div className="mb-3">
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Monitored Loci' : 'İzlenen Lokuslar'}
         </h4>
         <div className="space-y-2">
           {LOCI.map(locus => (
             <div key={locus.id} className="bg-sim-surface/50 rounded p-2">
               <div className="flex justify-between mb-1">
-                <span className="text-sim-text text-xs font-medium">{locus.gene}</span>
-                <span className="text-sim-accent text-xs">{locus.effect}</span>
+                <span className="text-sim-text text-sm font-medium">{locus.gene}</span>
+                <span className="text-sim-accent text-sm">{locus.effect}</span>
               </div>
-              <div className="text-sim-muted text-xs italic">{locus.desc}</div>
+              <div className="text-sim-muted text-sm italic">{locus.desc}</div>
               <div className="mt-1 h-1.5 bg-sim-border rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
@@ -42,8 +42,8 @@ export default function EpigeneticsPanel() {
                 />
               </div>
               <div className="flex justify-between mt-0.5">
-                <span className="text-xs text-sim-muted">Active</span>
-                <span className="text-xs text-sim-muted">Silenced</span>
+                <span className="text-sm text-sim-muted">Active</span>
+                <span className="text-sm text-sim-muted">Silenced</span>
               </div>
             </div>
           ))}
@@ -51,7 +51,7 @@ export default function EpigeneticsPanel() {
       </div>
 
       <div>
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Transgenerational Inheritance' : 'Nesiller Arası Aktarım'}
         </h4>
         <div className="space-y-1">
@@ -61,7 +61,7 @@ export default function EpigeneticsPanel() {
             { label: 'Immune priming', heritability: '60%' },
             { label: 'Metabolic marks', heritability: '50%' },
           ].map(row => (
-            <div key={row.label} className="flex justify-between py-0.5 border-b border-sim-border/30 text-xs">
+            <div key={row.label} className="flex justify-between py-0.5 border-b border-sim-border/30 text-sm">
               <span className="text-sim-muted">{row.label}</span>
               <span className="text-sim-accent">{row.heritability}</span>
             </div>

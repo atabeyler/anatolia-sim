@@ -64,16 +64,16 @@ function PersonRow({ obj, fallbackId, tag, lang }: { obj?: any; fallbackId?: str
   return (
     <div className="flex items-center gap-1.5 mb-0.5" style={{ paddingLeft: 10 }}>
       <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: dotColor }} />
-      <span className="font-share-tech" style={{ fontSize: 8.5, color: nameColor }}>{displayName}</span>
-      {tag && <span className="font-share-tech" style={{ fontSize: 7, color: '#5a7a6a', marginLeft: 2 }}>{tag}</span>}
+      <span className="font-share-tech" style={{ fontSize: 12, color: nameColor }}>{displayName}</span>
+      {tag && <span className="font-share-tech" style={{ fontSize: 12, color: '#5a7a6a', marginLeft: 2 }}>{tag}</span>}
       {obj && (
         alive
-          ? <span className="font-share-tech text-sim-muted" style={{ fontSize: 7.5 }}>{parseFloat(obj.age_years ?? 0).toFixed(0)}{lang === 'tr' ? ' yaş' : ' yr'}</span>
-          : <span className="font-share-tech" style={{ fontSize: 7.5, color: '#a05050' }}>
+          ? <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>{parseFloat(obj.age_years ?? 0).toFixed(0)}{lang === 'tr' ? ' yaş' : ' yr'}</span>
+          : <span className="font-share-tech" style={{ fontSize: 12, color: '#a05050' }}>
               † {obj.death_cause ? causeLabel(obj.death_cause, lang) : (lang === 'tr' ? 'ölü' : 'dec.')}
             </span>
       )}
-      {!obj && <span className="font-share-tech" style={{ fontSize: 7.5, color: '#a05050' }}>† {lang === 'tr' ? 'ölü' : 'dec.'}</span>}
+      {!obj && <span className="font-share-tech" style={{ fontSize: 12, color: '#a05050' }}>† {lang === 'tr' ? 'ölü' : 'dec.'}</span>}
     </div>
   );
 }
@@ -81,7 +81,7 @@ function PersonRow({ obj, fallbackId, tag, lang }: { obj?: any; fallbackId?: str
 function FamilySection({ label, indent, children }: { label: string; indent: number; children: React.ReactNode }) {
   return (
     <div className="mb-2" style={{ marginLeft: indent * 8 }}>
-      <div style={{ fontSize: 7, color: '#4a6a58', letterSpacing: '0.08em', marginBottom: 3, borderLeft: '1px solid #2a4a38', paddingLeft: 4 }}>
+      <div style={{ fontSize: 12, color: '#4a6a58', letterSpacing: '0.08em', marginBottom: 3, borderLeft: '1px solid #2a4a38', paddingLeft: 4 }}>
         {label}
       </div>
       {children}
@@ -140,14 +140,14 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <span className="font-orbitron font-bold tracking-wider" style={{ color: isDead ? '#a05050' : (ind.sex === 'male' ? '#6090ff' : '#ff8ab0'), fontSize: 14 }}>{name}</span>
-              {isDead && <span className="font-share-tech" style={{ fontSize: 9, color: '#a05050' }}>† {lang === 'tr' ? 'HAYATINI KAYBETTİ' : 'DECEASED'}</span>}
+              {isDead && <span className="font-share-tech" style={{ fontSize: 12, color: '#a05050' }}>† {lang === 'tr' ? 'HAYATINI KAYBETTİ' : 'DECEASED'}</span>}
             </div>
             <div className="flex items-center gap-1.5 mt-0.5">
-              {!isDead && <span className="font-share-tech" style={{ fontSize: 9, color: stage.color }}>{stage.label}</span>}
-              {!isDead && <span className="font-share-tech text-sim-muted" style={{ fontSize: 9 }}>·</span>}
-              <span className="font-share-tech text-sim-muted" style={{ fontSize: 9 }}>{age.toFixed(1)} {lang === 'tr' ? 'yaş' : 'yr'}</span>
-              <span className="font-share-tech text-sim-muted" style={{ fontSize: 9 }}>·</span>
-              <span className="font-share-tech" style={{ fontSize: 9, color: ind.sex === 'male' ? '#6090ff' : '#ff8ab0' }}>{ind.sex === 'male' ? (lang === 'tr' ? 'Erkek' : 'Male') : (lang === 'tr' ? 'Kadın' : 'Female')}</span>
+              {!isDead && <span className="font-share-tech" style={{ fontSize: 12, color: stage.color }}>{stage.label}</span>}
+              {!isDead && <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>·</span>}
+              <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>{age.toFixed(1)} {lang === 'tr' ? 'yaş' : 'yr'}</span>
+              <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>·</span>
+              <span className="font-share-tech" style={{ fontSize: 12, color: ind.sex === 'male' ? '#6090ff' : '#ff8ab0' }}>{ind.sex === 'male' ? (lang === 'tr' ? 'Erkek' : 'Male') : (lang === 'tr' ? 'Kadın' : 'Female')}</span>
             </div>
           </div>
           <div className="flex-1" />
@@ -159,17 +159,17 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
           {/* Death info — shown only for dead individuals */}
           {isDead && (
             <div style={{ background: 'rgba(160,80,80,0.1)', border: '1px solid rgba(160,80,80,0.35)', padding: '8px 10px' }}>
-              <div className="font-share-tech tracking-widest mb-1" style={{ fontSize: 8, color: '#a05050' }}>
+              <div className="font-share-tech tracking-widest mb-1" style={{ fontSize: 12, color: '#a05050' }}>
                 {lang === 'tr' ? 'ÖLÜM BİLGİSİ' : 'DEATH INFO'}
               </div>
               <div className="flex justify-between">
-                <span className="font-share-tech" style={{ fontSize: 9, color: '#8898c8' }}>{lang === 'tr' ? 'Neden' : 'Cause'}</span>
-                <span className="font-share-tech" style={{ fontSize: 9, color: '#e08080' }}>{causeLabel(ind.death_cause, lang)}</span>
+                <span className="font-share-tech" style={{ fontSize: 12, color: '#8898c8' }}>{lang === 'tr' ? 'Neden' : 'Cause'}</span>
+                <span className="font-share-tech" style={{ fontSize: 12, color: '#e08080' }}>{causeLabel(ind.death_cause, lang)}</span>
               </div>
               {ind.death_day != null && (
                 <div className="flex justify-between mt-0.5">
-                  <span className="font-share-tech" style={{ fontSize: 9, color: '#8898c8' }}>{lang === 'tr' ? 'Gün' : 'Day'}</span>
-                  <span className="font-share-tech" style={{ fontSize: 9, color: '#e08080' }}>{ind.death_day}</span>
+                  <span className="font-share-tech" style={{ fontSize: 12, color: '#8898c8' }}>{lang === 'tr' ? 'Gün' : 'Day'}</span>
+                  <span className="font-share-tech" style={{ fontSize: 12, color: '#e08080' }}>{ind.death_day}</span>
                 </div>
               )}
             </div>
@@ -178,8 +178,8 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
           {/* Location */}
           {!isDead && (
             <div>
-              <div className="font-share-tech text-sim-muted tracking-widest mb-1" style={{ fontSize: 8 }}>KONUM</div>
-              <div className="flex items-center gap-1 font-share-tech" style={{ fontSize: 10, color: '#a0b4ff' }}>
+              <div className="font-share-tech text-sim-muted tracking-widest mb-1" style={{ fontSize: 12 }}>KONUM</div>
+              <div className="flex items-center gap-1 font-share-tech" style={{ fontSize: 12, color: '#a0b4ff' }}>
                 <MapPin size={10} />
                 {(ind.y ?? 0).toFixed(3)}°{(ind.y ?? 0) >= 0 ? 'K' : 'G'}  {(ind.x ?? 0).toFixed(3)}°{(ind.x ?? 0) >= 0 ? 'D' : 'B'}
               </div>
@@ -188,7 +188,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
 
           {/* Traits */}
           <div>
-            <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 8 }}>ÖZELLİKLER</div>
+            <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 12 }}>ÖZELLİKLER</div>
             <div className="space-y-1.5">
               {[
                 { key: 'fluid_intelligence', label: 'Zekâ', color: '#d4a838' },
@@ -201,8 +201,8 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
               ].map(({ key, label, color }) => (
                 <div key={key}>
                   <div className="flex justify-between mb-0.5">
-                    <span className="font-share-tech" style={{ fontSize: 9, color: '#8898c8' }}>{label}</span>
-                    <span className="font-share-tech" style={{ fontSize: 9, color }}>{Math.round((ph[key] ?? 0) * 100)}%</span>
+                    <span className="font-share-tech" style={{ fontSize: 12, color: '#8898c8' }}>{label}</span>
+                    <span className="font-share-tech" style={{ fontSize: 12, color }}>{Math.round((ph[key] ?? 0) * 100)}%</span>
                   </div>
                   {traitBar(ph[key] ?? 0, color)}
                 </div>
@@ -212,15 +212,15 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
 
           {/* Physical measurements */}
           <div>
-            <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 8 }}>FİZİKSEL</div>
+            <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 12 }}>FİZİKSEL</div>
             <div className="space-y-1.5">
               <div className="flex justify-between">
-                <span className="font-share-tech" style={{ fontSize: 9, color: '#8898c8' }}>{lang === 'tr' ? 'Boy' : 'Height'}</span>
-                <span className="font-share-tech" style={{ fontSize: 9, color: '#a0b4ff', fontFamily: 'monospace' }}>{ind.height_cm ?? '—'} cm</span>
+                <span className="font-share-tech" style={{ fontSize: 12, color: '#8898c8' }}>{lang === 'tr' ? 'Boy' : 'Height'}</span>
+                <span className="font-share-tech" style={{ fontSize: 12, color: '#a0b4ff', fontFamily: 'monospace' }}>{ind.height_cm ?? '—'} cm</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-share-tech" style={{ fontSize: 9, color: '#8898c8' }}>{lang === 'tr' ? 'Kilo' : 'Weight'}</span>
-                <span className="font-share-tech" style={{ fontSize: 9, color: '#a0b4ff', fontFamily: 'monospace' }}>{ind.weight_kg ?? '—'} kg</span>
+                <span className="font-share-tech" style={{ fontSize: 12, color: '#8898c8' }}>{lang === 'tr' ? 'Kilo' : 'Weight'}</span>
+                <span className="font-share-tech" style={{ fontSize: 12, color: '#a0b4ff', fontFamily: 'monospace' }}>{ind.weight_kg ?? '—'} kg</span>
               </div>
             </div>
           </div>
@@ -228,11 +228,11 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
           {/* Health — only for alive */}
           {!isDead && (
             <div>
-              <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 8 }}>SAĞLIK</div>
+              <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 12 }}>SAĞLIK</div>
               <div>
                 <div className="flex justify-between mb-0.5">
-                  <span className="font-share-tech" style={{ fontSize: 9, color: '#8898c8' }}>Can</span>
-                  <span className="font-share-tech" style={{ fontSize: 9, color: '#4ecb71' }}>{Math.round((health.hp ?? 0) * 100)}%</span>
+                  <span className="font-share-tech" style={{ fontSize: 12, color: '#8898c8' }}>Can</span>
+                  <span className="font-share-tech" style={{ fontSize: 12, color: '#4ecb71' }}>{Math.round((health.hp ?? 0) * 100)}%</span>
                 </div>
                 {traitBar(health.hp ?? 0, '#4ecb71')}
               </div>
@@ -242,24 +242,24 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
           {/* Social — only for alive */}
           {!isDead && (
             <div>
-              <div className="font-share-tech text-sim-muted tracking-widest mb-1" style={{ fontSize: 8 }}>SOSYAL</div>
+              <div className="font-share-tech text-sim-muted tracking-widest mb-1" style={{ fontSize: 12 }}>SOSYAL</div>
               <div className="flex flex-wrap gap-1.5">
-                {soc.has_mate && <span className="font-share-tech px-1.5 py-0.5" style={{ fontSize: 8, color: '#ff8ab0', border: '1px solid rgba(255,138,176,0.3)', background: 'rgba(255,138,176,0.08)' }}>Çift</span>}
-                {(soc.children_ids?.length > 0) && <span className="font-share-tech px-1.5 py-0.5" style={{ fontSize: 8, color: '#4ecb71', border: '1px solid rgba(78,203,113,0.3)', background: 'rgba(78,203,113,0.08)' }}>{soc.children_ids.length} Çocuk</span>}
-                {soc.group_id && <span className="font-share-tech px-1.5 py-0.5" style={{ fontSize: 8, color: '#4f6ef7', border: '1px solid rgba(79,110,247,0.3)', background: 'rgba(79,110,247,0.08)' }}>Grup</span>}
-                {!soc.has_mate && !soc.group_id && <span className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>Yalnız</span>}
+                {soc.has_mate && <span className="font-share-tech px-1.5 py-0.5" style={{ fontSize: 12, color: '#ff8ab0', border: '1px solid rgba(255,138,176,0.3)', background: 'rgba(255,138,176,0.08)' }}>Çift</span>}
+                {(soc.children_ids?.length > 0) && <span className="font-share-tech px-1.5 py-0.5" style={{ fontSize: 12, color: '#4ecb71', border: '1px solid rgba(78,203,113,0.3)', background: 'rgba(78,203,113,0.08)' }}>{soc.children_ids.length} Çocuk</span>}
+                {soc.group_id && <span className="font-share-tech px-1.5 py-0.5" style={{ fontSize: 12, color: '#4f6ef7', border: '1px solid rgba(79,110,247,0.3)', background: 'rgba(79,110,247,0.08)' }}>Grup</span>}
+                {!soc.has_mate && !soc.group_id && <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>Yalnız</span>}
               </div>
             </div>
           )}
 
           {/* Family tree */}
           <div>
-            <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 8 }}>
+            <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 12 }}>
               {lang === 'tr' ? 'SOYAĞACI' : 'FAMILY TREE'}
             </div>
 
             {isFounder && (
-              <div className="font-share-tech px-2 py-1 mb-3" style={{ fontSize: 8, color: '#d4a838', border: '1px solid rgba(212,168,56,0.3)', background: 'rgba(212,168,56,0.06)' }}>
+              <div className="font-share-tech px-2 py-1 mb-3" style={{ fontSize: 12, color: '#d4a838', border: '1px solid rgba(212,168,56,0.3)', background: 'rgba(212,168,56,0.06)' }}>
                 ★ {lang === 'tr' ? 'Kurucu Birey — Medeniyetin Atası' : 'Founding Individual — Ancestor of Civilization'}
               </div>
             )}
@@ -297,7 +297,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
                   <PersonRow key={s.id} obj={s} lang={lang} />
                 ))}
                 {siblings.length > 6 && (
-                  <div className="font-share-tech text-sim-muted" style={{ fontSize: 7.5, paddingLeft: 10 }}>
+                  <div className="font-share-tech text-sim-muted" style={{ fontSize: 12, paddingLeft: 10 }}>
                     +{siblings.length - 6} {lang === 'tr' ? 'daha' : 'more'}
                   </div>
                 )}
@@ -306,9 +306,9 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
 
             {/* ── Self marker ── */}
             <div className="flex items-center gap-2 my-1 px-1" style={{ borderLeft: '2px solid rgba(212,168,56,0.6)', marginLeft: 2 }}>
-              <span style={{ fontSize: 9, color: '#d4a838' }}>★</span>
-              <span className="font-orbitron font-bold" style={{ fontSize: 9, color: ind.sex === 'male' ? '#8ab0ff' : '#ffaac8' }}>{name}</span>
-              <span className="font-share-tech text-sim-muted" style={{ fontSize: 7.5 }}>
+              <span style={{ fontSize: 12, color: '#d4a838' }}>★</span>
+              <span className="font-orbitron font-bold" style={{ fontSize: 12, color: ind.sex === 'male' ? '#8ab0ff' : '#ffaac8' }}>{name}</span>
+              <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>
                 {isDead ? `† ${lang === 'tr' ? 'ölü' : 'dec.'}` : `${age.toFixed(0)} ${lang === 'tr' ? 'yaş' : 'yr'}`}
               </span>
             </div>
@@ -320,7 +320,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
                   <PersonRow key={c.id} obj={c} lang={lang} />
                 ))}
                 {children.length > 8 && (
-                  <div className="font-share-tech text-sim-muted" style={{ fontSize: 7.5, paddingLeft: 10 }}>
+                  <div className="font-share-tech text-sim-muted" style={{ fontSize: 12, paddingLeft: 10 }}>
                     +{children.length - 8} {lang === 'tr' ? 'daha' : 'more'}
                   </div>
                 )}
@@ -334,7 +334,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
                   <PersonRow key={idx} obj={gc} tag={parentName} lang={lang} />
                 ))}
                 {grandchildren.length > 6 && (
-                  <div className="font-share-tech text-sim-muted" style={{ fontSize: 7.5, paddingLeft: 10 }}>
+                  <div className="font-share-tech text-sim-muted" style={{ fontSize: 12, paddingLeft: 10 }}>
                     +{grandchildren.length - 6} {lang === 'tr' ? 'daha' : 'more'}
                   </div>
                 )}
@@ -342,7 +342,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             )}
 
             {isFounder && children.length === 0 && (
-              <div className="font-share-tech text-sim-muted mt-2" style={{ fontSize: 8 }}>
+              <div className="font-share-tech text-sim-muted mt-2" style={{ fontSize: 12 }}>
                 {lang === 'tr' ? 'Henüz çocuk yok.' : 'No children yet.'}
               </div>
             )}
@@ -395,15 +395,15 @@ export default function PopulationPanel() {
       <div className="flex gap-2 mb-3">
         <div className="flex-1 p-2 text-center" style={{ background: 'rgba(79,110,247,0.08)', border: '1px solid rgba(79,110,247,0.2)' }}>
           <div className="font-orbitron font-bold" style={{ color: '#4f6ef7', fontSize: 14 }}>{stats?.population ?? individuals.length}</div>
-          <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 7 }}>TOPLAM</div>
+          <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 12 }}>TOPLAM</div>
         </div>
         <div className="flex-1 p-2 text-center" style={{ background: 'rgba(96,144,255,0.08)', border: '1px solid rgba(96,144,255,0.2)' }}>
           <div className="font-orbitron font-bold" style={{ color: '#6090ff', fontSize: 14 }}>{individuals.filter(i => i.sex === 'male').length}</div>
-          <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 7 }}>ERKEK</div>
+          <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 12 }}>ERKEK</div>
         </div>
         <div className="flex-1 p-2 text-center" style={{ background: 'rgba(255,138,176,0.08)', border: '1px solid rgba(255,138,176,0.2)' }}>
           <div className="font-orbitron font-bold" style={{ color: '#ff8ab0', fontSize: 14 }}>{individuals.filter(i => i.sex === 'female').length}</div>
-          <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 7 }}>KADIN</div>
+          <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 12 }}>KADIN</div>
         </div>
       </div>
 
@@ -413,7 +413,7 @@ export default function PopulationPanel() {
           <button key={f} onClick={() => setFilter(f)}
             className="flex-1 font-share-tech tracking-widest transition-all"
             style={{
-              padding: '3px 0', fontSize: 9,
+              padding: '3px 0', fontSize: 12,
               background: filter === f ? 'rgba(79,110,247,0.2)' : 'transparent',
               border: `1px solid ${filter === f ? 'rgba(79,110,247,0.5)' : 'rgba(79,110,247,0.15)'}`,
               color: filter === f ? '#c0ccff' : '#4a5578',
@@ -425,7 +425,7 @@ export default function PopulationPanel() {
 
       {loading && individuals.length === 0 && (
         <div className="text-center py-4">
-          <span className="font-share-tech text-sim-muted/50 animate-pulse tracking-widest" style={{ fontSize: 9 }}>VERİ YÜKLENİYOR...</span>
+          <span className="font-share-tech text-sim-muted/50 animate-pulse tracking-widest" style={{ fontSize: 12 }}>VERİ YÜKLENİYOR...</span>
         </div>
       )}
 
@@ -447,19 +447,19 @@ export default function PopulationPanel() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="font-share-tech font-bold tracking-wider truncate"
-                    style={{ fontSize: 11, color: isMale ? '#8ab0ff' : '#ffaac8' }}>
+                    style={{ fontSize: 12, color: isMale ? '#8ab0ff' : '#ffaac8' }}>
                     {name}
                   </span>
                   {isFounder && (
-                    <span className="font-share-tech px-1 py-0" style={{ fontSize: 7, color: '#d4a838', border: '1px solid rgba(212,168,56,0.4)' }}>KURUCU</span>
+                    <span className="font-share-tech px-1 py-0" style={{ fontSize: 12, color: '#d4a838', border: '1px solid rgba(212,168,56,0.4)' }}>KURUCU</span>
                   )}
                 </div>
                 <div className="flex items-center gap-1 mt-0.5">
-                  <span className="font-share-tech" style={{ fontSize: 8, color: stage.color }}>{stage.label}</span>
-                  <span className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>·</span>
-                  <span className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>{age.toFixed(0)} yaş</span>
-                  <span className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>·</span>
-                  <span className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>
+                  <span className="font-share-tech" style={{ fontSize: 12, color: stage.color }}>{stage.label}</span>
+                  <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>·</span>
+                  <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>{age.toFixed(0)} yaş</span>
+                  <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>·</span>
+                  <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>
                     {(ind.y ?? 0).toFixed(1)}° {(ind.x ?? 0).toFixed(1)}°
                   </span>
                 </div>
@@ -472,7 +472,7 @@ export default function PopulationPanel() {
 
       {filtered.length > 100 && (
         <div className="text-center py-2">
-          <span className="font-share-tech text-sim-muted/40 tracking-widest" style={{ fontSize: 8 }}>
+          <span className="font-share-tech text-sim-muted/40 tracking-widest" style={{ fontSize: 12 }}>
             +{filtered.length - 100} {lang === 'tr' ? 'birey daha' : 'more individuals'}
           </span>
         </div>
@@ -481,7 +481,7 @@ export default function PopulationPanel() {
       {filtered.length === 0 && !loading && (
         <div className="flex flex-col items-center py-6 gap-2">
           <Users size={24} className="text-sim-muted/20" />
-          <span className="font-share-tech text-sim-muted/40 tracking-widest" style={{ fontSize: 9 }}>NÜFUS YOK</span>
+          <span className="font-share-tech text-sim-muted/40 tracking-widest" style={{ fontSize: 12 }}>NÜFUS YOK</span>
         </div>
       )}
 
@@ -492,7 +492,7 @@ export default function PopulationPanel() {
             onClick={() => setDeadExpanded(v => !v)}
             className="w-full flex items-center gap-2 px-2 py-1.5"
             style={{ background: 'rgba(160,80,80,0.08)', border: '1px solid rgba(160,80,80,0.25)' }}>
-            <span className="font-share-tech tracking-widest flex-1 text-left" style={{ fontSize: 8, color: '#a05050' }}>
+            <span className="font-share-tech tracking-widest flex-1 text-left" style={{ fontSize: 12, color: '#a05050' }}>
               † {lang === 'tr' ? 'HAYATINI KAYBETTİLER' : 'DECEASED'} ({deadIndividuals.length})
             </span>
             <ChevronDown size={10} style={{ color: '#a05050', transform: deadExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
@@ -508,20 +508,20 @@ export default function PopulationPanel() {
                   <button key={ind.id} onClick={() => setSelected(ind)}
                     className="w-full flex items-center gap-2 px-2 py-1.5 transition-all text-left"
                     style={{ background: 'rgba(160,80,80,0.04)', border: '1px solid rgba(160,80,80,0.12)', borderTop: 'none' }}>
-                    <span style={{ fontSize: 10, color: '#a05050', flexShrink: 0, lineHeight: 1 }}>†</span>
+                    <span style={{ fontSize: 12, color: '#a05050', flexShrink: 0, lineHeight: 1 }}>†</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="font-share-tech font-bold tracking-wider truncate"
-                          style={{ fontSize: 10, color: isMale ? '#7a6a8a' : '#8a6a7a' }}>
+                          style={{ fontSize: 12, color: isMale ? '#7a6a8a' : '#8a6a7a' }}>
                           {name}
                         </span>
                       </div>
                       <div className="flex items-center gap-1 mt-0.5">
-                        <span className="font-share-tech" style={{ fontSize: 7.5, color: '#703030' }}>
+                        <span className="font-share-tech" style={{ fontSize: 12, color: '#703030' }}>
                           {causeLabel(ind.death_cause, lang)}
                         </span>
-                        <span className="font-share-tech text-sim-muted" style={{ fontSize: 7.5 }}>·</span>
-                        <span className="font-share-tech text-sim-muted" style={{ fontSize: 7.5 }}>{age.toFixed(0)} yaş</span>
+                        <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>·</span>
+                        <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>{age.toFixed(0)} yaş</span>
                       </div>
                     </div>
                     <ChevronRight size={10} style={{ color: '#a05050', flexShrink: 0 }} />
@@ -530,7 +530,7 @@ export default function PopulationPanel() {
               })}
               {deadIndividuals.length > 100 && (
                 <div className="text-center py-1">
-                  <span className="font-share-tech" style={{ fontSize: 7.5, color: '#703030' }}>
+                  <span className="font-share-tech" style={{ fontSize: 12, color: '#703030' }}>
                     +{deadIndividuals.length - 100} {lang === 'tr' ? 'daha' : 'more'}
                   </span>
                 </div>

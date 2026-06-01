@@ -74,20 +74,20 @@ export default function GodPanel() {
     <DetailPanel panelId="god" title="God Mode" titleTr="Tanrı Modu">
       <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 mb-3 text-center">
         <div className="text-2xl mb-1">⚡</div>
-        <div className="text-orange-300 text-xs font-medium">
+        <div className="text-orange-300 text-sm font-medium">
           {lang === 'en' ? 'Divine interventions override physics.' : 'Tanrısal müdahaleler fiziği geçersiz kılar.'}
         </div>
       </div>
 
       {status && (
-        <div className="bg-sim-accent/20 border border-sim-accent/40 rounded px-3 py-2 text-xs text-sim-text mb-3">
+        <div className="bg-sim-accent/20 border border-sim-accent/40 rounded px-3 py-2 text-sm text-sim-text mb-3">
           {status}
         </div>
       )}
 
       {/* Natural Disasters */}
       <div className="mb-4">
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Natural Disasters' : 'Doğal Afetler'}
         </h4>
         <div className="grid grid-cols-3 gap-1.5">
@@ -97,7 +97,7 @@ export default function GodPanel() {
               <button key={iv.id} onClick={() => intervene(iv.id, iv.params)}
                 className="flex flex-col items-center gap-1 p-2 bg-sim-surface hover:bg-sim-border rounded-lg transition-colors border border-sim-border hover:border-sim-accent/40">
                 <Icon size={14} className={iv.color} />
-                <span className={`text-xs font-medium ${iv.color}`} style={{ fontSize: 9 }}>{lang === 'en' ? iv.label : iv.labelTr}</span>
+                <span className={`text-sm font-medium ${iv.color}`} style={{ fontSize: 12 }}>{lang === 'en' ? iv.label : iv.labelTr}</span>
               </button>
             );
           })}
@@ -106,7 +106,7 @@ export default function GodPanel() {
 
       {/* Individual Anomalies */}
       <div className="mb-4">
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2 flex items-center gap-1.5">
           <Zap size={10} />
           {lang === 'en' ? 'Individual Anomalies' : 'Bireysel Anomali'}
         </h4>
@@ -114,8 +114,8 @@ export default function GodPanel() {
           <select
             value={selectedIndId}
             onChange={e => setSelectedIndId(e.target.value)}
-            className="flex-1 bg-sim-bg border border-sim-border rounded px-2 py-1 text-xs text-sim-text focus:border-sim-accent focus:outline-none"
-            style={{ fontSize: 10 }}>
+            className="flex-1 bg-sim-bg border border-sim-border rounded px-2 py-1 text-sm text-sim-text focus:border-sim-accent focus:outline-none"
+            style={{ fontSize: 12 }}>
             {population.length === 0
               ? <option value="">{lang === 'en' ? 'No population' : 'Nüfus yok'}</option>
               : population.map(ind => (
@@ -132,16 +132,16 @@ export default function GodPanel() {
           <button onClick={applyLongevity} disabled={!selectedIndId}
             className="flex items-center justify-center gap-1.5 p-2 bg-sim-surface hover:bg-sim-border rounded-lg transition-colors border border-sim-border hover:border-green-500/40 disabled:opacity-40">
             <Heart size={12} className="text-green-400" />
-            <span className="text-xs text-green-400" style={{ fontSize: 10 }}>{lang === 'en' ? 'Longevity' : 'Uzun Ömür'}</span>
+            <span className="text-sm text-green-400" style={{ fontSize: 12 }}>{lang === 'en' ? 'Longevity' : 'Uzun Ömür'}</span>
           </button>
           <button onClick={applyDeath} disabled={!selectedIndId}
             className="flex items-center justify-center gap-1.5 p-2 bg-sim-surface hover:bg-red-900/20 rounded-lg transition-colors border border-sim-border hover:border-red-500/40 disabled:opacity-40">
             <Skull size={12} className="text-red-400" />
-            <span className="text-xs text-red-400" style={{ fontSize: 10 }}>{lang === 'en' ? 'Instant Death' : 'Anında Ölüm'}</span>
+            <span className="text-sm text-red-400" style={{ fontSize: 12 }}>{lang === 'en' ? 'Instant Death' : 'Anında Ölüm'}</span>
           </button>
         </div>
         {selectedInd && (
-          <div className="mt-1.5 text-sim-muted text-center" style={{ fontSize: 9 }}>
+          <div className="mt-1.5 text-sim-muted text-center" style={{ fontSize: 12 }}>
             {lang === 'en' ? 'Selected' : 'Seçili'}: {selectedInd.name ?? selectedInd.id.slice(0,8)} · IQ {((selectedInd.phenotype?.fluid_intelligence ?? 0.5) * 100).toFixed(0)}
           </div>
         )}
@@ -149,7 +149,7 @@ export default function GodPanel() {
 
       {/* Speak to Individual */}
       <div className="mb-4">
-        <h4 className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2 flex items-center gap-1.5">
           <MessageCircle size={12} />
           {lang === 'en' ? 'Speak to Individual' : 'Bireyyle Konuş'}
         </h4>
@@ -157,20 +157,20 @@ export default function GodPanel() {
           value={message}
           onChange={e => setMessage(e.target.value)}
           placeholder={lang === 'en' ? 'They respond in their language stage…' : 'Dil seviyelerinde yanıt verirler…'}
-          className="w-full bg-sim-bg border border-sim-border rounded-lg px-3 py-2 text-xs text-sim-text resize-none h-14 focus:border-sim-accent focus:outline-none mb-2"
+          className="w-full bg-sim-bg border border-sim-border rounded-lg px-3 py-2 text-sm text-sim-text resize-none h-14 focus:border-sim-accent focus:outline-none mb-2"
         />
         <button onClick={speakToIndividual} disabled={chatLoading || !message.trim()}
-          className="w-full px-3 py-1.5 bg-sim-accent hover:bg-sim-accent/80 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50">
+          className="w-full px-3 py-1.5 bg-sim-accent hover:bg-sim-accent/80 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
           {chatLoading ? '…' : (lang === 'en' ? 'Speak' : 'Konuş')}
         </button>
         {response && (
-          <div className="mt-2 bg-sim-surface rounded-lg p-2 text-sim-muted text-xs italic border-l-2 border-sim-accent">
+          <div className="mt-2 bg-sim-surface rounded-lg p-2 text-sim-muted text-sm italic border-l-2 border-sim-accent">
             {response}
           </div>
         )}
       </div>
 
-      <div className="text-xs text-sim-muted text-center pt-2 border-t border-sim-border/30">
+      <div className="text-sm text-sim-muted text-center pt-2 border-t border-sim-border/30">
         {lang === 'en' ? `Year ${stats?.year ?? 0} · Pop ${stats?.population ?? 0}` : `Yıl ${stats?.year ?? 0} · Nüfus ${stats?.population ?? 0}`}
       </div>
     </DetailPanel>
