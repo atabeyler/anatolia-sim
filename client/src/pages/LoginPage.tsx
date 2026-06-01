@@ -389,8 +389,8 @@ export default function LoginPage() {
                     : 'Min 8 karakter · büyük · küçük · rakam · sembol'}
                 </p>
               </>) : (<>
-                <HudInput label={lang === 'en' ? 'User Code' : 'KULLANICI KODU'} type="password"
-                  value={form.user_code} onChange={f('user_code')} placeholder="ANSXX0000" />
+                <HudInput label={lang === 'en' ? 'User Code' : 'KULLANICI KODU'} type="text"
+                  value={form.user_code} onChange={f('user_code')} placeholder="••••••••" />
                 <HudInput label={lang === 'en' ? 'Password' : 'ŞİFRE'} type="password"
                   value={form.password} onChange={f('password')} placeholder="••••••••" />
               </>)}
