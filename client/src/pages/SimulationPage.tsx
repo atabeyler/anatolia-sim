@@ -324,7 +324,7 @@ export default function SimulationPage() {
                 ANATOLIA-SIM
               </span>
               <span style={{ fontSize: isMobile ? 10 : 11, fontFamily: 'Share Tech Mono, monospace', fontWeight: 700, color: '#cc2222', letterSpacing: isMobile ? '0.16em' : '0.22em', textAlign: 'center', width: '100%' }}>
-                {lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}
+                {lang === 'tr' ? 'MEDENIYET' : 'CIVILIZATION'}
               </span>
             </div>
           </div>
