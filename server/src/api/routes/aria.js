@@ -73,7 +73,6 @@ GLOBAL: navigate_to{"route":"/"}|toggle_lang|set_lang{"lang":"tr/en"}`;
         { role: 'user', content: message },
       ],
       max_tokens: 250,
-      response_format: { type: 'json_object' },
     });
 
     const raw = completion.choices[0].message.content ?? '{}';
@@ -102,12 +101,13 @@ GLOBAL: navigate_to{"route":"/"}|toggle_lang|set_lang{"lang":"tr/en"}`;
   } catch (err) {
     const status = err?.status ?? err?.response?.status;
     const detail = err?.message ?? String(err);
-    console.error('ARIA error:', detail);
+    const errorBody = err?.error ?? err?.response?.data;
+    console.error('ARIA error status:', status, 'detail:', detail, 'body:', JSON.stringify(errorBody)?.slice(0, 200));
     if (status === 429) {
-      const retryAfter = parseInt(err?.headers?.['retry-after'] ?? '60', 10);
-      return res.status(429).json({ text: 'Rate limit.', actions: [], retry_after: retryAfter });
+      const retryAfter = parseInt(err?.headers?.['retry-after'] ?? err?.headers?.get?.('retry-after') ?? '60', 10);
+      return res.status(429).json({ text: `Rate limit (${retryAfter}s)`, actions: [], retry_after: retryAfter });
     }
-    res.status(500).json({ text: `ARIA hata: ${detail.slice(0, 120)}`, actions: [] });
+    res.status(500).json({ text: `ARIA hata [${status ?? '?'}]: ${detail.slice(0, 120)}`, actions: [] });
   }
 });
 
