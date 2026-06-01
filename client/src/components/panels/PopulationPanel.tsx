@@ -125,12 +125,6 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
       .map(gc => ({ obj: gc, parentName: nameFromId(c.id, c.sex, c.phenotype?.name ?? c.name) }))
   );
 
-  // Mate (co-parent of children)
-  const mateId = children.length > 0
-    ? (children[0].parent_1_id === ind.id ? children[0].parent_2_id : children[0].parent_1_id)
-    : null;
-  const mate = mateId ? allIndividuals.find(i => i.id === mateId) : null;
-
   const siblings = allIndividuals.filter(i =>
     i.id !== ind.id &&
     ((ind.parent_1_id && i.parent_1_id === ind.parent_1_id) ||
@@ -318,13 +312,6 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
                 {isDead ? `† ${lang === 'tr' ? 'ölü' : 'dec.'}` : `${age.toFixed(0)} ${lang === 'tr' ? 'yaş' : 'yr'}`}
               </span>
             </div>
-
-            {/* ── Mate ── */}
-            {mate && (
-              <FamilySection label={lang === 'tr' ? 'EŞ' : 'MATE'} indent={0}>
-                <PersonRow obj={mate} tag={lang === 'tr' ? 'Eş' : 'Mate'} lang={lang} />
-              </FamilySection>
-            )}
 
             {/* ── Children ── */}
             {children.length > 0 && (
