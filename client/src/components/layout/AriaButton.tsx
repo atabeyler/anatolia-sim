@@ -7,7 +7,7 @@ import { Mic, MicOff, Loader2 } from 'lucide-react';
 type AriaState = 'idle' | 'listening' | 'processing';
 
 const GEMINI_URL = (key: string) =>
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
+  `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
 const SpeechRec: any = typeof window !== 'undefined'
   ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null)
   : null;
@@ -258,15 +258,25 @@ export default function AriaButton() {
           if (res.status === 429) {
             if (!activeRef.current) { processingRef.current = false; return; }
             clearTimeout(retryTimerRef.current);
-            const msg = lang === 'tr' ? 'Dakika limiti doldu — 60s sonra tekrar deniyor.' : 'Rate limited — retrying in 60s.';
-            setTranscript(''); setAriaText(msg); speak(msg); disarmWatchdog();
-            setUI('listening');
-            if (SpeechRec) startListening(); else setTimeout(() => textInputRef.current?.focus(), 50);
-            setTimeout(() => setAriaText(t => t === msg ? '' : t), 8000);
-            retryTimerRef.current = setTimeout(() => {
-              if (activeRef.current && processingRef.current) { armWatchdog(); processCommand(cmd); }
-            }, 60000);
-            return;
+            let errBody: any = {};
+            try { errBody = await res.json(); } catch {}
+            const errMsg: string = errBody?.error?.message ?? '';
+            const isDaily = errMsg.toLowerCase().includes('exhausted') || errMsg.toLowerCase().includes('quota');
+            if (isDaily) {
+              responseText = lang === 'tr'
+                ? 'Günlük Gemini limiti doldu. Yarın tekrar deneyin veya yeni API key alın.'
+                : 'Daily Gemini quota exhausted. Try again tomorrow or create a new API key.';
+            } else {
+              const msg = lang === 'tr' ? 'Dakika limiti — 60s sonra tekrar deniyor.' : 'Rate limited — retrying in 60s.';
+              setTranscript(''); setAriaText(msg); speak(msg); disarmWatchdog();
+              setUI('listening');
+              if (SpeechRec) startListening(); else setTimeout(() => textInputRef.current?.focus(), 50);
+              setTimeout(() => setAriaText(t => t === msg ? '' : t), 8000);
+              retryTimerRef.current = setTimeout(() => {
+                if (activeRef.current && processingRef.current) { armWatchdog(); processCommand(cmd); }
+              }, 60000);
+              return;
+            }
           } else if (!res.ok) {
             const errBody = await res.text().catch(() => '');
             console.error('Gemini error', res.status, errBody.slice(0, 200));
