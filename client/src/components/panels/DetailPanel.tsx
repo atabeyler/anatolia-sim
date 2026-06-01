@@ -22,8 +22,9 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
         onClick={() => setActivePanel(null)}
       />
       <div
-        className="fixed top-0 left-0 bottom-0 w-80 z-40 flex flex-col overflow-hidden"
+        className="fixed top-0 left-0 bottom-0 z-40 flex flex-col overflow-hidden"
         style={{
+          width: 368,
           background: 'rgba(2,8,4,0.98)',
           borderRight: '1px solid #cc2222',
           backdropFilter: 'blur(20px)',
@@ -56,8 +57,8 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3 text-xs"
-        style={{ color: '#a0c8b0' }}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4"
+        style={{ color: '#a0c8b0', fontSize: 14, lineHeight: 1.6 }}>
         {children}
       </div>
 
