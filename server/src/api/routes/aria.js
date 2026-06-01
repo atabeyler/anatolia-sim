@@ -41,14 +41,14 @@ function buildStatsContext(stats, events, context) {
 
 router.post('/command', authenticate, async (req, res) => {
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) return res.status(503).json({ text: 'OPENAI_API_KEY sunucuda tanımlı değil.', actions: [] });
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) return res.status(503).json({ text: 'GROQ_API_KEY sunucuda tanımlı değil.', actions: [] });
 
     const { message, lang, stats, events, context } = req.body;
     const statsCtx = buildStatsContext(stats, events, context);
     const respondIn = lang === 'tr' ? 'Turkish' : 'English';
 
-    const client = new OpenAI({ apiKey, maxRetries: 0 });
+    const client = new OpenAI({ apiKey, baseURL: 'https://api.groq.com/openai/v1', maxRetries: 0 });
 
     const systemPrompt = `You are ARIA, AI controller of ANATOLİA-SİM. Respond in ${respondIn}.
 
@@ -96,7 +96,7 @@ mimari→architecture, hukuk→law, mikrobiyom→microbiome
 Return ONLY the JSON object.`;
 
     const completion = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message },
