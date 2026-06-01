@@ -321,10 +321,10 @@ export default function SimulationPage() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1, gap: 2 }}>
               <span style={{ fontSize: isMobile ? 12 : 14, fontFamily: 'Orbitron, monospace', fontWeight: 900, color: '#e0e0f0', letterSpacing: isMobile ? '0.12em' : '0.2em' }}>
-                ANATOLIA-SIM
+                ANATOLİA-SİM
               </span>
               <span style={{ fontSize: isMobile ? 10 : 11, fontFamily: 'Share Tech Mono, monospace', fontWeight: 700, color: '#cc2222', letterSpacing: isMobile ? '0.16em' : '0.22em', textAlign: 'center', width: '100%' }}>
-                {lang === 'tr' ? 'MEDENIYET' : 'CIVILIZATION'}
+                {lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}
               </span>
             </div>
           </div>
