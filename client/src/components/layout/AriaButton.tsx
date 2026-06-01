@@ -131,15 +131,6 @@ export default function AriaButton() {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  function speakBrowser(text: string, lang: string) {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = lang === 'tr' ? 'tr-TR' : 'en-US';
-    utt.rate = 1.05;
-    window.speechSynthesis.speak(utt);
-  }
-
   function speak(text: string) {
     const { accessToken, lang } = storeRef.current;
     if (!accessToken) return;
@@ -149,7 +140,7 @@ export default function AriaButton() {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
       body: JSON.stringify({ text, lang }),
     })
-      .then(r => r.ok ? r.blob() : Promise.reject('no-elevenlabs'))
+      .then(r => r.ok ? r.blob() : null)
       .then(blob => {
         if (!blob || !activeRef.current) return;
         const url = URL.createObjectURL(blob);
@@ -158,7 +149,7 @@ export default function AriaButton() {
         audio.onended = () => URL.revokeObjectURL(url);
         audio.play().catch(() => {});
       })
-      .catch(() => speakBrowser(text, lang));
+      .catch(() => {});
   }
 
   function killRec(rec: any) {
