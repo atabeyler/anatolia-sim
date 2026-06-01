@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Play, Pause, FolderOpen, ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { Play, Pause, FolderOpen, ChevronLeft, ChevronRight, Users, Globe } from 'lucide-react';
 import { useSimStore } from '../store/simStore';
 import { useSimWebSocket } from '../hooks/useSimWebSocket';
 import SimMenuOverlay from '../components/layout/SimMenuOverlay';
@@ -314,13 +314,19 @@ export default function SimulationPage() {
 
         {/* Row 1: Logo | SIM time | [ARIA desktop] | [clock desktop] | BAŞLAT/DURDUR */}
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 8, padding: isMobile ? '4px 8px' : '5px 10px', borderBottom: '1px solid #4a1a1a' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, gap: 2, flexShrink: 0 }}>
-            <span style={{ fontSize: isMobile ? 12 : 14, fontFamily: 'Orbitron, monospace', fontWeight: 900, color: '#e0e0f0', letterSpacing: isMobile ? '0.12em' : '0.2em' }}>
-              ANATOLIA-SIM
-            </span>
-            <span style={{ fontSize: isMobile ? 10 : 11, fontFamily: 'Share Tech Mono, monospace', fontWeight: 700, color: '#cc2222', letterSpacing: isMobile ? '0.16em' : '0.22em' }}>
-              {lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <div style={{ position: 'relative', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ position: 'absolute', inset: 0, borderRadius: '999px', border: '1px solid rgba(79,158,247,0.5)' }} />
+              <Globe size={11} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 4px rgba(79,158,247,0.8))' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1, gap: 2 }}>
+              <span style={{ fontSize: isMobile ? 12 : 14, fontFamily: 'Orbitron, monospace', fontWeight: 900, color: '#e0e0f0', letterSpacing: isMobile ? '0.12em' : '0.2em' }}>
+                ANATOLIA-SIM
+              </span>
+              <span style={{ fontSize: isMobile ? 10 : 11, fontFamily: 'Share Tech Mono, monospace', fontWeight: 700, color: '#cc2222', letterSpacing: isMobile ? '0.16em' : '0.22em', textAlign: 'center', width: '100%' }}>
+                {lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}
+              </span>
+            </div>
           </div>
 
           <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: isMobile ? 3 : 6 }}>
