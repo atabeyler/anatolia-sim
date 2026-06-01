@@ -37,6 +37,59 @@ function parseAriaJson(raw) {
   return { text: safe, actions: [] };
 }
 
+function normalizeText(s = '') {
+  return String(s)
+    .toLowerCase()
+    .replace(/ı/g, 'i')
+    .replace(/ş/g, 's')
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
+    .trim();
+}
+
+function inferFallbackActions(message, context) {
+  const msg = normalizeText(message);
+  const actions = [];
+  const page = context?.page ?? '/';
+  const isWizard = !!context?.wizardOpen || page === '/wizard';
+  const isSim = page.startsWith('/simulation/');
+  const isDash = page === '/';
+
+  if (isWizard) {
+    if (/(devam|ileri|next|continue|ilerle)/.test(msg)) actions.push({ type: 'wizard_next' });
+    if (/(geri|back|onceki)/.test(msg)) actions.push({ type: 'wizard_back' });
+    if (/(baslat|onayla|submit|launch|tamamla)/.test(msg)) actions.push({ type: 'wizard_submit' });
+    if (/(cik|iptal|exit|vazgec)/.test(msg)) actions.push({ type: 'wizard_exit' });
+  }
+
+  if (isDash) {
+    if (/(yeni simulasyon|simulasyon olustur|create simulation|yeni sim)/.test(msg)) actions.push({ type: 'create_simulation' });
+    if (/(simulasyonu ac|open simulation|ilk simulasyon)/.test(msg)) actions.push({ type: 'open_simulation', index: 0 });
+    if (/(karsilastir|compare)/.test(msg)) actions.push({ type: 'toggle_compare' });
+  }
+
+  if (isSim) {
+    if (/(nufus|population)/.test(msg)) actions.push({ type: 'navigate_panel', panel: 'population' });
+    else if (/(biyoloji|genetik|biology)/.test(msg)) actions.push({ type: 'navigate_panel', panel: 'biology' });
+    else if (/(analiz|analysis)/.test(msg)) actions.push({ type: 'navigate_panel', panel: 'analysis' });
+    else if (/(hipotez|hypothesis)/.test(msg)) actions.push({ type: 'navigate_panel', panel: 'hypothesis' });
+    if (/(hiz 1|normal hiz)/.test(msg)) actions.push({ type: 'change_speed', speed: 1 });
+    if (/(hiz 5)/.test(msg)) actions.push({ type: 'change_speed', speed: 5 });
+    if (/(hiz 20|hizlandir)/.test(msg)) actions.push({ type: 'change_speed', speed: 20 });
+    if (/(hiz 100|maksimum)/.test(msg)) actions.push({ type: 'change_speed', speed: 100 });
+    if (/(baslat|start|devam)/.test(msg)) actions.push({ type: 'start_simulation' });
+    if (/(durdur|pause|beklet)/.test(msg)) actions.push({ type: 'pause_simulation' });
+  }
+
+  if (/(ana sayfa|dashboard|home)/.test(msg)) actions.push({ type: 'navigate_to', route: '/' });
+  if (/(login|giris)/.test(msg)) actions.push({ type: 'navigate_to', route: '/login' });
+  if (/(dil degistir|language|lang)/.test(msg)) actions.push({ type: 'toggle_lang' });
+
+  return actions;
+}
+
 
 function buildStatsContext(stats, events, context) {
   const page = context?.page ?? '/';
@@ -123,6 +176,14 @@ GLOBAL: navigate_to{"route":"/"}|toggle_lang|set_lang{"lang":"tr/en"}`;
     }).filter((a) => a && a.type);
 
     if (typeof parsed.text !== 'string') parsed.text = '';
+    if (!Array.isArray(parsed.actions)) parsed.actions = [];
+    if (parsed.actions.length === 0) {
+      const fallback = inferFallbackActions(message, context);
+      if (fallback.length > 0) {
+        parsed.actions = fallback;
+        if (!parsed.text) parsed.text = lang === 'tr' ? 'Tamam, komutu uyguluyorum.' : 'Okay, applying command.';
+      }
+    }
 
     res.json(parsed);
   } catch (err) {
