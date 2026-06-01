@@ -203,6 +203,7 @@ CREATE TABLE IF NOT EXISTS publications (
 
 -- Individual name column for founder-assigned names
 ALTER TABLE individuals ADD COLUMN IF NOT EXISTS name VARCHAR(100);
+ALTER TABLE individuals ADD COLUMN IF NOT EXISTS death_cause VARCHAR(50);
 
 CREATE INDEX IF NOT EXISTS idx_individuals_simulation ON individuals(simulation_id);
 CREATE INDEX IF NOT EXISTS idx_individuals_alive ON individuals(simulation_id, alive);

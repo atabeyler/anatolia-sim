@@ -89,7 +89,7 @@ class SimulationManager {
       let p = 1;
 
       for (const ind of chunk) {
-        placeholders.push(`($${p},$${p+1},$${p+2},$${p+3},$${p+4},$${p+5},$${p+6},$${p+7},$${p+8},$${p+9},$${p+10},$${p+11},$${p+12},$${p+13},$${p+14},$${p+15},$${p+16},$${p+17},$${p+18},$${p+19})`);
+        placeholders.push(`($${p},$${p+1},$${p+2},$${p+3},$${p+4},$${p+5},$${p+6},$${p+7},$${p+8},$${p+9},$${p+10},$${p+11},$${p+12},$${p+13},$${p+14},$${p+15},$${p+16},$${p+17},$${p+18},$${p+19},$${p+20})`);
         params.push(
           ind.id, simId, ind.birth_day, ind.death_day, !ind.is_dead, ind.sex,
           ind.x, ind.y,
@@ -104,14 +104,15 @@ class SimulationManager {
           JSON.stringify(ind.language),
           JSON.stringify(ind.memory ?? {}),
           ind.parent_1_id ?? null,
-          ind.parent_2_id ?? null
+          ind.parent_2_id ?? null,
+          ind.death_cause ?? null
         );
-        p += 20;
+        p += 21;
       }
 
       await query(
         `INSERT INTO individuals
-           (id,simulation_id,birth_day,death_day,alive,sex,x,y,genome,phenotype,epigenome,health,mind,social,skills,beliefs,language,memory,parent_1_id,parent_2_id)
+           (id,simulation_id,birth_day,death_day,alive,sex,x,y,genome,phenotype,epigenome,health,mind,social,skills,beliefs,language,memory,parent_1_id,parent_2_id,death_cause)
          VALUES ${placeholders.join(',')}
          ON CONFLICT (id) DO UPDATE SET
            death_day=EXCLUDED.death_day, alive=EXCLUDED.alive,
@@ -119,7 +120,8 @@ class SimulationManager {
            phenotype=EXCLUDED.phenotype, epigenome=EXCLUDED.epigenome,
            health=EXCLUDED.health, mind=EXCLUDED.mind, social=EXCLUDED.social,
            skills=EXCLUDED.skills, beliefs=EXCLUDED.beliefs,
-           language=EXCLUDED.language, memory=EXCLUDED.memory`,
+           language=EXCLUDED.language, memory=EXCLUDED.memory,
+           death_cause=EXCLUDED.death_cause`,
         params
       );
     }

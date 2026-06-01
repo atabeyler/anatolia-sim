@@ -10,6 +10,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { user, accessToken, logout, lang } = useSimStore();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPage, setMenuPage] = useState<'language' | 'guide' | 'about' | 'mission' | 'contact' | null>(null);
   const [sims, setSims]             = useState<any[]>([]);
   const [showNew, setShowNew]       = useState(false);
   const [compareMode, setCompareMode] = useState(false);
@@ -39,6 +40,28 @@ export default function DashboardPage() {
         }
         case 'toggle_compare': setCompareMode(c => !c); break;
         case 'wizard_exit': setShowNew(false); break;
+        case 'open_menu': setMenuOpen(true); break;
+        case 'open_menu_page':
+          setMenuPage((e as CustomEvent).detail.menuPage ?? null);
+          setMenuOpen(true);
+          break;
+        case 'close_menu': setMenuOpen(false); setMenuPage(null); break;
+        case 'delete_simulation': {
+          const sim = simsRef.current[index ?? 0];
+          if (!sim) break;
+          const { lang: l, accessToken: tok } = useSimStore.getState();
+          if (!confirm(l === 'en' ? `Delete "${sim.name}"? This cannot be undone.` : `"${sim.name}" silinsin mi? Bu işlem geri alınamaz.`)) break;
+          axios.delete(`/api/simulations/${sim.id}`, { headers: { Authorization: `Bearer ${tok}` } })
+            .then(() => setSims(s => s.filter((s2: any) => s2.id !== sim.id)))
+            .catch(() => alert(l === 'en' ? 'Delete failed.' : 'Silme başarısız.'));
+          break;
+        }
+        case 'logout': {
+          const { logout: doLogout } = useSimStore.getState();
+          doLogout();
+          navigate('/login');
+          break;
+        }
       }
     }
     window.addEventListener('aria-dashboard', onAriaDashboard);
@@ -324,7 +347,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Menu Overlay */}
-      <SimMenuOverlay isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      <SimMenuOverlay isOpen={menuOpen} onClose={() => { setMenuOpen(false); setMenuPage(null); }} menuPage={menuPage} onMenuPageChange={setMenuPage} />
 
       {/* Footer */}
       <div className="text-center py-6 px-4 relative z-1">
