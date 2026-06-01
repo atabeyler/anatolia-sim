@@ -87,12 +87,14 @@ export default function AriaButton() {
   function onTouchEnd() { dragging.current = false; }
 
   /* ── Core logic refs ────────────────────────────────────────────────────── */
-  const uiRef         = useRef<AriaState>('idle');
-  const activeRef     = useRef(false);
-  const processingRef = useRef(false);
-  const recRef        = useRef<any>(null);
-  const watchdogRef   = useRef<any>(null);
-  const pendingCmdRef = useRef<string | null>(null);
+  const uiRef          = useRef<AriaState>('idle');
+  const activeRef      = useRef(false);
+  const processingRef  = useRef(false);
+  const recRef         = useRef<any>(null);
+  const watchdogRef    = useRef<any>(null);
+  const pendingCmdRef  = useRef<string | null>(null);
+  const retryTimerRef  = useRef<any>(null);
+  const retryCmd       = useRef<string | null>(null);
 
   function setUI(s: AriaState) { uiRef.current = s; setUiState(s); }
 
@@ -112,6 +114,7 @@ export default function AriaButton() {
       activeRef.current     = false;
       processingRef.current = false;
       disarmWatchdog();
+      clearTimeout(retryTimerRef.current); retryCmd.current = null;
       killRec(recRef.current); recRef.current = null;
       if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
       setUI('idle');
@@ -195,6 +198,7 @@ export default function AriaButton() {
             pendingCmdRef.current = cmd;
           } else {
             processingRef.current = true;
+            clearTimeout(retryTimerRef.current); retryCmd.current = null;
             armWatchdog();
             killRec(rec);
             processCommand(cmd);
@@ -292,8 +296,27 @@ export default function AriaButton() {
         }
         responseText = data.text ?? (lang === 'tr' ? 'Tamam.' : 'Done.');
       } catch (err: any) {
-        const serverMsg = err?.response?.data?.text;
-        responseText = serverMsg ?? (lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.');
+        const status = err?.response?.status;
+        const retryAfter: number = err?.response?.data?.retry_after ?? 30;
+        if (status === 429 && activeRef.current) {
+          retryCmd.current = cmd;
+          clearTimeout(retryTimerRef.current);
+          retryTimerRef.current = setTimeout(() => {
+            const pending = retryCmd.current;
+            retryCmd.current = null;
+            if (pending && activeRef.current && !processingRef.current) {
+              processingRef.current = true;
+              armWatchdog();
+              processCommand(pending);
+            }
+          }, retryAfter * 1000);
+          responseText = lang === 'tr'
+            ? `Limit aşıldı — ${retryAfter}s içinde otomatik tekrar deniyor.`
+            : `Rate limited — auto-retrying in ${retryAfter}s.`;
+        } else {
+          const serverMsg = err?.response?.data?.text;
+          responseText = serverMsg ?? (lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.');
+        }
       }
     }
 
