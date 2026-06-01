@@ -18,7 +18,6 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^8.0.9",
-    "openai": "^6.39.1",
     "pg": "^8.12.0",
     "resend": "^4.0.0",
     "uuid": "^10.0.0",
