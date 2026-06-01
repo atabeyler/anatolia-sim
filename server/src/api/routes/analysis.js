@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, requireSimulationOwner } from '../middleware/auth.js';
-import { openrouterChat } from '../../utils/openrouter.js';
+import { geminiChat } from '../../utils/gemini.js';
 
 const router = Router();
 
@@ -15,8 +15,8 @@ function buildContext(stats, events) {
 router.post('/:simId', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const { message, stats, events } = req.body;
-    const response = await openrouterChat({
-      model: process.env.OPENROUTER_ANALYSIS_MODEL || process.env.OPENROUTER_MODEL || 'nvidia/nemotron-3-super-120b-a12b:free',
+    const response = await geminiChat({
+      model: process.env.GEMINI_ANALYSIS_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite',
       max_tokens: 800,
       system: `Sen ANATOLIA-SIM medeniyet simulasyonunu analiz eden uzman bir yapay zeka asistansin.\n\n${buildContext(stats, events)}\n\nYaniti kisa, net ve veriye dayali ver.`,
       user: message,
@@ -31,8 +31,8 @@ router.post('/:simId', authenticate, requireSimulationOwner, async (req, res) =>
 router.post('/:simId/hypothesis', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const { hypothesis, stats, events } = req.body;
-    const text = await openrouterChat({
-      model: process.env.OPENROUTER_ANALYSIS_MODEL || process.env.OPENROUTER_MODEL || 'nvidia/nemotron-3-super-120b-a12b:free',
+    const text = await geminiChat({
+      model: process.env.GEMINI_ANALYSIS_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite',
       max_tokens: 600,
       system: `You are a scientist evaluating hypotheses about a civilization simulation.\n${buildContext(stats, events)}`,
       user: `Evaluate: "${hypothesis}"\nRespond JSON only: {"verdict":"supported"|"refuted"|"inconclusive","confidence":0.0-1.0,"reasoning":"..."}`,

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.js';
-import { openrouterChat } from '../../utils/openrouter.js';
+import { geminiChat } from '../../utils/gemini.js';
 
 const router = Router();
 
@@ -147,8 +147,8 @@ Panels: population(nüfus) olaylar language timemachine analysis(analiz) biology
 ${isDash ? `DASH actions: create_simulation|open_simulation{"index":0}|delete_simulation{"index":0}|toggle_compare|logout` : ''}
 GLOBAL: navigate_to{"route":"/"}|toggle_lang|set_lang{"lang":"tr/en"}`;
 
-    const raw = await openrouterChat({
-      model: process.env.OPENROUTER_COMMAND_MODEL || process.env.OPENROUTER_MODEL || 'nvidia/nemotron-3-super-120b-a12b:free',
+    const raw = await geminiChat({
+      model: process.env.GEMINI_COMMAND_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite',
       system: systemPrompt,
       user: message,
       max_tokens: 250,
