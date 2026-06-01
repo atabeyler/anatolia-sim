@@ -111,6 +111,7 @@ export default function AriaButton() {
       processingRef.current = false;
       disarmWatchdog();
       killRec(recRef.current); recRef.current = null;
+      window.speechSynthesis?.cancel();
       setUI('idle');
       setTranscript('');
       setAriaText('');
@@ -120,6 +121,16 @@ export default function AriaButton() {
       pendingCmdRef.current = null;
       startRecognition();
     }
+  }
+
+  function speak(text: string) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = storeRef.current.lang === 'tr' ? 'tr-TR' : 'en-US';
+    utt.rate = 1.05;
+    utt.pitch = 1.1;
+    window.speechSynthesis.speak(utt);
   }
 
   function killRec(rec: any) {
@@ -267,6 +278,7 @@ export default function AriaButton() {
 
     setTranscript('');
     setAriaText(responseText);
+    speak(responseText);
     disarmWatchdog();
     processingRef.current = false;
     if (activeRef.current) {
