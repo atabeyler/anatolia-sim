@@ -343,18 +343,26 @@ export default function AriaButton() {
         if (status === 429 && activeRef.current) {
           retryCmd.current = cmd;
           clearTimeout(retryTimerRef.current);
-          retryTimerRef.current = setTimeout(() => {
-            const pending = retryCmd.current;
-            retryCmd.current = null;
-            if (pending && activeRef.current && !processingRef.current) {
-              processingRef.current = true;
-              armWatchdog();
-              processCommand(pending);
-            }
-          }, retryAfter * 1000);
-          responseText = lang === 'tr'
+          const retryMsg = lang === 'tr'
             ? `Limit aşıldı — ${retryAfter}s içinde otomatik tekrar deniyor.`
             : `Rate limited — auto-retrying in ${retryAfter}s.`;
+          setTranscript('');
+          setAriaText(retryMsg);
+          speak(retryMsg);
+          disarmWatchdog();
+          // Keep processingRef.current = true during wait — prevents new requests
+          setUI('command');
+          if (SR) startRecognition();
+          else setTimeout(() => textInputRef.current?.focus(), 50);
+          setTimeout(() => setAriaText(t => t === retryMsg ? '' : t), 8000);
+          retryTimerRef.current = setTimeout(() => {
+            retryCmd.current = null;
+            if (activeRef.current && processingRef.current) {
+              armWatchdog();
+              processCommand(cmd);
+            }
+          }, retryAfter * 1000);
+          return;
         } else {
           const serverMsg = err?.response?.data?.text;
           responseText = serverMsg ?? (lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.');
