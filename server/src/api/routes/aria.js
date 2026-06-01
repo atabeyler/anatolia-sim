@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.js';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
 const router = Router();
 
@@ -40,14 +40,14 @@ function buildStatsContext(stats, events, context) {
 
 router.post('/command', authenticate, async (req, res) => {
   try {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) return res.status(503).json({ text: 'ANTHROPIC_API_KEY sunucuda tanımlı değil.', actions: [] });
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) return res.status(503).json({ text: 'OPENAI_API_KEY sunucuda tanımlı değil.', actions: [] });
 
     const { message, lang, stats, events, context } = req.body;
     const statsCtx = buildStatsContext(stats, events, context);
     const respondIn = lang === 'tr' ? 'Turkish' : 'English';
 
-    const client = new Anthropic({ apiKey });
+    const client = new OpenAI({ apiKey });
 
     const systemPrompt = `You are ARIA, AI controller of ANATOLİA-SİM. Respond in ${respondIn}.
 
@@ -94,14 +94,17 @@ mimari→architecture, hukuk→law, mikrobiyom→microbiome
 
 Return ONLY the JSON object.`;
 
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    const completion = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: message },
+      ],
       max_tokens: 600,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: message }],
+      response_format: { type: 'json_object' },
     });
 
-    const raw = response.content[0]?.text ?? '{}';
+    const raw = completion.choices[0].message.content ?? '{}';
     let parsed;
     try { parsed = JSON.parse(raw); } catch { parsed = { text: raw, actions: [] }; }
 

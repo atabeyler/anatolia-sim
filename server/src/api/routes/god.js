@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authenticate, requireSimulationOwner } from '../middleware/auth.js';
 import { query } from '../../db/database.js';
 import { simulationManager } from '../simulationManager.js';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
 const router = Router();
 
@@ -127,16 +127,18 @@ router.post('/:simId/talk/:individualId', authenticate, requireSimulationOwner, 
     if (!individual) return res.status(404).json({ error: 'Individual not found' });
     const age = Math.floor((engine.currentDay - individual.birth_day) / 365);
     const langStage = individual.language?.stage ?? 0;
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) return res.status(503).json({ error: 'ANTHROPIC_API_KEY not configured' });
-    const client = new Anthropic({ apiKey });
-    const talkResponse = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) return res.status(503).json({ error: 'OPENAI_API_KEY not configured' });
+    const client = new OpenAI({ apiKey });
+    const talkCompletion = await client.chat.completions.create({
+      model: 'gpt-4o-mini',
       max_tokens: 500,
-      system: `You are roleplaying as a simulated human in a civilization simulation. Age: ${age}, Sex: ${individual.sex}, Language stage: ${langStage} (${individual.language?.stage_name ?? 'pre-linguistic'}), Intelligence: ${individual.phenotype?.fluid_intelligence?.toFixed(2)}/1.0. If stage 0-1: only grunts/gestures. If stage 2: proto-sounds. If stage 3: max 10 simple words. If stage 4+: simple sentences. Never break character.`,
-      messages: [{ role: 'user', content: message }],
+      messages: [
+        { role: 'system', content: `You are roleplaying as a simulated human in a civilization simulation. Age: ${age}, Sex: ${individual.sex}, Language stage: ${langStage} (${individual.language?.stage_name ?? 'pre-linguistic'}), Intelligence: ${individual.phenotype?.fluid_intelligence?.toFixed(2)}/1.0. If stage 0-1: only grunts/gestures. If stage 2: proto-sounds. If stage 3: max 10 simple words. If stage 4+: simple sentences. Never break character.` },
+        { role: 'user', content: message },
+      ],
     });
-    const individualResponse = talkResponse.content[0]?.text ?? '';
+    const individualResponse = talkCompletion.choices[0].message.content ?? '';
     await query(`INSERT INTO individual_conversations (simulation_id,individual_id,sim_day,user_message,individual_response,language_stage) VALUES ($1,$2,$3,$4,$5,$6)`,
       [simId, individualId, engine.currentDay, message, individualResponse, individual.language.stage_name ?? 'pre-linguistic']);
     res.json({ response: individualResponse });
