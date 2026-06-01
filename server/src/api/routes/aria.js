@@ -54,46 +54,41 @@ router.post('/command', authenticate, async (req, res) => {
 
 STATE: ${statsCtx}
 
-OUTPUT: JSON only. {"text":"1-2 sentences","actions":[...]}
-actions is ALWAYS an array. Combine multiple requests into one array.
+CRITICAL: Output ONLY a raw JSON object. No markdown, no explanation.
+Format: {"text":"1-2 sentence reply","actions":[{"type":"ACTION_TYPE","PARAM":"VALUE"},...]}
+"actions" MUST be an array (empty [] if no action needed).
 
-SIMULATION actions (page=simulation):
-navigate_panel(panel) | close_panel | change_speed(speed:1/5/20/100)
-start_simulation | pause_simulation | toggle_simulation
-toggle_sidebar | terminate_simulation
-open_menu | open_menu_page(menuPage:language/guide/about/mission/contact) | close_menu
-apply_disaster(disaster:earthquake/flood/drought/epidemic/volcano/meteor, params:{magnitude?,severity?,mortality_rate?,spread_rate?,power?,size?,lat,lon,radius})
-set_tab(tab:harita/durum/kontrol) | god_mode
+EXAMPLES:
+User: "nüfus panelini aç" → {"text":"Nüfus paneli açılıyor.","actions":[{"type":"navigate_panel","panel":"population"}]}
+User: "hızı 20 yap" → {"text":"Hız 20x olarak ayarlandı.","actions":[{"type":"change_speed","speed":20}]}
+User: "simülasyonu durdur" → {"text":"Simülasyon duraklatıldı.","actions":[{"type":"pause_simulation"}]}
+User: "deprem uygula" → {"text":"Deprem uygulanıyor.","actions":[{"type":"apply_disaster","disaster":"earthquake","params":{"lat":0,"lon":0,"radius":250,"magnitude":7}}]}
 
-DASHBOARD actions (page=dashboard):
-create_simulation | open_simulation(index:0) | toggle_compare
-delete_simulation(index:0) | logout
-open_menu | open_menu_page(menuPage:...) | close_menu
+ACTION TYPES (use exact strings as "type"):
+SIMULATION (page=simulation):
+  navigate_panel → {"type":"navigate_panel","panel":"PANEL_ID"}
+  close_panel → {"type":"close_panel"}
+  change_speed → {"type":"change_speed","speed":1|5|20|100}
+  start_simulation | pause_simulation | toggle_simulation | terminate_simulation | toggle_sidebar | god_mode
+  set_tab → {"type":"set_tab","tab":"harita"|"durum"|"kontrol"}
+  apply_disaster → {"type":"apply_disaster","disaster":"earthquake|flood|drought|epidemic|volcano|meteor","params":{...}}
+  open_menu | close_menu | open_menu_page → {"type":"open_menu_page","menuPage":"language|guide|about|mission|contact"}
 
-WIZARD actions (wizardOpen=true):
-wizard_next | wizard_back | wizard_submit | wizard_exit
-wizard_set(field,value[,founder:1/2])
+DASHBOARD (page=dashboard):
+  create_simulation | toggle_compare | logout
+  open_simulation → {"type":"open_simulation","index":0}
+  delete_simulation → {"type":"delete_simulation","index":0}
 
-WIZARD fields: sim_name, sim_latitude, sim_longitude,
-founder_name, founder_age, founder_sex(male/female), founder_height(cm),
-founder_eye(brown/hazel/green/blue), founder_hair(black/dark/brown/light/blond/red),
-founder_skin(fair/light/olive/tan/brown/dark),
-current_trait(0-100 = current step), or any trait ID(0-100):
-fluid_intelligence, curiosity, language_capacity, learning_rate, conscientiousness,
-self_awareness, stress_resilience, risk_tolerance, innovation, artistic_sense,
-empathy, social_bonding, aggression, cooperation, dominance,
-physical_strength, endurance, immune_strength, fertility, longevity
-Trait value: "80", "yüzde 80", "0.8" all mean 80. founder:1/2 if specified.
+WIZARD (wizardOpen=true):
+  wizard_next | wizard_back | wizard_submit | wizard_exit
+  wizard_set → {"type":"wizard_set","field":"FIELD","value":"VALUE"}
 
-GLOBAL: navigate_to(route:"/") | toggle_lang | set_lang(lang:tr/en/de/fr/ar) | logout
+GLOBAL: navigate_to → {"type":"navigate_to","route":"/"} | toggle_lang | set_lang → {"type":"set_lang","lang":"tr|en"}
 
-PANELS (TR→id): nüfus→population, olaylar→olaylar, dil→language, geçmiş→timemachine,
-analiz→analysis, mutasyon→biology, tanrı→god, akıl→psychology, çevre→environment,
-teknoloji→technology, inanç→belief, sosyal→social, ekonomi→economy, kültür→culture,
-sanat→art, astronomi→astronomy, hipotez→hypothesis, epigenetik→epigenetics,
-mimari→architecture, hukuk→law, mikrobiyom→microbiome
-
-Return ONLY the JSON object.`;
+PANEL IDs: population, olaylar, language, timemachine, analysis, biology, god, psychology,
+environment, technology, belief, social, economy, culture, art, astronomy, hypothesis,
+epigenetics, architecture, law, microbiome
+TR aliases: nüfus→population, analiz→analysis, tanrı→god, çevre→environment, inanç→belief`;
 
     const completion = await client.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
@@ -106,15 +101,26 @@ Return ONLY the JSON object.`;
     });
 
     const raw = completion.choices[0].message.content ?? '{}';
+    console.log('ARIA raw:', raw.slice(0, 300));
     let parsed;
     try { parsed = JSON.parse(raw); } catch { parsed = { text: raw, actions: [] }; }
 
+    // Normalize: model may use 'action' (singular) instead of 'actions'
     if (!parsed.actions && parsed.action != null) {
       parsed.actions = [parsed.action];
       delete parsed.action;
     } else if (!parsed.actions) {
       parsed.actions = [];
     }
+    // Normalize each action: some models use 'name' or 'action' instead of 'type'
+    parsed.actions = parsed.actions.map((a: any) => {
+      if (typeof a === 'string') return { type: a };
+      if (a && !a.type) {
+        a.type = a.name ?? a.action ?? a.command ?? a.function;
+        delete a.name; delete a.action; delete a.command; delete a.function;
+      }
+      return a;
+    }).filter(Boolean);
 
     res.json(parsed);
   } catch (err) {
