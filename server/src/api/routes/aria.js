@@ -48,7 +48,15 @@ router.post('/command', authenticate, async (req, res) => {
     const statsCtx = buildStatsContext(stats, events, context);
     const respondIn = lang === 'tr' ? 'Turkish' : 'English';
 
-    const client = new OpenAI({ apiKey, baseURL: 'https://openrouter.ai/api/v1', maxRetries: 0 });
+    const client = new OpenAI({
+      apiKey,
+      baseURL: 'https://openrouter.ai/api/v1',
+      maxRetries: 0,
+      defaultHeaders: {
+        'HTTP-Referer': 'https://anatolia-sim.onrender.com',
+        'X-Title': 'ANATOLİA-SİM',
+      },
+    });
 
     const page = context?.page ?? '/';
     const isWizard = !!context?.wizardOpen;
