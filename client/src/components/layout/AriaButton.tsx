@@ -136,6 +136,11 @@ export default function AriaButton() {
   function unlockAudio() {
     if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
     if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume().catch(() => {});
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      const utt = new SpeechSynthesisUtterance('');
+      window.speechSynthesis.speak(utt);
+      window.speechSynthesis.cancel();
+    }
   }
 
   function stopAudio() {
