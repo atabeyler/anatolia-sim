@@ -341,28 +341,34 @@ export default function AriaButton() {
         const status = err?.response?.status;
         const retryAfter: number = err?.response?.data?.retry_after ?? 30;
         if (status === 429 && activeRef.current) {
-          retryCmd.current = cmd;
           clearTimeout(retryTimerRef.current);
-          const retryMsg = lang === 'tr'
-            ? `Limit aşıldı — ${retryAfter}s içinde otomatik tekrar deniyor.`
-            : `Rate limited — auto-retrying in ${retryAfter}s.`;
-          setTranscript('');
-          setAriaText(retryMsg);
-          speak(retryMsg);
-          disarmWatchdog();
-          // Keep processingRef.current = true during wait — prevents new requests
-          setUI('command');
-          if (SR) startRecognition();
-          else setTimeout(() => textInputRef.current?.focus(), 50);
-          setTimeout(() => setAriaText(t => t === retryMsg ? '' : t), 8000);
-          retryTimerRef.current = setTimeout(() => {
-            retryCmd.current = null;
-            if (activeRef.current && processingRef.current) {
-              armWatchdog();
-              processCommand(cmd);
-            }
-          }, retryAfter * 1000);
-          return;
+          if (retryAfter > 300) {
+            // Günlük limit doldu — otomatik tekrar anlamsız
+            responseText = lang === 'tr'
+              ? 'Günlük AI limiti doldu. Lütfen birkaç saat sonra tekrar deneyin.'
+              : 'Daily AI quota reached. Please try again in a few hours.';
+          } else {
+            retryCmd.current = cmd;
+            const retryMsg = lang === 'tr'
+              ? `Limit aşıldı — ${retryAfter}s içinde otomatik tekrar deniyor.`
+              : `Rate limited — auto-retrying in ${retryAfter}s.`;
+            setTranscript('');
+            setAriaText(retryMsg);
+            speak(retryMsg);
+            disarmWatchdog();
+            setUI('command');
+            if (SR) startRecognition();
+            else setTimeout(() => textInputRef.current?.focus(), 50);
+            setTimeout(() => setAriaText(t => t === retryMsg ? '' : t), 8000);
+            retryTimerRef.current = setTimeout(() => {
+              retryCmd.current = null;
+              if (activeRef.current && processingRef.current) {
+                armWatchdog();
+                processCommand(cmd);
+              }
+            }, retryAfter * 1000);
+            return;
+          }
         } else {
           const serverMsg = err?.response?.data?.text;
           responseText = serverMsg ?? (lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.');

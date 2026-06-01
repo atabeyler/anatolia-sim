@@ -156,7 +156,7 @@ TR aliases: nüfus→population, analiz→analysis, tanrı→god, çevre→envir
     const detail = err?.message ?? String(err);
     console.error('ARIA error:', detail);
     if (status === 429) {
-      const retryAfter = Math.max(5, Math.min(60, parseInt(err?.headers?.['retry-after'] ?? '30', 10)));
+      const retryAfter = parseInt(err?.headers?.['retry-after'] ?? '60', 10);
       return res.status(429).json({ text: 'Rate limit.', actions: [], retry_after: retryAfter });
     }
     res.status(500).json({ text: `ARIA hata: ${detail.slice(0, 120)}`, actions: [] });
