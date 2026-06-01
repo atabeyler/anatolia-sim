@@ -573,10 +573,21 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           if (field === 'founder_name')  { targetSet((p: any) => ({...p, name: String(value)})); break; }
           if (field === 'founder_age')   { targetSet((p: any) => ({...p, ageYears: Math.max(16, Math.min(60, Math.round(Number(value))))})); break; }
           if (field === 'founder_sex')   { targetSet((p: any) => ({...p, sex: String(value)})); break; }
-          // Physical fields — height stored as 0-1 normalized (0=145cm, 1=200cm)
+          // Physical fields — height: fromCm=(cm-150)/45, weight: fromKg uses current height
           if (field === 'founder_height') {
             const cm = Number(value);
-            targetSet((p: any) => ({...p, height: Math.max(0, Math.min(1, (cm - 145) / 55))}));
+            targetSet((p: any) => ({...p, height: fromCm(cm)}));
+            break;
+          }
+          if (field === 'founder_weight' || field === 'founder_kilo') {
+            const kg = Number(value);
+            targetSet((p: any) => ({...p, metabolism: fromKg(kg, p.height)}));
+            break;
+          }
+          if (field === 'founder_metabolism') {
+            const num = Number(value);
+            const norm = num > 1 ? num / 100 : num;
+            targetSet((p: any) => ({...p, metabolism: Math.max(0, Math.min(1, norm))}));
             break;
           }
           // Appearance fields

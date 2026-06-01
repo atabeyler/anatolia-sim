@@ -81,7 +81,35 @@ DASHBOARD (page=dashboard):
 
 WIZARD (wizardOpen=true):
   wizard_next | wizard_back | wizard_submit | wizard_exit
-  wizard_set → {"type":"wizard_set","field":"FIELD","value":"VALUE"}
+  wizard_set → {"type":"wizard_set","field":"FIELD","value":"VALUE","founder":1|2}
+  "founder" key is optional; omit if not specified by user.
+
+  FIELD names by step type:
+  sim-info:   sim_name(text) | sim_latitude(number) | sim_longitude(number)
+  identity:   founder_name(text) | founder_age(16-60) | founder_sex("male"|"female")
+  physical:   founder_height(cm, 150-195) | founder_weight(kg, 40-130)
+  appearance: founder_eye("brown"|"hazel"|"green"|"blue")
+              founder_hair("black"|"dark"|"brown"|"light"|"blond"|"red")
+              founder_skin("fair"|"light"|"olive"|"tan"|"brown"|"dark")
+  trait:      current_trait(0-100) OR trait_id(0-100)
+              Trait IDs: fluid_intelligence, curiosity, language_capacity, learning_rate,
+              conscientiousness, self_awareness, stress_resilience, risk_tolerance,
+              innovation, artistic_sense, empathy, social_bonding, aggression,
+              cooperation, dominance, physical_strength, endurance, immune_strength,
+              fertility, longevity
+  TR trait names: zeka→fluid_intelligence, merak→curiosity, dil→language_capacity,
+    öğrenme→learning_rate, disiplin→conscientiousness, öz farkındalık→self_awareness,
+    stres→stress_resilience, risk→risk_tolerance, inovasyon→innovation,
+    sanat→artistic_sense, empati→empathy, sosyal bağ→social_bonding,
+    saldırganlık→aggression, işbirliği→cooperation, liderlik→dominance,
+    güç→physical_strength, dayanıklılık→endurance, bağışıklık→immune_strength,
+    üreme→fertility, uzun ömür→longevity
+
+  VALUE rules:
+  - "175 cm" or "175" → value:"175" for founder_height
+  - "80 kg" or "80"   → value:"80" for founder_weight
+  - "yüzde 80" or "%80" or "80%" or "0.8" → value:"80" for traits
+  - Always pass the raw number as a string, strip units
 
 GLOBAL: navigate_to → {"type":"navigate_to","route":"/"} | toggle_lang | set_lang → {"type":"set_lang","lang":"tr|en"}
 
