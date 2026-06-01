@@ -54,7 +54,7 @@ router.post('/command', authenticate, async (req, res) => {
       maxRetries: 0,
       defaultHeaders: {
         'HTTP-Referer': 'https://anatolia-sim.onrender.com',
-        'X-Title': 'ANATOLİA-SİM',
+        'X-Title': 'ANATOLIA-SIM',
       },
     });
 

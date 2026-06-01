@@ -130,7 +130,7 @@ router.post('/:simId/talk/:individualId', authenticate, requireSimulationOwner, 
     const langStage = individual.language?.stage ?? 0;
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) return res.status(503).json({ error: 'GROQ_API_KEY not configured' });
-    const client = new OpenAI({ apiKey, baseURL: 'https://openrouter.ai/api/v1', maxRetries: 0, defaultHeaders: { 'HTTP-Referer': 'https://anatolia-sim.onrender.com', 'X-Title': 'ANATOLİA-SİM' } });
+    const client = new OpenAI({ apiKey, baseURL: 'https://openrouter.ai/api/v1', maxRetries: 0, defaultHeaders: { 'HTTP-Referer': 'https://anatolia-sim.onrender.com', 'X-Title': 'ANATOLIA-SIM' } });
     const talkCompletion = await client.chat.completions.create({
       model: 'meta-llama/llama-3.3-70b-instruct:free',
       max_tokens: 500,

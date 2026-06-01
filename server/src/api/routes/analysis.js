@@ -18,7 +18,7 @@ router.post('/:simId', authenticate, requireSimulationOwner, async (req, res) =>
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) return res.status(503).json({ error: 'GROQ_API_KEY not configured' });
     const { message, stats, events } = req.body;
-    const client = new OpenAI({ apiKey, baseURL: 'https://openrouter.ai/api/v1', maxRetries: 0, defaultHeaders: { 'HTTP-Referer': 'https://anatolia-sim.onrender.com', 'X-Title': 'ANATOLİA-SİM' } });
+    const client = new OpenAI({ apiKey, baseURL: 'https://openrouter.ai/api/v1', maxRetries: 0, defaultHeaders: { 'HTTP-Referer': 'https://anatolia-sim.onrender.com', 'X-Title': 'ANATOLIA-SIM' } });
     const completion = await client.chat.completions.create({
       model: 'meta-llama/llama-3.3-70b-instruct:free',
       max_tokens: 800,
@@ -36,7 +36,7 @@ router.post('/:simId/hypothesis', authenticate, requireSimulationOwner, async (r
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) return res.status(503).json({ error: 'GROQ_API_KEY not configured' });
     const { hypothesis, stats, events } = req.body;
-    const client = new OpenAI({ apiKey, baseURL: 'https://openrouter.ai/api/v1', maxRetries: 0, defaultHeaders: { 'HTTP-Referer': 'https://anatolia-sim.onrender.com', 'X-Title': 'ANATOLİA-SİM' } });
+    const client = new OpenAI({ apiKey, baseURL: 'https://openrouter.ai/api/v1', maxRetries: 0, defaultHeaders: { 'HTTP-Referer': 'https://anatolia-sim.onrender.com', 'X-Title': 'ANATOLIA-SIM' } });
     const completion = await client.chat.completions.create({
       model: 'meta-llama/llama-3.3-70b-instruct:free',
       max_tokens: 600,
