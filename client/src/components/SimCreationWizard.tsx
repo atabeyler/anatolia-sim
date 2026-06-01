@@ -508,9 +508,18 @@ interface Props {
 export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: Props) {
   const [step, setStep] = useState(0);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [simForm, setSimForm] = useState({ name:'', latitude:'', longitude:'' });
-  const [f1, setF1] = useState<any>(founderDefaults('male'));
-  const [f2, setF2] = useState<any>(founderDefaults('female'));
+  const [simForm, setSimForm] = useState<{ name: string; latitude: string; longitude: string }>(() => {
+    try { const s = localStorage.getItem('anatolia-wizard-last'); if (s) return JSON.parse(s).simForm ?? { name:'', latitude:'', longitude:'' }; } catch {}
+    return { name:'', latitude:'', longitude:'' };
+  });
+  const [f1, setF1] = useState<any>(() => {
+    try { const s = localStorage.getItem('anatolia-wizard-last'); if (s) return JSON.parse(s).f1 ?? founderDefaults('male'); } catch {}
+    return founderDefaults('male');
+  });
+  const [f2, setF2] = useState<any>(() => {
+    try { const s = localStorage.getItem('anatolia-wizard-last'); if (s) return JSON.parse(s).f2 ?? founderDefaults('female'); } catch {}
+    return founderDefaults('female');
+  });
 
   const meta  = STEPS[step];
   const isF2  = meta.type !== 'sim-info' && meta.type !== 'summary' && (meta as any).f === 2;
@@ -883,7 +892,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
             </div>
             <div style={{ display:'flex', gap:12 }}>
               <button
-                onClick={() => { setConfirmOpen(false); onSubmit(simForm, f1, f2); }}
+                onClick={() => { setConfirmOpen(false); try { localStorage.setItem('anatolia-wizard-last', JSON.stringify({ simForm, f1, f2 })); } catch {} onSubmit(simForm, f1, f2); }}
                 style={{ ...btnBase, fontSize:16, flex:1,
                   background:'rgba(78,203,113,0.18)', border:'1px solid rgba(78,203,113,0.55)',
                   color:'#4ecb71' }}>
