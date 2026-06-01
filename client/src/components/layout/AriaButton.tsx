@@ -26,6 +26,7 @@ export default function AriaButton() {
   const [lastAction, setLastAction] = useState<string | null>(null);
   const [textInput, setTextInput]   = useState('');
   const [ttsMuted, setTtsMuted]     = useState(false);
+  const [ttsError, setTtsError]     = useState<string | null>(null);
   const textInputRef                = useRef<HTMLInputElement | null>(null);
   const [pos, setPos]               = useState({
     x: 20,
@@ -123,6 +124,7 @@ export default function AriaButton() {
       setAriaText('');
       setTextInput('');
       setTtsMuted(false);
+      setTtsError(null);
     } else {
       activeRef.current     = true;
       processingRef.current = false;
@@ -149,6 +151,7 @@ export default function AriaButton() {
     if (!accessToken) return;
     stopAudio();
     setTtsMuted(false);
+    setTtsError(null);
     const ctx = audioCtxRef.current;
     if (!ctx) return;
     fetch('/api/aria/speak', {
@@ -158,15 +161,19 @@ export default function AriaButton() {
     })
       .then(r => {
         if (!r.ok) {
-          r.json().catch(() => null).then(j => console.error('ARIA TTS error:', r.status, j));
-          setTtsMuted(true);
-          return null;
+          return r.text().then(body => {
+            const msg = `TTS ${r.status}: ${body.slice(0, 80)}`;
+            console.error('ARIA TTS error:', msg);
+            setTtsMuted(true);
+            setTtsError(msg);
+            return null;
+          });
         }
         return r.arrayBuffer();
       })
       .then(buf => {
         if (!buf || !activeRef.current) return;
-        ctx.decodeAudioData(buf)
+        ctx.decodeAudioData(buf as ArrayBuffer)
           .then(decoded => {
             const src = ctx.createBufferSource();
             src.buffer = decoded;
@@ -174,9 +181,9 @@ export default function AriaButton() {
             audioSrcRef.current = src;
             src.start(0);
           })
-          .catch(e => { console.error('ARIA audio decode error:', e); setTtsMuted(true); });
+          .catch(e => { console.error('ARIA audio decode error:', e); setTtsMuted(true); setTtsError('Audio decode failed'); });
       })
-      .catch(e => { console.error('ARIA TTS fetch error:', e); setTtsMuted(true); });
+      .catch(e => { console.error('ARIA TTS fetch error:', e); setTtsMuted(true); setTtsError(String(e)); });
   }
 
   function killRec(rec: any) {
@@ -596,8 +603,13 @@ export default function AriaButton() {
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
             }}>
-              {ttsMuted && <span title="TTS failed" style={{ marginRight: 4, opacity: 0.6 }}>🔇</span>}
+              {ttsMuted && <span title={ttsError ?? 'TTS failed'} style={{ marginRight: 4, opacity: 0.6 }}>🔇</span>}
               {ariaText}
+              {ttsError && (
+                <div style={{ color: '#ff6b6b', fontSize: 9, marginTop: 3, wordBreak: 'break-all' }}>
+                  {ttsError}
+                </div>
+              )}
             </div>
           )}
           {!SR && uiState === 'command' && (
