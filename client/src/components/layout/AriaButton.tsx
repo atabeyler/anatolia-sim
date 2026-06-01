@@ -111,7 +111,7 @@ export default function AriaButton() {
       processingRef.current = false;
       disarmWatchdog();
       killRec(recRef.current); recRef.current = null;
-      window.speechSynthesis?.cancel();
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
       setUI('idle');
       setTranscript('');
       setAriaText('');
@@ -123,14 +123,28 @@ export default function AriaButton() {
     }
   }
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   function speak(text: string) {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = storeRef.current.lang === 'tr' ? 'tr-TR' : 'en-US';
-    utt.rate = 1.05;
-    utt.pitch = 1.1;
-    window.speechSynthesis.speak(utt);
+    const { accessToken, lang } = storeRef.current;
+    if (!accessToken) return;
+    // Stop any ongoing speech
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    fetch('/api/aria/speak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ text, lang }),
+    })
+      .then(r => r.ok ? r.blob() : null)
+      .then(blob => {
+        if (!blob || !activeRef.current) return;
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        audio.onended = () => URL.revokeObjectURL(url);
+        audio.play().catch(() => {});
+      })
+      .catch(() => {});
   }
 
   function killRec(rec: any) {

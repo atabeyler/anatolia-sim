@@ -124,8 +124,43 @@ Return ONLY the JSON object.`;
   }
 });
 
-router.post('/speak', authenticate, async (_req, res) => {
-  res.status(503).json({ error: 'TTS disabled' });
+router.post('/speak', authenticate, async (req, res) => {
+  try {
+    const apiKey = process.env.ELEVENLABS_API_KEY;
+    if (!apiKey) return res.status(503).json({ error: 'ELEVENLABS_API_KEY not configured' });
+
+    const { text, lang } = req.body;
+    if (!text) return res.status(400).json({ error: 'No text provided' });
+
+    // eleven_multilingual_v2 supports Turkish. Voice: Sarah (neutral, clear)
+    const voiceId = process.env.ELEVENLABS_VOICE_ID ?? 'EXAVITQu4vr4xnSDxMaL';
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      method: 'POST',
+      headers: {
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json',
+        'Accept': 'audio/mpeg',
+      },
+      body: JSON.stringify({
+        text,
+        model_id: 'eleven_multilingual_v2',
+        voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.2, use_speaker_boost: true },
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      console.error('ElevenLabs error:', err);
+      return res.status(502).json({ error: 'TTS request failed' });
+    }
+
+    res.setHeader('Content-Type', 'audio/mpeg');
+    const buf = Buffer.from(await response.arrayBuffer());
+    res.send(buf);
+  } catch (err) {
+    console.error('TTS error:', err);
+    res.status(500).json({ error: 'TTS failed' });
+  }
 });
 
 export default router;
