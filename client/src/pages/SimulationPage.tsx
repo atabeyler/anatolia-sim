@@ -314,9 +314,14 @@ export default function SimulationPage() {
 
         {/* Row 1: Logo | SIM time | [ARIA desktop] | [clock desktop] | BAŞLAT/DURDUR */}
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 8, padding: isMobile ? '4px 8px' : '5px 10px', borderBottom: '1px solid #4a1a1a' }}>
-          <span style={{ fontSize: 14, fontFamily: 'Orbitron, monospace', fontWeight: 900, color: '#00e887', letterSpacing: isMobile ? '0.08em' : '0.15em', flexShrink: 0 }}>
-            ANATOLIA-SIM
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, gap: 2, flexShrink: 0 }}>
+            <span style={{ fontSize: isMobile ? 12 : 14, fontFamily: 'Orbitron, monospace', fontWeight: 900, color: '#e0e0f0', letterSpacing: isMobile ? '0.12em' : '0.2em' }}>
+              ANATOLIA-SIM
+            </span>
+            <span style={{ fontSize: isMobile ? 10 : 11, fontFamily: 'Share Tech Mono, monospace', fontWeight: 700, color: '#cc2222', letterSpacing: isMobile ? '0.16em' : '0.22em' }}>
+              {lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}
+            </span>
+          </div>
 
           <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: isMobile ? 3 : 6 }}>
             <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>SİM</span>
