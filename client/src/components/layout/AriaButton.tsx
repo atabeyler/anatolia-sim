@@ -68,6 +68,7 @@ export default function AriaButton() {
   const watchdogRef = useRef<any>(null);
   const pendingCmdRef = useRef<string | null>(null);
   const retryTimerRef = useRef<any>(null);
+  const speakingRef = useRef(false);
 
   function setUI(s: AriaState) { uiRef.current = s; setUiState(s); }
   function armWatchdog() {
@@ -119,8 +120,8 @@ export default function AriaButton() {
   function onTouchEnd() { dragging.current = false; }
 
   /* ── TTS ────────────────────────────────────────────────────────────────── */
-  function speak(text: string) {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  function speak(text: string, onDone?: () => void) {
+    if (typeof window === 'undefined' || !window.speechSynthesis) { onDone?.(); return; }
     window.speechSynthesis.cancel();
     const utt = new SpeechSynthesisUtterance(text);
     utt.lang = storeRef.current.lang === 'tr' ? 'tr-TR' : 'en-US';
@@ -128,9 +129,13 @@ export default function AriaButton() {
     const voices = window.speechSynthesis.getVoices();
     const match = voices.find(v => v.lang.startsWith(storeRef.current.lang === 'tr' ? 'tr' : 'en'));
     if (match) utt.voice = match;
+    speakingRef.current = true;
+    utt.onend = () => { speakingRef.current = false; onDone?.(); };
+    utt.onerror = () => { speakingRef.current = false; onDone?.(); };
     window.speechSynthesis.speak(utt);
   }
   function stopSpeech() {
+    speakingRef.current = false;
     if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
   }
   function unlockSpeech() {
@@ -168,7 +173,7 @@ export default function AriaButton() {
   }
 
   function startListening() {
-    if (!activeRef.current) return;
+    if (!activeRef.current || speakingRef.current) return;
     killRec();
     if (!SpeechRec) {
       setUI('listening');
@@ -276,18 +281,20 @@ export default function AriaButton() {
         responseText = err?.response?.data?.text ?? (lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.');
       }
     }
-    setTranscript(''); setAriaText(responseText); speak(responseText);
+    setTranscript(''); setAriaText(responseText);
     disarmWatchdog(); processingRef.current = false;
 
     if (activeRef.current) {
-      const pending = pendingCmdRef.current; pendingCmdRef.current = null;
-      if (pending) {
-        processingRef.current = true; armWatchdog(); killRec(); processCommand(pending);
-      } else if (SpeechRec) {
-        startListening();
-      } else {
-        setUI('listening'); setTimeout(() => textInputRef.current?.focus(), 50);
-      }
+      speak(responseText, () => {
+        if (!activeRef.current) return;
+        const pending = pendingCmdRef.current; pendingCmdRef.current = null;
+        if (pending) {
+          processingRef.current = true; armWatchdog(); killRec(); processCommand(pending);
+          return;
+        }
+        if (SpeechRec) startListening();
+        else { setUI('listening'); setTimeout(() => textInputRef.current?.focus(), 50); }
+      });
       const ms = Math.min(Math.max(2500, responseText.length * 70), 8000);
       setTimeout(() => setAriaText(t => t === responseText ? '' : t), ms);
     } else {
