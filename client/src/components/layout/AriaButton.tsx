@@ -24,6 +24,8 @@ export default function AriaButton() {
   const [transcript, setTranscript] = useState('');
   const [ariaText, setAriaText]     = useState('');
   const [lastAction, setLastAction] = useState<string | null>(null);
+  const [textInput, setTextInput]   = useState('');
+  const textInputRef                = useRef<HTMLInputElement | null>(null);
   const [pos, setPos]               = useState({
     x: 20,
     y: typeof window !== 'undefined' ? window.innerHeight - 100 : 600,
@@ -115,6 +117,7 @@ export default function AriaButton() {
       setUI('idle');
       setTranscript('');
       setAriaText('');
+      setTextInput('');
     } else {
       activeRef.current     = true;
       processingRef.current = false;
@@ -162,7 +165,11 @@ export default function AriaButton() {
     killRec(recRef.current);
     recRef.current = null;
 
-    if (!SR) { processCommand('__summary__'); return; }
+    if (!SR) {
+      setUI('command');
+      setTimeout(() => textInputRef.current?.focus(), 50);
+      return;
+    }
 
     setUI('command');
     setTranscript('');
@@ -303,8 +310,11 @@ export default function AriaButton() {
         armWatchdog();
         killRec(recRef.current); recRef.current = null;
         processCommand(pending);
-      } else {
+      } else if (SR) {
         startRecognition();
+      } else {
+        setUI('command');
+        setTimeout(() => textInputRef.current?.focus(), 50);
       }
       const ms = Math.min(Math.max(2500, responseText.length * 70), 8000);
       setTimeout(() => setAriaText(t => t === responseText ? '' : t), ms);
@@ -417,6 +427,15 @@ export default function AriaButton() {
     }
   }
 
+  function submitTextInput() {
+    const cmd = textInput.trim();
+    if (!cmd || processingRef.current) return;
+    setTextInput('');
+    processingRef.current = true;
+    armWatchdog();
+    processCommand(cmd);
+  }
+
   function buildSummary(stats: any, lang: string): string {
     if (!stats) return lang === 'tr' ? 'Simülasyon verisi yok.' : 'No simulation data.';
     if (lang === 'tr')
@@ -508,7 +527,7 @@ export default function AriaButton() {
           padding: '7px 11px',
           maxWidth: 280,
           boxShadow: `0 0 12px ${color}33`,
-          pointerEvents: 'none',
+          pointerEvents: !SR && uiState === 'command' ? 'auto' : 'none',
         }}>
           {transcript && (
             <div style={{
@@ -529,6 +548,43 @@ export default function AriaButton() {
               wordBreak: 'break-word',
             }}>
               {ariaText}
+            </div>
+          )}
+          {!SR && uiState === 'command' && (
+            <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
+              <input
+                ref={textInputRef}
+                value={textInput}
+                onChange={e => setTextInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') submitTextInput(); }}
+                placeholder={store.lang === 'tr' ? 'komut yaz…' : 'type command…'}
+                style={{
+                  flex: 1,
+                  background: 'transparent',
+                  border: '1px solid #00e88766',
+                  borderRadius: 4,
+                  color: '#00e887',
+                  fontFamily: 'Share Tech Mono, monospace',
+                  fontSize: 10,
+                  padding: '3px 6px',
+                  outline: 'none',
+                  pointerEvents: 'auto',
+                }}
+              />
+              <button
+                onClick={submitTextInput}
+                style={{
+                  background: '#00e88722',
+                  border: '1px solid #00e88766',
+                  borderRadius: 4,
+                  color: '#00e887',
+                  fontFamily: 'Share Tech Mono, monospace',
+                  fontSize: 10,
+                  padding: '3px 7px',
+                  cursor: 'pointer',
+                  pointerEvents: 'auto',
+                }}
+              >↵</button>
             </div>
           )}
           <div style={{
