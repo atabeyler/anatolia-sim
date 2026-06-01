@@ -155,8 +155,6 @@ export default function AriaButton() {
   function speak(text: string) {
     const { accessToken, lang } = storeRef.current;
     stopAudio();
-    setTtsMuted(false);
-    setTtsError(null);
     const ctx = audioCtxRef.current;
     if (!accessToken || !ctx) { browserSpeak(text, lang); return; }
     fetch('/api/aria/speak', {
