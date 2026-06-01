@@ -189,8 +189,8 @@ router.post('/speak', authenticate, async (req, res) => {
 
     if (!response.ok) {
       const err = await response.text();
-      console.error('ElevenLabs error:', err);
-      return res.status(502).json({ error: 'TTS request failed' });
+      console.error('ElevenLabs error:', response.status, err);
+      return res.status(502).json({ error: `ElevenLabs ${response.status}: ${err.slice(0, 300)}` });
     }
 
     res.setHeader('Content-Type', 'audio/mpeg');
