@@ -55,7 +55,7 @@ function inferFallbackActions(message, context) {
   const page = context?.page ?? '/';
   const isWizard = !!context?.wizardOpen || page === '/wizard';
   const isSim = page.startsWith('/simulation/');
-  const isDash = page === '/';
+  const isDash = page === '/' || page === '/dashboard';
 
   if (isWizard) {
     if (/(devam|ileri|next|continue|ilerle)/.test(msg)) actions.push({ type: 'wizard_next' });
@@ -65,7 +65,7 @@ function inferFallbackActions(message, context) {
   }
 
   if (isDash) {
-    if (/(yeni simulasyon|simulasyon olustur|create simulation|yeni sim)/.test(msg)) actions.push({ type: 'create_simulation' });
+    if (/(yeni simulasyon|simulasyon olustur|create simulation|yeni sim|simulasyon baslat|yeni oyun)/.test(msg)) actions.push({ type: 'create_simulation' });
     if (/(simulasyonu ac|open simulation|ilk simulasyon)/.test(msg)) actions.push({ type: 'open_simulation', index: 0 });
     if (/(karsilastir|compare)/.test(msg)) actions.push({ type: 'toggle_compare' });
   }
@@ -157,6 +157,7 @@ GLOBAL: navigate_to{"route":"/"}|toggle_lang|set_lang{"lang":"tr/en"}`;
     const preview = sanitizeText(raw).slice(0, 300);
     console.log('ARIA raw preview:', preview);
     const parsed = parseAriaJson(raw);
+    const rawLooksLikeReasoning = /we need to output json|according to state|so we should respond/i.test(String(raw));
 
     // Normalize: model may use 'action' (singular) instead of 'actions'
     if (!parsed.actions && parsed.action != null) {
@@ -177,7 +178,7 @@ GLOBAL: navigate_to{"route":"/"}|toggle_lang|set_lang{"lang":"tr/en"}`;
 
     if (typeof parsed.text !== 'string') parsed.text = '';
     if (!Array.isArray(parsed.actions)) parsed.actions = [];
-    if (parsed.actions.length === 0) {
+    if (parsed.actions.length === 0 || rawLooksLikeReasoning) {
       const fallback = inferFallbackActions(message, context);
       if (fallback.length > 0) {
         parsed.actions = fallback;
