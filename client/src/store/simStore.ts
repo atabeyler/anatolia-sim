@@ -101,7 +101,7 @@ export const useSimStore = create<SimStore>((set) => ({
 
   activePanel: null,
   setActivePanel: (panel) => set(s => ({ activePanel: s.activePanel === panel ? null : panel })),
-  lang: 'en',
+  lang: 'tr',
   setLang: (l) => set({ lang: l }),
   toggleLang: () => set(s => ({ lang: s.lang === 'tr' ? 'en' : 'tr' })),
   theme: 'dark',
