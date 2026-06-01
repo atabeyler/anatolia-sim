@@ -50,6 +50,45 @@ function traitBar(value: number, color: string) {
   );
 }
 
+function isAlive(obj: any) { return obj && obj.alive !== false && !obj.is_dead; }
+
+function PersonRow({ obj, fallbackId, tag, lang }: { obj?: any; fallbackId?: string; tag?: string; lang: string }) {
+  if (!obj && !fallbackId) return null;
+  const alive = isAlive(obj);
+  const isMale = obj?.sex === 'male';
+  const nameColor = alive ? (isMale ? '#8ab0ff' : '#ffaac8') : '#7a4a4a';
+  const dotColor  = alive ? (isMale ? '#6090ff' : '#ff8ab0') : '#5a3a3a';
+  const displayName = obj
+    ? nameFromId(obj.id, obj.sex, obj.phenotype?.name ?? obj.name)
+    : `ID:${fallbackId?.slice(-6)}`;
+  return (
+    <div className="flex items-center gap-1.5 mb-0.5" style={{ paddingLeft: 10 }}>
+      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: dotColor }} />
+      <span className="font-share-tech" style={{ fontSize: 8.5, color: nameColor }}>{displayName}</span>
+      {tag && <span className="font-share-tech" style={{ fontSize: 7, color: '#5a7a6a', marginLeft: 2 }}>{tag}</span>}
+      {obj && (
+        alive
+          ? <span className="font-share-tech text-sim-muted" style={{ fontSize: 7.5 }}>{parseFloat(obj.age_years ?? 0).toFixed(0)}{lang === 'tr' ? ' yaş' : ' yr'}</span>
+          : <span className="font-share-tech" style={{ fontSize: 7.5, color: '#a05050' }}>
+              † {obj.death_cause ? causeLabel(obj.death_cause, lang) : (lang === 'tr' ? 'ölü' : 'dec.')}
+            </span>
+      )}
+      {!obj && <span className="font-share-tech" style={{ fontSize: 7.5, color: '#a05050' }}>† {lang === 'tr' ? 'ölü' : 'dec.'}</span>}
+    </div>
+  );
+}
+
+function FamilySection({ label, indent, children }: { label: string; indent: number; children: React.ReactNode }) {
+  return (
+    <div className="mb-2" style={{ marginLeft: indent * 8 }}>
+      <div style={{ fontSize: 7, color: '#4a6a58', letterSpacing: '0.08em', marginBottom: 3, borderLeft: '1px solid #2a4a38', paddingLeft: 4 }}>
+        {label}
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndividuals: any[]; onClose: () => void }) {
   const { lang } = useSimStore();
   const name = nameFromId(ind.id, ind.sex, ind.phenotype?.name ?? ind.name);
@@ -63,9 +102,35 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
   // Resolve family from allIndividuals (alive + dead combined)
   const parent1 = allIndividuals.find(i => i.id === ind.parent_1_id);
   const parent2 = allIndividuals.find(i => i.id === ind.parent_2_id);
+
+  // Grandparents
+  const gp_p1a = parent1 ? allIndividuals.find(i => i.id === parent1.parent_1_id) : null;
+  const gp_p1b = parent1 ? allIndividuals.find(i => i.id === parent1.parent_2_id) : null;
+  const gp_p2a = parent2 ? allIndividuals.find(i => i.id === parent2.parent_1_id) : null;
+  const gp_p2b = parent2 ? allIndividuals.find(i => i.id === parent2.parent_2_id) : null;
+  const grandparents = [
+    gp_p1a ? { obj: gp_p1a, side: lang === 'tr' ? 'baba tarafı' : 'paternal' } : null,
+    gp_p1b ? { obj: gp_p1b, side: lang === 'tr' ? 'baba tarafı' : 'paternal' } : null,
+    gp_p2a ? { obj: gp_p2a, side: lang === 'tr' ? 'anne tarafı' : 'maternal' } : null,
+    gp_p2b ? { obj: gp_p2b, side: lang === 'tr' ? 'anne tarafı' : 'maternal' } : null,
+  ].filter(Boolean) as { obj: any; side: string }[];
+
   const children = allIndividuals.filter(i =>
     i.parent_1_id === ind.id || i.parent_2_id === ind.id
   );
+
+  // Grandchildren
+  const grandchildren = children.flatMap(c =>
+    allIndividuals.filter(i => i.parent_1_id === c.id || i.parent_2_id === c.id)
+      .map(gc => ({ obj: gc, parentName: nameFromId(c.id, c.sex, c.phenotype?.name ?? c.name) }))
+  );
+
+  // Mate (co-parent of children)
+  const mateId = children.length > 0
+    ? (children[0].parent_1_id === ind.id ? children[0].parent_2_id : children[0].parent_1_id)
+    : null;
+  const mate = mateId ? allIndividuals.find(i => i.id === mateId) : null;
+
   const siblings = allIndividuals.filter(i =>
     i.id !== ind.id &&
     ((ind.parent_1_id && i.parent_1_id === ind.parent_1_id) ||
@@ -200,128 +265,97 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             </div>
 
             {isFounder && (
-              <div className="font-share-tech px-2 py-1 mb-2" style={{ fontSize: 8, color: '#d4a838', border: '1px solid rgba(212,168,56,0.3)', background: 'rgba(212,168,56,0.06)' }}>
+              <div className="font-share-tech px-2 py-1 mb-3" style={{ fontSize: 8, color: '#d4a838', border: '1px solid rgba(212,168,56,0.3)', background: 'rgba(212,168,56,0.06)' }}>
                 ★ {lang === 'tr' ? 'Kurucu Birey — Medeniyetin Atası' : 'Founding Individual — Ancestor of Civilization'}
               </div>
             )}
 
-            {/* Parents */}
+            {/* ── Grandparents ── */}
+            {grandparents.length > 0 && (
+              <FamilySection label={lang === 'tr' ? `BÜYÜKANNE/BABA (${grandparents.length})` : `GRANDPARENTS (${grandparents.length})`} indent={0}>
+                {grandparents.map(({ obj, side }, idx) => (
+                  <PersonRow key={idx} obj={obj} tag={side} lang={lang} />
+                ))}
+              </FamilySection>
+            )}
+
+            {/* ── Parents ── */}
             {(parent1 || parent2 || ind.parent_1_id || ind.parent_2_id) && (
-              <div className="mb-2">
-                <div style={{ fontSize: 7.5, color: '#7a9a88', letterSpacing: '0.08em', marginBottom: 4 }}>
-                  {lang === 'tr' ? 'EBEVEYNLER' : 'PARENTS'}
-                </div>
+              <FamilySection label={lang === 'tr' ? 'EBEVEYNLER' : 'PARENTS'} indent={grandparents.length > 0 ? 1 : 0}>
                 {[
                   { obj: parent1, id: ind.parent_1_id },
                   { obj: parent2, id: ind.parent_2_id },
                 ].filter(p => p.obj || p.id).map(({ obj, id }, idx) => {
-                  const sex = obj?.sex;
-                  const isMale = sex === 'male';
-                  const isFemale = sex === 'female';
-                  const label = isMale ? (lang === 'tr' ? 'Baba' : 'Father')
-                              : isFemale ? (lang === 'tr' ? 'Anne' : 'Mother')
-                              : (lang === 'tr' ? 'Ebeveyn' : 'Parent');
-                  const labelColor = isMale ? '#5070c0' : isFemale ? '#c06080' : '#7a9a88';
-                  const dotColor   = isMale ? '#6090ff' : isFemale ? '#ff8ab0' : '#9090b0';
-                  const nameColor  = isMale ? '#8ab0ff' : isFemale ? '#ffaac8' : '#a0a8c8';
-                  const parentAlive = obj ? (obj.alive !== false && !obj.is_dead) : false;
-                  const parentFound = !!obj;
-                  return (
-                    <div key={idx} className="flex items-center gap-2 mb-1">
-                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: parentAlive ? dotColor : '#5a3a3a' }} />
-                      <div className="font-share-tech" style={{ fontSize: 9 }}>
-                        <span style={{ color: labelColor }}>{label}: </span>
-                        <span style={{ color: parentAlive ? nameColor : '#7a4a4a' }}>
-                          {parentFound
-                            ? nameFromId(obj.id, obj.sex, obj.phenotype?.name ?? obj.name)
-                            : `ID:${id?.slice(-6)}`}
-                        </span>
-                        {parentFound ? (
-                          parentAlive ? (
-                            <span style={{ color: '#7a9a88', marginLeft: 4 }}>
-                              {parseFloat(obj.age_years ?? 0).toFixed(0)}{lang === 'tr' ? ' yaş' : ' yr'}
-                            </span>
-                          ) : (
-                            <span style={{ color: '#a05050', marginLeft: 4 }}>
-                              † {lang === 'tr' ? 'ölü' : 'dec.'}
-                              {obj.death_cause && (
-                                <span style={{ color: '#7a3a3a', marginLeft: 3 }}>
-                                  ({causeLabel(obj.death_cause, lang)})
-                                </span>
-                              )}
-                            </span>
-                          )
-                        ) : (
-                          <span style={{ color: '#a05050', marginLeft: 4 }}>† {lang === 'tr' ? 'ölü' : 'dec.'}</span>
-                        )}
-                      </div>
-                    </div>
-                  );
+                  const roleLabel = obj?.sex === 'male'
+                    ? (lang === 'tr' ? 'Baba' : 'Father')
+                    : obj?.sex === 'female'
+                      ? (lang === 'tr' ? 'Anne' : 'Mother')
+                      : (lang === 'tr' ? 'Ebeveyn' : 'Parent');
+                  return <PersonRow key={idx} obj={obj} fallbackId={id} tag={roleLabel} lang={lang} />;
                 })}
-              </div>
+              </FamilySection>
             )}
 
-            {/* Children */}
-            {children.length > 0 && (
-              <div className="mb-2">
-                <div style={{ fontSize: 7.5, color: '#7a9a88', letterSpacing: '0.08em', marginBottom: 4 }}>
-                  {lang === 'tr' ? `ÇOCUKLAR (${children.length})` : `CHILDREN (${children.length})`}
-                </div>
-                {children.slice(0, 8).map(c => {
-                  const cAlive = c.alive !== false && !c.is_dead;
-                  return (
-                    <div key={c.id} className="flex items-center gap-2 mb-0.5">
-                      <div className="w-1 h-1 rounded-full flex-shrink-0"
-                        style={{ background: cAlive ? (c.sex === 'male' ? '#6090ff' : '#ff8ab0') : '#5a3a3a' }} />
-                      <span className="font-share-tech" style={{ fontSize: 8.5, color: cAlive ? (c.sex === 'male' ? '#8ab0ff' : '#ffaac8') : '#7a4a4a' }}>
-                        {nameFromId(c.id, c.sex, c.phenotype?.name ?? c.name)}
-                      </span>
-                      {cAlive ? (
-                        <span className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>
-                          {parseFloat(c.age_years ?? 0).toFixed(0)}{lang === 'tr' ? ' yaş' : ' yr'}
-                        </span>
-                      ) : (
-                        <span className="font-share-tech" style={{ fontSize: 8, color: '#a05050' }}>† {lang === 'tr' ? 'ölü' : 'dec.'}</span>
-                      )}
-                    </div>
-                  );
-                })}
-                {children.length > 8 && (
-                  <div className="font-share-tech text-sim-muted" style={{ fontSize: 7.5, marginLeft: 12 }}>
-                    +{children.length - 8} {lang === 'tr' ? 'çocuk daha' : 'more'}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Siblings */}
+            {/* ── Siblings ── */}
             {siblings.length > 0 && (
-              <div>
-                <div style={{ fontSize: 7.5, color: '#7a9a88', letterSpacing: '0.08em', marginBottom: 4 }}>
-                  {lang === 'tr' ? `KARDEŞLER (${siblings.length})` : `SIBLINGS (${siblings.length})`}
-                </div>
-                {siblings.slice(0, 5).map(s => (
-                  <div key={s.id} className="flex items-center gap-2 mb-0.5">
-                    <div className="w-1 h-1 rounded-full flex-shrink-0"
-                      style={{ background: s.sex === 'male' ? '#6090ff' : '#ff8ab0' }} />
-                    <span className="font-share-tech" style={{ fontSize: 8.5, color: '#6878a8' }}>
-                      {nameFromId(s.id, s.sex, s.phenotype?.name ?? s.name)}
-                    </span>
-                    <span className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>
-                      {parseFloat(s.age_years ?? 0).toFixed(0)}{lang === 'tr' ? ' yaş' : ' yr'}
-                    </span>
-                  </div>
+              <FamilySection label={lang === 'tr' ? `KARDEŞLER (${siblings.length})` : `SIBLINGS (${siblings.length})`} indent={2}>
+                {siblings.slice(0, 6).map(s => (
+                  <PersonRow key={s.id} obj={s} lang={lang} />
                 ))}
-                {siblings.length > 5 && (
-                  <div className="font-share-tech text-sim-muted" style={{ fontSize: 7.5, marginLeft: 12 }}>
-                    +{siblings.length - 5} {lang === 'tr' ? 'kardeş daha' : 'more'}
+                {siblings.length > 6 && (
+                  <div className="font-share-tech text-sim-muted" style={{ fontSize: 7.5, paddingLeft: 10 }}>
+                    +{siblings.length - 6} {lang === 'tr' ? 'daha' : 'more'}
                   </div>
                 )}
-              </div>
+              </FamilySection>
+            )}
+
+            {/* ── Self marker ── */}
+            <div className="flex items-center gap-2 my-1 px-1" style={{ borderLeft: '2px solid rgba(212,168,56,0.6)', marginLeft: 2 }}>
+              <span style={{ fontSize: 9, color: '#d4a838' }}>★</span>
+              <span className="font-orbitron font-bold" style={{ fontSize: 9, color: ind.sex === 'male' ? '#8ab0ff' : '#ffaac8' }}>{name}</span>
+              <span className="font-share-tech text-sim-muted" style={{ fontSize: 7.5 }}>
+                {isDead ? `† ${lang === 'tr' ? 'ölü' : 'dec.'}` : `${age.toFixed(0)} ${lang === 'tr' ? 'yaş' : 'yr'}`}
+              </span>
+            </div>
+
+            {/* ── Mate ── */}
+            {mate && (
+              <FamilySection label={lang === 'tr' ? 'EŞ' : 'MATE'} indent={0}>
+                <PersonRow obj={mate} tag={lang === 'tr' ? 'Eş' : 'Mate'} lang={lang} />
+              </FamilySection>
+            )}
+
+            {/* ── Children ── */}
+            {children.length > 0 && (
+              <FamilySection label={lang === 'tr' ? `ÇOCUKLAR (${children.length})` : `CHILDREN (${children.length})`} indent={1}>
+                {children.slice(0, 8).map(c => (
+                  <PersonRow key={c.id} obj={c} lang={lang} />
+                ))}
+                {children.length > 8 && (
+                  <div className="font-share-tech text-sim-muted" style={{ fontSize: 7.5, paddingLeft: 10 }}>
+                    +{children.length - 8} {lang === 'tr' ? 'daha' : 'more'}
+                  </div>
+                )}
+              </FamilySection>
+            )}
+
+            {/* ── Grandchildren ── */}
+            {grandchildren.length > 0 && (
+              <FamilySection label={lang === 'tr' ? `TORUNLAR (${grandchildren.length})` : `GRANDCHILDREN (${grandchildren.length})`} indent={2}>
+                {grandchildren.slice(0, 6).map(({ obj: gc, parentName }, idx) => (
+                  <PersonRow key={idx} obj={gc} tag={parentName} lang={lang} />
+                ))}
+                {grandchildren.length > 6 && (
+                  <div className="font-share-tech text-sim-muted" style={{ fontSize: 7.5, paddingLeft: 10 }}>
+                    +{grandchildren.length - 6} {lang === 'tr' ? 'daha' : 'more'}
+                  </div>
+                )}
+              </FamilySection>
             )}
 
             {isFounder && children.length === 0 && (
-              <div className="font-share-tech text-sim-muted" style={{ fontSize: 8 }}>
+              <div className="font-share-tech text-sim-muted mt-2" style={{ fontSize: 8 }}>
                 {lang === 'tr' ? 'Henüz çocuk yok.' : 'No children yet.'}
               </div>
             )}
