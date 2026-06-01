@@ -1,7 +1,7 @@
 // Main Simulation Loop — each tick = 1 simulation day
 
 import { rollDeath } from './biology/mortality.js';
-import { checkReproduction, attemptMating } from './biology/reproduction.js';
+import { checkReproduction } from './biology/reproduction.js';
 import { updateWorldState, computeResourcePressure } from './environment/environmentEngine.js';
 import { buildPhonology } from './language/nameEngine.js';
 import { updateLanguageStage, learnFromTeacher } from './language/languageEngine.js';
@@ -226,14 +226,6 @@ export class SimulationEngine {
         ind.alive = false;
         ind.death_day = day;
         ind.death_cause = cause;
-        // Free the surviving mate so they can re-pair
-        if (ind.social?.mate_id) {
-          const mate = this.population.get(ind.social.mate_id);
-          if (mate && !mate.is_dead) {
-            mate.social.has_mate = false;
-            mate.social.mate_id = null;
-          }
-        }
         tickEvents.push({ type: 'death_of_kin', individual_id: ind.id, day });
         const deadName = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
         this.logEvent(day, 'death', `${deadName} died: ${cause}`, { individual_id: ind.id, cause, name: deadName }, 1);
@@ -420,20 +412,6 @@ export class SimulationEngine {
       }
     }
 
-    // ── Mate attraction: partners stay together ──────────────────────────────
-    if (ind.social?.mate_id) {
-      const mate = this.population.get(ind.social.mate_id);
-      if (mate && !mate.is_dead) {
-        const dx = (mate.x ?? 0) - (ind.x ?? 0);
-        const dy = (mate.y ?? 0) - (ind.y ?? 0);
-        const dist = Math.hypot(dx, dy);
-        if (dist > 0.1) {
-          const pull = Math.min(1, dist / 2) * 0.7;
-          ind._moveAngle = ind._moveAngle * (1 - pull) + Math.atan2(dy, dx) * pull;
-        }
-      }
-    }
-
     // ── Child-parent attachment: ages 2–12 follow parent closely ────────────
     if (ageYears >= 2 && ageYears < 12) {
       const parent = this.population.get(ind.parent_1_id) ?? this.population.get(ind.parent_2_id);
@@ -524,11 +502,6 @@ export class SimulationEngine {
         const dist = Math.hypot((ind.x ?? 0) - (other.x ?? 0), (ind.y ?? 0) - (other.y ?? 0));
         if (dist > SOCIAL_INTERACTION_RADIUS) continue;
         pairs++;
-
-        // Mating attempt
-        if (!ind.social?.mate_id && !other.social?.mate_id) {
-          attemptMating(ind, other, day);
-        }
 
         // Social bonding
         processBonding(ind, other, 'interaction');
