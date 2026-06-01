@@ -6,7 +6,8 @@ import { Mic, MicOff, Loader2 } from 'lucide-react';
 
 type AriaState = 'idle' | 'listening' | 'processing';
 
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+const GEMINI_URL = (key: string) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
 const SpeechRec: any = typeof window !== 'undefined'
   ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null)
   : null;
@@ -243,45 +244,36 @@ export default function AriaButton() {
         responseText = lang === 'tr' ? 'API anahtarı eksik.' : 'API key missing.';
       } else {
         try {
-          const res = await fetch(GEMINI_URL, {
+          const sysPrompt = buildPrompt(stats, events.slice(0, 6), ctx, lang);
+          const res = await fetch(GEMINI_URL(apiKey), {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              model: 'gemini-2.0-flash',
-              messages: [
-                { role: 'system', content: buildPrompt(stats, events.slice(0, 6), ctx, lang) },
-                { role: 'user', content: cmd },
-              ],
-              max_tokens: 250,
+              system_instruction: { parts: [{ text: sysPrompt }] },
+              contents: [{ role: 'user', parts: [{ text: cmd }] }],
+              generationConfig: { maxOutputTokens: 300, responseMimeType: 'application/json' },
             }),
           });
 
           if (res.status === 429) {
             if (!activeRef.current) { processingRef.current = false; return; }
-            const ra = parseInt(res.headers.get('retry-after') ?? '30', 10);
             clearTimeout(retryTimerRef.current);
-            if (ra > 300) {
-              responseText = lang === 'tr'
-                ? 'Günlük AI limiti doldu. Birkaç saat sonra tekrar deneyin.'
-                : 'Daily AI quota reached. Try again in a few hours.';
-            } else {
-              const msg = lang === 'tr'
-                ? `Limit aşıldı — ${ra}s sonra tekrar deniyor.`
-                : `Rate limited — retrying in ${ra}s.`;
-              setTranscript(''); setAriaText(msg); speak(msg); disarmWatchdog();
-              setUI('listening');
-              if (SpeechRec) startListening(); else setTimeout(() => textInputRef.current?.focus(), 50);
-              setTimeout(() => setAriaText(t => t === msg ? '' : t), 8000);
-              retryTimerRef.current = setTimeout(() => {
-                if (activeRef.current && processingRef.current) { armWatchdog(); processCommand(cmd); }
-              }, ra * 1000);
-              return;
-            }
+            const msg = lang === 'tr' ? 'Dakika limiti doldu — 60s sonra tekrar deniyor.' : 'Rate limited — retrying in 60s.';
+            setTranscript(''); setAriaText(msg); speak(msg); disarmWatchdog();
+            setUI('listening');
+            if (SpeechRec) startListening(); else setTimeout(() => textInputRef.current?.focus(), 50);
+            setTimeout(() => setAriaText(t => t === msg ? '' : t), 8000);
+            retryTimerRef.current = setTimeout(() => {
+              if (activeRef.current && processingRef.current) { armWatchdog(); processCommand(cmd); }
+            }, 60000);
+            return;
           } else if (!res.ok) {
-            responseText = lang === 'tr' ? 'AI hatası.' : 'AI error.';
+            const errBody = await res.text().catch(() => '');
+            console.error('Gemini error', res.status, errBody.slice(0, 200));
+            responseText = lang === 'tr' ? `AI hatası (${res.status}).` : `AI error (${res.status}).`;
           } else {
             const json = await res.json();
-            const raw: string = json.choices?.[0]?.message?.content ?? '{}';
+            const raw: string = json.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
             let parsed: any;
             try { parsed = JSON.parse(raw); } catch { parsed = { text: raw, actions: [] }; }
             if (!parsed.actions && parsed.action != null) parsed.actions = [parsed.action];
