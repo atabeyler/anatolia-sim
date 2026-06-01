@@ -4,6 +4,20 @@ import { query } from '../../db/database.js';
 import { simulationManager } from '../simulationManager.js';
 import OpenAI from 'openai';
 
+async function withRetry(fn, attempts = 2, waitMs = 6000) {
+  for (let i = 0; i <= attempts; i++) {
+    try { return await fn(); }
+    catch (err) {
+      const status = err?.status ?? err?.response?.status;
+      if (status === 429 && i < attempts) {
+        await new Promise(r => setTimeout(r, waitMs));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 const router = Router();
 
 function markDead(individual, day, cause) {
@@ -130,14 +144,14 @@ router.post('/:simId/talk/:individualId', authenticate, requireSimulationOwner, 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) return res.status(503).json({ error: 'OPENAI_API_KEY not configured' });
     const client = new OpenAI({ apiKey });
-    const talkCompletion = await client.chat.completions.create({
+    const talkCompletion = await withRetry(() => client.chat.completions.create({
       model: 'gpt-4o-mini',
       max_tokens: 500,
       messages: [
         { role: 'system', content: `You are roleplaying as a simulated human in a civilization simulation. Age: ${age}, Sex: ${individual.sex}, Language stage: ${langStage} (${individual.language?.stage_name ?? 'pre-linguistic'}), Intelligence: ${individual.phenotype?.fluid_intelligence?.toFixed(2)}/1.0. If stage 0-1: only grunts/gestures. If stage 2: proto-sounds. If stage 3: max 10 simple words. If stage 4+: simple sentences. Never break character.` },
         { role: 'user', content: message },
       ],
-    });
+    }));
     const individualResponse = talkCompletion.choices[0].message.content ?? '';
     await query(`INSERT INTO individual_conversations (simulation_id,individual_id,sim_day,user_message,individual_response,language_stage) VALUES ($1,$2,$3,$4,$5,$6)`,
       [simId, individualId, engine.currentDay, message, individualResponse, individual.language.stage_name ?? 'pre-linguistic']);

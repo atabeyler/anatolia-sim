@@ -4,6 +4,20 @@ import OpenAI from 'openai';
 
 const router = Router();
 
+async function withRetry(fn, attempts = 2, waitMs = 6000) {
+  for (let i = 0; i <= attempts; i++) {
+    try { return await fn(); }
+    catch (err) {
+      const status = err?.status ?? err?.response?.status;
+      if (status === 429 && i < attempts) {
+        await new Promise(r => setTimeout(r, waitMs));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 function buildStatsContext(stats, events, context) {
   const page = context?.page ?? '/';
   const pageLabel = page === '/wizard' ? 'wizard'
@@ -94,7 +108,7 @@ mimari→architecture, hukuk→law, mikrobiyom→microbiome
 
 Return ONLY the JSON object.`;
 
-    const completion = await client.chat.completions.create({
+    const completion = await withRetry(() => client.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
@@ -102,7 +116,7 @@ Return ONLY the JSON object.`;
       ],
       max_tokens: 600,
       response_format: { type: 'json_object' },
-    });
+    }));
 
     const raw = completion.choices[0].message.content ?? '{}';
     let parsed;
