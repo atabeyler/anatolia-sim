@@ -4,6 +4,39 @@ import { openrouterChat } from '../../utils/openrouter.js';
 
 const router = Router();
 
+function sanitizeText(s) {
+  return String(s ?? '')
+    .replace(/\u0000/g, '')
+    .trim();
+}
+
+function parseAriaJson(raw) {
+  const safe = sanitizeText(raw);
+  const candidates = [];
+
+  candidates.push(safe);
+  const fenced = safe.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced?.[1]) candidates.push(fenced[1].trim());
+  const objMatch = safe.match(/\{[\s\S]*\}/);
+  if (objMatch?.[0]) candidates.push(objMatch[0]);
+
+  for (const c of candidates) {
+    try {
+      return JSON.parse(c);
+    } catch {
+      // try lightweight quote-fix for malformed single-quote JSON
+      try {
+        const fixed = c
+          .replace(/([{,]\s*)'([^']+?)'\s*:/g, '$1"$2":')
+          .replace(/:\s*'([^']*?)'/g, ': "$1"');
+        return JSON.parse(fixed);
+      } catch {}
+    }
+  }
+
+  return { text: safe, actions: [] };
+}
+
 
 function buildStatsContext(stats, events, context) {
   const page = context?.page ?? '/';
@@ -68,14 +101,9 @@ GLOBAL: navigate_to{"route":"/"}|toggle_lang|set_lang{"lang":"tr/en"}`;
       max_tokens: 250,
     });
 
-    console.log('ARIA raw:', raw.slice(0, 300));
-    let parsed;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      const match = String(raw).match(/\{[\s\S]*\}/);
-      parsed = match ? JSON.parse(match[0]) : { text: raw, actions: [] };
-    }
+    const preview = sanitizeText(raw).slice(0, 300);
+    console.log('ARIA raw preview:', preview);
+    const parsed = parseAriaJson(raw);
 
     // Normalize: model may use 'action' (singular) instead of 'actions'
     if (!parsed.actions && parsed.action != null) {
@@ -92,7 +120,9 @@ GLOBAL: navigate_to{"route":"/"}|toggle_lang|set_lang{"lang":"tr/en"}`;
         delete a.name; delete a.action; delete a.command; delete a.function;
       }
       return a;
-    }).filter(Boolean);
+    }).filter((a) => a && a.type);
+
+    if (typeof parsed.text !== 'string') parsed.text = '';
 
     res.json(parsed);
   } catch (err) {
