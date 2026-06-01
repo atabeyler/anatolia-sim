@@ -137,9 +137,11 @@ export default function AriaButton() {
     if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
     if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume().catch(() => {});
     if (typeof window !== 'undefined' && window.speechSynthesis) {
-      const utt = new SpeechSynthesisUtterance('');
+      const utt = new SpeechSynthesisUtterance(' ');
+      utt.volume = 0;
+      utt.rate = 10;
       window.speechSynthesis.speak(utt);
-      window.speechSynthesis.cancel();
+      // No cancel() — letting it finish activates iOS audio session
     }
   }
 
@@ -153,7 +155,10 @@ export default function AriaButton() {
     window.speechSynthesis.cancel();
     const utt = new SpeechSynthesisUtterance(text);
     utt.lang = lang === 'tr' ? 'tr-TR' : 'en-US';
-    utt.rate = 1.0;
+    utt.rate = 0.95;
+    const voices = window.speechSynthesis.getVoices();
+    const match = voices.find(v => v.lang.startsWith(lang === 'tr' ? 'tr' : 'en'));
+    if (match) utt.voice = match;
     window.speechSynthesis.speak(utt);
   }
 
