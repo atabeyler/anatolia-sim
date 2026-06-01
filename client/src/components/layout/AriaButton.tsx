@@ -6,8 +6,6 @@ import { Mic, MicOff, Loader2 } from 'lucide-react';
 
 type AriaState = 'idle' | 'listening' | 'processing';
 
-const GEMINI_URL = (key: string) =>
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
 const SpeechRec: any = typeof window !== 'undefined'
   ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null)
   : null;
@@ -239,67 +237,45 @@ export default function AriaButton() {
           wizardTraitName: (window as any).__ariaWizardTraitName,
         }),
       };
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-      if (!apiKey) {
-        responseText = lang === 'tr' ? 'API anahtarı eksik.' : 'API key missing.';
-      } else {
-        try {
-          const sysPrompt = buildPrompt(stats, events.slice(0, 6), ctx, lang);
-          const res = await fetch(GEMINI_URL(apiKey), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              system_instruction: { parts: [{ text: sysPrompt }] },
-              contents: [{ role: 'user', parts: [{ text: cmd }] }],
-              generationConfig: { maxOutputTokens: 300, responseMimeType: 'application/json' },
-            }),
-          });
+      try {
+        const { data } = await axios.post('/api/aria/command', {
+          message: cmd,
+          lang,
+          stats,
+          events: events.slice(0, 6),
+          context: ctx,
+        }, {
+          headers: { Authorization: `Bearer ${storeRef.current.accessToken}` },
+        });
 
-          if (res.status === 429) {
-            if (!activeRef.current) { processingRef.current = false; return; }
-            clearTimeout(retryTimerRef.current);
-            const msg = lang === 'tr' ? 'Limit — 60s sonra tekrar deniyor.' : 'Rate limited — retrying in 60s.';
-            setTranscript(''); setAriaText(msg); speak(msg); disarmWatchdog();
-            setUI('listening');
-            if (SpeechRec) startListening(); else setTimeout(() => textInputRef.current?.focus(), 50);
-            setTimeout(() => setAriaText(t => t === msg ? '' : t), 8000);
-            retryTimerRef.current = setTimeout(() => {
-              if (activeRef.current && processingRef.current) { armWatchdog(); processCommand(cmd); }
-            }, 60000);
-            return;
-          } else if (!res.ok) {
-            const errBody = await res.text().catch(() => '');
-            console.error('Gemini error', res.status, errBody.slice(0, 200));
-            responseText = lang === 'tr' ? `AI hatası (${res.status}).` : `AI error (${res.status}).`;
-          } else {
-            const json = await res.json();
-            const raw: string = json.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
-            let parsed: any;
-            try { parsed = JSON.parse(raw); } catch { parsed = { text: raw, actions: [] }; }
-            if (!parsed.actions && parsed.action != null) parsed.actions = [parsed.action];
-            if (!Array.isArray(parsed.actions)) parsed.actions = [];
-            parsed.actions = (parsed.actions as any[]).map((a: any) => {
-              if (typeof a === 'string') return { type: a };
-              if (a && !a.type) a.type = a.name ?? a.action ?? a.command ?? a.function;
-              return a;
-            }).filter((a: any) => a?.type);
-
-            (parsed.actions as any[]).forEach((a: any) => executeAction(a));
-            if (parsed.actions.length === 1) {
-              setLastAction(actionLabel(parsed.actions[0]));
-              setTimeout(() => setLastAction(null), 3000);
-            } else if (parsed.actions.length > 1) {
-              setLastAction(`✓ ${parsed.actions.length}`);
-              setTimeout(() => setLastAction(null), 3000);
-            }
-            responseText = parsed.text ?? (lang === 'tr' ? 'Tamam.' : 'Done.');
-          }
-        } catch {
-          responseText = lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.';
+        const actions = Array.isArray(data?.actions) ? data.actions : [];
+        actions.forEach((a: any) => executeAction(a));
+        if (actions.length === 1) {
+          setLastAction(actionLabel(actions[0]));
+          setTimeout(() => setLastAction(null), 3000);
+        } else if (actions.length > 1) {
+          setLastAction(`✓ ${actions.length}`);
+          setTimeout(() => setLastAction(null), 3000);
         }
+        responseText = data?.text ?? (lang === 'tr' ? 'Tamam.' : 'Done.');
+      } catch (err: any) {
+        const status = err?.response?.status;
+        if (status === 429) {
+          if (!activeRef.current) { processingRef.current = false; return; }
+          clearTimeout(retryTimerRef.current);
+          const msg = lang === 'tr' ? 'Limit - 60s sonra tekrar deniyor.' : 'Rate limited - retrying in 60s.';
+          setTranscript(''); setAriaText(msg); speak(msg); disarmWatchdog();
+          setUI('listening');
+          if (SpeechRec) startListening(); else setTimeout(() => textInputRef.current?.focus(), 50);
+          setTimeout(() => setAriaText(t => t === msg ? '' : t), 8000);
+          retryTimerRef.current = setTimeout(() => {
+            if (activeRef.current && processingRef.current) { armWatchdog(); processCommand(cmd); }
+          }, 60000);
+          return;
+        }
+        responseText = err?.response?.data?.text ?? (lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.');
       }
     }
-
     setTranscript(''); setAriaText(responseText); speak(responseText);
     disarmWatchdog(); processingRef.current = false;
 

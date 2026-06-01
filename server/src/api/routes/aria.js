@@ -41,14 +41,14 @@ function buildStatsContext(stats, events, context) {
 
 router.post('/command', authenticate, async (req, res) => {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return res.status(503).json({ text: 'GEMINI_API_KEY sunucuda tanımlı değil.', actions: [] });
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) return res.status(503).json({ text: 'OPENAI_API_KEY sunucuda tanimli degil.', actions: [] });
 
     const { message, lang, stats, events, context } = req.body;
     const statsCtx = buildStatsContext(stats, events, context);
     const respondIn = lang === 'tr' ? 'Turkish' : 'English';
 
-    const client = new OpenAI({ apiKey, baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/', maxRetries: 0 });
+    const client = new OpenAI({ apiKey, maxRetries: 0 });
 
     const page = context?.page ?? '/';
     const isWizard = !!context?.wizardOpen;
@@ -67,7 +67,7 @@ ${isDash ? `DASH actions: create_simulation|open_simulation{"index":0}|delete_si
 GLOBAL: navigate_to{"route":"/"}|toggle_lang|set_lang{"lang":"tr/en"}`;
 
     const completion = await client.chat.completions.create({
-      model: 'gemini-2.0-flash',
+      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message },
@@ -78,7 +78,12 @@ GLOBAL: navigate_to{"route":"/"}|toggle_lang|set_lang{"lang":"tr/en"}`;
     const raw = completion.choices[0].message.content ?? '{}';
     console.log('ARIA raw:', raw.slice(0, 300));
     let parsed;
-    try { parsed = JSON.parse(raw); } catch { parsed = { text: raw, actions: [] }; }
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      const match = String(raw).match(/\{[\s\S]*\}/);
+      parsed = match ? JSON.parse(match[0]) : { text: raw, actions: [] };
+    }
 
     // Normalize: model may use 'action' (singular) instead of 'actions'
     if (!parsed.actions && parsed.action != null) {
