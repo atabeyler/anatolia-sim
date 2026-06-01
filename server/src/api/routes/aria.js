@@ -50,81 +50,29 @@ router.post('/command', authenticate, async (req, res) => {
 
     const client = new OpenAI({ apiKey, baseURL: 'https://api.groq.com/openai/v1', maxRetries: 0 });
 
-    const systemPrompt = `You are ARIA, AI controller of ANATOLİA-SİM. Respond in ${respondIn}.
+    const page = context?.page ?? '/';
+    const isWizard = !!context?.wizardOpen;
+    const isSim = page.startsWith('/simulation/');
+    const isDash = page === '/';
 
+    const systemPrompt = `ARIA, ANATOLİA-SİM controller. Reply in ${respondIn}. Output ONLY JSON: {"text":"short reply","actions":[...]}
 STATE: ${statsCtx}
-
-CRITICAL: Output ONLY a raw JSON object. No markdown, no explanation.
-Format: {"text":"1-2 sentence reply","actions":[{"type":"ACTION_TYPE","PARAM":"VALUE"},...]}
-"actions" MUST be an array (empty [] if no action needed).
-
-EXAMPLES:
-User: "nüfus panelini aç" → {"text":"Nüfus paneli açılıyor.","actions":[{"type":"navigate_panel","panel":"population"}]}
-User: "hızı 20 yap" → {"text":"Hız 20x olarak ayarlandı.","actions":[{"type":"change_speed","speed":20}]}
-User: "simülasyonu durdur" → {"text":"Simülasyon duraklatıldı.","actions":[{"type":"pause_simulation"}]}
-User: "deprem uygula" → {"text":"Deprem uygulanıyor.","actions":[{"type":"apply_disaster","disaster":"earthquake","params":{"lat":0,"lon":0,"radius":250,"magnitude":7}}]}
-
-ACTION TYPES (use exact strings as "type"):
-SIMULATION (page=simulation):
-  navigate_panel → {"type":"navigate_panel","panel":"PANEL_ID"}
-  close_panel → {"type":"close_panel"}
-  change_speed → {"type":"change_speed","speed":1|5|20|100}
-  start_simulation | pause_simulation | toggle_simulation | terminate_simulation | toggle_sidebar | god_mode
-  set_tab → {"type":"set_tab","tab":"harita"|"durum"|"kontrol"}
-  apply_disaster → {"type":"apply_disaster","disaster":"earthquake|flood|drought|epidemic|volcano|meteor","params":{...}}
-  open_menu | close_menu | open_menu_page → {"type":"open_menu_page","menuPage":"language|guide|about|mission|contact"}
-
-DASHBOARD (page=dashboard):
-  create_simulation | toggle_compare | logout
-  open_simulation → {"type":"open_simulation","index":0}
-  delete_simulation → {"type":"delete_simulation","index":0}
-
-WIZARD (wizardOpen=true):
-  wizard_next | wizard_back | wizard_submit | wizard_exit
-  wizard_set → {"type":"wizard_set","field":"FIELD","value":"VALUE","founder":1|2}
-  "founder" key is optional; omit if not specified by user.
-
-  FIELD names by step type:
-  sim-info:   sim_name(text) | sim_latitude(number) | sim_longitude(number)
-  identity:   founder_name(text) | founder_age(16-60) | founder_sex("male"|"female")
-  physical:   founder_height(cm, 150-195) | founder_weight(kg, 40-130)
-  appearance: founder_eye("brown"|"hazel"|"green"|"blue")
-              founder_hair("black"|"dark"|"brown"|"light"|"blond"|"red")
-              founder_skin("fair"|"light"|"olive"|"tan"|"brown"|"dark")
-  trait:      current_trait(0-100) OR trait_id(0-100)
-              Trait IDs: fluid_intelligence, curiosity, language_capacity, learning_rate,
-              conscientiousness, self_awareness, stress_resilience, risk_tolerance,
-              innovation, artistic_sense, empathy, social_bonding, aggression,
-              cooperation, dominance, physical_strength, endurance, immune_strength,
-              fertility, longevity
-  TR trait names: zeka→fluid_intelligence, merak→curiosity, dil→language_capacity,
-    öğrenme→learning_rate, disiplin→conscientiousness, öz farkındalık→self_awareness,
-    stres→stress_resilience, risk→risk_tolerance, inovasyon→innovation,
-    sanat→artistic_sense, empati→empathy, sosyal bağ→social_bonding,
-    saldırganlık→aggression, işbirliği→cooperation, liderlik→dominance,
-    güç→physical_strength, dayanıklılık→endurance, bağışıklık→immune_strength,
-    üreme→fertility, uzun ömür→longevity
-
-  VALUE rules:
-  - "175 cm" or "175" → value:"175" for founder_height
-  - "80 kg" or "80"   → value:"80" for founder_weight
-  - "yüzde 80" or "%80" or "80%" or "0.8" → value:"80" for traits
-  - Always pass the raw number as a string, strip units
-
-GLOBAL: navigate_to → {"type":"navigate_to","route":"/"} | toggle_lang | set_lang → {"type":"set_lang","lang":"tr|en"}
-
-PANEL IDs: population, olaylar, language, timemachine, analysis, biology, god, psychology,
-environment, technology, belief, social, economy, culture, art, astronomy, hypothesis,
-epigenetics, architecture, law, microbiome
-TR aliases: nüfus→population, analiz→analysis, tanrı→god, çevre→environment, inanç→belief`;
+${isWizard ? `WIZARD step=${context.wizardStep} type=${context.wizardStepType}${context.wizardFounder ? ' founder='+context.wizardFounder : ''}${context.wizardTraitName ? ' trait='+context.wizardTraitName : ''}
+Actions: wizard_next|wizard_back|wizard_submit|wizard_exit|wizard_set{"type":"wizard_set","field":"F","value":"V","founder":1|2}
+Fields: sim_name|sim_latitude|sim_longitude|founder_name|founder_age|founder_sex(male/female)|founder_height(cm str)|founder_weight(kg str)|founder_eye(brown/hazel/green/blue)|founder_hair(black/dark/brown/light/blond/red)|founder_skin(fair/light/olive/tan/brown/dark)|current_trait(0-100 str)
+TR traits: zeka=fluid_intelligence merak=curiosity dil=language_capacity öğrenme=learning_rate disiplin=conscientiousness stres=stress_resilience risk=risk_tolerance inovasyon=innovation sanat=artistic_sense empati=empathy işbirliği=cooperation liderlik=dominance güç=physical_strength dayanıklılık=endurance bağışıklık=immune_strength üreme=fertility uzun_ömür=longevity` : ''}
+${isSim ? `SIM actions: navigate_panel{"panel":"ID"}|close_panel|change_speed{"speed":N}|start_simulation|pause_simulation|toggle_simulation|terminate_simulation|toggle_sidebar|god_mode|set_tab{"tab":"harita/durum/kontrol"}|apply_disaster{"disaster":"earthquake/flood/drought/epidemic/volcano/meteor","params":{}}|open_menu|close_menu|open_menu_page{"menuPage":"language/guide/about"}
+Panels: population(nüfus) olaylar language timemachine analysis(analiz) biology god(tanrı) psychology environment(çevre) technology belief(inanç) social economy culture art astronomy hypothesis epigenetics architecture law microbiome` : ''}
+${isDash ? `DASH actions: create_simulation|open_simulation{"index":0}|delete_simulation{"index":0}|toggle_compare|logout` : ''}
+GLOBAL: navigate_to{"route":"/"}|toggle_lang|set_lang{"lang":"tr/en"}`;
 
     const completion = await client.chat.completions.create({
-      model: 'llama-3.1-8b-instant',
+      model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message },
       ],
-      max_tokens: 300,
+      max_tokens: 250,
       response_format: { type: 'json_object' },
     });
 
