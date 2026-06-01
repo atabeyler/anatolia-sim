@@ -31,8 +31,19 @@ const PORT = process.env.PORT ?? 3001;
 
 app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false }));
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3001',
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3001'],
+  origin(origin, callback) {
+    // Allow server-to-server, health checks, and same-origin requests with no Origin header.
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true,
 }));
 app.use(rateLimit({
