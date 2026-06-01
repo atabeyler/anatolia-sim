@@ -25,6 +25,7 @@ export default function AriaButton() {
   const [ariaText, setAriaText]     = useState('');
   const [lastAction, setLastAction] = useState<string | null>(null);
   const [textInput, setTextInput]   = useState('');
+  const [ttsMuted, setTtsMuted]     = useState(false);
   const textInputRef                = useRef<HTMLInputElement | null>(null);
   const [pos, setPos]               = useState({
     x: 20,
@@ -116,40 +117,66 @@ export default function AriaButton() {
       disarmWatchdog();
       clearTimeout(retryTimerRef.current); retryCmd.current = null;
       killRec(recRef.current); recRef.current = null;
-      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+      stopAudio();
       setUI('idle');
       setTranscript('');
       setAriaText('');
       setTextInput('');
+      setTtsMuted(false);
     } else {
       activeRef.current     = true;
       processingRef.current = false;
       pendingCmdRef.current = null;
+      unlockAudio();
       startRecognition();
     }
   }
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const audioSrcRef = useRef<AudioBufferSourceNode | null>(null);
+
+  function unlockAudio() {
+    if (!audioCtxRef.current) audioCtxRef.current = new AudioContext();
+    if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume().catch(() => {});
+  }
+
+  function stopAudio() {
+    if (audioSrcRef.current) { try { audioSrcRef.current.stop(); } catch {} audioSrcRef.current = null; }
+  }
 
   function speak(text: string) {
     const { accessToken, lang } = storeRef.current;
     if (!accessToken) return;
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    stopAudio();
+    setTtsMuted(false);
+    const ctx = audioCtxRef.current;
+    if (!ctx) return;
     fetch('/api/aria/speak', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
       body: JSON.stringify({ text, lang }),
     })
-      .then(r => r.ok ? r.blob() : null)
-      .then(blob => {
-        if (!blob || !activeRef.current) return;
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        audioRef.current = audio;
-        audio.onended = () => URL.revokeObjectURL(url);
-        audio.play().catch(() => {});
+      .then(r => {
+        if (!r.ok) {
+          r.json().catch(() => null).then(j => console.error('ARIA TTS error:', r.status, j));
+          setTtsMuted(true);
+          return null;
+        }
+        return r.arrayBuffer();
       })
-      .catch(() => {});
+      .then(buf => {
+        if (!buf || !activeRef.current) return;
+        ctx.decodeAudioData(buf)
+          .then(decoded => {
+            const src = ctx.createBufferSource();
+            src.buffer = decoded;
+            src.connect(ctx.destination);
+            audioSrcRef.current = src;
+            src.start(0);
+          })
+          .catch(e => { console.error('ARIA audio decode error:', e); setTtsMuted(true); });
+      })
+      .catch(e => { console.error('ARIA TTS fetch error:', e); setTtsMuted(true); });
   }
 
   function killRec(rec: any) {
@@ -569,6 +596,7 @@ export default function AriaButton() {
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
             }}>
+              {ttsMuted && <span title="TTS failed" style={{ marginRight: 4, opacity: 0.6 }}>🔇</span>}
               {ariaText}
             </div>
           )}
