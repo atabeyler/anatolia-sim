@@ -884,7 +884,8 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
               letterSpacing:'0.2em', marginBottom:16, display:'flex', alignItems:'center', gap:10 }}>
               <span style={{
                 display:'inline-block',
-                fontSize: 32,
+                fontSize: 52,
+                lineHeight: 1,
                 filter:'drop-shadow(0 0 8px #cc2222) drop-shadow(0 0 18px #cc222299)',
                 animation:'warn-pulse 1.4s ease-in-out infinite',
               }}>⚠</span>
