@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.js';
-import Groq from 'groq-sdk';
+import Anthropic from '@anthropic-ai/sdk';
 
 const router = Router();
 
@@ -40,14 +40,14 @@ function buildStatsContext(stats, events, context) {
 
 router.post('/command', authenticate, async (req, res) => {
   try {
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) return res.status(503).json({ text: 'GROQ_API_KEY sunucuda tanımlı değil.', actions: [] });
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return res.status(503).json({ text: 'ANTHROPIC_API_KEY sunucuda tanımlı değil.', actions: [] });
 
     const { message, lang, stats, events, context } = req.body;
     const statsCtx = buildStatsContext(stats, events, context);
     const respondIn = lang === 'tr' ? 'Turkish' : 'English';
 
-    const groq = new Groq({ apiKey });
+    const client = new Anthropic({ apiKey });
 
     const systemPrompt = `You are ARIA, AI controller of ANATOLİA-SİM. Respond in ${respondIn}.
 
@@ -94,21 +94,17 @@ mimari→architecture, hukuk→law, mikrobiyom→microbiome
 
 Return ONLY the JSON object.`;
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: message },
-      ],
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 600,
-      response_format: { type: 'json_object' },
+      system: systemPrompt,
+      messages: [{ role: 'user', content: message }],
     });
 
-    const raw = completion.choices[0].message.content ?? '{}';
+    const raw = response.content[0]?.text ?? '{}';
     let parsed;
     try { parsed = JSON.parse(raw); } catch { parsed = { text: raw, actions: [] }; }
 
-    // Normalize: support both old single `action` and new `actions[]`
     if (!parsed.actions && parsed.action != null) {
       parsed.actions = [parsed.action];
       delete parsed.action;
