@@ -4,6 +4,7 @@ import { query } from '../../db/database.js';
 import { createWorldState } from '../../engines/environment/environmentEngine.js';
 import { createFounder } from '../../engines/biology/individual.js';
 import { simulationManager } from '../simulationManager.js';
+import { getEmergentLexicon } from '../../engines/language/languageEngine.js';
 
 const router = Router();
 
@@ -318,6 +319,15 @@ router.delete('/:id', authenticate, async (req, res) => {
     await query('DELETE FROM simulations WHERE id = $1', [req.params.id]);
     res.json({ message: 'Simulation deleted' });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to delete simulation' }); }
+});
+
+// Returns the emergent lexicon — sounds that 2+ agents share for the same context
+router.get('/:id/lexicon', authenticate, requireSimulationOwner, async (req, res) => {
+  try {
+    const engine = simulationManager.getEngine(req.params.id);
+    if (!engine) return res.status(404).json({ error: 'Simulation not running' });
+    res.json({ lexicon: getEmergentLexicon(engine.population, 50) });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to get lexicon' }); }
 });
 
 export default router;
