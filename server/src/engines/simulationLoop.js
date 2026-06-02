@@ -4,7 +4,7 @@ import { rollDeath } from './biology/mortality.js';
 import { checkReproduction } from './biology/reproduction.js';
 import { updateWorldState, computeResourcePressure } from './environment/environmentEngine.js';
 import { buildPhonology } from './language/nameEngine.js';
-import { updateLanguageStage, learnFromTeacher, maybeVocalize, hearVocalization, getEmergentWordCount, getEmergentLexicon, STIMULUS_CONTEXTS } from './language/languageEngine.js';
+import { updateLanguageStage, learnFromTeacher } from './language/languageEngine.js';
 import { tryDiscoverTech } from './technology/technologyEngine.js';
 import { getAge } from './biology/individual.js';
 import { processGroupDynamics, assignGroupRoles } from './social/socialEngine.js';
@@ -248,7 +248,6 @@ export class SimulationEngine {
     for (const ind of alive) {
       updateLanguageStage(ind, alive.length, genCount);
     }
-    this.processVocalizations(alive, tickEvents);
     this.processLanguageLearning(alive);
 
     // 12b. Social learning: children near parents learn faster
@@ -523,53 +522,12 @@ export class SimulationEngine {
     }
   }
 
-  // Determine what stimulus context each agent is experiencing this tick.
-  // Returns a context string or null.
-  _getContext(ind, tickEvents) {
-    if (ind.health?.hp < 0.3) return 'pain';
-    if (ind.is_dead) return null;
-    if ((ind.satiation ?? 1) > 0.8) return 'food';
-    if ((ind.health?.hydration ?? 1) > 0.85) return 'water';
-    const dayEvt = tickEvents.find(e =>
-      (e.type === 'death_of_kin' && e.individual_id !== ind.id) ||
-      e.type === 'disaster'
-    );
-    if (dayEvt?.type === 'death_of_kin') return 'death';
-    if (dayEvt?.type === 'disaster') return 'danger';
-    const bornEvt = tickEvents.find(e => e.type === 'birth');
-    if (bornEvt) return 'birth';
-    if (this.worldState?.temperature < 5) return 'cold';
-    if (this.worldState?.season === 'winter') return 'cold';
-    return null;
-  }
-
-  processVocalizations(alive, tickEvents) {
-    const sounds = []; // { sound, context, x, y }
-    for (const ind of alive) {
-      if (!ind.language) continue;
-      const context = this._getContext(ind, tickEvents);
-      if (!context) continue;
-      const sound = maybeVocalize(ind, context);
-      if (sound) sounds.push({ sound, context, x: ind.x ?? 0, y: ind.y ?? 0 });
-    }
-    // Propagate each emitted sound to nearby individuals
-    for (const { sound, context, x, y } of sounds) {
-      for (const listener of alive) {
-        if (!listener.language) continue;
-        const dist = Math.hypot((listener.x ?? 0) - x, (listener.y ?? 0) - y);
-        if (dist < SOCIAL_INTERACTION_RADIUS) {
-          hearVocalization(listener, sound, context);
-        }
-      }
-    }
-  }
-
   processLanguageLearning(alive) {
     for (const ind of alive) {
-      if (!ind.language || ind.language.stage < 1) continue;
+      if (!ind.language || ind.language.stage < 2) continue;
       const nearby = alive.filter(o =>
         o.id !== ind.id &&
-        (o.language?.stage ?? 0) >= ind.language.stage &&
+        o.language?.stage > ind.language.stage &&
         Math.hypot((ind.x ?? 0) - (o.x ?? 0), (ind.y ?? 0) - (o.y ?? 0)) < SOCIAL_INTERACTION_RADIUS
       );
       if (nearby.length > 0) {
@@ -641,10 +599,7 @@ export class SimulationEngine {
       const s = ind.language?.stage_name ?? 'pre-linguistic';
       langStages[s] = (langStages[s] ?? 0) + 1;
     }
-    return {
-      language_distribution: langStages,
-      emergent_lexicon: getEmergentLexicon(this.population, 30),
-    };
+    return { language_distribution: langStages };
   }
 
   computeStats(day, alive) {
@@ -674,7 +629,7 @@ export class SimulationEngine {
       has_disaster: !!(this.worldState.recent_disaster),
       births: Math.max(0, this.population.size - 2),
       deaths: Math.max(0, this.population.size - alive.length),
-      word_count: getEmergentWordCount(this.population),
+      word_count: new Set(alive.flatMap(i => Object.keys(i.language?.vocabulary ?? {}))).size,
       max_language_stage: Math.max(0, ...alive.map(i => i.language?.stage ?? 0)),
       mean_wealth: Math.round(econStats.mean_wealth * 100) / 100,
       gini: Math.round(econStats.gini * 100) / 100,
