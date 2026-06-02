@@ -98,6 +98,15 @@ async function main() {
     server.listen(PORT, () => {
       console.log(`✅ ANATOLİA-SİM Server running on port ${PORT}`);
       console.log(`✅ WebSocket server ready`);
+
+      // Self-ping every 10 minutes to prevent Render free tier spin-down
+      const selfUrl = process.env.RENDER_EXTERNAL_URL;
+      if (selfUrl) {
+        setInterval(() => {
+          fetch(`${selfUrl}/api/health`).catch(() => {});
+        }, 10 * 60 * 1000);
+        console.log(`✅ Self-ping active: ${selfUrl}/api/health`);
+      }
     });
   } catch (err) { console.error('Failed to start server:', err); process.exit(1); }
 }
