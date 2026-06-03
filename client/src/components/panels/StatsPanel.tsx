@@ -71,8 +71,6 @@ export default function StatsPanel() {
     ].slice(-80));
   }, [stats?.year]);
 
-  if (!stats) return null;
-
   function toggleMetric(key: Metric) {
     setActiveMetrics(prev => {
       const next = new Set(prev);
@@ -157,19 +155,17 @@ export default function StatsPanel() {
 
         {/* Stat grid */}
         <div className="grid grid-cols-2 gap-1.5 mb-3">
-          <StatBox label={lang === 'tr' ? 'NÜFUS' : 'POPULATION'} value={stats.population.toLocaleString()} color="#4f6ef7" />
-          <StatBox label={lang === 'tr' ? 'ORT. YAŞ' : 'AVG AGE'} value={stats.avg_age.toFixed(1)} unit=" yr" color="#e0e0f0" />
-          <StatBox label={lang === 'tr' ? 'ZEKA' : 'INTELLIGENCE'} value={`${(stats.avg_intelligence * 100).toFixed(0)}`} unit="%" color="#d4a838" />
-          <StatBox label={lang === 'tr' ? 'TEKNOLOJİ' : 'TECH LEVEL'} value={stats.technologies} color="#4ecb71" />
+          <StatBox label={lang === 'tr' ? 'NÜFUS' : 'POPULATION'} value={stats ? stats.population.toLocaleString() : '—'} color="#4f6ef7" />
+          <StatBox label={lang === 'tr' ? 'ORT. YAŞ' : 'AVG AGE'} value={stats ? stats.avg_age.toFixed(1) : '—'} unit={stats ? ' yr' : ''} color="#e0e0f0" />
+          <StatBox label={lang === 'tr' ? 'ZEKA' : 'INTELLIGENCE'} value={stats ? `${(stats.avg_intelligence * 100).toFixed(0)}` : '—'} unit={stats ? '%' : ''} color="#d4a838" />
+          <StatBox label={lang === 'tr' ? 'TEKNOLOJİ' : 'TECH LEVEL'} value={stats?.technologies ?? '—'} color="#4ecb71" />
         </div>
 
         {/* Bars */}
         <div className="border-t border-sim-border/30 pt-3">
-          <GaugeBar label={lang === 'tr' ? 'BESİN BOLLUĞU' : 'FOOD ABUNDANCE'} value={stats.food_abundance} color="#4ecb71" />
-          <GaugeBar label={lang === 'tr' ? 'SU BOLLUĞU' : 'WATER ABUNDANCE'} value={stats.water_abundance ?? 0} color="#7dd3fc" />
-          {(stats as any).happiness_index !== undefined && (
-            <GaugeBar label={lang === 'tr' ? 'MUTLULUK' : 'HAPPINESS'} value={(stats as any).happiness_index} color="#ff8ab0" />
-          )}
+          <GaugeBar label={lang === 'tr' ? 'BESİN BOLLUĞU' : 'FOOD ABUNDANCE'} value={stats?.food_abundance ?? 0} color="#4ecb71" />
+          <GaugeBar label={lang === 'tr' ? 'SU BOLLUĞU' : 'WATER ABUNDANCE'} value={stats?.water_abundance ?? 0} color="#7dd3fc" />
+          <GaugeBar label={lang === 'tr' ? 'MUTLULUK' : 'HAPPINESS'} value={(stats as any)?.happiness_index ?? 0} color="#ff8ab0" />
         </div>
       </div>
     </div>
