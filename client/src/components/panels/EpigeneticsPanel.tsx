@@ -2,12 +2,12 @@ import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 
 const LOCI = [
-  { id: 'HPA_AXIS', gene: 'COMT', effect: 'Stress Reactivity', desc: 'Blunted under chronic stress' },
-  { id: 'BDNF_PROMOTER', gene: 'BDNF', effect: 'Neuroplasticity', desc: 'Early adversity reduces learning' },
-  { id: 'MAOA_REGULATION', gene: 'MAOA', effect: 'Aggression', desc: 'Early stress → permanent mark' },
-  { id: 'LEPTIN_RESIST', gene: 'Metabolic', effect: 'Fat Storage', desc: 'Famine triggers metabolic shift' },
-  { id: 'OXTR_METHYL', gene: 'OXTR', effect: 'Social Bonding', desc: 'Isolation demethylates bonding' },
-  { id: 'IMMUNE_PRIMING', gene: 'Immune', effect: 'Pathogen Memory', desc: 'Infection leaves lasting marks' },
+  { id: 'HPA_AXIS',       gene: 'COMT',      effect: 'Stress Reactivity', effectTr: 'Stres Tepkisi',       desc: 'Blunted under chronic stress',        descTr: 'Kronik stres altında zayıflar' },
+  { id: 'BDNF_PROMOTER',  gene: 'BDNF',      effect: 'Neuroplasticity',   effectTr: 'Nöroplastisite',      desc: 'Early adversity reduces learning',    descTr: 'Erken zorluk öğrenmeyi azaltır' },
+  { id: 'MAOA_REGULATION',gene: 'MAOA',      effect: 'Aggression',        effectTr: 'Saldırganlık',        desc: 'Early stress → permanent mark',      descTr: 'Erken stres → kalıcı iz' },
+  { id: 'LEPTIN_RESIST',  gene: 'Metabolic', effect: 'Fat Storage',       effectTr: 'Yağ Depolama',        desc: 'Famine triggers metabolic shift',     descTr: 'Kıtlık metabolik kaymayı tetikler' },
+  { id: 'OXTR_METHYL',    gene: 'OXTR',      effect: 'Social Bonding',    effectTr: 'Sosyal Bağlanma',     desc: 'Isolation demethylates bonding',      descTr: 'Yalıtım bağlanma izlerini değiştirir' },
+  { id: 'IMMUNE_PRIMING', gene: 'Immune',    effect: 'Pathogen Memory',   effectTr: 'Patojen Belleği',     desc: 'Infection leaves lasting marks',      descTr: 'Enfeksiyon kalıcı izler bırakır' },
 ];
 
 function t(lang: string, en: string, tr: string) {
@@ -38,20 +38,10 @@ export default function EpigeneticsPanel() {
             <div key={locus.id} className="bg-sim-surface/50 rounded p-2">
               <div className="flex justify-between mb-1">
                 <span className="text-sim-text text-sm font-medium">{locus.gene}</span>
-                <span className="text-sim-accent text-sm">{t(lang, locus.effect, locus.effect)}</span>
+                <span className="text-sim-accent text-sm">{lang === 'tr' ? locus.effectTr : locus.effect}</span>
               </div>
               <div className="text-sim-muted text-sm italic">
-                {t(
-                  lang,
-                  locus.desc,
-                  locus.desc
-                    .replace('Blunted under chronic stress', 'Kronik stres altında zayıflar')
-                    .replace('Early adversity reduces learning', 'Erken zorluk öğrenmeyi azaltır')
-                    .replace('Early stress → permanent mark', 'Erken stres → kalıcı iz')
-                    .replace('Famine triggers metabolic shift', 'Kıtlık metabolik kaymayı tetikler')
-                    .replace('Isolation demethylates bonding', 'Yalıtım bağlanma izlerini değiştirir')
-                    .replace('Infection leaves lasting marks', 'Enfeksiyon kalıcı izler bırakır')
-                )}
+                {lang === 'tr' ? locus.descTr : locus.desc}
               </div>
               <div className="mt-1 h-1.5 bg-sim-border rounded-full overflow-hidden">
                 <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" style={{ width: '50%' }} />
