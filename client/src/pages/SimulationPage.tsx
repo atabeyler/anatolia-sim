@@ -26,6 +26,7 @@ import GodPanel from '../components/panels/GodPanel';
 import TimeMachinePanel from '../components/panels/TimeMachinePanel';
 import AnalysisPanel from '../components/panels/AnalysisPanel';
 import HypothesisPanel from '../components/panels/HypothesisPanel';
+import StatsPanel from '../components/panels/StatsPanel';
 import EventsPanel from '../components/panels/EventsPanel';
 import { translateEventDescription, translateSeason, type LangCode } from '../utils/i18n';
 
@@ -599,6 +600,9 @@ export default function SimulationPage() {
                     </button>
                   </div>
                 )}
+
+                {/* Stats telemetry panel */}
+                <StatsPanel />
 
                 {/* Draggable event log panel */}
                 <DraggableLogPanel
