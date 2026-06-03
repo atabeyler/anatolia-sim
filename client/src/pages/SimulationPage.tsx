@@ -27,6 +27,7 @@ import TimeMachinePanel from '../components/panels/TimeMachinePanel';
 import AnalysisPanel from '../components/panels/AnalysisPanel';
 import HypothesisPanel from '../components/panels/HypothesisPanel';
 import EventsPanel from '../components/panels/EventsPanel';
+import { translateEventDescription, type LangCode } from '../utils/i18n';
 
 const SPEEDS = [1, 5, 20, 100];
 
@@ -59,31 +60,6 @@ const TABS = [
   { id: 'durum',   label: 'DURUM',   labelEn: 'STATUS' },
   { id: 'kontrol', label: 'KONTROL', labelEn: 'CONTROL' },
 ];
-
-function translateEventDesc(desc: string, type: string): string {
-  if (!desc) return type;
-  return desc
-    .replace('New individual born', 'Yeni birey doğdu')
-    .replace('Individual died: starvation', 'Birey açlıktan öldü')
-    .replace('Individual died: dehydration', 'Birey susuzluktan öldü')
-    .replace('Individual died: disease_', 'Birey hastalıktan öldü: ')
-    .replace('Individual died: old_age', 'Birey yaşlılıktan öldü')
-    .replace('Individual died: predator', 'Birey yırtıcı tarafından öldürüldü')
-    .replace(/Individual died: (.+)/, (_: string, cause: string) => `Birey öldü: ${cause}`)
-    .replace(/(.+) language stage advanced to (.+)/, (_: string, name: string, stage: string) => `${name} dil aşamasını ${stage} seviyesine yükseltti`)
-    .replace('Technology discovered: foraging', 'Teknoloji keşfedildi: Toplayıcılık')
-    .replace('Technology discovered: stone_tools', 'Teknoloji keşfedildi: Taş Aletler')
-    .replace('Technology discovered: fire_making', 'Teknoloji keşfedildi: Ateş Yakma')
-    .replace(/Technology discovered: (.+)/, (_: string, t: string) => `Teknoloji keşfedildi: ${t.replace(/_/g, ' ')}`)
-    .replace(/Culture event: (.+)/, (_: string, c: string) => `Kültür olayı: ${c.replace(/_/g, ' ')}`)
-    .replace(/Art event: (.+)/, (_: string, a: string) => `Sanat olayı: ${a.replace(/_/g, ' ')}`)
-    .replace(/Astronomy event: (.+)/, (_: string, a: string) => `Astronomi olayı: ${a.replace(/_/g, ' ')}`)
-    .replace(/Architecture event: (.+)/, (_: string, a: string) => `Mimari olay: ${a.replace(/_/g, ' ')}`)
-    .replace(/Law event: (.+)/, (_: string, a: string) => `Hukuk olayı: ${a.replace(/_/g, ' ')}`)
-    .replace(/Microbiome event: (.+)/, (_: string, a: string) => `Mikrobiyom olayı: ${a.replace(/_/g, ' ')}`)
-    .replace(/Epigenetics event: (.+)/, (_: string, a: string) => `Epigenetik olay: ${a.replace(/_/g, ' ')}`)
-    .replace(/killed (\d+) individuals/, (_: string, n: string) => `${n} bireyi öldürdü`);
-}
 
 const IMPORTANT_TYPES = ['birth', 'death', 'language', 'belief', 'technology', 'word', 'discovery'];
 
@@ -300,7 +276,7 @@ export default function SimulationPage() {
     const prefix = `Y${String(ev.sim_year).padStart(4, '0')} G${String(ev.sim_day % 365).padStart(3, '0')}`;
     const icon = ev.event_type?.includes('birth') ? '+' : ev.event_type?.includes('death') ? '†' : ev.event_type?.includes('discovery') ? '◆' : ev.event_type?.includes('disaster') ? '⚠' : '·';
     const rawDesc = ev.description ?? ev.event_type;
-    const desc = lang === 'tr' ? translateEventDesc(rawDesc, ev.event_type) : rawDesc;
+    const desc = translateEventDescription(rawDesc, lang as LangCode, ev);
     return `${prefix} ${icon} ${desc}`;
   }
 

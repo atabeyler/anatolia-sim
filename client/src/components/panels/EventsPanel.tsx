@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
+import { translateEventDescription, type LangCode } from '../../utils/i18n';
 
 const FILTERS = [
   { id: 'all',        labelTr: 'Tümü',     labelEn: 'All',       color: '#a0c8b0' },
@@ -56,43 +57,6 @@ function matchesCategory(ev: any, id: string) {
     default:
       return false;
   }
-}
-
-const CAUSE_TR: Record<string, string> = {
-  starvation: 'açlık', dehydration: 'susuzluk', old_age: 'yaşlılık',
-  predator: 'yırtıcı hayvan', genetic_disease: 'genetik hastalık',
-  infection: 'enfeksiyon', trauma: 'travma', birth_complications: 'doğum komplikasyonu',
-  conflict: 'çatışma', unknown: 'bilinmeyen neden',
-};
-
-function trTr(desc: string, type: string, ev?: any): string {
-  if (!desc) return type;
-  const name = ev?.data?.name ?? ev?.data?.individual_name ?? ev?.data?.individual?.name ?? null;
-  return desc
-    // New format: "NAME died: cause" → "NAME öldü: türkçe_sebep"
-    .replace(/^(.+) died: (.+)$/, (_: string, name: string, cause: string) =>
-      `${name} öldü: ${CAUSE_TR[cause] ?? cause.replace(/_/g, ' ')}`)
-    // New format: "Born: NAME (father & mother)" → "Doğdu: NAME (baba & anne)"
-    .replace(/^Born: (.+) \((.+) & (.+)\)$/, (_: string, name: string, p1: string, p2: string) =>
-      `Doğdu: ${name} (${p1} & ${p2})`)
-    // Old format fallbacks
-    .replace(/^Born: (.+)$/, (_: string, name: string) => `Doğdu: ${name}`)
-    .replace('New individual born', 'Yeni birey doğdu')
-    .replace('Individual died: starvation', 'Birey açlıktan öldü')
-    .replace('Individual died: dehydration', 'Birey susuzluktan öldü')
-    .replace('Individual died: old_age', 'Birey yaşlılıktan öldü')
-    .replace('Individual died: predator', 'Birey yırtıcı tarafından öldürüldü')
-    .replace(/Individual died: (.+)/, (_: string, c: string) => `Birey öldü: ${CAUSE_TR[c] ?? c.replace(/_/g, ' ')}`)
-    .replace(/(.+) language stage advanced to (.+)/, (_: string, name: string, stage: string) => `${name} dil aşamasını ${stage} seviyesine yükseltti`)
-    .replace(/Technology discovered: (.+)/, (_: string, t: string) => `Teknoloji: ${t.replace(/_/g, ' ')}`)
-    .replace(/Culture event: (.+)/, (_: string, c: string) => `Kültür olayı: ${c.replace(/_/g, ' ')}`)
-    .replace(/Art event: (.+)/, (_: string, a: string) => `Sanat olayı: ${a.replace(/_/g, ' ')}`)
-    .replace(/Astronomy event: (.+)/, (_: string, a: string) => `Astronomi olayı: ${a.replace(/_/g, ' ')}`)
-    .replace(/Architecture event: (.+)/, (_: string, a: string) => `Mimari olay: ${a.replace(/_/g, ' ')}`)
-    .replace(/Law event: (.+)/, (_: string, a: string) => `Hukuk olayı: ${a.replace(/_/g, ' ')}`)
-    .replace(/Microbiome event: (.+)/, (_: string, a: string) => `Mikrobiyom olayı: ${a.replace(/_/g, ' ')}`)
-    .replace(/Epigenetics event: (.+)/, (_: string, a: string) => `Epigenetik olay: ${a.replace(/_/g, ' ')}`)
-    .replace(/killed (\d+) individuals/, (_: string, n: string) => `${n} bireyi öldürdü`);
 }
 
 export default function EventsPanel() {
@@ -189,9 +153,7 @@ export default function EventsPanel() {
         const color = evColor(ev.event_type);
         const icon = evIcon(ev.event_type);
         const rawDesc = ev.description ?? ev.event_type;
-        const desc = lang === 'tr'
-          ? trTr(rawDesc, ev.event_type, ev)
-          : rawDesc;
+        const desc = translateEventDescription(rawDesc, lang as LangCode, ev);
         return (
           <div key={i} style={{
             display: 'flex', gap: 6, alignItems: 'flex-start',
