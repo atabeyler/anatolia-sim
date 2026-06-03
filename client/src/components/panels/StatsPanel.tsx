@@ -63,6 +63,14 @@ export default function StatsPanel() {
 
   return (
     <>
+      {/* Click-outside backdrop */}
+      {open && (
+        <div
+          style={{ position: 'absolute', inset: 0, zIndex: 38 }}
+          onClick={() => setOpen(false)}
+        />
+      )}
+
       {/* Floating toggle button — bottom-right */}
       <button
         onClick={() => setOpen(v => !v)}
@@ -94,6 +102,7 @@ export default function StatsPanel() {
 
       {/* Animated panel */}
       <div
+        onClick={e => e.stopPropagation()}
         style={{
           position: 'absolute',
           bottom: 72,
@@ -127,6 +136,12 @@ export default function StatsPanel() {
           <div style={{ flex: 1 }} />
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: stats ? '#00e887' : '#4a4a4a', boxShadow: stats ? '0 0 6px #00e887' : 'none', animation: stats ? 'pulse 1.5s infinite' : 'none' }} />
           <span style={{ fontSize: 10, color: stats ? '#00e887' : '#4a4a4a', letterSpacing: '0.1em' }}>LIVE</span>
+          <button
+            onClick={() => setOpen(false)}
+            style={{ marginLeft: 6, background: 'transparent', border: 'none', color: '#4a6a5a', cursor: 'pointer', lineHeight: 0, padding: 2 }}
+          >
+            <X size={12} />
+          </button>
         </div>
 
         {/* Metric toggles */}
