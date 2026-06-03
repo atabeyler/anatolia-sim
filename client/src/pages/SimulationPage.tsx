@@ -58,7 +58,6 @@ const MODULES = [
 const TABS = [
   { id: 'harita',  label: 'HARİTA',  labelEn: 'MAP' },
   { id: 'durum',   label: 'DURUM',   labelEn: 'STATUS' },
-  { id: 'kontrol', label: 'KONTROL', labelEn: 'CONTROL' },
 ];
 
 const IMPORTANT_TYPES = ['birth', 'death', 'language', 'belief', 'technology', 'word', 'discovery'];
@@ -151,7 +150,7 @@ export default function SimulationPage() {
   const { accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, speedMultiplier, setSpeed, resetLiveState, setEvents } = useSimStore();
   const [individuals, setIndividuals] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'harita' | 'durum' | 'kontrol'>('harita');
+  const [activeTab, setActiveTab] = useState<'harita' | 'durum'>('harita');
   const [realTime, setRealTime] = useState('');
   const [sidebarExpanded, setSidebarExpanded] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 640);
   const [selectedInd, setSelectedInd] = useState<any>(null);
@@ -171,7 +170,7 @@ export default function SimulationPage() {
   useEffect(() => {
     function onAriaTab(e: Event) {
       const tab = (e as CustomEvent).detail;
-      if (tab === 'harita' || tab === 'durum' || tab === 'kontrol') setActiveTab(tab);
+      if (tab === 'harita' || tab === 'durum') setActiveTab(tab);
     }
     window.addEventListener('aria-set-tab', onAriaTab);
     return () => window.removeEventListener('aria-set-tab', onAriaTab);
@@ -639,45 +638,6 @@ export default function SimulationPage() {
               </div>
             )}
 
-            {/* KONTROL tab */}
-            {activeTab === 'kontrol' && (
-              <div style={{ height: '100%', overflowY: 'auto', padding: 12, background: '#000' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ border: '1px solid #4a1a1a', padding: 12 }}>
-                    <div style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.15em', marginBottom: 8 }}>SİMÜLASYON HIZI</div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      {SPEEDS.map(s => (
-                        <button key={s} onClick={() => changeSpeed(s)}
-                          style={{
-                            flex: 1, padding: '8px 0', fontSize: 14, fontFamily: 'Orbitron, monospace', fontWeight: 700, cursor: 'pointer',
-                            background: speedMultiplier === s ? 'rgba(0,232,135,0.2)' : 'rgba(0,10,5,0.8)',
-                            border: `1px solid ${speedMultiplier === s ? '#00e887' : '#4a1a1a'}`,
-                            color: speedMultiplier === s ? '#00e887' : '#2a5040',
-                            boxShadow: speedMultiplier === s ? '0 0 12px rgba(0,232,135,0.3)' : 'none',
-                          }}>
-                          {s}×
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {currentSim && (
-                    <div style={{ border: '1px solid #2a0d0d', padding: 12 }}>
-                      <div style={{ fontSize: 14, color: '#6a3030', letterSpacing: '0.15em', marginBottom: 8 }}>TEHLİKELİ BÖLGE</div>
-                      <button onClick={terminateSim}
-                        style={{ width: '100%', padding: '8px 0', fontSize: 14, border: '1px solid #6a2020', color: '#e05a5a', background: 'rgba(100,20,20,0.15)', letterSpacing: '0.1em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
-                        SİMÜLASYONU SONLANDIR
-                      </button>
-                    </div>
-                  )}
-
-                  <button onClick={() => navigate('/')}
-                    style={{ width: '100%', padding: '8px 0', fontSize: 14, border: '1px solid #4a1a1a', color: '#6a9a78', background: 'transparent', letterSpacing: '0.1em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
-                    ANA SAYFAYA DÖN
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
