@@ -5,10 +5,15 @@ import { Building2 } from 'lucide-react';
 const STRUCTURE_ICONS: Record<string, string> = {
   cave_dwelling: '🪨', lean_to: '🏕️', pit_house: '🏠', post_frame_hut: '🛖',
   storage_pit: '🪣', mud_brick_house: '🧱', granary: '🌾', defensive_wall: '🏰',
-  stone_temple: '⛩️', stone_house: '🏛️', marketplace: '🏪', city_wall: '🗼',
+  stone_temple: '⛩️', stone_house: '🏛️', marketplace: '🏪', city_wall: '🧱',
 };
 
 const TIER_LABEL = ['Natural', 'Simple', 'Permanent', 'Urban'];
+const TIER_LABEL_TR = ['Doğal', 'Basit', 'Kalıcı', 'Kentsel'];
+
+function t(lang: string, en: string, tr: string) {
+  return lang === 'en' ? en : tr;
+}
 
 export default function ArchitecturePanel() {
   const { events, lang } = useSimStore();
@@ -27,18 +32,18 @@ export default function ArchitecturePanel() {
         <div>
           <div className="text-orange-400 font-bold text-lg">{uniqueStructures.length}</div>
           <div className="text-sim-muted text-sm">
-            {lang === 'en' ? 'Structure Types Built' : 'İnşa Edilen Yapı Türleri'}
+            {t(lang, 'Structure Types Built', 'İnşa Edilen Yapı Türleri')}
           </div>
         </div>
       </div>
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Built Structures' : 'İnşa Edilmiş Yapılar'}
+          {t(lang, 'Built Structures', 'İnşa Edilmiş Yapılar')}
         </h4>
         {uniqueStructures.length === 0 ? (
           <p className="text-sim-muted italic text-sm">
-            {lang === 'en' ? 'No structures built yet.' : 'Henüz yapı inşa edilmedi.'}
+            {t(lang, 'No structures built yet.', 'Henüz yapı inşa edilmedi.')}
           </p>
         ) : (
           <div className="grid grid-cols-2 gap-1">
@@ -54,12 +59,14 @@ export default function ArchitecturePanel() {
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Available Structures' : 'Mevcut Yapılar'}
+          {t(lang, 'Available Structures', 'Mevcut Yapılar')}
         </h4>
         <div className="space-y-2">
           {[0, 1, 2, 3].map(tier => (
             <div key={tier}>
-              <div className="text-sm text-sim-muted mb-1">Tier {tier}: {TIER_LABEL[tier]}</div>
+              <div className="text-sm text-sim-muted mb-1">
+                {t(lang, `Tier ${tier}: ${TIER_LABEL[tier]}`, `Seviye ${tier}: ${TIER_LABEL_TR[tier]}`)}
+              </div>
               <div className="flex flex-wrap gap-1">
                 {Object.entries(STRUCTURE_ICONS)
                   .slice(tier * 3, tier * 3 + 3)
@@ -76,11 +83,11 @@ export default function ArchitecturePanel() {
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Construction Log' : 'İnşaat Günlüğü'}
+          {t(lang, 'Construction Log', 'İnşaat Günlüğü')}
         </h4>
         {archEvents.length === 0 ? (
           <p className="text-sim-muted italic text-sm">
-            {lang === 'en' ? 'No construction yet.' : 'Henüz inşaat yok.'}
+            {t(lang, 'No construction yet.', 'Henüz inşaat yok.')}
           </p>
         ) : (
           <div className="space-y-1 max-h-36 overflow-y-auto">

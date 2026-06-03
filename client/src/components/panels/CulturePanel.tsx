@@ -11,6 +11,36 @@ const MEME_STAGES: Record<string, number> = {
 
 const STAGE_COLORS = ['', '#6b8e23', '#4682b4', '#9370db', '#daa520', '#cd853f'];
 
+const MEME_LABELS_TR: Record<string, string> = {
+  shared_greeting: 'Ortak selamlaşma',
+  mourning_ritual: 'Yas ritüeli',
+  food_sharing_norm: 'Yiyecek paylaşımı normu',
+  reciprocity_norm: 'Karşılıklılık normu',
+  gender_roles: 'Toplumsal cinsiyet rolleri',
+  age_hierarchy: 'Yaş hiyerarşisi',
+  gift_exchange: 'Hediye alışverişi',
+  body_decoration: 'Vücut süsleme',
+  storytelling: 'Hikâye anlatımı',
+  music_drumming: 'Müzik ve davul',
+  dance_ritual: 'Dans ritüeli',
+  naming_ceremony: 'Ad verme töreni',
+  marriage_ceremony: 'Evlilik töreni',
+  seasonal_festival: 'Mevsim festivali',
+  taboo_system: 'Tabu sistemi',
+  trade_ceremony: 'Ticaret töreni',
+  written_myth: 'Yazılı mit',
+  legal_code: 'Hukuk kodu',
+};
+
+function translateDescription(desc: string, lang: string) {
+  if (lang !== 'tr') return desc;
+  let result = desc;
+  for (const [key, value] of Object.entries(MEME_LABELS_TR)) {
+    result = result.split(key.replace(/_/g, ' ')).join(value);
+  }
+  return result;
+}
+
 export default function CulturePanel() {
   const { events, lang } = useSimStore();
 
@@ -40,14 +70,14 @@ export default function CulturePanel() {
         {[1, 2, 3, 4, 5].map(stage => {
           const stageMemes = Object.entries(MEME_STAGES).filter(([, s]) => s === stage);
           const emerged = stageMemes.filter(([id]) =>
-            cultureEvents.some(e => e.description?.includes(id.replace(/_/g, ' ')))
+            cultureEvents.some(e => e.description?.toLowerCase().includes(id.replace(/_/g, ' ')))
           );
           return (
             <div key={stage} className="mb-2">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STAGE_COLORS[stage] }} />
                 <span className="text-sm text-sim-muted">
-                  Stage {stage} ({emerged.length}/{stageMemes.length})
+                  {lang === 'en' ? `Stage ${stage}` : `Aşama ${stage}`} ({emerged.length}/{stageMemes.length})
                 </span>
               </div>
               <div className="h-1.5 bg-sim-border rounded-full overflow-hidden">
@@ -77,7 +107,7 @@ export default function CulturePanel() {
             {cultureEvents.slice(0, 10).map((ev, i) => (
               <div key={i} className="flex gap-2 py-0.5 border-b border-sim-border/30">
                 <span className="text-purple-400 font-mono text-sm">Y{ev.sim_year}</span>
-                <span className="text-sim-muted text-sm">{ev.description}</span>
+                <span className="text-sim-muted text-sm">{translateDescription(ev.description, lang)}</span>
               </div>
             ))}
           </div>

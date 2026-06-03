@@ -85,6 +85,13 @@ function trTr(desc: string, type: string, ev?: any): string {
     .replace(/Individual died: (.+)/, (_: string, c: string) => `Birey öldü: ${CAUSE_TR[c] ?? c.replace(/_/g, ' ')}`)
     .replace(/(.+) language stage advanced to (.+)/, (_: string, name: string, stage: string) => `${name} dil aşamasını ${stage} seviyesine yükseltti`)
     .replace(/Technology discovered: (.+)/, (_: string, t: string) => `Teknoloji: ${t.replace(/_/g, ' ')}`)
+    .replace(/Culture event: (.+)/, (_: string, c: string) => `Kültür olayı: ${c.replace(/_/g, ' ')}`)
+    .replace(/Art event: (.+)/, (_: string, a: string) => `Sanat olayı: ${a.replace(/_/g, ' ')}`)
+    .replace(/Astronomy event: (.+)/, (_: string, a: string) => `Astronomi olayı: ${a.replace(/_/g, ' ')}`)
+    .replace(/Architecture event: (.+)/, (_: string, a: string) => `Mimari olay: ${a.replace(/_/g, ' ')}`)
+    .replace(/Law event: (.+)/, (_: string, a: string) => `Hukuk olayı: ${a.replace(/_/g, ' ')}`)
+    .replace(/Microbiome event: (.+)/, (_: string, a: string) => `Mikrobiyom olayı: ${a.replace(/_/g, ' ')}`)
+    .replace(/Epigenetics event: (.+)/, (_: string, a: string) => `Epigenetik olay: ${a.replace(/_/g, ' ')}`)
     .replace(/killed (\d+) individuals/, (_: string, n: string) => `${n} bireyi öldürdü`);
 }
 

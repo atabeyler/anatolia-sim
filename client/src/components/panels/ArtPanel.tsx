@@ -26,6 +26,10 @@ const ART_CATEGORIES = [
   },
 ];
 
+function t(lang: string, en: string, tr: string) {
+  return lang === 'en' ? en : tr;
+}
+
 export default function ArtPanel() {
   const { events, stats, lang } = useSimStore();
 
@@ -39,19 +43,21 @@ export default function ArtPanel() {
         <div>
           <div className="text-pink-400 font-bold text-lg">{totalForms}</div>
           <div className="text-sim-muted text-sm">
-            {lang === 'en' ? 'Art Forms Discovered' : 'Keşfedilen Sanat Formları'}
+            {t(lang, 'Art Forms Discovered', 'Keşfedilen Sanat Formları')}
           </div>
         </div>
       </div>
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Emergence Requirements' : 'Ortaya Çıkış Gereksinimleri'}
+          {t(lang, 'Emergence Requirements', 'Ortaya Çıkış Gereksinimleri')}
         </h4>
         <p className="text-sim-muted text-sm italic">
-          {lang === 'en'
-            ? 'Art requires food surplus + artistic_sense gene × intelligence > threshold. Higher forms need cognitive prerequisites.'
-            : 'Sanat; gıda fazlası + artistik_duyarlılık geni × zeka > eşiği gerektirir.'}
+          {t(
+            lang,
+            'Art requires food surplus + artistic_sense gene × intelligence > threshold. Higher forms need cognitive prerequisites.',
+            'Sanat; gıda fazlası + artistik_duyarlılık geni × zekâ > eşik gerektirir. Yüksek formlar bilişsel önkoşullar ister.'
+          )}
         </p>
       </div>
 
@@ -63,7 +69,7 @@ export default function ArtPanel() {
           <div key={cat.medium} className="mb-3">
             <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2 flex items-center gap-1.5">
               <span>{cat.emoji}</span>
-              <span>{lang === 'en' ? cat.label : cat.labelTr}</span>
+              <span>{t(lang, cat.label, cat.labelTr)}</span>
               <span className="text-sim-muted font-normal normal-case tracking-normal">
                 ({discovered.length}/{cat.items.length})
               </span>
@@ -74,9 +80,7 @@ export default function ArtPanel() {
                 return (
                   <div
                     key={item}
-                    className={`text-sm px-2 py-1 rounded ${
-                      isDiscovered ? 'text-sim-text bg-pink-500/10' : 'text-sim-muted opacity-40'
-                    }`}
+                    className={`text-sm px-2 py-1 rounded ${isDiscovered ? 'text-sim-text bg-pink-500/10' : 'text-sim-muted opacity-40'}`}
                   >
                     {isDiscovered ? '✓' : '○'} {item}
                   </div>
@@ -89,11 +93,11 @@ export default function ArtPanel() {
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Art Events' : 'Sanat Olayları'}
+          {t(lang, 'Art Events', 'Sanat Olayları')}
         </h4>
         {artEvents.length === 0 ? (
           <p className="text-sim-muted italic text-sm">
-            {lang === 'en' ? 'No art events yet.' : 'Henüz sanat olayı yok.'}
+            {t(lang, 'No art events yet.', 'Henüz sanat olayı yok.')}
           </p>
         ) : (
           <div className="space-y-1 max-h-36 overflow-y-auto">

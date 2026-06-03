@@ -75,6 +75,13 @@ function translateEventDesc(desc: string, type: string): string {
     .replace('Technology discovered: stone_tools', 'Teknoloji keşfedildi: Taş Aletler')
     .replace('Technology discovered: fire_making', 'Teknoloji keşfedildi: Ateş Yakma')
     .replace(/Technology discovered: (.+)/, (_: string, t: string) => `Teknoloji keşfedildi: ${t.replace(/_/g, ' ')}`)
+    .replace(/Culture event: (.+)/, (_: string, c: string) => `Kültür olayı: ${c.replace(/_/g, ' ')}`)
+    .replace(/Art event: (.+)/, (_: string, a: string) => `Sanat olayı: ${a.replace(/_/g, ' ')}`)
+    .replace(/Astronomy event: (.+)/, (_: string, a: string) => `Astronomi olayı: ${a.replace(/_/g, ' ')}`)
+    .replace(/Architecture event: (.+)/, (_: string, a: string) => `Mimari olay: ${a.replace(/_/g, ' ')}`)
+    .replace(/Law event: (.+)/, (_: string, a: string) => `Hukuk olayı: ${a.replace(/_/g, ' ')}`)
+    .replace(/Microbiome event: (.+)/, (_: string, a: string) => `Mikrobiyom olayı: ${a.replace(/_/g, ' ')}`)
+    .replace(/Epigenetics event: (.+)/, (_: string, a: string) => `Epigenetik olay: ${a.replace(/_/g, ' ')}`)
     .replace(/killed (\d+) individuals/, (_: string, n: string) => `${n} bireyi öldürdü`);
 }
 

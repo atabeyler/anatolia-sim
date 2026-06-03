@@ -4,11 +4,17 @@ import { Telescope } from 'lucide-react';
 
 const KNOWLEDGE_ITEMS = [
   { id: 'lunar_tracking', label: 'Lunar Tracking', labelTr: 'Ay Takibi', icon: '🌙' },
-  { id: 'seasonal_calendar', label: 'Seasonal Calendar', labelTr: 'Mevsimsel Takvim', icon: '📅' },
+  { id: 'seasonal_calendar', label: 'Seasonal Calendar', labelTr: 'Mevsimsel Takvim', icon: '📆' },
   { id: 'star_map', label: 'Star Map', labelTr: 'Yıldız Haritası', icon: '⭐' },
   { id: 'eclipse_prediction', label: 'Eclipse Prediction', labelTr: 'Tutulma Tahmini', icon: '🌑' },
   { id: 'planetary_model', label: 'Planetary Model', labelTr: 'Gezegen Modeli', icon: '🪐' },
 ];
+
+const OBSERVABLES_TR = ['Ay döngüleri', 'Gündönümleri', 'Ekinokslar', 'Yıldız doğuşları', 'Tutulmalar', 'Kuyruklu yıldızlar'];
+
+function t(lang: string, en: string, tr: string) {
+  return lang === 'en' ? en : tr;
+}
 
 export default function AstronomyPanel() {
   const { events, lang } = useSimStore();
@@ -23,14 +29,14 @@ export default function AstronomyPanel() {
         <div>
           <div className="text-blue-400 font-bold text-lg">{discoveries.length}</div>
           <div className="text-sim-muted text-sm">
-            {lang === 'en' ? 'Astronomical Discoveries' : 'Astronomik Keşifler'}
+            {t(lang, 'Astronomical Discoveries', 'Astronomik Keşifler')}
           </div>
         </div>
       </div>
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Knowledge Tree' : 'Bilgi Ağacı'}
+          {t(lang, 'Knowledge Tree', 'Bilgi Ağacı')}
         </h4>
         <div className="space-y-1.5">
           {KNOWLEDGE_ITEMS.map(item => {
@@ -42,7 +48,7 @@ export default function AstronomyPanel() {
               >
                 <span className="text-base">{item.icon}</span>
                 <span className={`text-sm ${discovered ? 'text-sim-text' : 'text-sim-muted'}`}>
-                  {lang === 'en' ? item.label : item.labelTr}
+                  {t(lang, item.label, item.labelTr)}
                 </span>
               </div>
             );
@@ -52,10 +58,13 @@ export default function AstronomyPanel() {
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Observable Events' : 'Gözlemlenebilir Olaylar'}
+          {t(lang, 'Observable Events', 'Gözlemlenebilir Olaylar')}
         </h4>
         <div className="grid grid-cols-2 gap-1">
-          {['Lunar cycles', 'Solstices', 'Equinoxes', 'Star risings', 'Eclipses', 'Comets'].map(ev => (
+          {(lang === 'en'
+            ? ['Lunar cycles', 'Solstices', 'Equinoxes', 'Star risings', 'Eclipses', 'Comets']
+            : OBSERVABLES_TR
+          ).map(ev => (
             <div key={ev} className="text-sm text-sim-muted bg-sim-surface rounded px-2 py-1">{ev}</div>
           ))}
         </div>
@@ -63,11 +72,11 @@ export default function AstronomyPanel() {
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Observation Log' : 'Gözlem Günlüğü'}
+          {t(lang, 'Observation Log', 'Gözlem Günlüğü')}
         </h4>
         {astroEvents.length === 0 ? (
           <p className="text-sim-muted italic text-sm">
-            {lang === 'en' ? 'No astronomical events recorded.' : 'Kayıtlı astronomi olayı yok.'}
+            {t(lang, 'No astronomical events recorded.', 'Kayıtlı astronomi olayı yok.')}
           </p>
         ) : (
           <div className="space-y-1 max-h-36 overflow-y-auto">
