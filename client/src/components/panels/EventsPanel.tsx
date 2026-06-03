@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
-import { translateEventDescription, type LangCode } from '../../utils/i18n';
+import { translateEventDescription, translateEventType, type LangCode } from '../../utils/i18n';
 
 const FILTERS = [
   { id: 'all',        labelTr: 'Tümü',     labelEn: 'All',       color: '#a0c8b0' },
@@ -169,7 +169,7 @@ export default function EventsPanel() {
                   Y{String(ev.sim_year).padStart(4, '0')} G{String(ev.sim_day % 365).padStart(3, '0')}
                 </span>
                 <span style={{ fontSize: 12, color: `${color}88`, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                  {ev.event_type?.replace(/_/g, ' ')}
+                  {translateEventType(ev.event_type, lang as LangCode)}
                 </span>
               </div>
               <div style={{ fontSize: 12, color: i < 5 ? color : '#6a9a7a', lineHeight: 1.45, wordBreak: 'break-word' }}>
