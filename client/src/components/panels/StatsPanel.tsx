@@ -65,7 +65,7 @@ export default function StatsPanel() {
         year: stats.year,
         pop: stats.population,
         food: Math.round(stats.food_abundance * 100),
-        water: Math.round(stats.water_abundance * 100),
+        water: Math.round((stats.water_abundance ?? 0) * 100),
         happiness: Math.round(((stats as any).happiness_index ?? 0) * 100),
       },
     ].slice(-80));
@@ -166,7 +166,7 @@ export default function StatsPanel() {
         {/* Bars */}
         <div className="border-t border-sim-border/30 pt-3">
           <GaugeBar label={lang === 'tr' ? 'BESİN BOLLUĞU' : 'FOOD ABUNDANCE'} value={stats.food_abundance} color="#4ecb71" />
-          <GaugeBar label={lang === 'tr' ? 'SU BOLLUĞU' : 'WATER ABUNDANCE'} value={stats.water_abundance} color="#7dd3fc" />
+          <GaugeBar label={lang === 'tr' ? 'SU BOLLUĞU' : 'WATER ABUNDANCE'} value={stats.water_abundance ?? 0} color="#7dd3fc" />
           {(stats as any).happiness_index !== undefined && (
             <GaugeBar label={lang === 'tr' ? 'MUTLULUK' : 'HAPPINESS'} value={(stats as any).happiness_index} color="#ff8ab0" />
           )}
