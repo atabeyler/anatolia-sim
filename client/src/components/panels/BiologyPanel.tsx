@@ -82,9 +82,9 @@ export default function BiologyPanel() {
               <div key={ind.id} className="bg-sim-bg/60 border border-sim-border/40 rounded p-2">
                 <div className="flex justify-between gap-2 mb-1">
                   <span className="text-sim-text font-semibold truncate">{ind.name ?? ind.phenotype?.name ?? 'Unnamed'}</span>
-                  <span className="text-sim-accent font-mono text-[12px]">{Number(ind.age_years ?? 0).toFixed(1)} yr</span>
+                  <span className="text-sim-accent font-mono text-[11px]">{Number(ind.age_years ?? 0).toFixed(1)} yr</span>
                 </div>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[12px]">
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
                   <Mini label={lang === 'en' ? 'Sex' : 'Cinsiyet'} value={ind.sex} />
                   <Mini label={lang === 'en' ? 'Location' : 'Konum'} value={`${Number(ind.y ?? 0).toFixed(2)}, ${Number(ind.x ?? 0).toFixed(2)}`} />
                   <Mini label={lang === 'en' ? 'Hair' : 'Sac'} value={ind.phenotype?.hair_color ?? '-'} />

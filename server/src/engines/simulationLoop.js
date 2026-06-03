@@ -36,13 +36,11 @@ export class SimulationEngine {
     this.groups = [];
     this.settlements = [];
     this.events = [];
-    this.eventSeq = 0;
     this.generation = 0;
     this.running = false;
     this.speedMultiplier = simulation.speed_multiplier ?? 1;
     this.onTick = null;
     this.onCheckpoint = null;
-    this.onEvent = null;
     // Build phonological profile once — unique to this civilization's geography
     const ws = simulation.world_state ?? {};
     this.phonology = buildPhonology(ws.phonology_seed ?? 0, ws.biome ?? 'mediterranean');
@@ -661,8 +659,7 @@ export class SimulationEngine {
   }
 
   logEvent(day, type, description, data = {}, importance = 1) {
-    const event = {
-      id: `${this.simId}:${day}:${this.eventSeq++}`,
+    this.events.push({
       simulation_id: this.simId,
       sim_day: day,
       sim_year: Math.floor(day / 365),
@@ -671,14 +668,8 @@ export class SimulationEngine {
       data,
       importance,
       created_at: new Date().toISOString(),
-    };
-    this.events.push(event);
+    });
     if (this.events.length > 1000) this.events.shift();
-    if (this.onEvent) {
-      Promise.resolve(this.onEvent(event)).catch(err => {
-        console.error('[SimulationEngine] event persist error:', err);
-      });
-    }
   }
 }
 

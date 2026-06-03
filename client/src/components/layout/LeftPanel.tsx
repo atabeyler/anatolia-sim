@@ -42,22 +42,23 @@ export default function LeftPanel() {
         width: W,
         transition: 'width 0.22s ease',
         background: 'rgba(3,3,16,0.97)',
-        borderRight: '1px solid rgba(0,232,135,0.22)',
+        borderRight: '1px solid rgba(79,110,247,0.28)',
         backdropFilter: 'blur(20px)',
-        boxShadow: '2px 0 30px rgba(0,232,135,0.06)',
+        boxShadow: '2px 0 30px rgba(79,110,247,0.06)',
       }}>
 
-      <div className="w-full h-px mb-2 flex-shrink-0" style={{ background: 'linear-gradient(90deg, transparent, rgba(0,232,135,0.5), transparent)' }} />
+      <div className="w-full h-px mb-2 flex-shrink-0" style={{ background: 'linear-gradient(90deg, transparent, rgba(79,110,247,0.5), transparent)' }} />
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-0.5 px-1.5">
         {MODULES.map((mod) => {
           const Icon = mod.icon;
           const isActive = activePanel === mod.id;
+          const accent = (mod as any).accent ?? '#4f6ef7';
 
           return (
             <div key={mod.id} className="flex-shrink-0">
               {(mod as any).divider && (
-                <div className="mx-1 my-1.5 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(0,232,135,0.35), transparent)' }} />
+                <div className="mx-1 my-1.5 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(79,110,247,0.35), transparent)' }} />
               )}
               <button
                 onClick={() => setActivePanel(isActive ? null : mod.id)}
@@ -66,15 +67,15 @@ export default function LeftPanel() {
                   height: 32,
                   padding: sidebarExpanded ? '0 8px' : '0',
                   justifyContent: sidebarExpanded ? 'flex-start' : 'center',
-                  background: isActive ? 'rgba(0,232,135,0.12)' : 'transparent',
-                  border: isActive ? '1px solid rgba(0,232,135,0.45)' : '1px solid transparent',
-                  boxShadow: isActive ? '0 0 10px rgba(0,232,135,0.24)' : 'none',
-                  color: isActive ? '#00e887' : '#8fcfb0',
+                  background: isActive ? `${accent}22` : 'transparent',
+                  border: isActive ? `1px solid ${accent}55` : '1px solid transparent',
+                  boxShadow: isActive ? `0 0 10px ${accent}35` : 'none',
+                  color: isActive ? accent : '#9aabcf',
                 }}>
-                <Icon size={14} style={{ flexShrink: 0, filter: isActive ? 'drop-shadow(0 0 4px #00e887)' : 'none' }} />
+                <Icon size={14} style={{ flexShrink: 0, filter: isActive ? `drop-shadow(0 0 4px ${accent})` : 'none' }} />
                 {sidebarExpanded && (
                   <span className="font-share-tech tracking-wider whitespace-nowrap overflow-hidden text-ellipsis"
-                    style={{ fontSize: 12, color: isActive ? '#00e887' : '#8fcfb0' }}>
+                    style={{ fontSize: 12, color: isActive ? accent : '#9aabcf' }}>
                     {lang === 'en' ? mod.label : mod.labelTr}
                   </span>
                 )}
@@ -84,7 +85,7 @@ export default function LeftPanel() {
         })}
       </div>
 
-      <div className="flex-shrink-0 px-1.5 pb-1 pt-2" style={{ borderTop: '1px solid rgba(0,232,135,0.12)' }}>
+      <div className="flex-shrink-0 px-1.5 pb-1 pt-2" style={{ borderTop: '1px solid rgba(79,110,247,0.12)' }}>
         <button
           onClick={toggleSidebar}
           className="w-full flex items-center transition-all duration-150 rounded-sm"

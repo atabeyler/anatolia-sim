@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import { useState } from 'react';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 
@@ -89,49 +88,15 @@ function trTr(desc: string, type: string, ev?: any): string {
 }
 
 export default function EventsPanel() {
-  const { events, lang, currentSim, accessToken } = useSimStore();
+  const { events, lang } = useSimStore();
   const [filter, setFilter] = useState('all');
-  const [summaryCounts, setSummaryCounts] = useState<Record<string, number>>({});
-  const [summaryTotal, setSummaryTotal] = useState(0);
-
-  useEffect(() => {
-    if (!currentSim || !accessToken) {
-      setSummaryCounts({});
-      setSummaryTotal(0);
-      return;
-    }
-    let alive = true;
-    const headers = { Authorization: `Bearer ${accessToken}` };
-    const load = () => axios.get(`/api/simulations/${currentSim.id}/events/summary`, { headers })
-      .then(r => {
-        if (!alive) return;
-        setSummaryCounts(r.data?.countsByType ?? {});
-        setSummaryTotal(r.data?.total ?? 0);
-      })
-      .catch(() => {});
-    load();
-    const timer = setInterval(load, 5000);
-    return () => {
-      alive = false;
-      clearInterval(timer);
-    };
-  }, [currentSim?.id, accessToken]);
 
   const visible = filter === 'all'
     ? events
     : events.filter(ev => ev.event_type?.toLowerCase().includes(filter));
 
-  const counts = useMemo(() => {
-    const next: Record<string, number> = {};
-    for (const f of FILTERS.slice(1)) next[f.id] = 0;
-    for (const [eventType, count] of Object.entries(summaryCounts)) {
-      const lower = eventType.toLowerCase();
-      for (const f of FILTERS.slice(1)) {
-        if (matchesCategory({ event_type: lower }, f.id)) next[f.id] += count;
-      }
-    }
-    return next;
-  }, [summaryCounts]);
+  const counts: Record<string, number> = {};
+  for (const f of FILTERS.slice(1)) counts[f.id] = events.filter(ev => matchesCategory(ev, f.id)).length;
 
   return (
     <DetailPanel panelId="olaylar" title="Event Log" titleTr="Olay Kaydı">
@@ -156,7 +121,7 @@ export default function EventsPanel() {
           <button key={f.id} onClick={() => setFilter(f.id)}
             style={{
               padding: '2px 6px', fontSize: 12,
-              border: `1px solid ${filter === f.id ? f.color : 'rgba(0,232,135,0.18)'}`,
+              border: `1px solid ${filter === f.id ? f.color : '#cc2222'}`,
               color: filter === f.id ? f.color : '#3a6040',
               background: filter === f.id ? `${f.color}14` : 'transparent',
               fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer',
@@ -169,7 +134,7 @@ export default function EventsPanel() {
 
       {/* Total */}
       <div style={{ fontSize: 12, color: '#2a5040', marginBottom: 6, letterSpacing: '0.06em' }}>
-        {visible.length} / {summaryTotal || events.length} {lang === 'tr' ? 'olay' : 'events'}
+        {visible.length} / {events.length} {lang === 'tr' ? 'olay' : 'events'}
       </div>
 
       {/* Event list */}
@@ -189,7 +154,7 @@ export default function EventsPanel() {
             display: 'flex', gap: 6, alignItems: 'flex-start',
             padding: '5px 6px', marginBottom: 2,
             background: i === 0 ? `${color}0c` : 'transparent',
-            border: `1px solid ${i < 3 ? color + '28' : 'rgba(0,232,135,0.12)'}`,
+            border: `1px solid ${i < 3 ? color + '28' : '#cc2222'}`,
             opacity: Math.max(0.35, 1 - i * 0.012),
           }}>
             <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1.1, color, marginTop: 1 }}>{icon}</span>

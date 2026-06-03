@@ -30,8 +30,6 @@ interface SimStats {
 }
 
 interface SimEvent {
-  id?: string;
-  data?: Record<string, any>;
   sim_day: number;
   sim_year: number;
   event_type: string;
@@ -85,16 +83,6 @@ interface SimStore {
   toggleSidebar: () => void;
 }
 
-function normalizeEventKey(event: SimEvent) {
-  return event.id ?? [
-    event.sim_day,
-    event.sim_year,
-    event.event_type ?? '',
-    event.description ?? '',
-    JSON.stringify(event.data ?? {}),
-  ].join('|');
-}
-
 export const useSimStore = create<SimStore>((set) => ({
   user: null,
   accessToken: null,
@@ -110,21 +98,8 @@ export const useSimStore = create<SimStore>((set) => ({
   stats: null,
   events: [],
   setStats: (stats) => set({ stats }),
-  addEvent: (event) => set(s => {
-    const key = normalizeEventKey(event);
-    if (s.events.some(existing => normalizeEventKey(existing) === key)) return s;
-    return { events: [event, ...s.events].slice(0, 200) };
-  }),
-  setEvents: (events) => {
-    const seen = new Set<string>();
-    const deduped = events.filter(event => {
-      const key = normalizeEventKey(event);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-    set({ events: deduped });
-  },
+  addEvent: (event) => set(s => ({ events: [event, ...s.events].slice(0, 200) })),
+  setEvents: (events) => set({ events }),
   resetLiveState: () => set({ stats: null, events: [] }),
 
   activePanel: null,

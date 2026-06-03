@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSimStore } from '../../store/simStore';
 import axios from 'axios';
@@ -30,7 +30,7 @@ function buildPrompt(stats: any, events: any[], ctx: any, lang: string): string 
 STATE: ${state}
 ${isWizard ? `WIZARD: wizard_next|wizard_back|wizard_submit|wizard_exit|wizard_set{"type":"wizard_set","field":"F","value":"V","founder":1|2}
 Fields: sim_name|sim_latitude|sim_longitude|founder_name|founder_age|founder_sex(male/female)|founder_height|founder_weight|founder_eye(brown/hazel/green/blue)|founder_hair(black/dark/brown/light/blond/red)|founder_skin(fair/light/olive/tan/brown/dark)|current_trait(0-100)
-TR: zeka=fluid_intelligence merak=curiosity dil=language_capacity Ã¶ÄŸrenme=learning_rate disiplin=conscientiousness stres=stress_resilience risk=risk_tolerance inovasyon=innovation sanat=artistic_sense empati=empathy iÅŸbirliÄŸi=cooperation liderlik=dominance gÃ¼Ã§=physical_strength dayanÄ±klÄ±lÄ±k=endurance baÄŸÄ±ÅŸÄ±klÄ±k=immune_strength Ã¼reme=fertility uzun_Ã¶mÃ¼r=longevity` : ''}
+TR: zeka=fluid_intelligence merak=curiosity dil=language_capacity öğrenme=learning_rate disiplin=conscientiousness stres=stress_resilience risk=risk_tolerance inovasyon=innovation sanat=artistic_sense empati=empathy işbirliği=cooperation liderlik=dominance güç=physical_strength dayanıklılık=endurance bağışıklık=immune_strength üreme=fertility uzun_ömür=longevity` : ''}
 ${isSim ? `SIM: navigate_panel{"panel":"ID"}|close_panel|change_speed{"speed":N}|start_simulation|pause_simulation|toggle_simulation|terminate_simulation|toggle_sidebar|god_mode|set_tab{"tab":"harita/durum/kontrol"}|apply_disaster{"disaster":"earthquake/flood/drought/epidemic/volcano/meteor","params":{}}|open_menu|close_menu|open_menu_page{"menuPage":"language/guide/about"}
 Panels: population olaylar language timemachine analysis biology god psychology environment technology belief social economy culture art astronomy hypothesis epigenetics architecture law microbiome` : ''}
 ${isDash ? `DASH: create_simulation|open_simulation{"index":0}|delete_simulation{"index":0}|toggle_compare|logout` : ''}
@@ -107,7 +107,7 @@ export default function AriaButton() {
     };
   }, []);
 
-  /* â”€â”€ Drag mouse â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Drag mouse ─────────────────────────────────────────────────────────── */
   useEffect(() => {
     function onMove(e: MouseEvent) {
       if (!dragging.current) return;
@@ -147,7 +147,7 @@ export default function AriaButton() {
   }
   function onTouchEnd() { dragging.current = false; }
 
-  /* â”€â”€ TTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── TTS ────────────────────────────────────────────────────────────────── */
   function speak(text: string, onDone?: () => void) {
     if (typeof window === 'undefined' || !window.speechSynthesis) { onDone?.(); return; }
     window.speechSynthesis.cancel();
@@ -173,7 +173,7 @@ export default function AriaButton() {
     window.speechSynthesis.speak(utt);
   }
 
-  /* â”€â”€ Toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Toggle ─────────────────────────────────────────────────────────────── */
   function toggle() {
     if (activeRef.current) {
       activeRef.current = false;
@@ -191,7 +191,7 @@ export default function AriaButton() {
     }
   }
 
-  /* â”€â”€ Speech recognition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Speech recognition ─────────────────────────────────────────────────── */
   function killRec() {
     const rec = recRef.current;
     if (!rec) return;
@@ -244,7 +244,7 @@ export default function AriaButton() {
     try { rec.start(); recRef.current = rec; } catch { setTimeout(startListening, 1000); }
   }
 
-  /* â”€â”€ Process command â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Process command ────────────────────────────────────────────────────── */
   async function processCommand(cmd: string) {
     if (!activeRef.current) { processingRef.current = false; return; }
     setUI('processing');
@@ -253,9 +253,9 @@ export default function AriaButton() {
 
     if (cmd === '__summary__') {
       responseText = !stats
-        ? (lang === 'tr' ? 'SimÃ¼lasyon verisi yok.' : 'No simulation data.')
+        ? (lang === 'tr' ? 'Simülasyon verisi yok.' : 'No simulation data.')
         : lang === 'tr'
-          ? `YÄ±l ${stats.year}, nÃ¼fus ${stats.population}. ${stats.technologies} teknoloji. Mutluluk %${Math.round((stats.happiness_index ?? 0.5) * 100)}.`
+          ? `Yıl ${stats.year}, nüfus ${stats.population}. ${stats.technologies} teknoloji. Mutluluk %${Math.round((stats.happiness_index ?? 0.5) * 100)}.`
           : `Year ${stats.year}, population ${stats.population}. ${stats.technologies} technologies. Happiness ${Math.round((stats.happiness_index ?? 0.5) * 100)}%.`;
     } else {
       const wizardOpen = !!(window as any).__ariaWizardOpen;
@@ -287,7 +287,7 @@ export default function AriaButton() {
           setLastAction(actionLabel(actions[0]));
           setTimeout(() => setLastAction(null), 3000);
         } else if (actions.length > 1) {
-          setLastAction(`âœ“ ${actions.length}`);
+          setLastAction(`✓ ${actions.length}`);
           setTimeout(() => setLastAction(null), 3000);
         }
         responseText = data?.text ?? (lang === 'tr' ? 'Tamam.' : 'Done.');
@@ -306,7 +306,7 @@ export default function AriaButton() {
           setTimeout(() => setAriaText(t => t === msg ? '' : t), 8000);
           return;
         }
-        responseText = err?.response?.data?.text ?? (lang === 'tr' ? 'BaÄŸlantÄ± hatasÄ±.' : 'Connection error.');
+        responseText = err?.response?.data?.text ?? (lang === 'tr' ? 'Bağlantı hatası.' : 'Connection error.');
       }
     }
     setTranscript(''); setAriaText(responseText);
@@ -332,25 +332,25 @@ export default function AriaButton() {
 
   function actionLabel(a: any): string {
     switch (a.type) {
-      case 'navigate_panel': return `ğŸ“‚ ${a.panel}`;
-      case 'change_speed': return `âš¡ x${a.speed}`;
-      case 'apply_disaster': return `âš  ${a.disaster}`;
-      case 'start_simulation': return 'â–¶ baÅŸlat';
-      case 'pause_simulation': return 'â¸ duraklat';
-      case 'toggle_simulation': return 'â¯ sim';
-      case 'terminate_simulation': return 'â¹ sonlandÄ±r';
-      case 'navigate_to': return `â†’ ${a.route}`;
-      case 'create_simulation': return 'âœš yeni sim';
-      case 'open_simulation': return `â–¶ sim #${(a.index ?? 0) + 1}`;
-      case 'wizard_next': return 'â†’ ileri';
-      case 'wizard_back': return 'â† geri';
-      case 'wizard_submit': return 'ğŸš€ baÅŸlat';
-      case 'wizard_set': return `âœ ${a.field}=${a.value}`;
+      case 'navigate_panel': return `📂 ${a.panel}`;
+      case 'change_speed': return `⚡ x${a.speed}`;
+      case 'apply_disaster': return `⚠ ${a.disaster}`;
+      case 'start_simulation': return '▶ başlat';
+      case 'pause_simulation': return '⏸ duraklat';
+      case 'toggle_simulation': return '⏯ sim';
+      case 'terminate_simulation': return '⏹ sonlandır';
+      case 'navigate_to': return `→ ${a.route}`;
+      case 'create_simulation': return '✚ yeni sim';
+      case 'open_simulation': return `▶ sim #${(a.index ?? 0) + 1}`;
+      case 'wizard_next': return '→ ileri';
+      case 'wizard_back': return '← geri';
+      case 'wizard_submit': return '🚀 başlat';
+      case 'wizard_set': return `✎ ${a.field}=${a.value}`;
       default: return a.type;
     }
   }
 
-  /* â”€â”€ Execute action â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Execute action ─────────────────────────────────────────────────────── */
   function executeAction(action: any) {
     if (!action?.type) return;
     const { currentSim, accessToken, setActivePanel, setSpeed, toggleLang, setLang, setCurrentSim, logout } = storeRef.current;
@@ -425,12 +425,12 @@ export default function AriaButton() {
     processingRef.current = true; armWatchdog(); processCommand(cmd);
   }
 
-  /* â”€â”€ Visual â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+  /* ── Visual ─────────────────────────────────────────────────────────────── */
   const COLORS: Record<AriaState, string> = { idle: '#00e887', listening: '#f97316', processing: '#a855f7' };
   const color = COLORS[uiState];
   const Icon = uiState === 'processing' ? Loader2 : uiState === 'listening' ? Mic : MicOff;
   const langKey = store.lang === 'tr' ? 'tr' : 'en';
-  const label = { tr: { idle: 'ASÄ°STAN', listening: 'DÄ°NLÄ°YORâ€¦', processing: 'Ä°ÅLENÄ°YORâ€¦' }, en: { idle: 'ASSISTANT', listening: 'LISTENINGâ€¦', processing: 'PROCESSINGâ€¦' } }[langKey][uiState];
+  const label = { tr: { idle: 'ASİSTAN', listening: 'DİNLİYOR…', processing: 'İŞLENİYOR…' }, en: { idle: 'ASSISTANT', listening: 'LISTENING…', processing: 'PROCESSING…' } }[langKey][uiState];
   const hasOverlay = uiState !== 'idle' && (transcript || ariaText);
 
   return (
@@ -472,12 +472,12 @@ export default function AriaButton() {
           pointerEvents: !SpeechRec && uiState === 'listening' ? 'auto' : 'none',
         }}>
           {transcript && (
-            <div style={{ color: '#a0b4ff', fontSize: 12, marginBottom: ariaText ? 6 : 0, fontFamily: 'Share Tech Mono, monospace' }}>
-              "{transcript.slice(0, 120)}{transcript.length > 120 ? 'â€¦' : ''}"
+            <div style={{ color: '#a0b4ff', fontSize: 10, marginBottom: ariaText ? 6 : 0, fontFamily: 'Share Tech Mono, monospace' }}>
+              "{transcript.slice(0, 120)}{transcript.length > 120 ? '…' : ''}"
             </div>
           )}
           {ariaText && (
-            <div style={{ color: '#00e887', fontSize: 12, fontFamily: 'Share Tech Mono, monospace',
+            <div style={{ color: '#00e887', fontSize: 11, fontFamily: 'Share Tech Mono, monospace',
               lineHeight: 1.5, marginBottom: 4, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
               {ariaText}
             </div>
@@ -486,17 +486,17 @@ export default function AriaButton() {
             <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
               <input ref={textInputRef} value={textInput} onChange={e => setTextInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') submitText(); }}
-                placeholder={store.lang === 'tr' ? 'komut yazâ€¦' : 'type commandâ€¦'}
+                placeholder={store.lang === 'tr' ? 'komut yaz…' : 'type command…'}
                 style={{ flex: 1, background: 'transparent', border: '1px solid #00e88766', borderRadius: 4,
-                  color: '#00e887', fontFamily: 'Share Tech Mono, monospace', fontSize: 12,
+                  color: '#00e887', fontFamily: 'Share Tech Mono, monospace', fontSize: 10,
                   padding: '3px 6px', outline: 'none', pointerEvents: 'auto' }} />
               <button onClick={submitText}
                 style={{ background: '#00e88722', border: '1px solid #00e88766', borderRadius: 4,
-                  color: '#00e887', fontFamily: 'Share Tech Mono, monospace', fontSize: 12,
-                  padding: '3px 7px', cursor: 'pointer', pointerEvents: 'auto' }}>â†µ</button>
+                  color: '#00e887', fontFamily: 'Share Tech Mono, monospace', fontSize: 10,
+                  padding: '3px 7px', cursor: 'pointer', pointerEvents: 'auto' }}>↵</button>
             </div>
           )}
-          <div style={{ fontSize: 12, color: '#2a6a48', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.04em' }}>
+          <div style={{ fontSize: 9, color: '#2a6a48', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.04em' }}>
             {store.lang === 'tr' ? '[ tekrar bas = durdur ]' : '[ press again = stop ]'}
           </div>
         </div>
@@ -508,14 +508,13 @@ export default function AriaButton() {
           left: Math.max(0, Math.min(window.innerWidth - 180, pos.x + PILL_W + 8)),
           top: pos.y + (PILL_H - 26) / 2, zIndex: 9998,
           background: 'rgba(0,232,135,0.12)', border: '1px solid #00e88766',
-          borderRadius: 6, padding: '4px 10px', fontSize: 12, color: '#00e887',
+          borderRadius: 6, padding: '4px 10px', fontSize: 10, color: '#00e887',
           fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.08em',
           pointerEvents: 'none', whiteSpace: 'nowrap',
         }}>
-          âœ“ {lastAction}
+          ✓ {lastAction}
         </div>
       )}
     </>
   );
 }
-

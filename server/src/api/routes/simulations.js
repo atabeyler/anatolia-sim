@@ -264,24 +264,6 @@ router.get('/:id/events', authenticate, requireSimulationOwner, async (req, res)
   } catch { res.status(500).json({ error: 'Failed to fetch events' }); }
 });
 
-router.get('/:id/events/summary', authenticate, requireSimulationOwner, async (req, res) => {
-  try {
-    const { rows } = await query(
-      `SELECT event_type, COUNT(*)::int AS count
-       FROM simulation_events
-       WHERE simulation_id = $1
-       GROUP BY event_type`,
-      [req.params.id]
-    );
-    const countsByType = Object.fromEntries(rows.map(row => [row.event_type, row.count]));
-    const total = rows.reduce((sum, row) => sum + row.count, 0);
-    res.json({ total, countsByType });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch event summary' });
-  }
-});
-
 router.get('/:id/checkpoints', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const { rows } = await query('SELECT id, sim_day, sim_year, population_count, stats, created_at FROM checkpoints WHERE simulation_id = $1 ORDER BY sim_day DESC', [req.params.id]);
