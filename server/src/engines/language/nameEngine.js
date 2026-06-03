@@ -93,8 +93,6 @@ export function derivePhonologySeed(lat, lon) {
  * @returns {string|null}
  */
 export function generateName(phonology, languageStage) {
-  if (languageStage < 2) return null;
-
   const { consonants, vowels, clanSuffix } = phonology;
 
   function rnd(arr) {
@@ -110,16 +108,16 @@ export function generateName(phonology, languageStage) {
   }
 
   if (languageStage < 3) {
-    // Single vocalization — short and simple
+    // Stage 0-2: Single vocalization
     return capitalize(syllable());
   }
 
   if (languageStage < 4) {
-    // Two-syllable personal name
+    // Stage 3: Two-syllable personal name
     return capitalize(syllable() + syllable());
   }
 
-  // Complex: personal name + clan identifier (hyphenated)
+  // Stage 4+: personal name + clan identifier (hyphenated)
   const personal = capitalize(syllable() + syllable());
   const clan     = capitalize(rnd(clanSuffix));
   return `${personal}-${clan}`;

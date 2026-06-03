@@ -1,5 +1,6 @@
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
+import { translateEventDescription, type LangCode } from '../../utils/i18n';
 
 const MEME_STAGES: Record<string, number> = {
   shared_greeting: 1, mourning_ritual: 1, food_sharing_norm: 1,
@@ -107,7 +108,7 @@ export default function CulturePanel() {
             {cultureEvents.slice(0, 10).map((ev, i) => (
               <div key={i} className="flex gap-2 py-0.5 border-b border-sim-border/30">
                 <span className="text-purple-400 font-mono text-sm">Y{ev.sim_year}</span>
-                <span className="text-sim-muted text-sm">{translateDescription(ev.description, lang)}</span>
+                <span className="text-sim-muted text-sm">{translateEventDescription(ev.description ?? '', lang as LangCode, ev)}</span>
               </div>
             ))}
           </div>

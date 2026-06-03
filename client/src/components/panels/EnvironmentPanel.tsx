@@ -1,5 +1,6 @@
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
+import { translateEventDescription, type LangCode } from '../../utils/i18n';
 
 const SEASON_NAMES: Record<string, { tr: string; color: string; icon: string }> = {
   spring: { tr: 'İlkbahar', color: '#4ecb71', icon: '🌿' },
@@ -160,7 +161,7 @@ export default function EnvironmentPanel() {
             {disasterEvents.slice(0, 10).map((ev, i) => (
               <div key={i} className="flex gap-2 py-0.5" style={{ borderBottom: '1px solid rgba(224,90,90,0.1)' }}>
                 <span className="font-share-tech" style={{ fontSize: 12, color: '#e05a5a' }}>Y{ev.sim_year}</span>
-                <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>{ev.description}</span>
+                <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>{translateEventDescription(ev.description ?? '', lang as LangCode, ev)}</span>
               </div>
             ))}
           </div>

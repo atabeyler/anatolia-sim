@@ -1,14 +1,15 @@
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
+import { translateEventDescription, type LangCode } from '../../utils/i18n';
 
 const LANGUAGE_STAGES = [
-  { id: 0, name: 'Pre-linguistic', nameTr: 'Dil Öncesi', desc: 'No symbolic communication', color: '#555' },
-  { id: 1, name: 'Gestural', nameTr: 'Jestsel', desc: 'Pointing, body language', color: '#8b7355' },
-  { id: 2, name: 'Emotional Sound', nameTr: 'Duygusal Ses', desc: 'Shared emotional vocalizations', color: '#6b8e23' },
-  { id: 3, name: 'Proto-Words', nameTr: 'Proto-Kelimeler', desc: 'Consistent sound-meaning pairs', color: '#4682b4' },
-  { id: 4, name: 'Syntax', nameTr: 'Sözdizimi', desc: 'Grammar emerges', color: '#9370db' },
-  { id: 5, name: 'Abstract', nameTr: 'Soyut', desc: 'Concepts beyond immediate world', color: '#cd853f' },
-  { id: 6, name: 'Writing', nameTr: 'Yazı', desc: 'Symbolic recording of language', color: '#daa520' },
+  { id: 0, name: 'Pre-linguistic',  nameTr: 'Dil Öncesi',      desc: 'No symbolic communication',        descTr: 'Sembolik iletişim yok',               color: '#555' },
+  { id: 1, name: 'Gestural',        nameTr: 'Jestsel',          desc: 'Pointing, body language',           descTr: 'İşaret, beden dili',                  color: '#8b7355' },
+  { id: 2, name: 'Emotional Sound', nameTr: 'Duygusal Ses',     desc: 'Shared emotional vocalizations',    descTr: 'Ortak duygusal sesler',               color: '#6b8e23' },
+  { id: 3, name: 'Proto-Words',     nameTr: 'Proto-Kelimeler',  desc: 'Consistent sound-meaning pairs',    descTr: 'Tutarlı ses-anlam eşleşmeleri',       color: '#4682b4' },
+  { id: 4, name: 'Syntax',          nameTr: 'Sözdizimi',        desc: 'Grammar emerges',                   descTr: 'Dilbilgisi ortaya çıkıyor',            color: '#9370db' },
+  { id: 5, name: 'Abstract',        nameTr: 'Soyut',            desc: 'Concepts beyond immediate world',   descTr: 'Anlık dünyayı aşan kavramlar',        color: '#cd853f' },
+  { id: 6, name: 'Writing',         nameTr: 'Yazı',             desc: 'Symbolic recording of language',    descTr: 'Dilin sembolik kaydı',                color: '#daa520' },
 ];
 
 export default function LanguagePanel() {
@@ -24,7 +25,7 @@ export default function LanguagePanel() {
         <div className="text-sim-gold font-bold text-base">
           Stage {currentStage}: {lang === 'en' ? LANGUAGE_STAGES[currentStage].name : LANGUAGE_STAGES[currentStage].nameTr}
         </div>
-        <div className="text-sim-muted text-sm mt-1">{LANGUAGE_STAGES[currentStage].desc}</div>
+        <div className="text-sim-muted text-sm mt-1">{lang === 'tr' ? LANGUAGE_STAGES[currentStage].descTr : LANGUAGE_STAGES[currentStage].desc}</div>
       </div>
 
       <div className="mb-3">
@@ -51,7 +52,7 @@ export default function LanguagePanel() {
                   <div className={`text-sm font-medium ${isReached ? 'text-sim-text' : 'text-sim-muted'}`}>
                     {lang === 'en' ? stage.name : stage.nameTr}
                   </div>
-                  <div className="text-sim-muted text-sm">{stage.desc}</div>
+                  <div className="text-sim-muted text-sm">{lang === 'tr' ? stage.descTr : stage.desc}</div>
                 </div>
               </div>
             );
@@ -69,7 +70,7 @@ export default function LanguagePanel() {
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {langEvents.slice(0, 10).map((ev, i) => (
               <div key={i} className="text-sim-muted text-sm py-0.5 border-b border-sim-border/30">
-                {ev.description}
+                {translateEventDescription(ev.description ?? '', lang as LangCode, ev)}
               </div>
             ))}
           </div>

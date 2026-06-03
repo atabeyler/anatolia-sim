@@ -1,6 +1,7 @@
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { Music } from 'lucide-react';
+import { translateEventDescription, type LangCode } from '../../utils/i18n';
 
 const ART_CATEGORIES = [
   {
@@ -104,7 +105,7 @@ export default function ArtPanel() {
             {artEvents.slice(0, 8).map((ev, i) => (
               <div key={i} className="flex gap-2 py-0.5 border-b border-sim-border/30">
                 <span className="text-pink-400 font-mono text-sm">Y{ev.sim_year}</span>
-                <span className="text-sim-muted text-sm">{ev.description}</span>
+                <span className="text-sim-muted text-sm">{translateEventDescription(ev.description ?? '', lang as LangCode, ev)}</span>
               </div>
             ))}
           </div>
