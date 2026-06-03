@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 
@@ -88,15 +89,50 @@ function trTr(desc: string, type: string, ev?: any): string {
 }
 
 export default function EventsPanel() {
-  const { events, lang } = useSimStore();
+  const { events, lang, currentSim, accessToken } = useSimStore();
   const [filter, setFilter] = useState('all');
+  const [summaryCounts, setSummaryCounts] = useState<Record<string, number>>({});
+  const [summaryTotal, setSummaryTotal] = useState(0);
+
+  useEffect(() => {
+    if (!currentSim || !accessToken) {
+      setSummaryCounts({});
+      setSummaryTotal(0);
+      return;
+    }
+    let active = true;
+    const headers = { Authorization: `Bearer ${accessToken}` };
+    const load = () => axios.get(`/api/simulations/${currentSim.id}/events/summary`, { headers })
+      .then(r => {
+        if (!active) return;
+        setSummaryCounts(r.data?.countsByType ?? {});
+        setSummaryTotal(r.data?.total ?? 0);
+      })
+      .catch(() => {});
+    load();
+    const timer = setInterval(load, 5000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [currentSim?.id, accessToken]);
 
   const visible = filter === 'all'
     ? events
     : events.filter(ev => ev.event_type?.toLowerCase().includes(filter));
 
-  const counts: Record<string, number> = {};
-  for (const f of FILTERS.slice(1)) counts[f.id] = events.filter(ev => matchesCategory(ev, f.id)).length;
+  const counts = useMemo(() => {
+    const next: Record<string, number> = {};
+    for (const f of FILTERS.slice(1)) next[f.id] = 0;
+    for (const [eventType, count] of Object.entries(summaryCounts)) {
+      const lower = eventType.toLowerCase();
+      const fakeEvent = { event_type: lower };
+      for (const f of FILTERS.slice(1)) {
+        if (matchesCategory(fakeEvent, f.id)) next[f.id] += count;
+      }
+    }
+    return next;
+  }, [summaryCounts]);
 
   return (
     <DetailPanel panelId="olaylar" title="Event Log" titleTr="Olay Kaydı">
@@ -134,7 +170,7 @@ export default function EventsPanel() {
 
       {/* Total */}
       <div style={{ fontSize: 12, color: '#2a5040', marginBottom: 6, letterSpacing: '0.06em' }}>
-        {visible.length} / {events.length} {lang === 'tr' ? 'olay' : 'events'}
+        {visible.length} / {summaryTotal || events.length} {lang === 'tr' ? 'olay' : 'events'}
       </div>
 
       {/* Event list */}
