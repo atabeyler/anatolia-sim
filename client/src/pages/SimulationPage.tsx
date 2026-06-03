@@ -321,9 +321,6 @@ export default function SimulationPage() {
             <span style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.04em', fontFamily: 'Orbitron, monospace' }}>
               Y{String(simYear).padStart(4, '0')} G{String(simDay % 365).padStart(3, '0')}
             </span>
-            <span style={{ fontSize: 12, color: '#a0b4ff', letterSpacing: '0.08em', marginTop: 1 }}>
-              {seasonLabel}
-            </span>
           </div>
 
           <div style={{ flex: 1 }} />
@@ -360,14 +357,15 @@ export default function SimulationPage() {
         {/* Row 2: Stats (scrollable on mobile) | TR▸EN */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 0, padding: '0 10px', borderBottom: '1px solid #4a1a1a', overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', overflowX: isMobile ? 'auto' : 'visible', flex: 1, scrollbarWidth: 'none' }}>
-            {[
-              { key: 'pop',  label: lang === 'tr' ? 'NÜFUS'  : 'POP',   value: stats?.population ?? '—',   color: '#00e887' },
-              { key: 'bir',  label: lang === 'tr' ? 'DOĞUM'  : 'BIRTH', value: births,                      color: '#4ecb71' },
-              { key: 'dth',  label: lang === 'tr' ? 'ÖLÜM'   : 'DEATH', value: deaths,                      color: '#e05a5a' },
-              { key: 'yr',   label: lang === 'tr' ? 'YIL'    : 'YEAR',  value: stats?.year ?? '—',          color: '#7dd3fc' },
-              { key: 'tech', label: lang === 'tr' ? 'TECH' : 'TECH',    value: stats?.technologies ?? '—',  color: '#d4a838' },
-              { key: 'temp', label: lang === 'tr' ? 'SICAK' : 'TEMP',   value: stats?.temperature !== undefined ? `${stats.temperature}°` : '—', color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
-            ].map(({ key, label, value, color }) => (
+              {[
+                { key: 'pop',  label: lang === 'tr' ? 'NÜFUS'  : 'POP',   value: stats?.population ?? '—',   color: '#00e887' },
+                { key: 'bir',  label: lang === 'tr' ? 'DOĞUM'  : 'BIRTH', value: births,                      color: '#4ecb71' },
+                { key: 'dth',  label: lang === 'tr' ? 'ÖLÜM'   : 'DEATH', value: deaths,                      color: '#e05a5a' },
+                { key: 'yr',   label: lang === 'tr' ? 'YIL'    : 'YEAR',  value: stats?.year ?? '—',          color: '#7dd3fc' },
+                { key: 'tech', label: lang === 'tr' ? 'TEKNOLOJİ' : 'TECH',    value: stats?.technologies ?? '—',  color: '#d4a838' },
+                { key: 'sea',  label: lang === 'tr' ? 'MEVSİM' : 'SEASON',value: seasonLabel,                 color: '#a0b4ff' },
+                { key: 'temp', label: lang === 'tr' ? 'SICAK' : 'TEMP',   value: stats?.temperature !== undefined ? `${stats.temperature}°` : '—', color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
+              ].map(({ key, label, value, color }) => (
               <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '2px 7px' : '2px 10px', borderRight: '1px solid #4a1a1a', flexShrink: 0, minWidth: isMobile ? 42 : 52 }}>
                 <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{label}</span>
                 <span style={{ fontSize: 14, color, fontFamily: 'Orbitron, monospace', fontWeight: 700, lineHeight: 1.2 }}>{value}</span>
@@ -629,7 +627,6 @@ export default function SimulationPage() {
                     { l: 'HASTALIK', v: stats?.sick_rate !== undefined ? (stats.sick_rate * 100).toFixed(0) + '%' : '—',                         c: '#f97316' },
                     { l: 'TEKNOLOJİ',v: stats?.technologies ?? '—',                                                                             c: '#4ecb71' },
                     { l: 'İNANÇ',    v: stats?.beliefs ?? '—',                                                                                  c: '#a855f7' },
-                    { l: 'MEVSİM',   v: seasonLabel,                                                                                            c: '#a0b4ff' },
                     { l: 'SICAKLIK', v: stats?.temperature !== undefined ? `${stats.temperature}°` : '—',                                        c: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
                     { l: 'GRUPLAR',  v: stats?.groups ?? '—',                                                                                   c: '#d4a838' },
                   ].map(({ l, v, c }) => (
