@@ -1,13 +1,47 @@
+import { translateEventDescription, type LangCode } from '../../utils/i18n';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { Scale, ShieldCheck } from 'lucide-react';
 
 const NORM_STAGES = [
-  { stage: 1, label: 'Spontaneous Norms', labelTr: 'Kendiliğinden Normlar', norms: ['Reciprocity', 'No Theft', 'Incest Taboo'] },
-  { stage: 2, label: 'Social Norms', labelTr: 'Sosyal Normlar', norms: ['Elder Respect', 'Hospitality', 'Blood Feud', 'Communal Work'] },
-  { stage: 3, label: 'Proto-Law', labelTr: 'Proto-Hukuk', norms: ['Leader Arbitration', 'Property Rights', 'Exile Punishment'] },
-  { stage: 4, label: 'Formal Law', labelTr: 'Resmi Hukuk', norms: ['Written Law', 'Tax System', 'Contract Law'] },
+  {
+    stage: 1, label: 'Spontaneous Norms', labelTr: 'Kendiliğinden Normlar',
+    norms: [
+      { en: 'Reciprocity',   tr: 'Karşılıklılık' },
+      { en: 'No Theft',      tr: 'Hırsızlık Yasağı' },
+      { en: 'Incest Taboo',  tr: 'Ensest Tabusu' },
+    ],
+  },
+  {
+    stage: 2, label: 'Social Norms', labelTr: 'Sosyal Normlar',
+    norms: [
+      { en: 'Elder Respect',  tr: 'Yaşlılara Saygı' },
+      { en: 'Hospitality',    tr: 'Misafirperverlik' },
+      { en: 'Blood Feud',     tr: 'Kan Davası' },
+      { en: 'Communal Work',  tr: 'Ortak Çalışma' },
+    ],
+  },
+  {
+    stage: 3, label: 'Proto-Law', labelTr: 'Proto-Hukuk',
+    norms: [
+      { en: 'Leader Arbitration', tr: 'Lider Tahkimi' },
+      { en: 'Property Rights',    tr: 'Mülkiyet Hakkı' },
+      { en: 'Exile Punishment',   tr: 'Sürgün Cezası' },
+    ],
+  },
+  {
+    stage: 4, label: 'Formal Law', labelTr: 'Resmi Hukuk',
+    norms: [
+      { en: 'Written Law',   tr: 'Yazılı Hukuk' },
+      { en: 'Tax System',    tr: 'Vergi Sistemi' },
+      { en: 'Contract Law',  tr: 'Sözleşme Hukuku' },
+    ],
+  },
 ];
+
+function t(lang: string, en: string, tr: string) {
+  return lang === 'en' ? en : tr;
+}
 
 export default function LawPanel() {
   const { events, lang } = useSimStore();
@@ -22,39 +56,39 @@ export default function LawPanel() {
         <div className="bg-sim-surface rounded-lg p-2 text-center">
           <ShieldCheck size={16} className="text-green-400 mx-auto mb-1" />
           <div className="text-green-400 font-bold text-lg">{normCount}</div>
-          <div className="text-sim-muted text-sm">{lang === 'en' ? 'Active Norms' : 'Aktif Normlar'}</div>
+          <div className="text-sim-muted text-sm">{t(lang, 'Active Norms', 'Aktif Normlar')}</div>
         </div>
         <div className="bg-sim-surface rounded-lg p-2 text-center">
           <Scale size={16} className="text-yellow-400 mx-auto mb-1" />
           <div className="text-yellow-400 font-bold text-lg">{violationCount}</div>
-          <div className="text-sim-muted text-sm">{lang === 'en' ? 'Violations' : 'İhlaller'}</div>
+          <div className="text-sim-muted text-sm">{t(lang, 'Violations', 'İhlaller')}</div>
         </div>
       </div>
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Norm Progression' : 'Norm İlerlemesi'}
+          {t(lang, 'Norm Progression', 'Norm İlerlemesi')}
         </h4>
         <div className="space-y-3">
           {NORM_STAGES.map(stage => {
             const stageNorms = lawEvents.filter(e =>
-              stage.norms.some(n => e.description?.toLowerCase().includes(n.toLowerCase()))
+              stage.norms.some(n => e.description?.toLowerCase().includes(n.en.toLowerCase()))
             );
             return (
               <div key={stage.stage}>
                 <div className="text-sm text-sim-muted mb-1 font-medium">
-                  Stage {stage.stage}: {lang === 'en' ? stage.label : stage.labelTr}
+                  {t(lang, `Stage ${stage.stage}: ${stage.label}`, `Aşama ${stage.stage}: ${stage.labelTr}`)}
                 </div>
                 <div className="space-y-0.5">
                   {stage.norms.map(norm => {
-                    const active = stageNorms.some(e => e.description?.toLowerCase().includes(norm.toLowerCase()));
+                    const active = stageNorms.some(e => e.description?.toLowerCase().includes(norm.en.toLowerCase()));
                     return (
                       <div
-                        key={norm}
+                        key={norm.en}
                         className={`flex items-center gap-1.5 text-sm px-2 py-0.5 rounded ${active ? 'text-sim-text' : 'text-sim-muted opacity-50'}`}
                       >
                         <div className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-green-400' : 'bg-sim-border'}`} />
-                        {norm}
+                        {lang === 'tr' ? norm.tr : norm.en}
                       </div>
                     );
                   })}
@@ -67,18 +101,18 @@ export default function LawPanel() {
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Legal Events' : 'Hukuki Olaylar'}
+          {t(lang, 'Legal Events', 'Hukuki Olaylar')}
         </h4>
         {lawEvents.length === 0 ? (
           <p className="text-sim-muted italic text-sm">
-            {lang === 'en' ? 'No legal events yet.' : 'Henüz hukuki olay yok.'}
+            {t(lang, 'No legal events yet.', 'Henüz hukuki olay yok.')}
           </p>
         ) : (
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {lawEvents.slice(0, 10).map((ev, i) => (
               <div key={i} className="flex gap-2 py-0.5 border-b border-sim-border/30">
                 <span className="text-green-400 font-mono text-sm">Y{ev.sim_year}</span>
-                <span className="text-sim-muted text-sm">{ev.description}</span>
+                <span className="text-sim-muted text-sm">{translateEventDescription(ev.description ?? '', lang as LangCode, ev)}</span>
               </div>
             ))}
           </div>

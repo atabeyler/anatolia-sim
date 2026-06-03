@@ -1,6 +1,7 @@
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { Music } from 'lucide-react';
+import { translateEventDescription, type LangCode } from '../../utils/i18n';
 
 const ART_CATEGORIES = [
   {
@@ -8,23 +9,42 @@ const ART_CATEGORIES = [
     label: 'Visual Art',
     labelTr: 'Görsel Sanat',
     emoji: '🎨',
-    items: ['Cave Painting', 'Sculpture', 'Pottery Decoration', 'Textile Pattern', 'Architecture Art'],
+    items: [
+      { en: 'Cave Painting',      tr: 'Mağara Resmi' },
+      { en: 'Sculpture',          tr: 'Heykelcilik' },
+      { en: 'Pottery Decoration', tr: 'Çömlek Süslemesi' },
+      { en: 'Textile Pattern',    tr: 'Dokuma Deseni' },
+      { en: 'Architecture Art',   tr: 'Mimari Sanatı' },
+    ],
   },
   {
     medium: 'music',
     label: 'Music',
     labelTr: 'Müzik',
     emoji: '🎵',
-    items: ['Rhythmic Percussion', 'Vocal Melody', 'Bone Flute', 'String Instrument'],
+    items: [
+      { en: 'Rhythmic Percussion', tr: 'Ritimli Vurma' },
+      { en: 'Vocal Melody',        tr: 'Sesli Melodi' },
+      { en: 'Bone Flute',          tr: 'Kemik Flüt' },
+      { en: 'String Instrument',   tr: 'Telli Çalgı' },
+    ],
   },
   {
     medium: 'narrative',
     label: 'Narrative',
     labelTr: 'Anlatı',
     emoji: '📖',
-    items: ['Oral Story', 'Epic Poem', 'Written Story'],
+    items: [
+      { en: 'Oral Story',    tr: 'Sözlü Hikâye' },
+      { en: 'Epic Poem',     tr: 'Epik Şiir' },
+      { en: 'Written Story', tr: 'Yazılı Hikâye' },
+    ],
   },
 ];
+
+function t(lang: string, en: string, tr: string) {
+  return lang === 'en' ? en : tr;
+}
 
 export default function ArtPanel() {
   const { events, stats, lang } = useSimStore();
@@ -39,46 +59,46 @@ export default function ArtPanel() {
         <div>
           <div className="text-pink-400 font-bold text-lg">{totalForms}</div>
           <div className="text-sim-muted text-sm">
-            {lang === 'en' ? 'Art Forms Discovered' : 'Keşfedilen Sanat Formları'}
+            {t(lang, 'Art Forms Discovered', 'Keşfedilen Sanat Formları')}
           </div>
         </div>
       </div>
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Emergence Requirements' : 'Ortaya Çıkış Gereksinimleri'}
+          {t(lang, 'Emergence Requirements', 'Ortaya Çıkış Gereksinimleri')}
         </h4>
         <p className="text-sim-muted text-sm italic">
-          {lang === 'en'
-            ? 'Art requires food surplus + artistic_sense gene × intelligence > threshold. Higher forms need cognitive prerequisites.'
-            : 'Sanat; gıda fazlası + artistik_duyarlılık geni × zeka > eşiği gerektirir.'}
+          {t(
+            lang,
+            'Art requires food surplus + artistic_sense gene × intelligence > threshold. Higher forms need cognitive prerequisites.',
+            'Sanat; gıda fazlası + artistik_duyarlılık geni × zekâ > eşik gerektirir. Yüksek formlar bilişsel önkoşullar ister.'
+          )}
         </p>
       </div>
 
       {ART_CATEGORIES.map(cat => {
         const discovered = artEvents.filter(e =>
-          cat.items.some(item => e.description?.toLowerCase().includes(item.toLowerCase()))
+          cat.items.some(item => e.description?.toLowerCase().includes(item.en.toLowerCase()))
         );
         return (
           <div key={cat.medium} className="mb-3">
             <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2 flex items-center gap-1.5">
               <span>{cat.emoji}</span>
-              <span>{lang === 'en' ? cat.label : cat.labelTr}</span>
+              <span>{t(lang, cat.label, cat.labelTr)}</span>
               <span className="text-sim-muted font-normal normal-case tracking-normal">
                 ({discovered.length}/{cat.items.length})
               </span>
             </h4>
             <div className="space-y-0.5">
               {cat.items.map(item => {
-                const isDiscovered = discovered.some(e => e.description?.toLowerCase().includes(item.toLowerCase()));
+                const isDiscovered = discovered.some(e => e.description?.toLowerCase().includes(item.en.toLowerCase()));
                 return (
                   <div
-                    key={item}
-                    className={`text-sm px-2 py-1 rounded ${
-                      isDiscovered ? 'text-sim-text bg-pink-500/10' : 'text-sim-muted opacity-40'
-                    }`}
+                    key={item.en}
+                    className={`text-sm px-2 py-1 rounded ${isDiscovered ? 'text-sim-text bg-pink-500/10' : 'text-sim-muted opacity-40'}`}
                   >
-                    {isDiscovered ? '✓' : '○'} {item}
+                    {isDiscovered ? '✓' : '○'} {lang === 'tr' ? item.tr : item.en}
                   </div>
                 );
               })}
@@ -89,18 +109,18 @@ export default function ArtPanel() {
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Art Events' : 'Sanat Olayları'}
+          {t(lang, 'Art Events', 'Sanat Olayları')}
         </h4>
         {artEvents.length === 0 ? (
           <p className="text-sim-muted italic text-sm">
-            {lang === 'en' ? 'No art events yet.' : 'Henüz sanat olayı yok.'}
+            {t(lang, 'No art events yet.', 'Henüz sanat olayı yok.')}
           </p>
         ) : (
           <div className="space-y-1 max-h-36 overflow-y-auto">
             {artEvents.slice(0, 8).map((ev, i) => (
               <div key={i} className="flex gap-2 py-0.5 border-b border-sim-border/30">
                 <span className="text-pink-400 font-mono text-sm">Y{ev.sim_year}</span>
-                <span className="text-sim-muted text-sm">{ev.description}</span>
+                <span className="text-sim-muted text-sm">{translateEventDescription(ev.description ?? '', lang as LangCode, ev)}</span>
               </div>
             ))}
           </div>

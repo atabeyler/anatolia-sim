@@ -27,6 +27,7 @@ import TimeMachinePanel from '../components/panels/TimeMachinePanel';
 import AnalysisPanel from '../components/panels/AnalysisPanel';
 import HypothesisPanel from '../components/panels/HypothesisPanel';
 import EventsPanel from '../components/panels/EventsPanel';
+import { translateEventDescription, translateSeason, type LangCode } from '../utils/i18n';
 
 const SPEEDS = [1, 5, 20, 100];
 
@@ -59,23 +60,6 @@ const TABS = [
   { id: 'durum',   label: 'DURUM',   labelEn: 'STATUS' },
   { id: 'kontrol', label: 'KONTROL', labelEn: 'CONTROL' },
 ];
-
-function translateEventDesc(desc: string, type: string): string {
-  if (!desc) return type;
-  return desc
-    .replace('New individual born', 'Yeni birey doğdu')
-    .replace('Individual died: starvation', 'Birey açlıktan öldü')
-    .replace('Individual died: dehydration', 'Birey susuzluktan öldü')
-    .replace('Individual died: disease_', 'Birey hastalıktan öldü: ')
-    .replace('Individual died: old_age', 'Birey yaşlılıktan öldü')
-    .replace('Individual died: predator', 'Birey yırtıcı tarafından öldürüldü')
-    .replace(/Individual died: (.+)/, (_: string, cause: string) => `Birey öldü: ${cause}`)
-    .replace('Technology discovered: foraging', 'Teknoloji keşfedildi: Toplayıcılık')
-    .replace('Technology discovered: stone_tools', 'Teknoloji keşfedildi: Taş Aletler')
-    .replace('Technology discovered: fire_making', 'Teknoloji keşfedildi: Ateş Yakma')
-    .replace(/Technology discovered: (.+)/, (_: string, t: string) => `Teknoloji keşfedildi: ${t.replace(/_/g, ' ')}`)
-    .replace(/killed (\d+) individuals/, (_: string, n: string) => `${n} bireyi öldürdü`);
-}
 
 const IMPORTANT_TYPES = ['birth', 'death', 'language', 'belief', 'technology', 'word', 'discovery'];
 
@@ -283,6 +267,7 @@ export default function SimulationPage() {
   const isRunning = currentSim?.status === 'running';
   const simYear = stats?.year ?? 0;
   const simDay = stats?.day ?? 0;
+  const seasonLabel = translateSeason(stats?.season ?? '', lang as LangCode);
   const simHour = stats?.hour !== undefined ? `${String(stats.hour).padStart(2, '0')}:00` : '00:00';
   const births = stats?.births ?? 0;
   const deaths = stats?.deaths ?? 0;
@@ -292,7 +277,7 @@ export default function SimulationPage() {
     const prefix = `Y${String(ev.sim_year).padStart(4, '0')} G${String(ev.sim_day % 365).padStart(3, '0')}`;
     const icon = ev.event_type?.includes('birth') ? '+' : ev.event_type?.includes('death') ? '†' : ev.event_type?.includes('discovery') ? '◆' : ev.event_type?.includes('disaster') ? '⚠' : '·';
     const rawDesc = ev.description ?? ev.event_type;
-    const desc = lang === 'tr' ? translateEventDesc(rawDesc, ev.event_type) : rawDesc;
+    const desc = translateEventDescription(rawDesc, lang as LangCode, ev);
     return `${prefix} ${icon} ${desc}`;
   }
 
@@ -330,7 +315,9 @@ export default function SimulationPage() {
           </div>
 
           <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: isMobile ? 3 : 6 }}>
-            <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>SİM</span>
+            <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>
+              {lang === 'tr' ? 'SİM ZAMANI' : 'SIM TIME'}
+            </span>
             <span style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.04em', fontFamily: 'Orbitron, monospace' }}>
               Y{String(simYear).padStart(4, '0')} G{String(simDay % 365).padStart(3, '0')}
             </span>
@@ -370,14 +357,15 @@ export default function SimulationPage() {
         {/* Row 2: Stats (scrollable on mobile) | TR▸EN */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 0, padding: '0 10px', borderBottom: '1px solid #4a1a1a', overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', overflowX: isMobile ? 'auto' : 'visible', flex: 1, scrollbarWidth: 'none' }}>
-            {[
-              { key: 'pop',  label: lang === 'tr' ? 'NÜFUS'  : 'POP',   value: stats?.population ?? '—',   color: '#00e887' },
-              { key: 'bir',  label: lang === 'tr' ? 'DOĞUM'  : 'BIRTH', value: births,                      color: '#4ecb71' },
-              { key: 'dth',  label: lang === 'tr' ? 'ÖLÜM'   : 'DEATH', value: deaths,                      color: '#e05a5a' },
-              { key: 'yr',   label: lang === 'tr' ? 'YIL'    : 'YEAR',  value: stats?.year ?? '—',          color: '#7dd3fc' },
-              { key: 'tech', label: lang === 'tr' ? 'TECH' : 'TECH',    value: stats?.technologies ?? '—',  color: '#d4a838' },
-              { key: 'temp', label: lang === 'tr' ? 'SICAK' : 'TEMP',   value: stats?.temperature !== undefined ? `${stats.temperature}°` : '—', color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
-            ].map(({ key, label, value, color }) => (
+              {[
+                { key: 'pop',  label: lang === 'tr' ? 'NÜFUS'  : 'POP',   value: stats?.population ?? '—',   color: '#00e887' },
+                { key: 'bir',  label: lang === 'tr' ? 'DOĞUM'  : 'BIRTH', value: births,                      color: '#4ecb71' },
+                { key: 'dth',  label: lang === 'tr' ? 'ÖLÜM'   : 'DEATH', value: deaths,                      color: '#e05a5a' },
+                { key: 'yr',   label: lang === 'tr' ? 'YIL'    : 'YEAR',  value: stats?.year ?? '—',          color: '#7dd3fc' },
+                { key: 'tech', label: lang === 'tr' ? 'TEKNOLOJİ' : 'TECH',    value: stats?.technologies ?? '—',  color: '#d4a838' },
+                { key: 'sea',  label: lang === 'tr' ? 'MEVSİM' : 'SEASON',value: seasonLabel,                 color: '#a0b4ff' },
+                { key: 'temp', label: lang === 'tr' ? 'SICAK' : 'TEMP',   value: stats?.temperature !== undefined ? `${stats.temperature}°` : '—', color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
+              ].map(({ key, label, value, color }) => (
               <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '2px 7px' : '2px 10px', borderRight: '1px solid #4a1a1a', flexShrink: 0, minWidth: isMobile ? 42 : 52 }}>
                 <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{label}</span>
                 <span style={{ fontSize: 14, color, fontFamily: 'Orbitron, monospace', fontWeight: 700, lineHeight: 1.2 }}>{value}</span>
@@ -639,7 +627,6 @@ export default function SimulationPage() {
                     { l: 'HASTALIK', v: stats?.sick_rate !== undefined ? (stats.sick_rate * 100).toFixed(0) + '%' : '—',                         c: '#f97316' },
                     { l: 'TEKNOLOJİ',v: stats?.technologies ?? '—',                                                                             c: '#4ecb71' },
                     { l: 'İNANÇ',    v: stats?.beliefs ?? '—',                                                                                  c: '#a855f7' },
-                    { l: 'MEVSİM',   v: stats?.season?.toUpperCase() ?? '—',                                                                    c: '#a0b4ff' },
                     { l: 'SICAKLIK', v: stats?.temperature !== undefined ? `${stats.temperature}°` : '—',                                        c: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
                     { l: 'GRUPLAR',  v: stats?.groups ?? '—',                                                                                   c: '#d4a838' },
                   ].map(({ l, v, c }) => (

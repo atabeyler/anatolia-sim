@@ -15,11 +15,12 @@ export function updateLanguageStage(individual, groupSize, generationCount) {
     const s = LANGUAGE_STAGES[i];
     if (foxp2 >= s.foxp2_min && groupSize >= s.group_min && generationCount >= s.gen_min) {
       if (i > currentStage) {
+        const prevStage = currentStage;
         individual.language.stage = i;
         individual.language.stage_name = s.name;
         if (i >= 4) individual.language.grammar = true;
         if (i >= 6) individual.language.writing = true;
-        return { upgraded: true, newStage: i, stageName: s.name };
+        return { upgraded: true, prevStage, newStage: i, stageName: s.name };
       }
       break;
     }

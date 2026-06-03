@@ -2,7 +2,9 @@ services:
   - type: web
     name: anatolia-sim
     env: node
+    branch: main
     plan: free
+    autoDeployTrigger: commit
     buildCommand: cd client && npm install --include=dev && npm run build && cd ../server && npm install --include=dev
     startCommand: cd server && npm start
     healthCheckPath: /api/health

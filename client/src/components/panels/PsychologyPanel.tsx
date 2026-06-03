@@ -1,14 +1,14 @@
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 
-const MENTAL_STATES: Record<string, { emoji: string; color: string }> = {
-  content:   { emoji: '😌', color: 'text-green-400' },
-  excited:   { emoji: '😃', color: 'text-yellow-400' },
-  anxious:   { emoji: '😰', color: 'text-orange-400' },
-  depressed: { emoji: '😞', color: 'text-blue-400' },
-  calm:      { emoji: '🧘', color: 'text-teal-400' },
-  angry:     { emoji: '😠', color: 'text-red-400' },
-  grieving:  { emoji: '😢', color: 'text-purple-400' },
+const MENTAL_STATES: Record<string, { emoji: string; color: string; tr: string }> = {
+  content:   { emoji: '😌', color: 'text-green-400',  tr: 'Memnun' },
+  excited:   { emoji: '😃', color: 'text-yellow-400', tr: 'Heyecanlı' },
+  anxious:   { emoji: '😰', color: 'text-orange-400', tr: 'Kaygılı' },
+  depressed: { emoji: '😞', color: 'text-blue-400',   tr: 'Depresif' },
+  calm:      { emoji: '🧘', color: 'text-teal-400',   tr: 'Sakin' },
+  angry:     { emoji: '😠', color: 'text-red-400',    tr: 'Öfkeli' },
+  grieving:  { emoji: '😢', color: 'text-purple-400', tr: 'Yasında' },
 };
 
 export default function PsychologyPanel() {
@@ -54,12 +54,15 @@ export default function PsychologyPanel() {
           {lang === 'en' ? 'Mental State Distribution' : 'Zihinsel Durum Dağılımı'}
         </h4>
         <div className="grid grid-cols-2 gap-1">
-          {Object.entries(MENTAL_STATES).map(([state, { emoji, color }]) => (
+          {Object.entries(MENTAL_STATES).map(([state, info]) => {
+            const { emoji, color } = info;
+            return (
             <div key={state} className="flex items-center gap-1 bg-sim-surface rounded px-2 py-1">
               <span>{emoji}</span>
-              <span className={`text-sm capitalize ${color}`}>{state}</span>
+              <span className={`text-sm capitalize ${color}`}>{lang === 'tr' ? info.tr : state}</span>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

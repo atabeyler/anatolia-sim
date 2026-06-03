@@ -29,6 +29,21 @@ class SimulationManager {
     const engine = new SimulationEngine(simulation);
     engine.load(individuals.map(parseIndividual));
     engine.onTick = (data) => this.broadcast(simulation.id, { type: 'tick', ...data });
+    engine.onEvent = (event) => withRetry(() => query(
+      `INSERT INTO simulation_events (
+        simulation_id, sim_day, sim_year, event_type, description, data, importance, created_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [
+        event.simulation_id,
+        event.sim_day,
+        event.sim_year,
+        event.event_type,
+        event.description,
+        JSON.stringify(event.data ?? {}),
+        event.importance ?? 1,
+        event.created_at ?? new Date().toISOString(),
+      ]
+    ));
 
     engine.onCheckpoint = async (cp) => {
       // Skip if a checkpoint is already in progress for this simulation

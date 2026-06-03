@@ -1,6 +1,7 @@
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { Users, Crown, Swords, ArrowLeftRight } from 'lucide-react';
+import { translateEventDescription, type LangCode } from '../../utils/i18n';
 
 export default function SocialPanel() {
   const { stats, events, lang } = useSimStore();
@@ -31,9 +32,9 @@ export default function SocialPanel() {
             : 'Baskınlık × güç → liderlik. Yüksek bağımsızlık → bölünme. MHC × saldırganlık → çatışma.'}
         </p>
         <div className="space-y-1">
-          {['Leader', 'Elder', 'Warrior', 'Healer', 'Member'].map(role => (
-            <div key={role} className="flex justify-between py-0.5 text-sm border-b border-sim-border/30">
-              <span className="text-sim-text">{role}</span>
+          {([['Leader','Lider'],['Elder','Yaşlı'],['Warrior','Savaşçı'],['Healer','İyileştirici'],['Member','Üye']] as [string,string][]).map(([en, tr]) => (
+            <div key={en} className="flex justify-between py-0.5 text-sm border-b border-sim-border/30">
+              <span className="text-sim-text">{lang === 'tr' ? tr : en}</span>
               <span className="text-sim-muted">{lang === 'en' ? 'Trait-driven assignment' : 'Özellik tabanlı'}</span>
             </div>
           ))}
@@ -53,7 +54,7 @@ export default function SocialPanel() {
                 <span className="text-sim-accent font-mono text-sm flex-shrink-0">
                   Y{ev.sim_year}
                 </span>
-                <span className="text-sim-muted text-sm">{ev.description}</span>
+                <span className="text-sim-muted text-sm">{translateEventDescription(ev.description ?? '', lang as LangCode, ev)}</span>
               </div>
             ))}
           </div>
