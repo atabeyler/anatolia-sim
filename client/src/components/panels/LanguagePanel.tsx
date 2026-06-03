@@ -11,6 +11,14 @@ const LANGUAGE_STAGES = [
   { id: 6, name: 'Writing', nameTr: 'Yazı', desc: 'Symbolic recording of language', color: '#daa520' },
 ];
 
+function translateLanguageEvent(desc: string, lang: string) {
+  if (lang !== 'tr') return desc;
+  return desc
+    .replace(/(.+) language stage advanced to (.+)/, (_: string, name: string, stage: string) => `${name} dil aşamasını ${stage} seviyesine yükseltti`)
+    .replace(/word created: (.+)/, (_: string, word: string) => `Sözcük oluştu: ${word}`)
+    .replace(/language word: (.+)/, (_: string, word: string) => `Dil sözcüğü: ${word}`);
+}
+
 export default function LanguagePanel() {
   const { stats, events, lang } = useSimStore();
 
@@ -69,7 +77,7 @@ export default function LanguagePanel() {
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {langEvents.slice(0, 10).map((ev, i) => (
               <div key={i} className="text-sim-muted text-sm py-0.5 border-b border-sim-border/30">
-                {ev.description}
+                {translateLanguageEvent(ev.description, lang)}
               </div>
             ))}
           </div>

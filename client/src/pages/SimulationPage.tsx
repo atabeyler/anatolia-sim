@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+﻿import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Play, Pause, FolderOpen, ChevronLeft, ChevronRight, Users, Globe } from 'lucide-react';
@@ -31,31 +31,31 @@ import EventsPanel from '../components/panels/EventsPanel';
 const SPEEDS = [1, 5, 20, 100];
 
 const MODULES = [
-  { id: 'population',   label: 'NÜFUS',      labelEn: 'POPUL.',   icon: '👥' },
-  { id: 'olaylar',      label: 'OLAYLAR',    labelEn: 'EVENTS',   icon: '📋', special: true },
-  { id: 'language',     label: 'DİL',        labelEn: 'LANG.',    icon: '🔤' },
-  { id: 'timemachine',  label: 'GEÇMİŞ',     labelEn: 'HISTORY',  icon: '⏳' },
-  { id: 'analysis',     label: 'ANALİZ',     labelEn: 'ANALYS.',  icon: '📊' },
-  { id: 'biology',      label: 'MUTASYON',   labelEn: 'MUTAT.',   icon: '🧬' },
-  { id: 'god',          label: 'TANRI',      labelEn: 'GOD',      icon: '✦',  accent: '#f97316' },
-  { id: 'psychology',   label: 'AKIL',       labelEn: 'MIND',     icon: '🧠' },
-  { id: 'environment',  label: 'ÇEVRE',      labelEn: 'ENV.',     icon: '🌿' },
-  { id: 'technology',   label: 'TEKNOLOJİ',  labelEn: 'TECH',     icon: '⚙' },
-  { id: 'belief',       label: 'İNANÇ',      labelEn: 'BELIEF',   icon: '☽' },
-  { id: 'social',       label: 'SOSYAL',     labelEn: 'SOCIAL',   icon: '🤝' },
-  { id: 'economy',      label: 'EKONOMİ',    labelEn: 'ECON.',    icon: '💰' },
-  { id: 'culture',      label: 'KÜLTÜR',     labelEn: 'CULT.',    icon: '🎭' },
-  { id: 'art',          label: 'SANAT',      labelEn: 'ART',      icon: '🎨' },
-  { id: 'astronomy',    label: 'ASTRONOMİ',  labelEn: 'ASTRO.',   icon: '🌙' },
-  { id: 'hypothesis',   label: 'HİPOTEZ',    labelEn: 'HYPOTH.',  icon: '💡' },
-  { id: 'epigenetics',  label: 'EPİGEN.',    labelEn: 'EPIGEN.',  icon: '🔬' },
-  { id: 'architecture', label: 'MİMARİ',     labelEn: 'ARCH.',    icon: '🏛️' },
-  { id: 'law',          label: 'HUKUK',      labelEn: 'LAW',      icon: '⚖️' },
-  { id: 'microbiome',   label: 'MİKROBİYOM', labelEn: 'MICROB.',  icon: '🦠' },
+  { id: 'population',   label: 'NÃœFUS',      labelEn: 'POPUL.',   icon: 'ğŸ‘¥' },
+  { id: 'olaylar',      label: 'OLAYLAR',    labelEn: 'EVENTS',   icon: 'ğŸ“‹', special: true },
+  { id: 'language',     label: 'DÄ°L',        labelEn: 'LANG.',    icon: 'ğŸ”¤' },
+  { id: 'timemachine',  label: 'GEÃ‡MÄ°Å',     labelEn: 'HISTORY',  icon: 'â³' },
+  { id: 'analysis',     label: 'ANALÄ°Z',     labelEn: 'ANALYS.',  icon: 'ğŸ“Š' },
+  { id: 'biology',      label: 'MUTASYON',   labelEn: 'MUTAT.',   icon: 'ğŸ§¬' },
+  { id: 'god',          label: 'TANRI',      labelEn: 'GOD',      icon: 'âœ¦',  accent: '#f97316' },
+  { id: 'psychology',   label: 'AKIL',       labelEn: 'MIND',     icon: 'ğŸ§ ' },
+  { id: 'environment',  label: 'Ã‡EVRE',      labelEn: 'ENV.',     icon: 'ğŸŒ¿' },
+  { id: 'technology',   label: 'TEKNOLOJÄ°',  labelEn: 'TECH',     icon: 'âš™' },
+  { id: 'belief',       label: 'Ä°NANÃ‡',      labelEn: 'BELIEF',   icon: 'â˜½' },
+  { id: 'social',       label: 'SOSYAL',     labelEn: 'SOCIAL',   icon: 'ğŸ¤' },
+  { id: 'economy',      label: 'EKONOMÄ°',    labelEn: 'ECON.',    icon: 'ğŸ’°' },
+  { id: 'culture',      label: 'KÃœLTÃœR',     labelEn: 'CULT.',    icon: 'ğŸ­' },
+  { id: 'art',          label: 'SANAT',      labelEn: 'ART',      icon: 'ğŸ¨' },
+  { id: 'astronomy',    label: 'ASTRONOMÄ°',  labelEn: 'ASTRO.',   icon: 'ğŸŒ™' },
+  { id: 'hypothesis',   label: 'HÄ°POTEZ',    labelEn: 'HYPOTH.',  icon: 'ğŸ’¡' },
+  { id: 'epigenetics',  label: 'EPÄ°GEN.',    labelEn: 'EPIGEN.',  icon: 'ğŸ”¬' },
+  { id: 'architecture', label: 'MÄ°MARÄ°',     labelEn: 'ARCH.',    icon: 'ğŸ›ï¸' },
+  { id: 'law',          label: 'HUKUK',      labelEn: 'LAW',      icon: 'âš–ï¸' },
+  { id: 'microbiome',   label: 'MÄ°KROBÄ°YOM', labelEn: 'MICROB.',  icon: 'ğŸ¦ ' },
 ];
 
 const TABS = [
-  { id: 'harita',  label: 'HARİTA',  labelEn: 'MAP' },
+  { id: 'harita',  label: 'HARÄ°TA',  labelEn: 'MAP' },
   { id: 'durum',   label: 'DURUM',   labelEn: 'STATUS' },
   { id: 'kontrol', label: 'KONTROL', labelEn: 'CONTROL' },
 ];
@@ -63,19 +63,19 @@ const TABS = [
 function translateEventDesc(desc: string, type: string): string {
   if (!desc) return type;
   return desc
-    .replace('New individual born', 'Yeni birey doğdu')
-    .replace('Individual died: starvation', 'Birey açlıktan öldü')
-    .replace('Individual died: dehydration', 'Birey susuzluktan öldü')
-    .replace('Individual died: disease_', 'Birey hastalıktan öldü: ')
-    .replace('Individual died: old_age', 'Birey yaşlılıktan öldü')
-    .replace('Individual died: predator', 'Birey yırtıcı tarafından öldürüldü')
-    .replace(/Individual died: (.+)/, (_: string, cause: string) => `Birey öldü: ${cause}`)
-    .replace(/(.+) language stage advanced to (.+)/, (_: string, name: string, stage: string) => `${name} dil aşamasını ${stage} seviyesine yükseltti`)
-    .replace('Technology discovered: foraging', 'Teknoloji keşfedildi: Toplayıcılık')
-    .replace('Technology discovered: stone_tools', 'Teknoloji keşfedildi: Taş Aletler')
-    .replace('Technology discovered: fire_making', 'Teknoloji keşfedildi: Ateş Yakma')
-    .replace(/Technology discovered: (.+)/, (_: string, t: string) => `Teknoloji keşfedildi: ${t.replace(/_/g, ' ')}`)
-    .replace(/killed (\d+) individuals/, (_: string, n: string) => `${n} bireyi öldürdü`);
+    .replace('New individual born', 'Yeni birey doÄŸdu')
+    .replace('Individual died: starvation', 'Birey aÃ§lÄ±ktan Ã¶ldÃ¼')
+    .replace('Individual died: dehydration', 'Birey susuzluktan Ã¶ldÃ¼')
+    .replace('Individual died: disease_', 'Birey hastalÄ±ktan Ã¶ldÃ¼: ')
+    .replace('Individual died: old_age', 'Birey yaÅŸlÄ±lÄ±ktan Ã¶ldÃ¼')
+    .replace('Individual died: predator', 'Birey yÄ±rtÄ±cÄ± tarafÄ±ndan Ã¶ldÃ¼rÃ¼ldÃ¼')
+    .replace(/Individual died: (.+)/, (_: string, cause: string) => `Birey Ã¶ldÃ¼: ${cause}`)
+    .replace(/(.+) language stage advanced to (.+)/, (_: string, name: string, stage: string) => `${name} dil aÅŸamasÄ±nÄ± ${stage} seviyesine yÃ¼kseltti`)
+    .replace('Technology discovered: foraging', 'Teknoloji keÅŸfedildi: ToplayÄ±cÄ±lÄ±k')
+    .replace('Technology discovered: stone_tools', 'Teknoloji keÅŸfedildi: TaÅŸ Aletler')
+    .replace('Technology discovered: fire_making', 'Teknoloji keÅŸfedildi: AteÅŸ Yakma')
+    .replace(/Technology discovered: (.+)/, (_: string, t: string) => `Teknoloji keÅŸfedildi: ${t.replace(/_/g, ' ')}`)
+    .replace(/killed (\d+) individuals/, (_: string, n: string) => `${n} bireyi Ã¶ldÃ¼rdÃ¼`);
 }
 
 const IMPORTANT_TYPES = ['birth', 'death', 'language', 'belief', 'technology', 'word', 'discovery'];
@@ -122,15 +122,15 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
   return (
     <div style={{
       position: 'absolute', left: pos.x, top: pos.y, zIndex: 30,
-      width: panelW, background: 'rgba(0,4,2,0.93)', border: '1px solid #4a1a1a',
+      width: panelW, background: 'rgba(0,4,2,0.93)', border: '1px solid rgba(0,232,135,0.12)',
       userSelect: 'none', cursor: dragging ? 'grabbing' : 'default',
       boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
     }}>
-      {/* Drag handle — mouse + touch */}
+      {/* Drag handle â€” mouse + touch */}
       <div
         onMouseDown={e => { startDrag(e.clientX, e.clientY); e.preventDefault(); }}
         onTouchStart={e => { startDrag(e.touches[0].clientX, e.touches[0].clientY); }}
-        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderBottom: '1px solid #4a1a1a', cursor: 'grab', background: 'rgba(0,20,10,0.9)', touchAction: 'none' }}>
+        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderBottom: '1px solid rgba(0,232,135,0.12)', cursor: 'grab', background: 'rgba(0,20,10,0.9)', touchAction: 'none' }}>
         <div style={{ width: 3, height: 12, background: '#00e887', boxShadow: '0 0 4px #00e887', flexShrink: 0 }} />
         <span style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.2em', fontFamily: 'Share Tech Mono, monospace', flex: 1 }}>
           {lang === 'tr' ? 'OLAY KAYDI' : 'EVENT LOG'}
@@ -140,7 +140,7 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
           {lang === 'tr' ? 'CANLI' : 'LIVE'}
         </span>
       </div>
-      {/* Events — 3 rows max */}
+      {/* Events â€” 3 rows max */}
       <div style={{ padding: '2px 6px' }}>
         {filtered.length === 0 ? (
           <div style={{ fontSize: 14, color: '#6a9a80', padding: '4px 0', fontFamily: 'Share Tech Mono, monospace', fontStyle: 'italic' }}>
@@ -216,7 +216,7 @@ export default function SimulationPage() {
         case 'terminate_simulation': {
           const { currentSim: sim, accessToken: tok, lang: l, setCurrentSim: setSim } = useSimStore.getState();
           if (!sim || !tok) return;
-          if (!confirm(l === 'tr' ? 'Simülasyonu sonlandır?' : 'Terminate simulation?')) return;
+          if (!confirm(l === 'tr' ? 'SimÃ¼lasyonu sonlandÄ±r?' : 'Terminate simulation?')) return;
           axios.post(`/api/simulations/${sim.id}/terminate`, {}, { headers: { Authorization: `Bearer ${tok}` } })
             .then(() => { setSim({ ...sim, status: 'completed' }); navigate('/'); })
             .catch(() => {});
@@ -270,12 +270,12 @@ export default function SimulationPage() {
     if (!simId || !accessToken) return;
     try {
       await axios.post(`/api/simulations/${simId}/speed`, { speed_multiplier: s }, { headers: { Authorization: `Bearer ${accessToken}` } });
-    } catch { /* optimistic — ignore error */ }
+    } catch { /* optimistic â€” ignore error */ }
   }
 
   async function terminateSim() {
     if (!currentSim || !accessToken) return;
-    if (!confirm(lang === 'tr' ? 'Simülasyonu sonlandır?' : 'Terminate simulation?')) return;
+    if (!confirm(lang === 'tr' ? 'SimÃ¼lasyonu sonlandÄ±r?' : 'Terminate simulation?')) return;
     await axios.post(`/api/simulations/${currentSim.id}/terminate`, {}, { headers: { Authorization: `Bearer ${accessToken}` } });
     setCurrentSim({ ...currentSim, status: 'completed' });
     navigate('/');
@@ -291,7 +291,7 @@ export default function SimulationPage() {
 
   function fmtEvent(ev: any) {
     const prefix = `Y${String(ev.sim_year).padStart(4, '0')} G${String(ev.sim_day % 365).padStart(3, '0')}`;
-    const icon = ev.event_type?.includes('birth') ? '+' : ev.event_type?.includes('death') ? '†' : ev.event_type?.includes('discovery') ? '◆' : ev.event_type?.includes('disaster') ? '⚠' : '·';
+    const icon = ev.event_type?.includes('birth') ? '+' : ev.event_type?.includes('death') ? 'â€ ' : ev.event_type?.includes('discovery') ? 'â—†' : ev.event_type?.includes('disaster') ? 'âš ' : 'Â·';
     const rawDesc = ev.description ?? ev.event_type;
     const desc = lang === 'tr' ? translateEventDesc(rawDesc, ev.event_type) : rawDesc;
     return `${prefix} ${icon} ${desc}`;
@@ -310,11 +310,11 @@ export default function SimulationPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', overflow: 'hidden', background: '#000', color: '#fff', fontFamily: 'Share Tech Mono, monospace' }}>
 
-      {/* ═══ HEADER (3 rows) ═══ */}
-      <div style={{ flexShrink: 0, background: 'rgba(0,0,0,0.97)', borderBottom: '1px solid #4a1a1a' }}>
+      {/* â•â•â• HEADER (3 rows) â•â•â• */}
+      <div style={{ flexShrink: 0, background: 'rgba(0,0,0,0.97)', borderBottom: '1px solid rgba(0,232,135,0.12)' }}>
 
-        {/* Row 1: Logo | SIM time | [ARIA desktop] | [clock desktop] | BAŞLAT/DURDUR */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 8, padding: isMobile ? '4px 8px' : '5px 10px', borderBottom: '1px solid #4a1a1a' }}>
+        {/* Row 1: Logo | SIM time | [ARIA desktop] | [clock desktop] | BAÅLAT/DURDUR */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 8, padding: isMobile ? '4px 8px' : '5px 10px', borderBottom: '1px solid rgba(0,232,135,0.12)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <div style={{ position: 'relative', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div className="neon-breathe" style={{ position: 'absolute', inset: 0, borderRadius: '999px', border: '1px solid rgba(79,158,247,0.5)', boxShadow: '0 0 8px rgba(79,158,247,0.5)' }} />
@@ -322,16 +322,16 @@ export default function SimulationPage() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1, gap: 2 }}>
               <span style={{ fontSize: isMobile ? 12 : 14, fontFamily: 'Orbitron, monospace', fontWeight: 900, color: '#e0e0f0', letterSpacing: isMobile ? '0.12em' : '0.2em', textShadow: '0 0 10px rgba(79,158,247,0.35)' }}>
-                ANATOLİA-SİM
+                ANATOLÄ°A-SÄ°M
               </span>
-              <span style={{ fontSize: isMobile ? 10 : 11, fontFamily: 'Share Tech Mono, monospace', fontWeight: 700, color: '#cc2222', letterSpacing: isMobile ? '0.16em' : '0.22em', textAlign: 'center', width: '100%' }}>
-                {lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}
+              <span style={{ fontSize: 12, fontFamily: 'Share Tech Mono, monospace', fontWeight: 700, color: '#00e887', letterSpacing: isMobile ? '0.16em' : '0.22em', textAlign: 'center', width: '100%', textShadow: '0 0 8px rgba(0,232,135,0.35)' }}>
+                {lang === 'tr' ? 'MEDENÄ°YET' : 'CIVILIZATION'}
               </span>
             </div>
           </div>
 
           <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: isMobile ? 3 : 6 }}>
-            <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>SİM</span>
+            <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>SÄ°M</span>
             <span style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.04em', fontFamily: 'Orbitron, monospace' }}>
               Y{String(simYear).padStart(4, '0')} G{String(simDay % 365).padStart(3, '0')}
             </span>
@@ -341,7 +341,7 @@ export default function SimulationPage() {
 
           {!isMobile && (
             <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: 6 }}>
-              <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>GERÇEK</span>
+              <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>GERÃ‡EK</span>
               <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.05em' }}>{realTime}</span>
             </div>
           )}
@@ -360,7 +360,7 @@ export default function SimulationPage() {
               cursor: 'pointer',
             }}>
             {isRunning ? <Pause size={11} /> : <Play size={11} />}
-            {isRunning ? (lang === 'tr' ? 'DURDUR' : 'PAUSE') : (lang === 'tr' ? 'BAŞLAT' : 'START')}
+            {isRunning ? (lang === 'tr' ? 'DURDUR' : 'PAUSE') : (lang === 'tr' ? 'BAÅLAT' : 'START')}
           </button>
 
           {isRunning && (
@@ -368,18 +368,18 @@ export default function SimulationPage() {
           )}
         </div>
 
-        {/* Row 2: Stats (scrollable on mobile) | TR▸EN */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 0, padding: '0 10px', borderBottom: '1px solid #4a1a1a', overflow: 'hidden' }}>
+        {/* Row 2: Stats (scrollable on mobile) | TRâ–¸EN */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 0, padding: '0 10px', borderBottom: '1px solid rgba(0,232,135,0.12)', overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', overflowX: isMobile ? 'auto' : 'visible', flex: 1, scrollbarWidth: 'none' }}>
             {[
-              { key: 'pop',  label: lang === 'tr' ? 'NÜFUS'  : 'POP',   value: stats?.population ?? '—',   color: '#00e887' },
-              { key: 'bir',  label: lang === 'tr' ? 'DOĞUM'  : 'BIRTH', value: births,                      color: '#4ecb71' },
-              { key: 'dth',  label: lang === 'tr' ? 'ÖLÜM'   : 'DEATH', value: deaths,                      color: '#e05a5a' },
-              { key: 'yr',   label: lang === 'tr' ? 'YIL'    : 'YEAR',  value: stats?.year ?? '—',          color: '#7dd3fc' },
-              { key: 'tech', label: lang === 'tr' ? 'TECH' : 'TECH',    value: stats?.technologies ?? '—',  color: '#d4a838' },
-              { key: 'temp', label: lang === 'tr' ? 'SICAK' : 'TEMP',   value: stats?.temperature !== undefined ? `${stats.temperature}°` : '—', color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
+              { key: 'pop',  label: lang === 'tr' ? 'NÃœFUS'  : 'POP',   value: stats?.population ?? 'â€”',   color: '#00e887' },
+              { key: 'bir',  label: lang === 'tr' ? 'DOÄUM'  : 'BIRTH', value: births,                      color: '#4ecb71' },
+              { key: 'dth',  label: lang === 'tr' ? 'Ã–LÃœM'   : 'DEATH', value: deaths,                      color: '#e05a5a' },
+              { key: 'yr',   label: lang === 'tr' ? 'YIL'    : 'YEAR',  value: stats?.year ?? 'â€”',          color: '#7dd3fc' },
+              { key: 'tech', label: lang === 'tr' ? 'TECH' : 'TECH',    value: stats?.technologies ?? 'â€”',  color: '#d4a838' },
+              { key: 'temp', label: lang === 'tr' ? 'SICAK' : 'TEMP',   value: stats?.temperature !== undefined ? `${stats.temperature}Â°` : 'â€”', color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
             ].map(({ key, label, value, color }) => (
-              <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '2px 7px' : '2px 10px', borderRight: '1px solid #4a1a1a', flexShrink: 0, minWidth: isMobile ? 42 : 52 }}>
+              <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '2px 7px' : '2px 10px', borderRight: '1px solid rgba(0,232,135,0.12)', flexShrink: 0, minWidth: isMobile ? 42 : 52 }}>
                 <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{label}</span>
                 <span style={{ fontSize: 14, color, fontFamily: 'Orbitron, monospace', fontWeight: 700, lineHeight: 1.2 }}>{value}</span>
               </div>
@@ -387,7 +387,7 @@ export default function SimulationPage() {
           </div>
         </div>
 
-        {/* Row 3: HIZ buttons | [ARIA mobile] | SONLANDIR | ÇIKIŞ | MENÜ */}
+        {/* Row 3: HIZ buttons | [ARIA mobile] | SONLANDIR | Ã‡IKIÅ | MENÃœ */}
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 3 : 4, padding: isMobile ? '3px 8px' : '3px 10px' }}>
           {!isMobile && <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em', marginRight: 2, flexShrink: 0 }}>HIZ</span>}
           {SPEEDS.map(s => (
@@ -396,11 +396,11 @@ export default function SimulationPage() {
                 padding: isMobile ? '2px 5px' : '2px 6px', fontSize: 14,
                 fontFamily: 'Orbitron, monospace', cursor: 'pointer',
                 background: speedMultiplier === s ? 'rgba(0,232,135,0.2)' : 'transparent',
-                border: `1px solid ${speedMultiplier === s ? '#00e887' : '#4a1a1a'}`,
+                border: `1px solid ${speedMultiplier === s ? '#00e887' : 'rgba(0,232,135,0.12)'}`,
                 color: speedMultiplier === s ? '#00e887' : '#4a6a5a',
                 flexShrink: 0,
               }}>
-              {s}×
+              {s}Ã—
             </button>
           ))}
 
@@ -408,37 +408,37 @@ export default function SimulationPage() {
 
           {!isMobile && (
             <button onClick={terminateSim}
-              style={{ padding: '2px 6px', fontSize: 14, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.05em', cursor: 'pointer', flexShrink: 0 }}>
+              style={{ padding: '2px 6px', fontSize: 14, border: '1px solid rgba(0,232,135,0.14)', color: '#c05050', background: 'transparent', letterSpacing: '0.05em', cursor: 'pointer', flexShrink: 0 }}>
               {lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
             </button>
           )}
           {!isMobile && (
             <button
               onClick={() => navigate('/')}
-              style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', border: '1px solid #4a1a1a', color: '#7aaa88', background: 'transparent', fontSize: 14, letterSpacing: '0.05em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', border: '1px solid rgba(0,232,135,0.12)', color: '#7aaa88', background: 'transparent', fontSize: 14, letterSpacing: '0.05em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
               <FolderOpen size={9} />
-              {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
+              {lang === 'tr' ? 'Ã‡IKIÅ' : 'EXIT'}
             </button>
           )}
           <button
             onClick={() => setMenuOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid #4a1a1a', color: '#7aaa88', background: 'transparent', fontSize: 14, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
-            ☰ {!isMobile && (lang === 'tr' ? 'MENÜ' : 'MENU')}
+            style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid rgba(0,232,135,0.12)', color: '#7aaa88', background: 'transparent', fontSize: 14, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
+            â˜° {!isMobile && (lang === 'tr' ? 'MENÃœ' : 'MENU')}
           </button>
         </div>
       </div>
 
-      {/* ═══ BODY: SIDEBAR + MAIN ═══ */}
+      {/* â•â•â• BODY: SIDEBAR + MAIN â•â•â• */}
       <div style={{ display: 'flex', flexDirection: 'row', flex: 1, overflow: 'hidden' }}>
 
-        {/* ── LEFT SIDEBAR ── */}
+        {/* â”€â”€ LEFT SIDEBAR â”€â”€ */}
         <div style={{
           width: sidebarW,
           flexShrink: 0,
           display: 'flex',
           flexDirection: 'column',
           background: 'rgba(0,0,0,0.97)',
-          borderRight: '1px solid #4a1a1a',
+          borderRight: '1px solid rgba(0,232,135,0.12)',
           overflow: 'hidden',
           transition: 'width 0.2s ease',
           position: 'relative',
@@ -468,7 +468,7 @@ export default function SimulationPage() {
                     borderLeft: `2px solid ${isActive ? accent : 'transparent'}`,
                     borderTop: 'none',
                     borderRight: 'none',
-                    borderBottom: '1px solid #4a1a1a',
+                    borderBottom: '1px solid rgba(0,232,135,0.12)',
                     color: isActive ? accent : '#4a7060',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
@@ -490,10 +490,10 @@ export default function SimulationPage() {
 
           {/* Collapsed population indicator */}
           {!sidebarExpanded && (
-            <div style={{ padding: '6px 0', borderTop: '1px solid #4a1a1a', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <div style={{ padding: '6px 0', borderTop: '1px solid rgba(0,232,135,0.12)', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
               <Users size={10} color="#00e887" />
               <span style={{ fontSize: 14, color: '#00e887', fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
-                {stats?.population !== undefined ? (stats.population > 999 ? `${Math.floor(stats.population / 1000)}k` : stats.population) : '—'}
+                {stats?.population !== undefined ? (stats.population > 999 ? `${Math.floor(stats.population / 1000)}k` : stats.population) : 'â€”'}
               </span>
             </div>
           )}
@@ -511,7 +511,7 @@ export default function SimulationPage() {
               padding: '6px 0',
               background: 'rgba(0,20,10,0.8)',
               border: 'none',
-              borderTop: '1px solid #4a1a1a',
+              borderTop: '1px solid rgba(0,232,135,0.12)',
               color: '#6a9a78',
               cursor: 'pointer',
               fontSize: 14,
@@ -522,11 +522,11 @@ export default function SimulationPage() {
           </button>
         </div>
 
-        {/* ── MAIN CONTENT ── */}
+        {/* â”€â”€ MAIN CONTENT â”€â”€ */}
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
           {/* Tab bar */}
-          <div style={{ display: 'flex', flexShrink: 0, borderBottom: '1px solid #4a1a1a' }}>
+          <div style={{ display: 'flex', flexShrink: 0, borderBottom: '1px solid rgba(0,232,135,0.12)' }}>
             {TABS.map(tab => {
               const isActive = activeTab === tab.id;
               return (
@@ -542,7 +542,7 @@ export default function SimulationPage() {
                     background: isActive ? 'rgba(0,232,135,0.06)' : 'transparent',
                     border: 'none',
                     borderBottom: `2px solid ${isActive ? '#00e887' : 'transparent'}`,
-                    borderRight: '1px solid #4a1a1a',
+                    borderRight: '1px solid rgba(0,232,135,0.12)',
                     cursor: 'pointer',
                   }}>
                   {lang === 'tr' ? tab.label : tab.labelEn}
@@ -569,46 +569,46 @@ export default function SimulationPage() {
 
                 {/* Sim start coord (bottom-left) */}
                 {currentSim && (
-                  <div style={{ position: 'absolute', bottom: 8, left: 8, zIndex: 10, background: 'rgba(0,0,0,0.7)', border: '1px solid #4a1a1a', padding: '3px 8px' }}>
+                  <div style={{ position: 'absolute', bottom: 8, left: 8, zIndex: 10, background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(0,232,135,0.12)', padding: '3px 8px' }}>
                     <span style={{ fontSize: 14, color: '#6a9a78', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.05em' }}>
-                      {lang === 'tr' ? 'BAŞLANGIÇ' : 'ORIGIN'}: {currentSim.start_latitude?.toFixed(3)}°{(currentSim.start_latitude ?? 0) >= 0 ? 'K' : 'G'}  {currentSim.start_longitude?.toFixed(3)}°{(currentSim.start_longitude ?? 0) >= 0 ? 'D' : 'B'}
+                      {lang === 'tr' ? 'BAÅLANGIÃ‡' : 'ORIGIN'}: {currentSim.start_latitude?.toFixed(3)}Â°{(currentSim.start_latitude ?? 0) >= 0 ? 'K' : 'G'}  {currentSim.start_longitude?.toFixed(3)}Â°{(currentSim.start_longitude ?? 0) >= 0 ? 'D' : 'B'}
                     </span>
                   </div>
                 )}
 
                 {/* Globe click coordinate overlay (bottom-right) */}
                 {globeCoord && (
-                  <div style={{ position: 'absolute', bottom: 8, right: 8, zIndex: 20, background: 'rgba(0,5,2,0.92)', border: '1px solid #4a1a1a', padding: '5px 10px', fontFamily: 'Share Tech Mono, monospace' }}>
+                  <div style={{ position: 'absolute', bottom: 8, right: 8, zIndex: 20, background: 'rgba(0,5,2,0.92)', border: '1px solid rgba(0,232,135,0.12)', padding: '5px 10px', fontFamily: 'Share Tech Mono, monospace' }}>
                     <div style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em', marginBottom: 2 }}>
                       {lang === 'tr' ? '// KONUM' : '// COORDS'}
                     </div>
                     <div style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.06em' }}>
-                      {Math.abs(globeCoord.lat).toFixed(3)}°{globeCoord.lat >= 0 ? (lang === 'tr' ? 'K' : 'N') : (lang === 'tr' ? 'G' : 'S')}
+                      {Math.abs(globeCoord.lat).toFixed(3)}Â°{globeCoord.lat >= 0 ? (lang === 'tr' ? 'K' : 'N') : (lang === 'tr' ? 'G' : 'S')}
                       {'  '}
-                      {Math.abs(globeCoord.lon).toFixed(3)}°{globeCoord.lon >= 0 ? (lang === 'tr' ? 'D' : 'E') : (lang === 'tr' ? 'B' : 'W')}
+                      {Math.abs(globeCoord.lon).toFixed(3)}Â°{globeCoord.lon >= 0 ? (lang === 'tr' ? 'D' : 'E') : (lang === 'tr' ? 'B' : 'W')}
                     </div>
-                    <button onClick={() => setGlobeCoord(null)} style={{ marginTop: 3, fontSize: 14, color: '#6a9a80', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}>✕</button>
+                    <button onClick={() => setGlobeCoord(null)} style={{ marginTop: 3, fontSize: 14, color: '#6a9a80', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}>âœ•</button>
                   </div>
                 )}
 
                 {/* Selected individual overlay */}
                 {selectedInd && (
                   <div style={{ position: 'absolute', top: 80, right: 8, zIndex: 50, background: 'rgba(0,5,2,0.97)', border: '1px solid #00e887', padding: 12, minWidth: 160, fontFamily: 'Share Tech Mono, monospace' }}>
-                    <div style={{ fontSize: 14, color: '#6a9a78', marginBottom: 4 }}>// {lang === 'tr' ? 'BİREY' : 'INDIVIDUAL'}</div>
+                    <div style={{ fontSize: 14, color: '#6a9a78', marginBottom: 4 }}>// {lang === 'tr' ? 'BÄ°REY' : 'INDIVIDUAL'}</div>
                     <div style={{ fontSize: 14, color: '#00e887', marginBottom: 2 }}>
-                      {selectedInd.name ?? `${selectedInd.sex === 'male' ? '♂' : '♀'}-${selectedInd.id?.slice(-4).toUpperCase()}`}
+                      {selectedInd.name ?? `${selectedInd.sex === 'male' ? 'â™‚' : 'â™€'}-${selectedInd.id?.slice(-4).toUpperCase()}`}
                     </div>
                     {!selectedInd.name && (
                       <div style={{ fontSize: 14, color: '#4a6a40', marginBottom: 4, fontStyle: 'italic' }}>
-                        {lang === 'tr' ? '// dil henüz gelişmedi' : '// pre-linguistic era'}
+                        {lang === 'tr' ? '// dil henÃ¼z geliÅŸmedi' : '// pre-linguistic era'}
                       </div>
                     )}
-                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Cinsiyet' : 'Sex'}: <span style={{ color: '#fff' }}>{selectedInd.sex === 'male' ? (lang === 'tr' ? 'Erkek' : 'Male') : (lang === 'tr' ? 'Kadın' : 'Female')}</span></div>
-                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Yaş' : 'Age'}: <span style={{ color: '#fff' }}>{selectedInd.age_years ?? '—'}</span></div>
-                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Boy' : 'Height'}: <span style={{ color: '#a0e887' }}>{selectedInd.height_cm ?? selectedInd.phenotype?.height_cm ?? '—'} cm</span></div>
-                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Kilo' : 'Weight'}: <span style={{ color: '#a0e887' }}>{selectedInd.weight_kg ?? '—'} kg</span></div>
-                    <div style={{ fontSize: 14, color: '#6090a0' }}>HP: <span style={{ color: selectedInd.health?.hp > 0.6 ? '#4ecb71' : '#e05a5a' }}>{selectedInd.health?.hp !== undefined ? (selectedInd.health.hp * 100).toFixed(0) + '%' : '—'}</span></div>
-                    <button onClick={() => setSelectedInd(null)} style={{ marginTop: 8, fontSize: 14, color: '#6a9a78', border: '1px solid #4a1a1a', padding: '2px 8px', background: 'transparent', width: '100%', cursor: 'pointer' }}>
+                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Cinsiyet' : 'Sex'}: <span style={{ color: '#fff' }}>{selectedInd.sex === 'male' ? (lang === 'tr' ? 'Erkek' : 'Male') : (lang === 'tr' ? 'KadÄ±n' : 'Female')}</span></div>
+                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'YaÅŸ' : 'Age'}: <span style={{ color: '#fff' }}>{selectedInd.age_years ?? 'â€”'}</span></div>
+                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Boy' : 'Height'}: <span style={{ color: '#a0e887' }}>{selectedInd.height_cm ?? selectedInd.phenotype?.height_cm ?? 'â€”'} cm</span></div>
+                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Kilo' : 'Weight'}: <span style={{ color: '#a0e887' }}>{selectedInd.weight_kg ?? 'â€”'} kg</span></div>
+                    <div style={{ fontSize: 14, color: '#6090a0' }}>HP: <span style={{ color: selectedInd.health?.hp > 0.6 ? '#4ecb71' : '#e05a5a' }}>{selectedInd.health?.hp !== undefined ? (selectedInd.health.hp * 100).toFixed(0) + '%' : 'â€”'}</span></div>
+                    <button onClick={() => setSelectedInd(null)} style={{ marginTop: 8, fontSize: 14, color: '#6a9a78', border: '1px solid rgba(0,232,135,0.12)', padding: '2px 8px', background: 'transparent', width: '100%', cursor: 'pointer' }}>
                       {lang === 'tr' ? 'KAPAT' : 'CLOSE'}
                     </button>
                   </div>
@@ -629,22 +629,22 @@ export default function SimulationPage() {
               <div style={{ height: '100%', overflowY: 'auto', padding: 12, background: '#000' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {[
-                    { l: 'NÜFUS',    v: stats?.population ?? '—',                                                                              c: '#00e887' },
-                    { l: 'YIL',      v: stats?.year ?? '—',                                                                                     c: '#7dd3fc' },
-                    { l: 'GÜN',      v: stats?.day ?? '—',                                                                                      c: '#a0b4ff' },
-                    { l: 'DOĞUM',    v: births,                                                                                                  c: '#4ecb71' },
-                    { l: 'ÖLÜM',     v: deaths,                                                                                                  c: '#e05a5a' },
-                    { l: 'KELİME',   v: wordCount,                                                                                               c: '#7dd3fc' },
-                    { l: 'ZEKA ORT.',v: stats?.avg_intelligence !== undefined ? (stats.avg_intelligence * 100).toFixed(0) + '%' : '—',           c: '#d4a838' },
-                    { l: 'MUTLULUK', v: stats?.happiness_index !== undefined ? (stats.happiness_index * 100).toFixed(0) + '%' : '—',             c: '#ff8ab0' },
-                    { l: 'HASTALIK', v: stats?.sick_rate !== undefined ? (stats.sick_rate * 100).toFixed(0) + '%' : '—',                         c: '#f97316' },
-                    { l: 'TEKNOLOJİ',v: stats?.technologies ?? '—',                                                                             c: '#4ecb71' },
-                    { l: 'İNANÇ',    v: stats?.beliefs ?? '—',                                                                                  c: '#a855f7' },
-                    { l: 'MEVSİM',   v: stats?.season?.toUpperCase() ?? '—',                                                                    c: '#a0b4ff' },
-                    { l: 'SICAKLIK', v: stats?.temperature !== undefined ? `${stats.temperature}°` : '—',                                        c: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
-                    { l: 'GRUPLAR',  v: stats?.groups ?? '—',                                                                                   c: '#d4a838' },
+                    { l: 'NÃœFUS',    v: stats?.population ?? 'â€”',                                                                              c: '#00e887' },
+                    { l: 'YIL',      v: stats?.year ?? 'â€”',                                                                                     c: '#7dd3fc' },
+                    { l: 'GÃœN',      v: stats?.day ?? 'â€”',                                                                                      c: '#a0b4ff' },
+                    { l: 'DOÄUM',    v: births,                                                                                                  c: '#4ecb71' },
+                    { l: 'Ã–LÃœM',     v: deaths,                                                                                                  c: '#e05a5a' },
+                    { l: 'KELÄ°ME',   v: wordCount,                                                                                               c: '#7dd3fc' },
+                    { l: 'ZEKA ORT.',v: stats?.avg_intelligence !== undefined ? (stats.avg_intelligence * 100).toFixed(0) + '%' : 'â€”',           c: '#d4a838' },
+                    { l: 'MUTLULUK', v: stats?.happiness_index !== undefined ? (stats.happiness_index * 100).toFixed(0) + '%' : 'â€”',             c: '#ff8ab0' },
+                    { l: 'HASTALIK', v: stats?.sick_rate !== undefined ? (stats.sick_rate * 100).toFixed(0) + '%' : 'â€”',                         c: '#f97316' },
+                    { l: 'TEKNOLOJÄ°',v: stats?.technologies ?? 'â€”',                                                                             c: '#4ecb71' },
+                    { l: 'Ä°NANÃ‡',    v: stats?.beliefs ?? 'â€”',                                                                                  c: '#a855f7' },
+                    { l: 'MEVSÄ°M',   v: stats?.season?.toUpperCase() ?? 'â€”',                                                                    c: '#a0b4ff' },
+                    { l: 'SICAKLIK', v: stats?.temperature !== undefined ? `${stats.temperature}Â°` : 'â€”',                                        c: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
+                    { l: 'GRUPLAR',  v: stats?.groups ?? 'â€”',                                                                                   c: '#d4a838' },
                   ].map(({ l, v, c }) => (
-                    <div key={l} style={{ background: 'rgba(0,20,10,0.6)', border: '1px solid #4a1a1a', padding: '8px 12px' }}>
+                    <div key={l} style={{ background: 'rgba(0,20,10,0.6)', border: '1px solid rgba(0,232,135,0.12)', padding: '8px 12px' }}>
                       <div style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>{l}</div>
                       <div style={{ fontSize: 18, color: c, fontFamily: 'Orbitron, monospace', fontWeight: 700, marginTop: 2 }}>{v}</div>
                     </div>
@@ -657,37 +657,37 @@ export default function SimulationPage() {
             {activeTab === 'kontrol' && (
               <div style={{ height: '100%', overflowY: 'auto', padding: 12, background: '#000' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ border: '1px solid #4a1a1a', padding: 12 }}>
-                    <div style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.15em', marginBottom: 8 }}>SİMÜLASYON HIZI</div>
+                  <div style={{ border: '1px solid rgba(0,232,135,0.12)', padding: 12 }}>
+                    <div style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.15em', marginBottom: 8 }}>SÄ°MÃœLASYON HIZI</div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       {SPEEDS.map(s => (
                         <button key={s} onClick={() => changeSpeed(s)}
                           style={{
                             flex: 1, padding: '8px 0', fontSize: 14, fontFamily: 'Orbitron, monospace', fontWeight: 700, cursor: 'pointer',
                             background: speedMultiplier === s ? 'rgba(0,232,135,0.2)' : 'rgba(0,10,5,0.8)',
-                            border: `1px solid ${speedMultiplier === s ? '#00e887' : '#4a1a1a'}`,
+                            border: `1px solid ${speedMultiplier === s ? '#00e887' : 'rgba(0,232,135,0.12)'}`,
                             color: speedMultiplier === s ? '#00e887' : '#2a5040',
                             boxShadow: speedMultiplier === s ? '0 0 12px rgba(0,232,135,0.3)' : 'none',
                           }}>
-                          {s}×
+                          {s}Ã—
                         </button>
                       ))}
                     </div>
                   </div>
 
                   {currentSim && (
-                    <div style={{ border: '1px solid #2a0d0d', padding: 12 }}>
-                      <div style={{ fontSize: 14, color: '#6a3030', letterSpacing: '0.15em', marginBottom: 8 }}>TEHLİKELİ BÖLGE</div>
+                    <div style={{ border: '1px solid rgba(0,232,135,0.08)', padding: 12 }}>
+                      <div style={{ fontSize: 14, color: '#6a3030', letterSpacing: '0.15em', marginBottom: 8 }}>TEHLÄ°KELÄ° BÃ–LGE</div>
                       <button onClick={terminateSim}
-                        style={{ width: '100%', padding: '8px 0', fontSize: 14, border: '1px solid #6a2020', color: '#e05a5a', background: 'rgba(100,20,20,0.15)', letterSpacing: '0.1em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
-                        SİMÜLASYONU SONLANDIR
+                        style={{ width: '100%', padding: '8px 0', fontSize: 14, border: '1px solid rgba(0,232,135,0.14)', color: '#e05a5a', background: 'rgba(100,20,20,0.15)', letterSpacing: '0.1em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
+                        SÄ°MÃœLASYONU SONLANDIR
                       </button>
                     </div>
                   )}
 
                   <button onClick={() => navigate('/')}
-                    style={{ width: '100%', padding: '8px 0', fontSize: 14, border: '1px solid #4a1a1a', color: '#6a9a78', background: 'transparent', letterSpacing: '0.1em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
-                    ANA SAYFAYA DÖN
+                    style={{ width: '100%', padding: '8px 0', fontSize: 14, border: '1px solid rgba(0,232,135,0.12)', color: '#6a9a78', background: 'transparent', letterSpacing: '0.1em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
+                    ANA SAYFAYA DÃ–N
                   </button>
                 </div>
               </div>
@@ -696,34 +696,34 @@ export default function SimulationPage() {
         </div>
       </div>
 
-      {/* ── FOOTER ── */}
+      {/* â”€â”€ FOOTER â”€â”€ */}
       <div style={{ flexShrink: 0, textAlign: 'center', padding: '2px 10px', background: 'rgba(0,0,0,0.97)', borderTop: '1px solid #0a1a10' }}>
         <span style={{ fontSize: 14, color: '#1e3a28', letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace' }}>
-          Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026 Tüm hakları saklıdır. · RST Q-Nation 200120401018 · Yalçın Atabey
+          Bold Askeri Teknoloji ve Savunma Sanayi A.Å. Â© 2026 TÃ¼m haklarÄ± saklÄ±dÄ±r. Â· RST Q-Nation 200120401018 Â· YalÃ§Ä±n Atabey
         </span>
       </div>
 
-      {/* ═══ MENU OVERLAY ═══ */}
+      {/* â•â•â• MENU OVERLAY â•â•â• */}
       <SimMenuOverlay
         isOpen={menuOpen}
         onClose={() => { setMenuOpen(false); setMenuPage(null); }}
         menuPage={menuPage}
         onMenuPageChange={setMenuPage}
         mobileActions={isMobile ? (
-          <div style={{ padding: '8px 14px', borderTop: '1px solid #4a1a1a', display: 'flex', gap: 8 }}>
+          <div style={{ padding: '8px 14px', borderTop: '1px solid rgba(0,232,135,0.12)', display: 'flex', gap: 8 }}>
             <button onClick={() => { setMenuOpen(false); navigate('/'); }}
-              style={{ flex: 1, padding: '7px 0', fontSize: 14, border: '1px solid #4a1a1a', color: '#7aaa88', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
-              ← {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
+              style={{ flex: 1, padding: '7px 0', fontSize: 14, border: '1px solid rgba(0,232,135,0.12)', color: '#7aaa88', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
+              â† {lang === 'tr' ? 'Ã‡IKIÅ' : 'EXIT'}
             </button>
             <button onClick={() => { setMenuOpen(false); terminateSim(); }}
-              style={{ flex: 1, padding: '7px 0', fontSize: 14, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
+              style={{ flex: 1, padding: '7px 0', fontSize: 14, border: '1px solid rgba(0,232,135,0.14)', color: '#c05050', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
               {lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
             </button>
           </div>
         ) : undefined}
       />
 
-      {/* ═══ OVERLAY PANELS ═══ */}
+      {/* â•â•â• OVERLAY PANELS â•â•â• */}
       <EventsPanel />
       <PopulationPanel />
       <BiologyPanel />
@@ -748,3 +748,4 @@ export default function SimulationPage() {
     </div>
   );
 }
+

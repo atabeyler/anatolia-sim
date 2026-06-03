@@ -9,7 +9,7 @@ const SPEEDS = [1, 10, 100, 1000];
 function Seg({ label, value, color = '#c0ccee' }: { label: string; value: string; color?: string }) {
   return (
     <div className="flex flex-col items-center gap-0 px-2">
-      <span className="font-share-tech tracking-widest" style={{ fontSize: 7, color: '#6878a8' }}>{label}</span>
+      <span className="font-share-tech tracking-widest" style={{ fontSize: 12, color: '#6878a8' }}>{label}</span>
       <span className="font-orbitron font-bold" style={{ color, fontSize: 12, textShadow: `0 0 8px ${color}55` }}>{value}</span>
     </div>
   );
@@ -35,7 +35,7 @@ function SettingsOverlay({ onClose }: { onClose: () => void }) {
       style={{ background: 'rgba(4,4,18,0.98)', border: '1px solid rgba(79,110,247,0.35)', backdropFilter: 'blur(20px)', boxShadow: '0 8px 40px rgba(0,0,0,0.6)' }}>
       <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: 'rgba(79,110,247,0.2)' }}>
         <Settings size={11} className="text-sim-accent" />
-        <span className="font-orbitron text-sim-accent tracking-[0.2em]" style={{ fontSize: 9 }}>AYARLAR</span>
+        <span className="font-orbitron text-sim-accent tracking-[0.2em]" style={{ fontSize: 12 }}>AYARLAR</span>
         <div className="flex-1" />
         <button onClick={onClose} className="text-sim-muted hover:text-sim-accent"><X size={11} /></button>
       </div>
@@ -43,13 +43,13 @@ function SettingsOverlay({ onClose }: { onClose: () => void }) {
       <div className="p-3 space-y-3">
         {/* Language */}
         <div>
-          <div className="font-share-tech text-sim-muted tracking-widest mb-1.5" style={{ fontSize: 8 }}>DİL / LANGUAGE</div>
+          <div className="font-share-tech text-sim-muted tracking-widest mb-1.5" style={{ fontSize: 12 }}>DİL / LANGUAGE</div>
           <div className="flex gap-1">
             {(['en', 'tr'] as const).map(l => (
               <button key={l} onClick={() => lang !== l && toggleLang()}
                 className="flex-1 font-share-tech tracking-widest transition-all"
                 style={{
-                  padding: '4px 0', fontSize: 10,
+                  padding: '4px 0', fontSize: 12,
                   background: lang === l ? 'rgba(79,110,247,0.25)' : 'rgba(22,22,58,0.6)',
                   border: `1px solid ${lang === l ? 'rgba(79,110,247,0.7)' : 'rgba(79,110,247,0.15)'}`,
                   color: lang === l ? '#c0ccff' : '#4a5578',
@@ -63,13 +63,13 @@ function SettingsOverlay({ onClose }: { onClose: () => void }) {
 
         {/* Speed */}
         <div>
-          <div className="font-share-tech text-sim-muted tracking-widest mb-1.5" style={{ fontSize: 8 }}>SİMÜLASYON HIZI</div>
+          <div className="font-share-tech text-sim-muted tracking-widest mb-1.5" style={{ fontSize: 12 }}>SİMÜLASYON HIZI</div>
           <div className="flex gap-1">
             {SPEEDS.map(s => (
               <button key={s} onClick={() => setSpeed(s)}
                 className="flex-1 font-share-tech tracking-widest transition-all"
                 style={{
-                  padding: '4px 0', fontSize: 10,
+                  padding: '4px 0', fontSize: 12,
                   background: speedMultiplier === s ? 'rgba(79,110,247,0.25)' : 'rgba(22,22,58,0.6)',
                   border: `1px solid ${speedMultiplier === s ? 'rgba(79,110,247,0.7)' : 'rgba(79,110,247,0.15)'}`,
                   color: speedMultiplier === s ? '#c0ccff' : '#4a5578',
@@ -124,7 +124,7 @@ function MenuOverlay({ onClose, onTerminate }: { onClose: () => void; onTerminat
         ) : (
           <Menu size={11} className="text-sim-accent" />
         )}
-        <span className="font-orbitron text-sim-accent tracking-[0.2em]" style={{ fontSize: 9 }}>
+        <span className="font-orbitron text-sim-accent tracking-[0.2em]" style={{ fontSize: 12 }}>
           {infoPage ? (lang === 'en' ? infoPage.titleEn : infoPage.titleTr) : 'MENÜ'}
         </span>
         <div className="flex-1" />
@@ -135,7 +135,7 @@ function MenuOverlay({ onClose, onTerminate }: { onClose: () => void; onTerminat
         <div className="p-3 max-h-72 overflow-y-auto">
           {infoPage.content.split('\n').map((line, i) => (
             <p key={i} className={`font-share-tech tracking-wide leading-relaxed ${line === '' ? 'mb-1' : 'mb-0'}`}
-              style={{ fontSize: 9, color: line.match(/^[A-ZÇŞĞÜÖİ\s]{3,}$/) ? '#7090ff' : '#8898c8' }}>
+              style={{ fontSize: 12, color: line.match(/^[A-ZÇŞĞÜÖİ\s]{3,}$/) ? '#7090ff' : '#8898c8' }}>
               {line || ' '}
             </p>
           ))}
@@ -144,8 +144,8 @@ function MenuOverlay({ onClose, onTerminate }: { onClose: () => void; onTerminat
         <>
           {currentSim && (
             <div className="px-3 py-2 border-b" style={{ borderColor: 'rgba(79,110,247,0.1)', background: 'rgba(79,110,247,0.05)' }}>
-              <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 7 }}>AKTİF SİMÜLASYON</div>
-              <div className="font-orbitron text-sim-accent font-bold tracking-wider mt-0.5" style={{ fontSize: 10 }}>{currentSim.name}</div>
+              <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 12 }}>AKTİF SİMÜLASYON</div>
+              <div className="font-orbitron text-sim-accent font-bold tracking-wider mt-0.5" style={{ fontSize: 12 }}>{currentSim.name}</div>
             </div>
           )}
 
@@ -154,28 +154,28 @@ function MenuOverlay({ onClose, onTerminate }: { onClose: () => void; onTerminat
               className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-sim-border/30"
               style={{ color: '#8898c8' }}>
               <Home size={12} />
-              <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>{lang === 'en' ? 'Home' : 'Ana Sayfa'}</span>
+              <span className="font-share-tech tracking-wider" style={{ fontSize: 12 }}>{lang === 'en' ? 'Home' : 'Ana Sayfa'}</span>
             </button>
 
             <button onClick={() => setSubPage('about')}
               className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-sim-border/30"
               style={{ color: '#8898c8' }}>
-              <span style={{ fontSize: 11 }}>ℹ</span>
-              <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>{lang === 'en' ? 'About' : 'Hakkımızda'}</span>
+              <span style={{ fontSize: 12 }}>ℹ</span>
+              <span className="font-share-tech tracking-wider" style={{ fontSize: 12 }}>{lang === 'en' ? 'About' : 'Hakkımızda'}</span>
             </button>
 
             <button onClick={() => setSubPage('mission')}
               className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-sim-border/30"
               style={{ color: '#8898c8' }}>
-              <span style={{ fontSize: 11 }}>◎</span>
-              <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>{lang === 'en' ? 'Mission & Vision' : 'Misyon & Vizyon'}</span>
+              <span style={{ fontSize: 12 }}>◎</span>
+              <span className="font-share-tech tracking-wider" style={{ fontSize: 12 }}>{lang === 'en' ? 'Mission & Vision' : 'Misyon & Vizyon'}</span>
             </button>
 
             <button onClick={() => setSubPage('contact')}
               className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-sim-border/30"
               style={{ color: '#8898c8' }}>
-              <span style={{ fontSize: 11 }}>✉</span>
-              <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>{lang === 'en' ? 'Contact' : 'İletişim'}</span>
+              <span style={{ fontSize: 12 }}>✉</span>
+              <span className="font-share-tech tracking-wider" style={{ fontSize: 12 }}>{lang === 'en' ? 'Contact' : 'İletişim'}</span>
             </button>
 
             {user?.role === 'admin' && (
@@ -183,7 +183,7 @@ function MenuOverlay({ onClose, onTerminate }: { onClose: () => void; onTerminat
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-sim-border/30"
                 style={{ color: '#f97316' }}>
                 <Sliders size={12} />
-                <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>Admin Paneli</span>
+                <span className="font-share-tech tracking-wider" style={{ fontSize: 12 }}>Admin Paneli</span>
               </button>
             )}
 
@@ -194,7 +194,7 @@ function MenuOverlay({ onClose, onTerminate }: { onClose: () => void; onTerminat
                   className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-orange-900/20"
                   style={{ color: '#f97316' }}>
                   <Power size={12} />
-                  <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>Simülasyonu Sonlandır</span>
+                  <span className="font-share-tech tracking-wider" style={{ fontSize: 12 }}>Simülasyonu Sonlandır</span>
                 </button>
               </>
             )}
@@ -205,13 +205,13 @@ function MenuOverlay({ onClose, onTerminate }: { onClose: () => void; onTerminat
               className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-red-900/20"
               style={{ color: '#e05a5a' }}>
               <LogOut size={12} />
-              <span className="font-share-tech tracking-wider" style={{ fontSize: 10 }}>{lang === 'en' ? 'Sign Out' : 'Çıkış Yap'}</span>
+              <span className="font-share-tech tracking-wider" style={{ fontSize: 12 }}>{lang === 'en' ? 'Sign Out' : 'Çıkış Yap'}</span>
             </button>
           </div>
 
           {user && (
             <div className="px-3 py-1.5 border-t" style={{ borderColor: 'rgba(79,110,247,0.1)' }}>
-              <div className="font-share-tech text-sim-muted/50 tracking-widest" style={{ fontSize: 7 }}>
+              <div className="font-share-tech text-sim-muted/50 tracking-widest" style={{ fontSize: 12 }}>
                 {user.username} · {user.role?.toUpperCase()}
               </div>
             </div>
@@ -291,8 +291,8 @@ export default function TopBar() {
         </div>
         {!isMobile && (
           <div className="flex flex-col leading-none">
-            <span className="font-orbitron text-sim-accent font-bold tracking-[0.2em]" style={{ fontSize: 10 }}>ANATOLİA</span>
-            <span className="font-share-tech text-sim-muted tracking-[0.25em]" style={{ fontSize: 7 }}>{lang === 'tr' ? 'SİM MEDENİYET' : 'SIM CIVILIZATION'}</span>
+            <span className="font-orbitron text-sim-accent font-bold tracking-[0.2em]" style={{ fontSize: 12 }}>ANATOLİA</span>
+            <span className="font-share-tech text-sim-muted tracking-[0.25em]" style={{ fontSize: 12 }}>{lang === 'tr' ? 'SİM MEDENİYET' : 'SIM CIVILIZATION'}</span>
           </div>
         )}
       </div>
@@ -311,10 +311,10 @@ export default function TopBar() {
               clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))',
             }}>
             {simLoading
-              ? <span className="font-share-tech" style={{ color: '#8898c8', fontSize: 9 }}>...</span>
+              ? <span className="font-share-tech" style={{ color: '#8898c8', fontSize: 12 }}>...</span>
               : isRunning
-                ? <><Pause size={10} style={{ color: '#d4a838' }} /><span className="font-share-tech" style={{ color: '#d4a838', fontSize: 9 }}>{lang === 'tr' ? 'DURDUR' : 'PAUSE'}</span></>
-                : <><Play size={10} style={{ color: '#4ecb71' }} /><span className="font-share-tech" style={{ color: '#4ecb71', fontSize: 9 }}>{lang === 'tr' ? 'BAŞLAT' : 'START'}</span></>
+                ? <><Pause size={10} style={{ color: '#d4a838' }} /><span className="font-share-tech" style={{ color: '#d4a838', fontSize: 12 }}>{lang === 'tr' ? 'DURDUR' : 'PAUSE'}</span></>
+                : <><Play size={10} style={{ color: '#4ecb71' }} /><span className="font-share-tech" style={{ color: '#4ecb71', fontSize: 12 }}>{lang === 'tr' ? 'BAŞLAT' : 'START'}</span></>
             }
           </button>
 
@@ -324,7 +324,7 @@ export default function TopBar() {
                 <button key={s} onClick={() => setSpeed(s)}
                   className="font-share-tech transition-all"
                   style={{
-                    padding: '2px 5px', fontSize: 9,
+                    padding: '2px 5px', fontSize: 12,
                     background: speedMultiplier === s ? 'rgba(79,110,247,0.25)' : 'rgba(22,22,58,0.6)',
                     border: `1px solid ${speedMultiplier === s ? 'rgba(79,110,247,0.6)' : 'rgba(79,110,247,0.18)'}`,
                     color: speedMultiplier === s ? '#c0ccff' : '#6a7ab0',
@@ -338,17 +338,17 @@ export default function TopBar() {
           {isRunning && (
             <div className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full bg-sim-green pulse-live" />
-              {!isMobile && <span className="font-share-tech text-sim-green" style={{ fontSize: 8 }}>LIVE</span>}
+              {!isMobile && <span className="font-share-tech text-sim-green" style={{ fontSize: 12 }}>LIVE</span>}
             </div>
           )}
 
           {simError && !isMobile && (
-            <span className="font-share-tech text-sim-red" style={{ fontSize: 9 }}>{simError}</span>
+            <span className="font-share-tech text-sim-red" style={{ fontSize: 12 }}>{simError}</span>
           )}
         </div>
       ) : (
         !isMobile && (
-          <span className="font-share-tech tracking-widest text-sim-muted" style={{ fontSize: 9 }}>
+          <span className="font-share-tech tracking-widest text-sim-muted" style={{ fontSize: 12 }}>
             {lang === 'tr' ? 'SİMÜLASYON SEÇİLMEDİ' : 'NO SIMULATION'}
           </span>
         )

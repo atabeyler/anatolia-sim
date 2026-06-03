@@ -11,11 +11,11 @@ export default function EconomyPanel() {
   const tradeEvents = events.filter(e => e.event_type === 'trade');
 
   const resourceData = [
-    { name: 'Food', value: 60 },
-    { name: 'Water', value: 50 },
-    { name: 'Stone', value: 20 },
-    { name: 'Wood', value: 35 },
-    { name: 'Clay', value: 10 },
+    { name: lang === 'en' ? 'Food' : 'Gıda', value: 60 },
+    { name: lang === 'en' ? 'Water' : 'Su', value: 50 },
+    { name: lang === 'en' ? 'Stone' : 'Taş', value: 20 },
+    { name: lang === 'en' ? 'Wood' : 'Odun', value: 35 },
+    { name: lang === 'en' ? 'Clay' : 'Kil', value: 10 },
   ];
 
   return (
@@ -23,7 +23,7 @@ export default function EconomyPanel() {
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div className="bg-sim-surface rounded-lg p-2 text-center">
           <div className="text-sim-gold font-bold text-lg">{meanWealth.toFixed(1)}</div>
-          <div className="text-sim-muted text-sm">{lang === 'en' ? 'Mean Wealth' : 'Ort. Servet'}</div>
+          <div className="text-sim-muted text-sm">{lang === 'en' ? 'Mean Wealth' : 'Ortalama Servet'}</div>
         </div>
         <div className="bg-sim-surface rounded-lg p-2 text-center">
           <div className={`font-bold text-lg ${gini > 0.5 ? 'text-red-400' : gini > 0.3 ? 'text-yellow-400' : 'text-green-400'}`}>
@@ -55,8 +55,8 @@ export default function EconomyPanel() {
         </h4>
         <p className="text-sim-muted text-sm italic">
           {lang === 'en'
-            ? 'Barter driven by surplus detection. Altruism gene × cooperation → trade frequency. Gini measures inequality from specialization.'
-            : 'Takasa dayalı takas fazla tespiti ile yönlendirilir. Özgecilik geni × iş birliği → ticaret sıklığı.'}
+            ? 'Barter is driven by surplus detection. The altruism gene × cooperation → trade frequency. Gini measures inequality from specialization.'
+            : 'Takas, fazla kaynak tespitiyle yönlendirilir. Özgecilik geni × iş birliği → ticaret sıklığı. Gini, uzmanlaşmadan doğan eşitsizliği ölçer.'}
         </p>
       </div>
 
