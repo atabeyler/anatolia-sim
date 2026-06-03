@@ -24,7 +24,7 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
       <div
         className="fixed top-0 left-0 bottom-0 z-40 flex flex-col overflow-hidden"
         style={{
-          width: 368,
+          width: typeof window !== 'undefined' && window.innerWidth < 480 ? '100vw' : 368,
           background: 'rgba(2,8,4,0.98)',
           borderRight: '1px solid #cc2222',
           backdropFilter: 'blur(20px)',

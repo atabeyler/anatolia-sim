@@ -656,6 +656,15 @@ export class SimulationEngine {
       gini: Math.round(econStats.gini * 100) / 100,
       happiness_index: Math.round(psychStats.happiness_index * 100) / 100,
       sick_rate: Math.round(healthStats.sick_rate * 100) / 100,
+      epigenetics: (() => {
+        const loci = ['HPA_AXIS', 'BDNF_PROMOTER', 'MAOA_REGULATION', 'LEPTIN_RESIST', 'OXTR_METHYL', 'IMMUNE_PRIMING'];
+        const result = {};
+        for (const id of loci) {
+          const vals = alive.map(i => i.epigenome?.[id]?.methylation ?? 0.5);
+          result[id] = Math.round(vals.reduce((a, b) => a + b, 0) / Math.max(1, vals.length) * 100) / 100;
+        }
+        return result;
+      })(),
     };
   }
 

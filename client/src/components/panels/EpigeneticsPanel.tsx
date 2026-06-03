@@ -15,7 +15,8 @@ function t(lang: string, en: string, tr: string) {
 }
 
 export default function EpigeneticsPanel() {
-  const { lang } = useSimStore();
+  const { lang, stats } = useSimStore();
+  const epi = (stats as any)?.epigenetics ?? {};
 
   return (
     <DetailPanel panelId="epigenetics" title="Epigenetics" titleTr="Epigenetik">
@@ -34,24 +35,36 @@ export default function EpigeneticsPanel() {
           {t(lang, 'Monitored Loci', 'İzlenen Lokuslar')}
         </h4>
         <div className="space-y-2">
-          {LOCI.map(locus => (
-            <div key={locus.id} className="bg-sim-surface/50 rounded p-2">
-              <div className="flex justify-between mb-1">
-                <span className="text-sim-text text-sm font-medium">{locus.gene}</span>
-                <span className="text-sim-accent text-sm">{lang === 'tr' ? locus.effectTr : locus.effect}</span>
+          {LOCI.map(locus => {
+            const methylation: number = epi[locus.id] ?? 0.5;
+            const pct = Math.round(methylation * 100);
+            // High methylation = more silenced; color shifts from blue→purple
+            const barColor = methylation > 0.65
+              ? `hsl(${270 - (methylation - 0.65) * 200}, 70%, 60%)`
+              : `hsl(${220 + methylation * 50}, 70%, 60%)`;
+            return (
+              <div key={locus.id} className="bg-sim-surface/50 rounded p-2">
+                <div className="flex justify-between mb-1">
+                  <span className="text-sim-text text-sm font-medium">{locus.gene}</span>
+                  <span className="text-sim-accent text-sm">{lang === 'tr' ? locus.effectTr : locus.effect}</span>
+                </div>
+                <div className="text-sim-muted text-sm italic mb-1">
+                  {lang === 'tr' ? locus.descTr : locus.desc}
+                </div>
+                <div className="mt-1 h-1.5 bg-sim-border rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${pct}%`, background: barColor }}
+                  />
+                </div>
+                <div className="flex justify-between mt-0.5">
+                  <span className="text-xs text-sim-muted">{t(lang, 'Active', 'Aktif')}</span>
+                  <span className="text-xs text-sim-accent font-mono">{pct}%</span>
+                  <span className="text-xs text-sim-muted">{t(lang, 'Silenced', 'Sessiz')}</span>
+                </div>
               </div>
-              <div className="text-sim-muted text-sm italic">
-                {lang === 'tr' ? locus.descTr : locus.desc}
-              </div>
-              <div className="mt-1 h-1.5 bg-sim-border rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" style={{ width: '50%' }} />
-              </div>
-              <div className="flex justify-between mt-0.5">
-                <span className="text-sm text-sim-muted">{t(lang, 'Active', 'Aktif')}</span>
-                <span className="text-sm text-sim-muted">{t(lang, 'Silenced', 'Sessiz')}</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

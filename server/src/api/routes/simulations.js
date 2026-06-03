@@ -289,6 +289,29 @@ router.get('/:id/checkpoints', authenticate, requireSimulationOwner, async (req,
   } catch { res.status(500).json({ error: 'Failed to fetch checkpoints' }); }
 });
 
+router.post('/:id/checkpoint', authenticate, requireSimulationOwner, async (req, res) => {
+  const engine = simulationManager.getEngine(req.params.id);
+  if (!engine) return res.status(400).json({ error: 'Simulation not running' });
+  try {
+    const alive = [...engine.population.values()].filter(i => !i.is_dead);
+    const snapshot = alive.map(i => ({
+      id: i.id, sex: i.sex, birth_day: i.birth_day, death_day: i.death_day,
+      is_dead: i.is_dead, x: i.x, y: i.y, genome: i.genome, phenotype: i.phenotype,
+      language_stage: i.language?.stage ?? 0, group_id: i.group_id,
+      parent_1_id: i.parent_1_id, parent_2_id: i.parent_2_id,
+    }));
+    const stats = engine.computeStats(engine.currentDay, alive);
+    const { rows } = await query(
+      `INSERT INTO checkpoints (simulation_id, sim_day, sim_year, population_count, population_snapshot, world_state, cultural_state, tech_state, stats)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id, sim_day, sim_year, population_count, created_at`,
+      [req.params.id, engine.currentDay, stats.year, alive.length,
+       JSON.stringify(snapshot), JSON.stringify(engine.worldState),
+       JSON.stringify({}), JSON.stringify({ technologies: [...engine.discoveredTechs] }), JSON.stringify(stats)]
+    );
+    res.json(rows[0]);
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Checkpoint creation failed' }); }
+});
+
 router.post('/:id/restore/:checkpointId', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const { rows: cpRows } = await query('SELECT * FROM checkpoints WHERE id = $1 AND simulation_id = $2', [req.params.checkpointId, req.params.id]);
