@@ -326,7 +326,7 @@ export default function SimulationPage() {
 
           {!isMobile && (
             <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: 6 }}>
-              <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>GERÇEK</span>
+              <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>KURUCU ZAMANI</span>
               <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.05em' }}>{realTime}</span>
             </div>
           )}
