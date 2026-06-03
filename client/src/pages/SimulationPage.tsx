@@ -27,7 +27,7 @@ import TimeMachinePanel from '../components/panels/TimeMachinePanel';
 import AnalysisPanel from '../components/panels/AnalysisPanel';
 import HypothesisPanel from '../components/panels/HypothesisPanel';
 import EventsPanel from '../components/panels/EventsPanel';
-import { translateEventDescription, type LangCode } from '../utils/i18n';
+import { translateEventDescription, translateSeason, type LangCode } from '../utils/i18n';
 
 const SPEEDS = [1, 5, 20, 100];
 
@@ -267,6 +267,7 @@ export default function SimulationPage() {
   const isRunning = currentSim?.status === 'running';
   const simYear = stats?.year ?? 0;
   const simDay = stats?.day ?? 0;
+  const seasonLabel = translateSeason(stats?.season ?? '', lang as LangCode);
   const simHour = stats?.hour !== undefined ? `${String(stats.hour).padStart(2, '0')}:00` : '00:00';
   const births = stats?.births ?? 0;
   const deaths = stats?.deaths ?? 0;
@@ -314,9 +315,14 @@ export default function SimulationPage() {
           </div>
 
           <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: isMobile ? 3 : 6 }}>
-            <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>SİM</span>
+            <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>
+              {lang === 'tr' ? 'SİM ZAMANI' : 'SIM TIME'}
+            </span>
             <span style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.04em', fontFamily: 'Orbitron, monospace' }}>
               Y{String(simYear).padStart(4, '0')} G{String(simDay % 365).padStart(3, '0')}
+            </span>
+            <span style={{ fontSize: 12, color: '#a0b4ff', letterSpacing: '0.08em', marginTop: 1 }}>
+              {seasonLabel}
             </span>
           </div>
 
@@ -623,7 +629,7 @@ export default function SimulationPage() {
                     { l: 'HASTALIK', v: stats?.sick_rate !== undefined ? (stats.sick_rate * 100).toFixed(0) + '%' : '—',                         c: '#f97316' },
                     { l: 'TEKNOLOJİ',v: stats?.technologies ?? '—',                                                                             c: '#4ecb71' },
                     { l: 'İNANÇ',    v: stats?.beliefs ?? '—',                                                                                  c: '#a855f7' },
-                    { l: 'MEVSİM',   v: stats?.season?.toUpperCase() ?? '—',                                                                    c: '#a0b4ff' },
+                    { l: 'MEVSİM',   v: seasonLabel,                                                                                            c: '#a0b4ff' },
                     { l: 'SICAKLIK', v: stats?.temperature !== undefined ? `${stats.temperature}°` : '—',                                        c: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
                     { l: 'GRUPLAR',  v: stats?.groups ?? '—',                                                                                   c: '#d4a838' },
                   ].map(({ l, v, c }) => (

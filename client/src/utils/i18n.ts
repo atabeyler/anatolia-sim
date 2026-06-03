@@ -9,6 +9,31 @@ export function text(lang: LangCode, values: TranslationMap): string {
   return values[lang] ?? values.en ?? values.tr ?? '';
 }
 
+const SEASON_LABELS: Record<string, TranslationMap> = {
+  spring: { tr: 'İlkbahar', en: 'Spring', de: 'Frühling', fr: 'Printemps', ar: 'الربيع' },
+  summer: { tr: 'Yaz', en: 'Summer', de: 'Sommer', fr: 'Été', ar: 'الصيف' },
+  autumn: { tr: 'Sonbahar', en: 'Autumn', de: 'Herbst', fr: 'Automne', ar: 'الخريف' },
+  fall: { tr: 'Sonbahar', en: 'Fall', de: 'Herbst', fr: 'Automne', ar: 'الخريف' },
+  winter: { tr: 'Kış', en: 'Winter', de: 'Winter', fr: 'Hiver', ar: 'الشتاء' },
+};
+
+export function translateSeason(season: string, lang: LangCode): string {
+  const key = (season ?? '').trim().toLowerCase();
+  if (!key) return '—';
+
+  const exact = SEASON_LABELS[key];
+  if (exact) return text(lang, exact);
+
+  if (lang === 'tr') {
+    if (key.includes('spring')) return 'İlkbahar';
+    if (key.includes('summer')) return 'Yaz';
+    if (key.includes('autumn') || key.includes('fall')) return 'Sonbahar';
+    if (key.includes('winter')) return 'Kış';
+  }
+
+  return season;
+}
+
 const CAUSE_TR: Record<string, string> = {
   starvation: 'açlık',
   dehydration: 'susuzluk',
