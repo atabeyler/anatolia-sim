@@ -14,8 +14,8 @@ const LANGUAGE_STAGES = [
 export default function LanguagePanel() {
   const { stats, events, lang } = useSimStore();
 
-  const langEvents = events.filter(e => e.event_type === 'language');
-  const currentStage = langEvents.length > 0 ? Math.min(6, Math.floor(langEvents.length / 2)) : 0;
+  const currentStage = Math.max(0, Math.min(6, stats?.max_language_stage ?? 0));
+  const langEvents = events.filter(e => e.event_type === 'language' || e.event_type === 'word' || e.event_type?.includes?.('language'));
 
   return (
     <DetailPanel panelId="language" title="Language" titleTr="Dil">

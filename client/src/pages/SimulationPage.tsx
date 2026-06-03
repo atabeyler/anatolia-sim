@@ -70,6 +70,7 @@ function translateEventDesc(desc: string, type: string): string {
     .replace('Individual died: old_age', 'Birey yaşlılıktan öldü')
     .replace('Individual died: predator', 'Birey yırtıcı tarafından öldürüldü')
     .replace(/Individual died: (.+)/, (_: string, cause: string) => `Birey öldü: ${cause}`)
+    .replace(/(.+) language stage advanced to (.+)/, (_: string, name: string, stage: string) => `${name} dil aşamasını ${stage} seviyesine yükseltti`)
     .replace('Technology discovered: foraging', 'Teknoloji keşfedildi: Toplayıcılık')
     .replace('Technology discovered: stone_tools', 'Teknoloji keşfedildi: Taş Aletler')
     .replace('Technology discovered: fire_making', 'Teknoloji keşfedildi: Ateş Yakma')

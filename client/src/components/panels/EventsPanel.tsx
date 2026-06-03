@@ -35,6 +35,28 @@ function evIcon(type: string) {
   return '·';
 }
 
+function matchesCategory(ev: any, id: string) {
+  const type = String(ev?.event_type ?? '').toLowerCase();
+  switch (id) {
+    case 'birth':
+      return type === 'birth';
+    case 'death':
+      return type === 'death';
+    case 'technology':
+      return type === 'technology';
+    case 'language':
+      return type === 'language' || type === 'word' || type.includes('language');
+    case 'discovery':
+      return type === 'discovery' || type.includes('discovery');
+    case 'disaster':
+      return type === 'disaster' || type === 'epidemic' || type === 'epidemic_outbreak' || type.includes('disaster');
+    case 'belief':
+      return type === 'belief' || type === 'ritual' || type.includes('belief');
+    default:
+      return false;
+  }
+}
+
 const CAUSE_TR: Record<string, string> = {
   starvation: 'açlık', dehydration: 'susuzluk', old_age: 'yaşlılık',
   predator: 'yırtıcı hayvan', genetic_disease: 'genetik hastalık',
@@ -42,8 +64,9 @@ const CAUSE_TR: Record<string, string> = {
   conflict: 'çatışma', unknown: 'bilinmeyen neden',
 };
 
-function trTr(desc: string, type: string): string {
+function trTr(desc: string, type: string, ev?: any): string {
   if (!desc) return type;
+  const name = ev?.data?.name ?? ev?.data?.individual_name ?? ev?.data?.individual?.name ?? null;
   return desc
     // New format: "NAME died: cause" → "NAME öldü: türkçe_sebep"
     .replace(/^(.+) died: (.+)$/, (_: string, name: string, cause: string) =>
@@ -59,6 +82,7 @@ function trTr(desc: string, type: string): string {
     .replace('Individual died: old_age', 'Birey yaşlılıktan öldü')
     .replace('Individual died: predator', 'Birey yırtıcı tarafından öldürüldü')
     .replace(/Individual died: (.+)/, (_: string, c: string) => `Birey öldü: ${CAUSE_TR[c] ?? c.replace(/_/g, ' ')}`)
+    .replace(/(.+) language stage advanced to (.+)/, (_: string, name: string, stage: string) => `${name} dil aşamasını ${stage} seviyesine yükseltti`)
     .replace(/Technology discovered: (.+)/, (_: string, t: string) => `Teknoloji: ${t.replace(/_/g, ' ')}`)
     .replace(/killed (\d+) individuals/, (_: string, n: string) => `${n} bireyi öldürdü`);
 }
@@ -72,9 +96,7 @@ export default function EventsPanel() {
     : events.filter(ev => ev.event_type?.toLowerCase().includes(filter));
 
   const counts: Record<string, number> = {};
-  for (const f of FILTERS.slice(1)) {
-    counts[f.id] = events.filter(ev => ev.event_type?.toLowerCase().includes(f.id)).length;
-  }
+  for (const f of FILTERS.slice(1)) counts[f.id] = events.filter(ev => matchesCategory(ev, f.id)).length;
 
   return (
     <DetailPanel panelId="olaylar" title="Event Log" titleTr="Olay Kaydı">
@@ -123,9 +145,10 @@ export default function EventsPanel() {
       ) : visible.map((ev, i) => {
         const color = evColor(ev.event_type);
         const icon = evIcon(ev.event_type);
+        const rawDesc = ev.description ?? ev.event_type;
         const desc = lang === 'tr'
-          ? trTr(ev.description ?? ev.event_type, ev.event_type)
-          : (ev.description ?? ev.event_type);
+          ? trTr(rawDesc, ev.event_type, ev)
+          : rawDesc;
         return (
           <div key={i} style={{
             display: 'flex', gap: 6, alignItems: 'flex-start',

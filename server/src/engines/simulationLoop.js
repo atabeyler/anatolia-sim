@@ -246,7 +246,27 @@ export class SimulationEngine {
     // 12. Language evolution
     const genCount = this.estimateGenerations();
     for (const ind of alive) {
-      updateLanguageStage(ind, alive.length, genCount);
+      const langResult = updateLanguageStage(ind, alive.length, genCount);
+      if (langResult?.upgraded) {
+        const name = ind.phenotype?.name ?? `${ind.sex === 'male' ? 'â™‚' : 'â™€'}-${ind.id.slice(-4).toUpperCase()}`;
+        const stageName = langResult.stageName ?? ind.language?.stage_name ?? 'language';
+        tickEvents.push({
+          type: 'language',
+          individual_id: ind.id,
+          day,
+          importance: langResult.newStage >= 4 ? 'high' : 'medium',
+          stage: langResult.newStage,
+          stage_name: stageName,
+          name,
+        });
+        this.logEvent(
+          day,
+          'language',
+          `${name} language stage advanced to ${stageName}`,
+          { individual_id: ind.id, name, stage: langResult.newStage, stage_name: stageName },
+          langResult.newStage >= 4 ? 3 : 2
+        );
+      }
     }
     this.processLanguageLearning(alive);
 

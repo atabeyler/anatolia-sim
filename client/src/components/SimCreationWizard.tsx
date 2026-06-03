@@ -833,8 +833,8 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
   /* ── render ──────────────────────────────────────────────────────────── */
   const subtitle = stepSubtitle();
   return (
-    <div style={{ maxWidth:580, margin:'0 auto', background:'rgba(4,4,15,0.97)',
-      border:'1px solid rgba(79,110,247,0.4)', animation:'boot-in 0.3s ease-out both' }}>
+    <div style={{ width:'min(580px, 92vw)', height:'min(86vh, 860px)', margin:'0 auto', background:'rgba(4,4,15,0.97)',
+      border:'1px solid rgba(79,110,247,0.4)', animation:'boot-in 0.3s ease-out both', display:'flex', flexDirection:'column', overflow:'hidden' }}>
 
       {/* Progress */}
       <div style={{ height:2, background:'rgba(79,110,247,0.1)' }}>
@@ -874,7 +874,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
       </div>
 
       {/* Content */}
-      <div style={{ padding:'22px 24px', minHeight:260 }}>
+      <div style={{ padding:'22px 24px', flex:1, overflowY:'auto' }}>
         {renderContent()}
       </div>
 
