@@ -3,13 +3,13 @@ import { useSimStore } from '../../store/simStore';
 import { Flame } from 'lucide-react';
 import { translateEventDescription, type LangCode } from '../../utils/i18n';
 
-const BELIEF_INFO: Record<string, { stage: number; desc: string; descTr: string; color: string }> = {
-  animism:        { stage: 1, desc: 'Spirits in all living things', descTr: 'Her canlıda ruhlar var', color: '#6b8e23' },
-  ancestor_cult:  { stage: 2, desc: 'Ancestor spirits guide the living', descTr: 'Ata ruhları rehberlik eder', color: '#8b7355' },
-  shamanism:      { stage: 2, desc: 'Shamans commune with spirits', descTr: 'Şamanlar ruhlarla iletişir', color: '#9370db' },
-  polytheism:     { stage: 3, desc: 'Multiple deities', descTr: 'Çok tanrılılık', color: '#daa520' },
-  monotheism:     { stage: 4, desc: 'One all-powerful deity', descTr: 'Tek güçlü tanrı', color: '#4682b4' },
-  philosophical:  { stage: 4, desc: 'Abstract reasoning about cosmos', descTr: 'Kozmos üzerine soyut düşünce', color: '#cd853f' },
+const BELIEF_INFO: Record<string, { stage: number; name: string; nameTr: string; desc: string; descTr: string; color: string }> = {
+  animism:        { stage: 1, name: 'Animism',        nameTr: 'Animizm',           desc: 'Spirits in all living things',      descTr: 'Her canlıda ruhlar var',             color: '#6b8e23' },
+  ancestor_cult:  { stage: 2, name: 'Ancestor Cult',  nameTr: 'Ata Kültü',         desc: 'Ancestor spirits guide the living', descTr: 'Ata ruhları rehberlik eder',         color: '#8b7355' },
+  shamanism:      { stage: 2, name: 'Shamanism',       nameTr: 'Şamanizm',          desc: 'Shamans commune with spirits',      descTr: 'Şamanlar ruhlarla iletişir',        color: '#9370db' },
+  polytheism:     { stage: 3, name: 'Polytheism',      nameTr: 'Çok Tanrıcılık',    desc: 'Multiple deities',                  descTr: 'Çok tanrılılık',                    color: '#daa520' },
+  monotheism:     { stage: 4, name: 'Monotheism',      nameTr: 'Tek Tanrıcılık',    desc: 'One all-powerful deity',            descTr: 'Tek güçlü tanrı',                   color: '#4682b4' },
+  philosophical:  { stage: 4, name: 'Philosophical',   nameTr: 'Felsefi Düşünce',   desc: 'Abstract reasoning about cosmos',   descTr: 'Kozmos üzerine soyut düşünce',      color: '#cd853f' },
 };
 
 export default function BeliefPanel() {
@@ -52,9 +52,11 @@ export default function BeliefPanel() {
               >
                 <div className="flex justify-between items-center mb-0.5">
                   <span className="text-sm font-medium" style={{ color: discovered ? info.color : '#555' }}>
-                    {id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                    {lang === 'tr' ? info.nameTr : info.name}
                   </span>
-                  <span className="text-sm text-sim-muted">Stage {info.stage}</span>
+                  <span className="text-sm text-sim-muted">
+                    {lang === 'tr' ? `Aşama ${info.stage}` : `Stage ${info.stage}`}
+                  </span>
                 </div>
                 <div className="text-sm text-sim-muted">
                   {lang === 'en' ? info.desc : info.descTr}

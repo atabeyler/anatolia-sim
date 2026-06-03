@@ -4,10 +4,39 @@ import { useSimStore } from '../../store/simStore';
 import { Scale, ShieldCheck } from 'lucide-react';
 
 const NORM_STAGES = [
-  { stage: 1, label: 'Spontaneous Norms', labelTr: 'Kendiliğinden Normlar', norms: ['Reciprocity', 'No Theft', 'Incest Taboo'] },
-  { stage: 2, label: 'Social Norms', labelTr: 'Sosyal Normlar', norms: ['Elder Respect', 'Hospitality', 'Blood Feud', 'Communal Work'] },
-  { stage: 3, label: 'Proto-Law', labelTr: 'Proto-Hukuk', norms: ['Leader Arbitration', 'Property Rights', 'Exile Punishment'] },
-  { stage: 4, label: 'Formal Law', labelTr: 'Resmi Hukuk', norms: ['Written Law', 'Tax System', 'Contract Law'] },
+  {
+    stage: 1, label: 'Spontaneous Norms', labelTr: 'Kendiliğinden Normlar',
+    norms: [
+      { en: 'Reciprocity',   tr: 'Karşılıklılık' },
+      { en: 'No Theft',      tr: 'Hırsızlık Yasağı' },
+      { en: 'Incest Taboo',  tr: 'Ensest Tabusu' },
+    ],
+  },
+  {
+    stage: 2, label: 'Social Norms', labelTr: 'Sosyal Normlar',
+    norms: [
+      { en: 'Elder Respect',  tr: 'Yaşlılara Saygı' },
+      { en: 'Hospitality',    tr: 'Misafirperverlik' },
+      { en: 'Blood Feud',     tr: 'Kan Davası' },
+      { en: 'Communal Work',  tr: 'Ortak Çalışma' },
+    ],
+  },
+  {
+    stage: 3, label: 'Proto-Law', labelTr: 'Proto-Hukuk',
+    norms: [
+      { en: 'Leader Arbitration', tr: 'Lider Tahkimi' },
+      { en: 'Property Rights',    tr: 'Mülkiyet Hakkı' },
+      { en: 'Exile Punishment',   tr: 'Sürgün Cezası' },
+    ],
+  },
+  {
+    stage: 4, label: 'Formal Law', labelTr: 'Resmi Hukuk',
+    norms: [
+      { en: 'Written Law',   tr: 'Yazılı Hukuk' },
+      { en: 'Tax System',    tr: 'Vergi Sistemi' },
+      { en: 'Contract Law',  tr: 'Sözleşme Hukuku' },
+    ],
+  },
 ];
 
 function t(lang: string, en: string, tr: string) {
@@ -43,7 +72,7 @@ export default function LawPanel() {
         <div className="space-y-3">
           {NORM_STAGES.map(stage => {
             const stageNorms = lawEvents.filter(e =>
-              stage.norms.some(n => e.description?.toLowerCase().includes(n.toLowerCase()))
+              stage.norms.some(n => e.description?.toLowerCase().includes(n.en.toLowerCase()))
             );
             return (
               <div key={stage.stage}>
@@ -52,14 +81,14 @@ export default function LawPanel() {
                 </div>
                 <div className="space-y-0.5">
                   {stage.norms.map(norm => {
-                    const active = stageNorms.some(e => e.description?.toLowerCase().includes(norm.toLowerCase()));
+                    const active = stageNorms.some(e => e.description?.toLowerCase().includes(norm.en.toLowerCase()));
                     return (
                       <div
-                        key={norm}
+                        key={norm.en}
                         className={`flex items-center gap-1.5 text-sm px-2 py-0.5 rounded ${active ? 'text-sim-text' : 'text-sim-muted opacity-50'}`}
                       >
                         <div className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-green-400' : 'bg-sim-border'}`} />
-                        {t(lang, norm, norm)}
+                        {lang === 'tr' ? norm.tr : norm.en}
                       </div>
                     );
                   })}

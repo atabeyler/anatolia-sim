@@ -3,14 +3,18 @@ import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { AlertTriangle } from 'lucide-react';
 
-const PATHOGEN_INFO: Record<string, { transmission: string; severity: string; color: string; tr: string; trTransmission: string }> = {
-  intestinal_parasite: { transmission: 'Fecal-oral', severity: 'Low', color: 'text-yellow-400', tr: 'Bağırsak paraziti', trTransmission: 'Dışkı-ağız' },
-  cholera_like:        { transmission: 'Waterborne', severity: 'High', color: 'text-red-400', tr: 'Kolera benzeri', trTransmission: 'Suyla bulaşan' },
-  respiratory_common:  { transmission: 'Airborne', severity: 'Low', color: 'text-yellow-400', tr: 'Solunum yolu', trTransmission: 'Hava yoluyla' },
-  pneumonia_like:      { transmission: 'Airborne', severity: 'Medium', color: 'text-orange-400', tr: 'Zatürre benzeri', trTransmission: 'Hava yoluyla' },
-  plague_like:         { transmission: 'Airborne', severity: 'Critical', color: 'text-red-600', tr: 'Veba benzeri', trTransmission: 'Hava yoluyla' },
-  malaria_like:        { transmission: 'Vector', severity: 'Medium', color: 'text-orange-400', tr: 'Sıtma benzeri', trTransmission: 'Vektör ile' },
-  wound_infection:     { transmission: 'Contact', severity: 'Medium', color: 'text-orange-400', tr: 'Yara enfeksiyonu', trTransmission: 'Temas ile' },
+const SEVERITY_TR: Record<string, string> = {
+  Low: 'Düşük', Medium: 'Orta', High: 'Yüksek', Critical: 'Kritik',
+};
+
+const PATHOGEN_INFO: Record<string, { name: string; nameTr: string; transmission: string; severity: string; color: string; trTransmission: string }> = {
+  intestinal_parasite: { name: 'Intestinal Parasite', nameTr: 'Bağırsak Paraziti',    transmission: 'Fecal-oral', severity: 'Low',      color: 'text-yellow-400', trTransmission: 'Dışkı-ağız' },
+  cholera_like:        { name: 'Cholera Like',         nameTr: 'Kolera Benzeri',        transmission: 'Waterborne', severity: 'High',     color: 'text-red-400',    trTransmission: 'Suyla bulaşan' },
+  respiratory_common:  { name: 'Respiratory Common',   nameTr: 'Solunum Yolu',          transmission: 'Airborne',   severity: 'Low',      color: 'text-yellow-400', trTransmission: 'Hava yoluyla' },
+  pneumonia_like:      { name: 'Pneumonia Like',        nameTr: 'Zatürre Benzeri',       transmission: 'Airborne',   severity: 'Medium',   color: 'text-orange-400', trTransmission: 'Hava yoluyla' },
+  plague_like:         { name: 'Plague Like',           nameTr: 'Veba Benzeri',          transmission: 'Airborne',   severity: 'Critical', color: 'text-red-600',    trTransmission: 'Hava yoluyla' },
+  malaria_like:        { name: 'Malaria Like',          nameTr: 'Sıtma Benzeri',         transmission: 'Vector',     severity: 'Medium',   color: 'text-orange-400', trTransmission: 'Vektör ile' },
+  wound_infection:     { name: 'Wound Infection',       nameTr: 'Yara Enfeksiyonu',      transmission: 'Contact',    severity: 'Medium',   color: 'text-orange-400', trTransmission: 'Temas ile' },
 };
 
 function t(lang: string, en: string, tr: string) {
@@ -44,13 +48,15 @@ export default function MicrobiomePanel() {
             <div key={id} className="flex items-center gap-2 bg-sim-surface/50 rounded p-1.5">
               <div className="flex-1">
                 <div className="text-sm text-sim-text">
-                  {t(lang, info.tr, id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))}
+                  {lang === 'tr' ? info.nameTr : info.name}
                 </div>
                 <div className="text-sm text-sim-muted">
-                  {t(lang, info.transmission, info.trTransmission)}
+                  {lang === 'tr' ? info.trTransmission : info.transmission}
                 </div>
               </div>
-              <span className={`text-sm font-medium ${info.color}`}>{t(lang, info.severity, info.severity)}</span>
+              <span className={`text-sm font-medium ${info.color}`}>
+                {lang === 'tr' ? (SEVERITY_TR[info.severity] ?? info.severity) : info.severity}
+              </span>
             </div>
           ))}
         </div>

@@ -9,6 +9,15 @@ const STRUCTURE_ICONS: Record<string, string> = {
   stone_temple: '⛩️', stone_house: '🏛️', marketplace: '🏪', city_wall: '🧱',
 };
 
+const STRUCTURE_TR: Record<string, string> = {
+  cave_dwelling:  'Mağara Konutu', lean_to:        'Sığınak',
+  pit_house:      'Çukur Ev',      post_frame_hut: 'Direkli Kulübe',
+  storage_pit:    'Depo Çukuru',   mud_brick_house:'Kerpiç Ev',
+  granary:        'Tahıl Ambarı',  defensive_wall: 'Savunma Duvarı',
+  stone_temple:   'Taş Tapınak',   stone_house:    'Taş Ev',
+  marketplace:    'Pazar Yeri',    city_wall:      'Şehir Surları',
+};
+
 const TIER_LABEL = ['Natural', 'Simple', 'Permanent', 'Urban'];
 const TIER_LABEL_TR = ['Doğal', 'Basit', 'Kalıcı', 'Kentsel'];
 
@@ -51,7 +60,9 @@ export default function ArchitecturePanel() {
             {uniqueStructures.map(s => (
               <div key={s} className="flex items-center gap-1.5 bg-sim-surface rounded p-1.5">
                 <span>{STRUCTURE_ICONS[s] ?? '🏗️'}</span>
-                <span className="text-sm text-sim-text capitalize">{s.replace(/_/g, ' ')}</span>
+                <span className="text-sm text-sim-text capitalize">
+                  {lang === 'tr' ? (STRUCTURE_TR[s] ?? s.replace(/_/g, ' ')) : s.replace(/_/g, ' ')}
+                </span>
               </div>
             ))}
           </div>
@@ -73,7 +84,7 @@ export default function ArchitecturePanel() {
                   .slice(tier * 3, tier * 3 + 3)
                   .map(([id, icon]) => (
                     <div key={id} className="text-sm bg-sim-surface/50 rounded px-1.5 py-0.5 text-sim-muted">
-                      {icon} {id.replace(/_/g, ' ')}
+                      {icon} {lang === 'tr' ? (STRUCTURE_TR[id] ?? id.replace(/_/g, ' ')) : id.replace(/_/g, ' ')}
                     </div>
                   ))}
               </div>

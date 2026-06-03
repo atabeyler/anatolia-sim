@@ -249,7 +249,7 @@ export class SimulationEngine {
     for (const ind of alive) {
       const langResult = updateLanguageStage(ind, alive.length, genCount);
       if (langResult?.upgraded) {
-        const name = ind.phenotype?.name ?? `${ind.sex === 'male' ? 'â™‚' : 'â™€'}-${ind.id.slice(-4).toUpperCase()}`;
+        const name = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
         const stageName = langResult.stageName ?? ind.language?.stage_name ?? 'language';
         tickEvents.push({
           type: 'language',

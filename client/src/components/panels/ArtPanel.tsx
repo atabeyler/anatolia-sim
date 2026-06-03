@@ -9,21 +9,36 @@ const ART_CATEGORIES = [
     label: 'Visual Art',
     labelTr: 'Görsel Sanat',
     emoji: '🎨',
-    items: ['Cave Painting', 'Sculpture', 'Pottery Decoration', 'Textile Pattern', 'Architecture Art'],
+    items: [
+      { en: 'Cave Painting',      tr: 'Mağara Resmi' },
+      { en: 'Sculpture',          tr: 'Heykelcilik' },
+      { en: 'Pottery Decoration', tr: 'Çömlek Süslemesi' },
+      { en: 'Textile Pattern',    tr: 'Dokuma Deseni' },
+      { en: 'Architecture Art',   tr: 'Mimari Sanatı' },
+    ],
   },
   {
     medium: 'music',
     label: 'Music',
     labelTr: 'Müzik',
     emoji: '🎵',
-    items: ['Rhythmic Percussion', 'Vocal Melody', 'Bone Flute', 'String Instrument'],
+    items: [
+      { en: 'Rhythmic Percussion', tr: 'Ritimli Vurma' },
+      { en: 'Vocal Melody',        tr: 'Sesli Melodi' },
+      { en: 'Bone Flute',          tr: 'Kemik Flüt' },
+      { en: 'String Instrument',   tr: 'Telli Çalgı' },
+    ],
   },
   {
     medium: 'narrative',
     label: 'Narrative',
     labelTr: 'Anlatı',
     emoji: '📖',
-    items: ['Oral Story', 'Epic Poem', 'Written Story'],
+    items: [
+      { en: 'Oral Story',    tr: 'Sözlü Hikâye' },
+      { en: 'Epic Poem',     tr: 'Epik Şiir' },
+      { en: 'Written Story', tr: 'Yazılı Hikâye' },
+    ],
   },
 ];
 
@@ -64,7 +79,7 @@ export default function ArtPanel() {
 
       {ART_CATEGORIES.map(cat => {
         const discovered = artEvents.filter(e =>
-          cat.items.some(item => e.description?.toLowerCase().includes(item.toLowerCase()))
+          cat.items.some(item => e.description?.toLowerCase().includes(item.en.toLowerCase()))
         );
         return (
           <div key={cat.medium} className="mb-3">
@@ -77,13 +92,13 @@ export default function ArtPanel() {
             </h4>
             <div className="space-y-0.5">
               {cat.items.map(item => {
-                const isDiscovered = discovered.some(e => e.description?.toLowerCase().includes(item.toLowerCase()));
+                const isDiscovered = discovered.some(e => e.description?.toLowerCase().includes(item.en.toLowerCase()));
                 return (
                   <div
-                    key={item}
+                    key={item.en}
                     className={`text-sm px-2 py-1 rounded ${isDiscovered ? 'text-sim-text bg-pink-500/10' : 'text-sim-muted opacity-40'}`}
                   >
-                    {isDiscovered ? '✓' : '○'} {item}
+                    {isDiscovered ? '✓' : '○'} {lang === 'tr' ? item.tr : item.en}
                   </div>
                 );
               })}

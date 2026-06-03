@@ -19,6 +19,50 @@ const GENE_LABELS: Record<string, { en: string; tr: string }> = {
   artistic_sense: { en: 'Art Sense', tr: 'Sanat Duyusu' },
 };
 
+const HAIR_TR: Record<string, string> = {
+  black: 'Siyah', brown: 'Kahverengi', blonde: 'Sarı', red: 'Kızıl',
+  grey: 'Gri', white: 'Beyaz', dark: 'Koyu', light: 'Açık', medium: 'Orta',
+  'dark brown': 'Koyu Kahverengi', 'light brown': 'Açık Kahverengi',
+};
+
+const EYE_TR: Record<string, string> = {
+  brown: 'Kahverengi', blue: 'Mavi', green: 'Yeşil', hazel: 'Ela',
+  grey: 'Gri', amber: 'Kehribar', black: 'Siyah',
+};
+
+const SKIN_TR: Record<string, string> = {
+  fair: 'Açık', light: 'Açık', medium: 'Orta', olive: 'Zeytinî',
+  tan: 'Bronz', dark: 'Koyu', 'very dark': 'Çok Koyu', very_dark: 'Çok Koyu',
+};
+
+const LANG_STAGE_TR: Record<string, string> = {
+  'pre-linguistic':   'Dil öncesi',
+  'gestural':         'Jestsel',
+  'emotional sound':  'Duygusal ses',
+  'proto-words':      'Proto-kelimeler',
+  'syntax':           'Sözdizimi',
+  'abstract':         'Soyut',
+  'writing':          'Yazı',
+};
+
+const LIFE_STAGE_TR: Record<string, string> = {
+  infant: 'Bebek', child: 'Çocuk', adolescent: 'Ergen',
+  adult: 'Yetişkin', elder: 'Yaşlı',
+};
+
+function translateSkin(value: any, lang: string): string {
+  if (!value && value !== 0) return '-';
+  if (lang !== 'tr') return String(value).slice(0, 12);
+  if (typeof value === 'number') {
+    if (value < 0.25) return 'Açık';
+    if (value < 0.5)  return 'Orta';
+    if (value < 0.75) return 'Koyu';
+    return 'Çok Koyu';
+  }
+  const key = String(value).toLowerCase();
+  return SKIN_TR[key] ?? String(value).slice(0, 12);
+}
+
 function t(lang: string, en: string, tr: string) {
   return lang === 'en' ? en : tr;
 }
@@ -84,24 +128,36 @@ export default function BiologyPanel() {
           </p>
         ) : (
           <div className="space-y-2 max-h-80 overflow-auto pr-1">
-            {individuals.slice(0, 80).map(ind => (
-              <div key={ind.id} className="bg-sim-bg/60 border border-sim-border/40 rounded p-2">
-                <div className="flex justify-between gap-2 mb-1">
-                  <span className="text-sim-text font-semibold truncate">{ind.name ?? ind.phenotype?.name ?? 'Unnamed'}</span>
-                  <span className="text-sim-accent font-mono text-[12px]">{Number(ind.age_years ?? 0).toFixed(1)} yr</span>
+            {individuals.slice(0, 80).map(ind => {
+              const sexTr = ind.sex === 'male' ? 'Erkek' : ind.sex === 'female' ? 'Kadın' : ind.sex;
+              const hairVal = ind.phenotype?.hair_color ?? '-';
+              const eyeVal  = ind.phenotype?.eye_color ?? '-';
+              const skinVal = ind.phenotype?.skin_color ?? ind.phenotype?.skin_tone;
+              const langStage = ind.language?.stage_name ?? '-';
+              return (
+                <div key={ind.id} className="bg-sim-bg/60 border border-sim-border/40 rounded p-2">
+                  <div className="flex justify-between gap-2 mb-1">
+                    <span className="text-sim-text font-semibold truncate">
+                      {ind.name ?? ind.phenotype?.name ?? t(lang, 'Unnamed', 'İsimsiz')}
+                    </span>
+                    <span className="text-sim-accent font-mono text-[12px]">{Number(ind.age_years ?? 0).toFixed(1)} yr</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[12px]">
+                    <Mini label={t(lang, 'Sex', 'Cinsiyet')} value={lang === 'tr' ? sexTr : ind.sex} />
+                    <Mini label={t(lang, 'Location', 'Konum')} value={`${Number(ind.y ?? 0).toFixed(2)}, ${Number(ind.x ?? 0).toFixed(2)}`} />
+                    <Mini label={t(lang, 'Hair', 'Saç')} value={lang === 'tr' ? (HAIR_TR[hairVal] ?? hairVal) : hairVal} />
+                    <Mini label={t(lang, 'Eye', 'Göz')} value={lang === 'tr' ? (EYE_TR[eyeVal] ?? eyeVal) : eyeVal} />
+                    <Mini label={t(lang, 'Skin', 'Ten')} value={translateSkin(skinVal, lang)} />
+                    <Mini label={t(lang, 'Height', 'Boy')} value={`${ind.phenotype?.height_cm ?? '-'} cm`} />
+                    <Mini label={t(lang, 'IQ', 'Zekâ')} value={`${((ind.phenotype?.fluid_intelligence ?? 0) * 100).toFixed(0)}%`} />
+                    <Mini
+                      label={t(lang, 'Language', 'Dil')}
+                      value={lang === 'tr' ? (LANG_STAGE_TR[langStage.toLowerCase()] ?? langStage) : langStage}
+                    />
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[12px]">
-                  <Mini label={t(lang, 'Sex', 'Cinsiyet')} value={ind.sex} />
-                  <Mini label={t(lang, 'Location', 'Konum')} value={`${Number(ind.y ?? 0).toFixed(2)}, ${Number(ind.x ?? 0).toFixed(2)}`} />
-                  <Mini label={t(lang, 'Hair', 'Saç')} value={ind.phenotype?.hair_color ?? '-'} />
-                  <Mini label={t(lang, 'Eye', 'Göz')} value={ind.phenotype?.eye_color ?? '-'} />
-                  <Mini label={t(lang, 'Skin', 'Ten')} value={String(ind.phenotype?.skin_color ?? ind.phenotype?.skin_tone ?? '-')} />
-                  <Mini label={t(lang, 'Height', 'Boy')} value={`${ind.phenotype?.height_cm ?? '-'} cm`} />
-                  <Mini label={t(lang, 'IQ', 'Zekâ')} value={`${((ind.phenotype?.fluid_intelligence ?? 0) * 100).toFixed(0)}%`} />
-                  <Mini label={t(lang, 'Language', 'Dil')} value={ind.language?.stage_name ?? '-'} />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Section>
@@ -109,7 +165,9 @@ export default function BiologyPanel() {
       <Section title={t(lang, 'Life Stages', 'Yaşam Evreleri')}>
         {['INFANT', 'CHILD', 'ADOLESCENT', 'ADULT', 'ELDER'].map(stage => (
           <div key={stage} className="flex justify-between py-0.5 border-b border-sim-border/30">
-            <span className="text-sim-muted capitalize">{stage.toLowerCase()}</span>
+            <span className="text-sim-muted">
+              {lang === 'tr' ? (LIFE_STAGE_TR[stage.toLowerCase()] ?? stage.toLowerCase()) : stage.toLowerCase()}
+            </span>
             <span className="text-sim-text">—</span>
           </div>
         ))}
