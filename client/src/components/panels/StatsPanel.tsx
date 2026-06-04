@@ -36,6 +36,7 @@ function useDrag(initial: { x: number; y: number }) {
   useEffect(() => {
     function onMove(e: MouseEvent | TouchEvent) {
       if (!dragging.current) return;
+      if ('touches' in e) e.preventDefault(); // prevent page scroll on mobile
       const cx = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
       const cy = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
       const dx = cx - origin.current.clientX;
