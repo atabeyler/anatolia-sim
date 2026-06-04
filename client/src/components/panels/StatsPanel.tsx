@@ -17,7 +17,7 @@ function GaugeBar({ label, value, color }: { label: string; value: number; color
   return (
     <div className="mb-1.5">
       <div className="flex justify-between items-center mb-0.5">
-        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 12, color: '#6a9a78', letterSpacing: '0.08em' }}>{label}</span>
+        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 12, color: '#a0c8b0', letterSpacing: '0.08em' }}>{label}</span>
         <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 12, color }}>{(value * 100).toFixed(0)}%</span>
       </div>
       <div style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
@@ -149,7 +149,7 @@ export default function StatsPanel() {
           onTouchStart={e => panel.startDrag(e.touches[0].clientX, e.touches[0].clientY)}
           style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, cursor: 'grab', userSelect: 'none' }}
         >
-          <GripHorizontal size={12} style={{ color: '#2a4a38', flexShrink: 0 }} />
+          <GripHorizontal size={12} style={{ color: '#6a9a80', flexShrink: 0 }} />
           <div style={{ width: 3, height: 14, background: '#4f6ef7', boxShadow: '0 0 6px rgba(79,110,247,0.8)', flexShrink: 0 }} />
           <span style={{ fontSize: 12, color: '#4f6ef7', letterSpacing: '0.22em', fontWeight: 700 }}>
             {lang === 'tr' ? 'NÜFUS TELEMETRİSİ' : 'POPULATION TELEMETRY'}
@@ -159,7 +159,7 @@ export default function StatsPanel() {
           <span style={{ fontSize: 12, color: stats ? '#00e887' : '#4a4a4a', letterSpacing: '0.1em' }}>LIVE</span>
           <button
             onClick={e => { e.stopPropagation(); setOpen(false); }}
-            style={{ marginLeft: 6, background: 'transparent', border: 'none', color: '#4a6a5a', cursor: 'pointer', lineHeight: 0, padding: 2 }}
+            style={{ marginLeft: 6, background: 'transparent', border: 'none', color: '#a0c8b0', cursor: 'pointer', lineHeight: 0, padding: 2 }}
           >
             <X size={12} />
           </button>
@@ -171,8 +171,8 @@ export default function StatsPanel() {
             <button key={m.key} onClick={() => toggleMetric(m.key)}
               style={{
                 flex: 1, padding: '2px 0', fontSize: 12,
-                border: `1px solid ${activeMetrics.has(m.key) ? m.color : 'rgba(255,255,255,0.1)'}`,
-                color: activeMetrics.has(m.key) ? m.color : '#4a6a5a',
+                border: `1px solid ${activeMetrics.has(m.key) ? m.color : 'rgba(160,200,176,0.3)'}`,
+                color: activeMetrics.has(m.key) ? m.color : '#a0c8b0',
                 background: activeMetrics.has(m.key) ? `${m.color}15` : 'transparent',
                 cursor: 'pointer', borderRadius: 2, letterSpacing: '0.04em', transition: 'all 0.15s',
                 fontFamily: 'Share Tech Mono, monospace',
@@ -191,7 +191,7 @@ export default function StatsPanel() {
                 <YAxis hide />
                 <Tooltip
                   contentStyle={{ background: '#07071a', border: '1px solid rgba(79,110,247,0.3)', borderRadius: 2, fontSize: 12, fontFamily: 'Share Tech Mono' }}
-                  labelStyle={{ color: '#6070a0' }}
+                  labelStyle={{ color: '#a0c8b0' }}
                   formatter={(val: any, name: string) => {
                     const m = METRICS.find(x => x.key === name);
                     return [name === 'pop' ? Number(val).toLocaleString() : `${val}%`, lang === 'tr' ? m?.labelTr : m?.label];
@@ -205,7 +205,7 @@ export default function StatsPanel() {
           </div>
         ) : (
           <div style={{ height: 72, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-            <span style={{ fontSize: 12, color: 'rgba(160,200,180,0.4)', letterSpacing: '0.1em' }}>
+            <span style={{ fontSize: 12, color: 'rgba(160,200,180,0.7)', letterSpacing: '0.1em' }}>
               {lang === 'tr' ? 'VERİ BEKLENIYOR…' : 'AWAITING DATA…'}
             </span>
           </div>
@@ -220,7 +220,7 @@ export default function StatsPanel() {
             { l: lang === 'tr' ? 'TEKNOLOJİ' : 'TECH', v: stats?.technologies ?? '—', c: '#4ecb71' },
           ].map(({ l, v, c }) => (
             <div key={l} style={{ background: 'rgba(4,4,15,0.8)', border: '1px solid rgba(255,255,255,0.07)', padding: '5px 8px', borderRadius: 2 }}>
-              <div style={{ fontSize: 12, color: '#4a6a5a', letterSpacing: '0.1em', marginBottom: 2 }}>{l}</div>
+              <div style={{ fontSize: 12, color: '#a0c8b0', letterSpacing: '0.1em', marginBottom: 2 }}>{l}</div>
               <div style={{ fontSize: 15, color: c, fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>{v}</div>
             </div>
           ))}
