@@ -47,8 +47,8 @@ function useDrag(initial: { x: number; y: number }) {
     function onUp() { dragging.current = false; }
     function onResize() {
       setPos(p => ({
-        x: Math.max(0, Math.min(window.innerWidth - 60, p.x)),
-        y: Math.max(0, Math.min(window.innerHeight - 60, p.y)),
+        x: Math.max(8, Math.min(window.innerWidth - 52, p.x)),
+        y: Math.max(8, Math.min(window.innerHeight - 52, p.y)),
       }));
     }
     window.addEventListener('mousemove', onMove as any);
@@ -75,18 +75,15 @@ function useDrag(initial: { x: number; y: number }) {
 }
 
 export default function StatsPanel() {
-  const { stats, sidebarExpanded, lang } = useSimStore();
+  const { stats, lang } = useSimStore();
   const [open, setOpen] = useState(false);
   const [activeMetrics, setActiveMetrics] = useState<Set<Metric>>(new Set(['pop', 'food']));
   const [history, setHistory] = useState<any[]>([]);
   const lastYear = useRef(-1);
 
-  // Absolute coords are relative to the tab-content container (starts after sidebar)
-  const sidebarW = sidebarExpanded ? 180 : 44;
-  const containerW = window.innerWidth - sidebarW;
-  const safeH = window.innerHeight - 200; // subtract header + tabbar + footer ≈ 160px
-  const fab = useDrag({ x: containerW - 60, y: Math.max(60, safeH - 44) });
-  const panel = useDrag({ x: Math.max(60, containerW - 340), y: Math.max(60, safeH - 460) });
+  // position: fixed — coords relative to viewport, never clipped by overflow:hidden
+  const fab = useDrag({ x: window.innerWidth - 60, y: window.innerHeight - 80 });
+  const panel = useDrag({ x: Math.max(16, window.innerWidth - 320), y: Math.max(60, window.innerHeight - 480) });
 
   useEffect(() => {
     if (!stats || stats.year === lastYear.current) return;
@@ -112,20 +109,20 @@ export default function StatsPanel() {
     });
   }
 
-  const panelW = Math.min(296, window.innerWidth - (sidebarExpanded ? 180 : 44) - 24);
+  const panelW = Math.min(296, window.innerWidth - 32);
 
   return (
     <>
       {/* Click-outside backdrop */}
       {open && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 38 }} onClick={() => setOpen(false)} />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 38 }} onClick={() => setOpen(false)} />
       )}
 
       {/* Panel — independently draggable */}
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          position: 'absolute',
+          position: 'fixed',
           left: panel.pos.x,
           top: panel.pos.y,
           zIndex: 39,
@@ -243,7 +240,7 @@ export default function StatsPanel() {
         onTouchStart={e => fab.startDrag(e.touches[0].clientX, e.touches[0].clientY)}
         onClick={() => { if (!fab.wasMoved()) setOpen(v => !v); }}
         style={{
-          position: 'absolute',
+          position: 'fixed',
           left: fab.pos.x,
           top: fab.pos.y,
           zIndex: 40,
