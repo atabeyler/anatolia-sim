@@ -341,28 +341,25 @@ export default function LoginPage() {
 
 
 
-      {/* System status top-left */}
-      <div className="fixed top-3 left-3 z-20 space-y-0.5" style={{ display: showMatrix ? 'none' : undefined }}>
+      {/* System status top-left — 2-col grid on mobile to save vertical space */}
+      <div className="fixed top-3 left-3 z-20" style={{ display: showMatrix ? 'none' : 'grid', gridTemplateColumns: 'repeat(2, auto)', columnGap: 12, rowGap: 2 }}>
         {STATUS.map((s, i) => (
-          <div key={s.label} className="flex items-center gap-1.5 boot-in" style={{ animationDelay: `${i * 100}ms` }}>
+          <div key={s.label} className="flex items-center gap-1 boot-in" style={{ animationDelay: `${i * 80}ms` }}>
             <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.ok ? 'bg-sim-green pulse-live' : 'bg-sim-red'}`} />
-            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#c0c8e8', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#c0c8e8', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
               {lang === 'tr' ? s.labelTr : s.label}
             </span>
-            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#6a9a78', letterSpacing: '0.05em', marginLeft: 2 }}>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#4ecb71', marginLeft: 2, whiteSpace: 'nowrap' }}>
               {s.val}
-            </span>
-            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, letterSpacing: '0.05em', color: s.ok ? '#00e887' : '#e05a5a', marginLeft: 'auto', paddingLeft: 4 }}>
-              {s.ok ? '✓' : '✗'}
             </span>
           </div>
         ))}
       </div>
 
-      {/* Coordinate display bottom */}
-      <div className="fixed bottom-5 left-3 z-20 font-share-tech text-xs tracking-widest" style={{ color: '#c0c8e8' }}>
+      {/* Coordinate display bottom — pushed up to avoid footer overlap */}
+      <div className="fixed left-3 z-20 font-share-tech tracking-widest" style={{ bottom: 48, fontSize: 10, color: '#c0c8e8' }}>
         <div>LAT: {coords?.lat ?? '39.9334°N'} · LON: {coords?.lon ?? '32.8597°E'}</div>
-        <div className="mt-0.5">SYS: ANATOLİA-SIM v1.0 · BUILD 2026</div>
+        <div style={{ marginTop: 2 }}>SYS: ANATOLİA-SIM v1.0 · BUILD 2026</div>
       </div>
 
       {/* Main content */}
