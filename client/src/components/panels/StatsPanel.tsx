@@ -45,15 +45,23 @@ function useDrag(initial: { x: number; y: number }) {
       setPos({ x: Math.max(0, origin.current.posX + dx), y: Math.max(0, origin.current.posY + dy) });
     }
     function onUp() { dragging.current = false; }
+    function onResize() {
+      setPos(p => ({
+        x: Math.max(0, Math.min(window.innerWidth - 60, p.x)),
+        y: Math.max(0, Math.min(window.innerHeight - 60, p.y)),
+      }));
+    }
     window.addEventListener('mousemove', onMove as any);
     window.addEventListener('mouseup', onUp);
     window.addEventListener('touchmove', onMove as any, { passive: false });
     window.addEventListener('touchend', onUp);
+    window.addEventListener('resize', onResize);
     return () => {
       window.removeEventListener('mousemove', onMove as any);
       window.removeEventListener('mouseup', onUp);
       window.removeEventListener('touchmove', onMove as any);
       window.removeEventListener('touchend', onUp);
+      window.removeEventListener('resize', onResize);
     };
   }, []);
 
