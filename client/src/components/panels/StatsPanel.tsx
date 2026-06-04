@@ -155,8 +155,8 @@ export default function StatsPanel() {
             {lang === 'tr' ? 'NÜFUS TELEMETRİSİ' : 'POPULATION TELEMETRY'}
           </span>
           <div style={{ flex: 1 }} />
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: stats ? '#00e887' : '#4a4a4a', boxShadow: stats ? '0 0 6px #00e887' : 'none', animation: stats ? 'pulse 1.5s infinite' : 'none' }} />
-          <span style={{ fontSize: 12, color: stats ? '#00e887' : '#4a4a4a', letterSpacing: '0.1em' }}>LIVE</span>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: stats ? '#00e887' : '#a0c8b0', boxShadow: stats ? '0 0 6px #00e887' : 'none', animation: stats ? 'pulse 1.5s infinite' : 'none' }} />
+          <span style={{ fontSize: 12, color: stats ? '#00e887' : '#a0c8b0', letterSpacing: '0.1em' }}>LIVE</span>
           <button
             onClick={e => { e.stopPropagation(); setOpen(false); }}
             style={{ marginLeft: 6, background: 'transparent', border: 'none', color: '#a0c8b0', cursor: 'pointer', lineHeight: 0, padding: 2 }}
