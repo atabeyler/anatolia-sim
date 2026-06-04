@@ -109,9 +109,9 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
   return (
     <div style={{
       position: 'absolute', left: pos.x, top: pos.y, zIndex: 30,
-      width: panelW, background: 'rgba(0,8,4,0.97)', border: '1px solid rgba(0,232,135,0.45)',
+      width: panelW, background: 'rgba(0,4,2,0.93)', border: '1px solid #4a1a1a',
       userSelect: 'none', cursor: dragging ? 'grabbing' : 'default',
-      boxShadow: '0 4px 24px rgba(0,0,0,0.9), 0 0 12px rgba(0,232,135,0.1)',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
     }}>
       {/* Drag handle — mouse + touch */}
       <div
@@ -555,8 +555,8 @@ export default function SimulationPage() {
 
                 {/* Sim start coord (bottom-left) */}
                 {currentSim && (
-                  <div style={{ position: 'absolute', bottom: 8, left: 8, zIndex: 10, background: 'rgba(0,8,4,0.97)', border: '1px solid rgba(0,232,135,0.45)', padding: '3px 8px', boxShadow: '0 2px 12px rgba(0,0,0,0.8), 0 0 8px rgba(0,232,135,0.1)' }}>
-                    <span style={{ fontSize: 12, color: '#a0c8b0', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.05em' }}>
+                  <div style={{ position: 'absolute', bottom: 8, left: 8, zIndex: 10, background: 'rgba(0,0,0,0.7)', border: '1px solid #4a1a1a', padding: '3px 8px' }}>
+                    <span style={{ fontSize: 14, color: '#a0c8b0', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.05em' }}>
                       {lang === 'tr' ? 'BAŞLANGIÇ' : 'ORIGIN'}: {currentSim.start_latitude?.toFixed(3)}°{(currentSim.start_latitude ?? 0) >= 0 ? 'K' : 'G'}  {currentSim.start_longitude?.toFixed(3)}°{(currentSim.start_longitude ?? 0) >= 0 ? 'D' : 'B'}
                     </span>
                   </div>

@@ -277,7 +277,7 @@ export default function LoginPage() {
 
 
       {/* System status top-left */}
-      <div className="fixed top-5 left-5 z-20 space-y-1 hidden sm:block">
+      <div className="fixed top-3 left-3 z-20 space-y-1">
         {STATUS.map((s, i) => (
           <div key={s.label} className="flex items-center gap-2 boot-in" style={{ animationDelay: `${i * 120}ms` }}>
             <div className={`w-1.5 h-1.5 rounded-full ${s.ok ? 'bg-sim-green pulse-live' : 'bg-sim-red'}`} />
@@ -288,7 +288,7 @@ export default function LoginPage() {
       </div>
 
       {/* Coordinate display bottom */}
-      <div className="fixed bottom-5 left-5 z-20 font-share-tech text-xs tracking-widest hidden sm:block" style={{ color: '#c0c8e8' }}>
+      <div className="fixed bottom-5 left-3 z-20 font-share-tech text-xs tracking-widest" style={{ color: '#c0c8e8' }}>
         <div>LAT: {coords?.lat ?? '39.9334°N'} · LON: {coords?.lon ?? '32.8597°E'}</div>
         <div className="mt-0.5">SYS: ANATOLİA-SIM v1.0 · BUILD 2026</div>
       </div>
