@@ -130,7 +130,7 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
       {/* Events — 3 rows max */}
       <div style={{ padding: '2px 6px' }}>
         {filtered.length === 0 ? (
-          <div style={{ fontSize: 14, color: '#6a9a80', padding: '4px 0', fontFamily: 'Share Tech Mono, monospace', fontStyle: 'italic' }}>
+          <div style={{ fontSize: 14, color: '#a0c8b0', padding: '4px 0', fontFamily: 'Share Tech Mono, monospace', fontStyle: 'italic' }}>
             {lang === 'tr' ? 'Olay bekleniyor...' : 'Awaiting events...'}
           </div>
         ) : filtered.map((ev, i) => (
@@ -319,7 +319,7 @@ export default function SimulationPage() {
           </div>
 
           <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: isMobile ? 3 : 6 }}>
-            <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>
+            <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em' }}>
               {lang === 'tr' ? 'SİM ZAMANI' : 'SIM TIME'}
             </span>
             <span style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.04em', fontFamily: 'Orbitron, monospace' }}>
@@ -331,7 +331,7 @@ export default function SimulationPage() {
 
           {!isMobile && (
             <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: 6 }}>
-              <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>KURUCU ZAMANI</span>
+              <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em' }}>KURUCU ZAMANI</span>
               <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.05em' }}>{realTime}</span>
             </div>
           )}
@@ -371,7 +371,7 @@ export default function SimulationPage() {
                 { key: 'temp', label: lang === 'tr' ? 'SICAK' : 'TEMP',   value: stats?.temperature !== undefined ? `${stats.temperature}°` : '—', color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
               ].map(({ key, label, value, color }) => (
               <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '2px 7px' : '2px 10px', borderRight: '1px solid #4a1a1a', flexShrink: 0, minWidth: isMobile ? 42 : 52 }}>
-                <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{label}</span>
+                <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{label}</span>
                 <span style={{ fontSize: 14, color, fontFamily: 'Orbitron, monospace', fontWeight: 700, lineHeight: 1.2 }}>{value}</span>
               </div>
             ))}
@@ -379,15 +379,15 @@ export default function SimulationPage() {
 
           {/* HIZ + controls — right of stats */}
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 3 : 4, flexShrink: 0, paddingLeft: isMobile ? 6 : 8, borderLeft: '1px solid #4a1a1a' }}>
-            {!isMobile && <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em', flexShrink: 0 }}>HIZ</span>}
+            {!isMobile && <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em', flexShrink: 0 }}>HIZ</span>}
             {SPEEDS.map(s => (
               <button key={s} onClick={() => changeSpeed(s)}
                 style={{
                   padding: isMobile ? '2px 5px' : '2px 6px', fontSize: 14,
                   fontFamily: 'Orbitron, monospace', cursor: 'pointer',
                   background: speedMultiplier === s ? 'rgba(0,232,135,0.2)' : 'transparent',
-                  border: `1px solid ${speedMultiplier === s ? '#00e887' : '#4a1a1a'}`,
-                  color: speedMultiplier === s ? '#00e887' : '#4a6a5a',
+                  border: `1px solid ${speedMultiplier === s ? '#00e887' : 'rgba(160,200,176,0.3)'}`,
+                  color: speedMultiplier === s ? '#00e887' : '#8abda0',
                   flexShrink: 0,
                 }}>
                 {s}×
@@ -401,13 +401,13 @@ export default function SimulationPage() {
             )}
             {!isMobile && (
               <button onClick={() => navigate('/')}
-                style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', border: '1px solid #4a1a1a', color: '#7aaa88', background: 'transparent', fontSize: 14, letterSpacing: '0.05em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', border: '1px solid rgba(160,200,176,0.35)', color: '#a0c8b0', background: 'transparent', fontSize: 14, letterSpacing: '0.05em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
                 <FolderOpen size={9} />
                 {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
               </button>
             )}
             <button onClick={() => setMenuOpen(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid #4a1a1a', color: '#7aaa88', background: 'transparent', fontSize: 14, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid rgba(160,200,176,0.35)', color: '#a0c8b0', background: 'transparent', fontSize: 14, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
               ☰ {!isMobile && (lang === 'tr' ? 'MENÜ' : 'MENU')}
             </button>
           </div>
@@ -498,7 +498,7 @@ export default function SimulationPage() {
               background: 'rgba(0,20,10,0.8)',
               border: 'none',
               borderTop: '1px solid #4a1a1a',
-              color: '#6a9a78',
+              color: '#a0c8b0',
               cursor: 'pointer',
               fontSize: 14,
               gap: 4,
@@ -556,7 +556,7 @@ export default function SimulationPage() {
                 {/* Sim start coord (bottom-left) */}
                 {currentSim && (
                   <div style={{ position: 'absolute', bottom: 8, left: 8, zIndex: 10, background: 'rgba(0,0,0,0.7)', border: '1px solid #4a1a1a', padding: '3px 8px' }}>
-                    <span style={{ fontSize: 14, color: '#6a9a78', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.05em' }}>
+                    <span style={{ fontSize: 14, color: '#a0c8b0', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.05em' }}>
                       {lang === 'tr' ? 'BAŞLANGIÇ' : 'ORIGIN'}: {currentSim.start_latitude?.toFixed(3)}°{(currentSim.start_latitude ?? 0) >= 0 ? 'K' : 'G'}  {currentSim.start_longitude?.toFixed(3)}°{(currentSim.start_longitude ?? 0) >= 0 ? 'D' : 'B'}
                     </span>
                   </div>
@@ -565,7 +565,7 @@ export default function SimulationPage() {
                 {/* Globe click coordinate overlay (bottom-right) */}
                 {globeCoord && (
                   <div style={{ position: 'absolute', bottom: 8, right: 8, zIndex: 20, background: 'rgba(0,5,2,0.92)', border: '1px solid #4a1a1a', padding: '5px 10px', fontFamily: 'Share Tech Mono, monospace' }}>
-                    <div style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em', marginBottom: 2 }}>
+                    <div style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em', marginBottom: 2 }}>
                       {lang === 'tr' ? '// KONUM' : '// COORDS'}
                     </div>
                     <div style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.06em' }}>
@@ -573,19 +573,19 @@ export default function SimulationPage() {
                       {'  '}
                       {Math.abs(globeCoord.lon).toFixed(3)}°{globeCoord.lon >= 0 ? (lang === 'tr' ? 'D' : 'E') : (lang === 'tr' ? 'B' : 'W')}
                     </div>
-                    <button onClick={() => setGlobeCoord(null)} style={{ marginTop: 3, fontSize: 14, color: '#6a9a80', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}>✕</button>
+                    <button onClick={() => setGlobeCoord(null)} style={{ marginTop: 3, fontSize: 14, color: '#a0c8b0', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}>✕</button>
                   </div>
                 )}
 
                 {/* Selected individual overlay */}
                 {selectedInd && (
                   <div style={{ position: 'absolute', top: 80, right: 8, zIndex: 50, background: 'rgba(0,5,2,0.97)', border: '1px solid #00e887', padding: 12, minWidth: 160, fontFamily: 'Share Tech Mono, monospace' }}>
-                    <div style={{ fontSize: 14, color: '#6a9a78', marginBottom: 4 }}>// {lang === 'tr' ? 'BİREY' : 'INDIVIDUAL'}</div>
+                    <div style={{ fontSize: 14, color: '#a0c8b0', marginBottom: 4 }}>// {lang === 'tr' ? 'BİREY' : 'INDIVIDUAL'}</div>
                     <div style={{ fontSize: 14, color: '#00e887', marginBottom: 2 }}>
                       {selectedInd.name ?? `${selectedInd.sex === 'male' ? '♂' : '♀'}-${selectedInd.id?.slice(-4).toUpperCase()}`}
                     </div>
                     {!selectedInd.name && (
-                      <div style={{ fontSize: 14, color: '#4a6a40', marginBottom: 4, fontStyle: 'italic' }}>
+                      <div style={{ fontSize: 14, color: '#8abda0', marginBottom: 4, fontStyle: 'italic' }}>
                         {lang === 'tr' ? '// dil henüz gelişmedi' : '// pre-linguistic era'}
                       </div>
                     )}
@@ -594,7 +594,7 @@ export default function SimulationPage() {
                     <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Boy' : 'Height'}: <span style={{ color: '#a0e887' }}>{selectedInd.height_cm ?? selectedInd.phenotype?.height_cm ?? '—'} cm</span></div>
                     <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Kilo' : 'Weight'}: <span style={{ color: '#a0e887' }}>{selectedInd.weight_kg ?? '—'} kg</span></div>
                     <div style={{ fontSize: 14, color: '#6090a0' }}>HP: <span style={{ color: selectedInd.health?.hp > 0.6 ? '#4ecb71' : '#e05a5a' }}>{selectedInd.health?.hp !== undefined ? (selectedInd.health.hp * 100).toFixed(0) + '%' : '—'}</span></div>
-                    <button onClick={() => setSelectedInd(null)} style={{ marginTop: 8, fontSize: 14, color: '#6a9a78', border: '1px solid #4a1a1a', padding: '2px 8px', background: 'transparent', width: '100%', cursor: 'pointer' }}>
+                    <button onClick={() => setSelectedInd(null)} style={{ marginTop: 8, fontSize: 14, color: '#a0c8b0', border: '1px solid #4a1a1a', padding: '2px 8px', background: 'transparent', width: '100%', cursor: 'pointer' }}>
                       {lang === 'tr' ? 'KAPAT' : 'CLOSE'}
                     </button>
                   </div>
@@ -633,7 +633,7 @@ export default function SimulationPage() {
                     { l: 'GRUPLAR',  v: stats?.groups ?? '—',                                                                                   c: '#d4a838' },
                   ].map(({ l, v, c }) => (
                     <div key={l} style={{ background: 'rgba(0,20,10,0.6)', border: '1px solid #4a1a1a', padding: '8px 12px' }}>
-                      <div style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em' }}>{l}</div>
+                      <div style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em' }}>{l}</div>
                       <div style={{ fontSize: 18, color: c, fontFamily: 'Orbitron, monospace', fontWeight: 700, marginTop: 2 }}>{v}</div>
                     </div>
                   ))}
@@ -661,7 +661,7 @@ export default function SimulationPage() {
         mobileActions={isMobile ? (
           <div style={{ padding: '8px 14px', borderTop: '1px solid #4a1a1a', display: 'flex', gap: 8 }}>
             <button onClick={() => { setMenuOpen(false); navigate('/'); }}
-              style={{ flex: 1, padding: '7px 0', fontSize: 14, border: '1px solid #4a1a1a', color: '#7aaa88', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
+              style={{ flex: 1, padding: '7px 0', fontSize: 14, border: '1px solid #4a1a1a', color: '#a0c8b0', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
               ← {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
             </button>
             <button onClick={() => { setMenuOpen(false); terminateSim(); }}
