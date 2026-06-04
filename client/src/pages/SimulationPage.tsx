@@ -27,6 +27,8 @@ import TimeMachinePanel from '../components/panels/TimeMachinePanel';
 import AnalysisPanel from '../components/panels/AnalysisPanel';
 import HypothesisPanel from '../components/panels/HypothesisPanel';
 import StatsPanel from '../components/panels/StatsPanel';
+import PopulationPyramidPanel from '../components/panels/PopulationPyramidPanel';
+import ReportPanel from '../components/panels/ReportPanel';
 import EventsPanel from '../components/panels/EventsPanel';
 import { translateEventDescription, translateSeason, type LangCode } from '../utils/i18n';
 
@@ -38,6 +40,8 @@ const MODULES = [
   { id: 'language',     label: 'DİL',        labelEn: 'LANG.',    icon: '🔤' },
   { id: 'timemachine',  label: 'GEÇMİŞ',     labelEn: 'HISTORY',  icon: '⏳' },
   { id: 'analysis',     label: 'ANALİZ',     labelEn: 'ANALYS.',  icon: '📊' },
+  { id: 'pyramid',      label: 'PİRAMİT',    labelEn: 'PYRAMID',  icon: '📐' },
+  { id: 'report',       label: 'RAPOR',      labelEn: 'REPORT',   icon: '📄' },
   { id: 'biology',      label: 'MUTASYON',   labelEn: 'MUTAT.',   icon: '🧬' },
   { id: 'god',          label: 'TANRI',      labelEn: 'GOD',      icon: '✦',  accent: '#f97316' },
   { id: 'psychology',   label: 'AKIL',       labelEn: 'MIND',     icon: '🧠' },
@@ -695,6 +699,8 @@ export default function SimulationPage() {
       <TimeMachinePanel />
       <AnalysisPanel />
       <HypothesisPanel />
+      <PopulationPyramidPanel />
+      <ReportPanel />
     </div>
   );
 }

@@ -361,4 +361,40 @@ router.delete('/:id', authenticate, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to delete simulation' }); }
 });
 
+router.get('/:id/report', authenticate, requireSimulationOwner, async (req, res) => {
+  try {
+    const { rows: simRows } = await query('SELECT * FROM simulations WHERE id = $1', [req.params.id]);
+    if (!simRows[0]) return res.status(404).json({ error: 'Simulation not found' });
+    const sim = simRows[0];
+
+    const [eventsRes, checkpointsRes, techRes, beliefsRes] = await Promise.all([
+      query('SELECT sim_year, sim_day, event_type, description FROM simulation_events WHERE simulation_id=$1 ORDER BY sim_day DESC LIMIT 200', [req.params.id]),
+      query('SELECT sim_day, sim_year, population_count, stats FROM checkpoints WHERE simulation_id=$1 ORDER BY sim_day DESC', [req.params.id]),
+      query("SELECT data FROM simulation_events WHERE simulation_id=$1 AND event_type='discovery' ORDER BY sim_day", [req.params.id]),
+      query("SELECT data FROM simulation_events WHERE simulation_id=$1 AND event_type='belief' ORDER BY sim_day", [req.params.id]),
+    ]);
+
+    const engine = simulationManager.getEngine(req.params.id);
+    const liveStats = engine ? (() => {
+      const alive = [...engine.population.values()].filter(i => !i.is_dead);
+      return engine.computeStats(engine.currentDay, alive);
+    })() : null;
+
+    res.json({
+      simulation: {
+        id: sim.id, name: sim.name, status: sim.status,
+        start_latitude: sim.start_latitude, start_longitude: sim.start_longitude,
+        current_year: sim.current_year, current_day: sim.current_day,
+        created_at: sim.created_at,
+      },
+      stats: liveStats ?? sim.world_state,
+      events: eventsRes.rows,
+      checkpoints: checkpointsRes.rows.map(c => ({ sim_day: c.sim_day, sim_year: c.sim_year, population_count: c.population_count })),
+      technologies: techRes.rows.map(r => r.data?.name).filter(Boolean),
+      beliefs: beliefsRes.rows.map(r => r.data?.belief_type ?? r.data?.name).filter(Boolean),
+      generated_at: new Date().toISOString(),
+    });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Report generation failed' }); }
+});
+
 export default router;

@@ -665,6 +665,17 @@ export class SimulationEngine {
         }
         return result;
       })(),
+      age_pyramid: (() => {
+        const bands = ['0-4','5-9','10-14','15-19','20-24','25-29','30-34','35-39','40-44','45-49','50-54','55-59','60-64','65+'];
+        const counts = {};
+        for (const b of bands) counts[b] = { male: 0, female: 0 };
+        for (let idx = 0; idx < alive.length; idx++) {
+          const age = Math.floor(ages[idx]);
+          const b = age >= 65 ? '65+' : `${Math.floor(age / 5) * 5}-${Math.floor(age / 5) * 5 + 4}`;
+          if (counts[b]) counts[b][alive[idx].sex === 'male' ? 'male' : 'female']++;
+        }
+        return bands.map(b => ({ group: b, male: counts[b].male, female: counts[b].female }));
+      })(),
     };
   }
 
