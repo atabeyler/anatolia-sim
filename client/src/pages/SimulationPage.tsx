@@ -354,7 +354,7 @@ export default function SimulationPage() {
           )}
         </div>
 
-        {/* Row 2: Stats (scrollable on mobile) | TR▸EN */}
+        {/* Row 2: Stats | HIZ | SONLANDIR | ÇIKIŞ | MENÜ */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 0, padding: '0 10px', borderBottom: '1px solid #4a1a1a', overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', overflowX: isMobile ? 'auto' : 'visible', flex: 1, scrollbarWidth: 'none' }}>
               {[
@@ -372,46 +372,41 @@ export default function SimulationPage() {
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Row 3: HIZ buttons | [ARIA mobile] | SONLANDIR | ÇIKIŞ | MENÜ */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 3 : 4, padding: isMobile ? '3px 8px' : '3px 10px' }}>
-          {!isMobile && <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em', marginRight: 2, flexShrink: 0 }}>HIZ</span>}
-          {SPEEDS.map(s => (
-            <button key={s} onClick={() => changeSpeed(s)}
-              style={{
-                padding: isMobile ? '2px 5px' : '2px 6px', fontSize: 14,
-                fontFamily: 'Orbitron, monospace', cursor: 'pointer',
-                background: speedMultiplier === s ? 'rgba(0,232,135,0.2)' : 'transparent',
-                border: `1px solid ${speedMultiplier === s ? '#00e887' : '#4a1a1a'}`,
-                color: speedMultiplier === s ? '#00e887' : '#4a6a5a',
-                flexShrink: 0,
-              }}>
-              {s}×
+          {/* HIZ + controls — right of stats */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 3 : 4, flexShrink: 0, paddingLeft: isMobile ? 6 : 8, borderLeft: '1px solid #4a1a1a' }}>
+            {!isMobile && <span style={{ fontSize: 14, color: '#6a9a78', letterSpacing: '0.1em', flexShrink: 0 }}>HIZ</span>}
+            {SPEEDS.map(s => (
+              <button key={s} onClick={() => changeSpeed(s)}
+                style={{
+                  padding: isMobile ? '2px 5px' : '2px 6px', fontSize: 14,
+                  fontFamily: 'Orbitron, monospace', cursor: 'pointer',
+                  background: speedMultiplier === s ? 'rgba(0,232,135,0.2)' : 'transparent',
+                  border: `1px solid ${speedMultiplier === s ? '#00e887' : '#4a1a1a'}`,
+                  color: speedMultiplier === s ? '#00e887' : '#4a6a5a',
+                  flexShrink: 0,
+                }}>
+                {s}×
+              </button>
+            ))}
+            {!isMobile && (
+              <button onClick={terminateSim}
+                style={{ padding: '2px 6px', fontSize: 14, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.05em', cursor: 'pointer', flexShrink: 0 }}>
+                {lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
+              </button>
+            )}
+            {!isMobile && (
+              <button onClick={() => navigate('/')}
+                style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', border: '1px solid #4a1a1a', color: '#7aaa88', background: 'transparent', fontSize: 14, letterSpacing: '0.05em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
+                <FolderOpen size={9} />
+                {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
+              </button>
+            )}
+            <button onClick={() => setMenuOpen(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid #4a1a1a', color: '#7aaa88', background: 'transparent', fontSize: 14, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
+              ☰ {!isMobile && (lang === 'tr' ? 'MENÜ' : 'MENU')}
             </button>
-          ))}
-
-          <div style={{ flex: 1 }} />
-
-          {!isMobile && (
-            <button onClick={terminateSim}
-              style={{ padding: '2px 6px', fontSize: 14, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.05em', cursor: 'pointer', flexShrink: 0 }}>
-              {lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
-            </button>
-          )}
-          {!isMobile && (
-            <button
-              onClick={() => navigate('/')}
-              style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', border: '1px solid #4a1a1a', color: '#7aaa88', background: 'transparent', fontSize: 14, letterSpacing: '0.05em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
-              <FolderOpen size={9} />
-              {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
-            </button>
-          )}
-          <button
-            onClick={() => setMenuOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid #4a1a1a', color: '#7aaa88', background: 'transparent', fontSize: 14, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
-            ☰ {!isMobile && (lang === 'tr' ? 'MENÜ' : 'MENU')}
-          </button>
+          </div>
         </div>
       </div>
 

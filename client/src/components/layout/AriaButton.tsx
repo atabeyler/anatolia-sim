@@ -107,6 +107,18 @@ export default function AriaButton() {
     };
   }, []);
 
+  // Clamp position on screen rotation / resize
+  useEffect(() => {
+    function onResize() {
+      setPos(p => ({
+        x: Math.max(0, Math.min(window.innerWidth - 120, p.x)),
+        y: Math.max(0, Math.min(window.innerHeight - PILL_H - 8, p.y)),
+      }));
+    }
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   /* ── Drag mouse ─────────────────────────────────────────────────────────── */
   useEffect(() => {
     function onMove(e: MouseEvent) {
