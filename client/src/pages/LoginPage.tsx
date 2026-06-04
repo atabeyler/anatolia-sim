@@ -177,12 +177,73 @@ function HudInput({ label, type, value, onChange, placeholder, maxLength }: any)
   );
 }
 
+/* ── Matrix DNA Rain ──────────────────────────────────────── */
+function MatrixRain({ onDone }: { onDone: () => void }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const [opacity, setOpacity] = useState(1);
+
+  useEffect(() => {
+    const c = ref.current!;
+    const ctx = c.getContext('2d')!;
+    const resize = () => { c.width = window.innerWidth; c.height = window.innerHeight; };
+    resize();
+
+    const chars = 'ATCGATCGatcg0123456789ACDEFGHIKLMNPQRSTVWYХΔΣΨΩ①②③④⑤アイウエオカキクケコ'.split('');
+    const fs = 13;
+    const cols = Math.floor(c.width / fs);
+    const drops = Array.from({ length: cols }, () => Math.floor(Math.random() * -50));
+
+    let frame: number;
+    function draw() {
+      ctx.fillStyle = 'rgba(0,0,0,0.06)';
+      ctx.fillRect(0, 0, c.width, c.height);
+      drops.forEach((y, x) => {
+        const bright = Math.random() > 0.92;
+        ctx.fillStyle = bright ? '#ffffff' : `rgba(0,${180 + Math.floor(Math.random()*75)},${80 + Math.floor(Math.random()*60)},${0.6 + Math.random()*0.4})`;
+        ctx.font = `${fs}px monospace`;
+        ctx.fillText(chars[Math.floor(Math.random() * chars.length)], x * fs, y * fs);
+        if (y * fs > c.height && Math.random() > 0.97) drops[x] = 0;
+        drops[x]++;
+      });
+      frame = requestAnimationFrame(draw);
+    }
+    draw();
+
+    const fadeT = setTimeout(() => setOpacity(0), 2600);
+    const doneT = setTimeout(() => { cancelAnimationFrame(frame); onDone(); }, 3600);
+    return () => { cancelAnimationFrame(frame); clearTimeout(fadeT); clearTimeout(doneT); };
+  }, []);
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: '#000', opacity, transition: 'opacity 1s ease', pointerEvents: 'none' }}>
+      <canvas ref={ref} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+        <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(18px,5vw,34px)', color: '#00e887', letterSpacing: '0.3em', fontWeight: 900, textShadow: '0 0 24px #00e887, 0 0 48px rgba(0,232,135,0.4)' }}>
+          ANATOLİA-SİM
+        </span>
+        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 13, color: '#4ecb71', letterSpacing: '0.35em', textShadow: '0 0 10px #4ecb71' }}>
+          GENOM MATRİSİ YÜKLENİYOR…
+        </span>
+        <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+          {['A','T','C','G'].map((b, i) => (
+            <span key={b} style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, color: ['#4f6ef7','#e05a5a','#d4a838','#00e887'][i], letterSpacing: '0.1em', animation: `pulse ${0.8 + i*0.2}s infinite` }}>{b}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Status indicators ────────────────────────────────────── */
 const STATUS = [
-  { label: 'CORE SYSTEMS',  labelTr: 'ÇEKİRDEK SİSTEMLER', ok: true },
-  { label: 'PHYSICS ENGINE', labelTr: 'FİZİK MOTORU',       ok: true },
-  { label: 'GENOME MATRIX', labelTr: 'GENOM MATRİSİ',       ok: true },
-  { label: 'NEURAL NET',    labelTr: 'SİNİR AĞI',           ok: true },
+  { label: 'CORE SYSTEMS',   labelTr: 'ÇEKİRDEK SİSTEMLER',  ok: true, val: '100%'  },
+  { label: 'PHYSICS ENGINE', labelTr: 'FİZİK MOTORU',          ok: true, val: 'v2.4'  },
+  { label: 'GENOME MATRIX',  labelTr: 'GENOM MATRİSİ',         ok: true, val: '46 CHR'},
+  { label: 'EPIGENOME',      labelTr: 'EPİGENOM',              ok: true, val: '6 LOCI'},
+  { label: 'NEURAL NET',     labelTr: 'SİNİR AĞI',             ok: true, val: 'ACTIVE'},
+  { label: 'CLIMATE SIM',    labelTr: 'İKLİM SİMÜL.',          ok: true, val: 'SYNC'  },
+  { label: 'LANGUAGE CORE',  labelTr: 'DİL ÇEKİRDEĞİ',        ok: true, val: 'READY' },
+  { label: 'SOCIAL MATRIX',  labelTr: 'SOSYAL MATRİS',         ok: true, val: 'INIT'  },
 ];
 
 /* ── Main Login Component ─────────────────────────────────── */
@@ -195,6 +256,7 @@ export default function LoginPage() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [booted, setBooted] = useState(false);
+  const [showMatrix, setShowMatrix] = useState(true);
   const [pendingCode, setPendingCode] = useState('');
   const [coords, setCoords] = useState<{ lat: string; lon: string } | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -263,6 +325,9 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen overflow-y-auto flex flex-col items-center justify-center bg-[#030310] scanlines">
+      {/* Matrix rain — first-load only */}
+      {showMatrix && <MatrixRain onDone={() => setShowMatrix(false)} />}
+
       {/* Backgrounds */}
       <StarField />
       <HexGrid />
@@ -277,12 +342,19 @@ export default function LoginPage() {
 
 
       {/* System status top-left */}
-      <div className="fixed top-3 left-3 z-20 space-y-1">
+      <div className="fixed top-3 left-3 z-20 space-y-0.5" style={{ display: showMatrix ? 'none' : undefined }}>
         {STATUS.map((s, i) => (
-          <div key={s.label} className="flex items-center gap-2 boot-in" style={{ animationDelay: `${i * 120}ms` }}>
-            <div className={`w-1.5 h-1.5 rounded-full ${s.ok ? 'bg-sim-green pulse-live' : 'bg-sim-red'}`} />
-            <span className="text-xs font-share-tech tracking-widest" style={{ color: '#c0c8e8' }}>{lang === 'tr' ? s.labelTr : s.label}</span>
-            <span className={`text-xs font-share-tech ${s.ok ? 'text-sim-green' : 'text-sim-red'}`}>{s.ok ? 'OK' : 'ERR'}</span>
+          <div key={s.label} className="flex items-center gap-1.5 boot-in" style={{ animationDelay: `${i * 100}ms` }}>
+            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.ok ? 'bg-sim-green pulse-live' : 'bg-sim-red'}`} />
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#c0c8e8', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>
+              {lang === 'tr' ? s.labelTr : s.label}
+            </span>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, color: '#6a9a78', letterSpacing: '0.05em', marginLeft: 2 }}>
+              {s.val}
+            </span>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 10, letterSpacing: '0.05em', color: s.ok ? '#00e887' : '#e05a5a', marginLeft: 'auto', paddingLeft: 4 }}>
+              {s.ok ? '✓' : '✗'}
+            </span>
           </div>
         ))}
       </div>
