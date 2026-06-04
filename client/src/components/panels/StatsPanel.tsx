@@ -72,10 +72,12 @@ export default function StatsPanel() {
   const [history, setHistory] = useState<any[]>([]);
   const lastYear = useRef(-1);
 
-  // Container is clipped (overflow:hidden); header+tabbar+footer ≈ 160px total
-  const safeH = window.innerHeight - 200;
-  const fab = useDrag({ x: window.innerWidth - 100, y: Math.max(60, safeH - 44) });
-  const panel = useDrag({ x: Math.max(60, window.innerWidth - 340), y: Math.max(60, safeH - 460) });
+  // Absolute coords are relative to the tab-content container (starts after sidebar)
+  const sidebarW = sidebarExpanded ? 180 : 44;
+  const containerW = window.innerWidth - sidebarW;
+  const safeH = window.innerHeight - 200; // subtract header + tabbar + footer ≈ 160px
+  const fab = useDrag({ x: containerW - 60, y: Math.max(60, safeH - 44) });
+  const panel = useDrag({ x: Math.max(60, containerW - 340), y: Math.max(60, safeH - 460) });
 
   useEffect(() => {
     if (!stats || stats.year === lastYear.current) return;
