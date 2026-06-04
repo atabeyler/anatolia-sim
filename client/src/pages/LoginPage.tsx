@@ -430,13 +430,8 @@ export default function LoginPage() {
           </div>
 
           {/* Footer */}
-          <p className="font-share-tech text-xs text-sim-muted mt-6 mb-2 tracking-widest text-in text-center px-4" style={{ animationDelay: '600ms', lineHeight: 1.6 }}>
-            <span className="hidden sm:inline">
-              {lang === 'tr' ? 'BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026' : 'BOLD MILITARY TECHNOLOGY AND DEFENSE INDUSTRIES INC. © 2026'}
-            </span>
-            <span className="sm:hidden">
-              {lang === 'tr' ? <>BOLD ASKERİ TEKNOLOJİ<br />VE SAVUNMA SANAYİ A.Ş. © 2026</> : <>BOLD MILITARY TECHNOLOGY<br />AND DEFENSE INDUSTRIES INC. © 2026</>}
-            </span>
+          <p className="text-in mt-6 mb-2 text-center px-4" style={{ animationDelay: '600ms', fontFamily: 'Share Tech Mono, monospace', fontSize: '12px', letterSpacing: '0.15em', color: '#00e887', textShadow: '0 0 6px #00e887, 0 0 16px rgba(0,232,135,0.6)' }}>
+            RST Q-Nation 200120401018 · Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026
           </p>
         </div>
       )}
