@@ -358,17 +358,14 @@ export default function DashboardPage() {
       {/* Menu Overlay */}
       <SimMenuOverlay isOpen={menuOpen} onClose={() => { setMenuOpen(false); setMenuPage(null); }} menuPage={menuPage} onMenuPageChange={setMenuPage} />
 
-      {/* Footer */}
-      <div className="text-center py-6 px-4 relative z-1">
-        <span className="font-share-tech text-sim-muted tracking-[0.2em]" style={{ fontSize: 11, lineHeight: 1.7 }}>
-          <span className="hidden sm:inline">
-            {lang === 'tr' ? 'BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026' : 'BOLD MILITARY TECHNOLOGY AND DEFENSE INDUSTRIES INC. © 2026'}
-          </span>
-          <span className="sm:hidden">
-            {lang === 'tr' ? <>BOLD ASKERİ TEKNOLOJİ<br />VE SAVUNMA SANAYİ A.Ş. © 2026</> : <>BOLD MILITARY TECHNOLOGY<br />AND DEFENSE INDUSTRIES INC. © 2026</>}
-          </span>
+      {/* Footer — fixed to bottom of viewport */}
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, textAlign: 'center', padding: '6px 16px', background: 'rgba(3,3,16,0.97)', borderTop: '1px solid rgba(0,232,135,0.15)' }}>
+        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, letterSpacing: '0.15em', color: '#00e887', textShadow: '0 0 8px rgba(0,232,135,0.5)' }}>
+          RST Q-Nation 200120401018 · Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026
         </span>
       </div>
+      {/* spacer so fixed footer doesn't cover last card */}
+      <div style={{ height: 36 }} />
     </div>
   );
 }
