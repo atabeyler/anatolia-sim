@@ -647,7 +647,7 @@ export default function SimulationPage() {
 
       {/* ── FOOTER ── */}
       <div style={{ flexShrink: 0, textAlign: 'center', padding: '3px 10px', background: 'rgba(0,0,0,0.97)', borderTop: '1px solid rgba(0,232,135,0.15)' }}>
-        <span style={{ fontSize: '12px', color: '#00e887', letterSpacing: '0.15em', fontFamily: 'Share Tech Mono, monospace', textShadow: '0 0 8px rgba(0,232,135,0.5)' }}>
+        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: '12px', letterSpacing: '0.15em', color: '#00e887', textShadow: '0 0 6px #00e887, 0 0 16px rgba(0,232,135,0.6)' }}>
           RST Q-Nation 200120401018 · Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026
         </span>
       </div>
