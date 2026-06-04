@@ -72,8 +72,10 @@ export default function StatsPanel() {
   const [history, setHistory] = useState<any[]>([]);
   const lastYear = useRef(-1);
 
-  const fab = useDrag({ x: window.innerWidth - 60, y: window.innerHeight - 60 });
-  const panel = useDrag({ x: window.innerWidth - 320, y: window.innerHeight - 480 });
+  // Container is clipped (overflow:hidden); header+tabbar+footer ≈ 160px total
+  const safeH = window.innerHeight - 200;
+  const fab = useDrag({ x: window.innerWidth - 100, y: Math.max(60, safeH - 44) });
+  const panel = useDrag({ x: Math.max(60, window.innerWidth - 340), y: Math.max(60, safeH - 460) });
 
   useEffect(() => {
     if (!stats || stats.year === lastYear.current) return;
