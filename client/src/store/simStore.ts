@@ -50,6 +50,11 @@ interface Simulation {
   start_latitude: number;
   start_longitude: number;
   speed_multiplier?: number;
+  world_state?: {
+    phonology_seed?: number;
+    biome?: string;
+    [key: string]: any;
+  };
 }
 
 interface SimStore {
