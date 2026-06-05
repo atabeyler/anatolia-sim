@@ -153,23 +153,20 @@ function Moon() {
 
 /** Faint orbit ring drawn in the ecliptic plane. */
 function OrbitPath({ dist }: { dist: number }) {
-  const geo = useMemo(() => {
+  const line = useMemo(() => {
     const pts: number[] = [];
     const N = 256;
     for (let i = 0; i <= N; i++) {
       const a = (i / N) * Math.PI * 2;
       pts.push(Math.cos(a) * dist, 0, Math.sin(a) * dist);
     }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-    return g;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    const mat = new THREE.LineBasicMaterial({ color: '#1a2a5a', transparent: true, opacity: 0.20 });
+    return new THREE.Line(geo, mat);
   }, [dist]);
 
-  return (
-    <line geometry={geo}>
-      <lineBasicMaterial color="#1a2a5a" transparent opacity={0.20} />
-    </line>
-  );
+  return <primitive object={line} />;
 }
 
 interface PlanetProps {
