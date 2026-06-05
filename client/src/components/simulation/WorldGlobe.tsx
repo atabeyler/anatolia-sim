@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import * as THREE from 'three';
@@ -17,9 +17,11 @@ function makeSpriteTexture(): THREE.CanvasTexture {
   const ctx = canvas.getContext('2d')!;
   const half = size / 2;
   const grad = ctx.createRadialGradient(half, half, 0, half, half, half);
-  grad.addColorStop(0, 'rgba(255,255,255,1)');
-  grad.addColorStop(0.4, 'rgba(255,255,255,0.8)');
-  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  grad.addColorStop(0,   'rgba(255,255,255,1)');
+  grad.addColorStop(0.15,'rgba(255,255,255,0.95)');
+  grad.addColorStop(0.4, 'rgba(255,255,255,0.6)');
+  grad.addColorStop(0.7, 'rgba(255,255,255,0.15)');
+  grad.addColorStop(1,   'rgba(255,255,255,0)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
   return new THREE.CanvasTexture(canvas);
@@ -159,7 +161,7 @@ function GridLines() {
 }
 
 /** Build positions array for a subset of individuals at a given radius. */
-function buildPositions(individuals: any[], r: number): THREE.BufferGeometry {
+function buildPositions(individuals: { x?: number; y?: number }[], r: number): THREE.BufferGeometry {
   const positions: number[] = [];
   for (const ind of individuals) {
     const lat = ((ind.y ?? 0) * Math.PI) / 180;
@@ -171,7 +173,7 @@ function buildPositions(individuals: any[], r: number): THREE.BufferGeometry {
     );
   }
   const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  g.setAttribute('position', new THREE.Float32BufferAttribute(positions.length ? positions : [0, 0, 0], 3));
   return g;
 }
 
@@ -231,76 +233,79 @@ function PopulationDots({
 
   return (
     <>
-      {/* Founders — gold */}
+      {/* Founders — gold, larger */}
       <points geometry={founderGeo} onClick={handleClick}>
         <pointsMaterial
           map={spriteTex}
-          size={0.22}
+          size={0.28}
           color="#ffd700"
           sizeAttenuation
           transparent
           opacity={1.0}
           depthWrite={false}
-          alphaTest={0.01}
+          alphaTest={0.005}
         />
       </points>
       {/* Males — blue */}
       <points geometry={maleGeo} onClick={handleClick}>
         <pointsMaterial
           map={spriteTex}
-          size={0.14}
-          color="#6090ff"
+          size={0.18}
+          color="#70aaff"
           sizeAttenuation
           transparent
           opacity={1.0}
           depthWrite={false}
-          alphaTest={0.01}
+          alphaTest={0.005}
         />
       </points>
       {/* Females — pink */}
       <points geometry={femaleGeo} onClick={handleClick}>
         <pointsMaterial
           map={spriteTex}
-          size={0.14}
-          color="#ff8ab0"
+          size={0.18}
+          color="#ff9abf"
           sizeAttenuation
           transparent
           opacity={1.0}
           depthWrite={false}
-          alphaTest={0.01}
+          alphaTest={0.005}
         />
       </points>
     </>
   );
 }
 
-function PopulationGlow({ individuals }: { individuals: any[] }) {
-  const { founders, others } = useMemo(() => {
-    const founders: any[] = [];
-    const others: any[] = [];
-    for (const ind of individuals) {
-      if (!ind.parent_1_id && !ind.parent_2_id) {
-        founders.push(ind);
-      } else {
-        others.push(ind);
-      }
-    }
-    return { founders, others };
-  }, [individuals]);
+/** Fading trail dots showing past positions — updated each polling cycle (~8 s). */
+function PopulationTrails({ snapshots }: { snapshots: { x: number; y: number }[][] }) {
+  const spriteTex = useMemo(() => makeSpriteTexture(), []);
 
-  const founderGeo = useMemo(() => buildPositions(founders, 2.05), [founders]);
-  const othersGeo  = useMemo(() => buildPositions(others,   2.05), [others]);
+  // snapshots[0] = oldest, snapshots[last] = most recent past positions
+  const layers = useMemo(() => snapshots.map((snapshot, idx) => {
+    const age = snapshots.length - 1 - idx; // 0 = most recent past, higher = older
+    return {
+      geo: buildPositions(snapshot, 2.023),
+      opacity: Math.max(0.04, 0.35 - age * 0.06),
+      size: Math.max(0.035, 0.08 - age * 0.008),
+    };
+  }), [snapshots]);
 
   return (
     <>
-      {/* Gold glow layer for founders */}
-      <points geometry={founderGeo}>
-        <pointsMaterial size={0.6} color="#ffd700" sizeAttenuation transparent opacity={0.15} depthWrite={false} />
-      </points>
-      {/* Blue/pink mixed glow layer for all other individuals */}
-      <points geometry={othersGeo}>
-        <pointsMaterial size={0.4} color="#8899ff" sizeAttenuation transparent opacity={0.12} depthWrite={false} />
-      </points>
+      {layers.map((layer, i) => (
+        <points key={i} geometry={layer.geo}>
+          <pointsMaterial
+            map={spriteTex}
+            size={layer.size}
+            color="#88aaee"
+            sizeAttenuation
+            transparent
+            opacity={layer.opacity}
+            depthWrite={false}
+            alphaTest={0.01}
+          />
+        </points>
+      ))}
     </>
   );
 }
@@ -371,6 +376,8 @@ function PopClickCatcher({
   );
 }
 
+const TRAIL_DEPTH = 6; // number of past snapshots to retain
+
 function RotatingGroup({
   individuals,
   onSelect,
@@ -385,6 +392,19 @@ function RotatingGroup({
     if (groupRef.current) groupRef.current.rotation.y += delta * 0.025;
   });
 
+  // Track position history: when individuals updates, push previous snapshot onto trail
+  const prevIndRef = useRef<any[]>([]);
+  const [trailSnapshots, setTrailSnapshots] = useState<{ x: number; y: number }[][]>([]);
+
+  useEffect(() => {
+    const prev = prevIndRef.current;
+    if (prev.length > 0) {
+      const snapshot = prev.map(ind => ({ x: ind.x ?? 0, y: ind.y ?? 0 }));
+      setTrailSnapshots(s => [...s, snapshot].slice(-TRAIL_DEPTH));
+    }
+    prevIndRef.current = individuals;
+  }, [individuals]);
+
   return (
     <group ref={groupRef}>
       <GlobeMesh />
@@ -392,7 +412,7 @@ function RotatingGroup({
       {onGlobeClick && <GlobeClickCatcher groupRef={groupRef} onGlobeClick={onGlobeClick} />}
       {individuals.length > 0 && (
         <>
-          <PopulationGlow individuals={individuals} />
+          {trailSnapshots.length > 0 && <PopulationTrails snapshots={trailSnapshots} />}
           <PopulationDots individuals={individuals} groupRef={groupRef} onSelect={onSelect} />
           <PopClickCatcher individuals={individuals} groupRef={groupRef} onSelect={onSelect} />
         </>
