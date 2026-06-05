@@ -207,7 +207,6 @@ function PopulationDots({
 
   // Click handler shared across all three layers — finds nearest individual in world space.
   const handleClick = (e: import('@react-three/fiber').ThreeEvent<MouseEvent>) => {
-    e.stopPropagation();
     if (!onSelect || individuals.length === 0) return;
     const r = 2.025;
     let minDist = Infinity;
@@ -225,7 +224,8 @@ function PopulationDots({
       const d = Math.hypot(wx - e.point.x, py - e.point.y, wz - e.point.z);
       if (d < minDist) { minDist = d; minIdx = i; }
     });
-    if (minIdx >= 0 && minDist < 0.3) onSelect(individuals[minIdx]);
+    // Only consume the click if an individual is actually selected
+    if (minIdx >= 0 && minDist < 0.3) { e.stopPropagation(); onSelect(individuals[minIdx]); }
   };
 
   return (
@@ -347,7 +347,6 @@ function PopClickCatcher({
   return (
     <mesh
       onClick={(e) => {
-        e.stopPropagation();
         if (!onSelect || individuals.length === 0) return;
         const r = 2.025;
         let minDist = Infinity;
@@ -364,7 +363,8 @@ function PopClickCatcher({
           const d = Math.hypot(wx - e.point.x, py - e.point.y, wz - e.point.z);
           if (d < minDist) { minDist = d; minIdx = i; }
         });
-        if (minIdx >= 0 && minDist < 0.3) onSelect(individuals[minIdx]);
+        // Only consume the click if an individual is actually selected
+        if (minIdx >= 0 && minDist < 0.3) { e.stopPropagation(); onSelect(individuals[minIdx]); }
       }}
     >
       <sphereGeometry args={[2.03, 32, 32]} />
