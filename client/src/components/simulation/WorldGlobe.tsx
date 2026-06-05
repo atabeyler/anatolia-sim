@@ -17,9 +17,11 @@ function makeSpriteTexture(): THREE.CanvasTexture {
   const ctx = canvas.getContext('2d')!;
   const half = size / 2;
   const grad = ctx.createRadialGradient(half, half, 0, half, half, half);
-  grad.addColorStop(0, 'rgba(255,255,255,1)');
-  grad.addColorStop(0.4, 'rgba(255,255,255,0.8)');
-  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  grad.addColorStop(0,   'rgba(255,255,255,1)');
+  grad.addColorStop(0.15,'rgba(255,255,255,0.95)');
+  grad.addColorStop(0.4, 'rgba(255,255,255,0.6)');
+  grad.addColorStop(0.7, 'rgba(255,255,255,0.15)');
+  grad.addColorStop(1,   'rgba(255,255,255,0)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
   return new THREE.CanvasTexture(canvas);
@@ -231,95 +233,43 @@ function PopulationDots({
 
   return (
     <>
-      {/* Founders — gold */}
+      {/* Founders — gold, larger */}
       <points geometry={founderGeo} onClick={handleClick}>
         <pointsMaterial
           map={spriteTex}
-          size={0.22}
+          size={0.28}
           color="#ffd700"
           sizeAttenuation
           transparent
           opacity={1.0}
           depthWrite={false}
-          alphaTest={0.01}
+          alphaTest={0.005}
         />
       </points>
       {/* Males — blue */}
       <points geometry={maleGeo} onClick={handleClick}>
         <pointsMaterial
           map={spriteTex}
-          size={0.14}
-          color="#6090ff"
+          size={0.18}
+          color="#70aaff"
           sizeAttenuation
           transparent
           opacity={1.0}
           depthWrite={false}
-          alphaTest={0.01}
+          alphaTest={0.005}
         />
       </points>
       {/* Females — pink */}
       <points geometry={femaleGeo} onClick={handleClick}>
         <pointsMaterial
           map={spriteTex}
-          size={0.14}
-          color="#ff8ab0"
+          size={0.18}
+          color="#ff9abf"
           sizeAttenuation
           transparent
           opacity={1.0}
           depthWrite={false}
-          alphaTest={0.01}
-        />
-      </points>
-    </>
-  );
-}
-
-/** Soft glow halo behind each dot — uses sprite texture so it renders as circles, not squares. */
-function PopulationGlow({ individuals }: { individuals: any[] }) {
-  const spriteTex = useMemo(() => makeSpriteTexture(), []);
-
-  const { founders, others } = useMemo(() => {
-    const founders: any[] = [];
-    const others: any[] = [];
-    for (const ind of individuals) {
-      if (!ind.parent_1_id && !ind.parent_2_id) {
-        founders.push(ind);
-      } else {
-        others.push(ind);
-      }
-    }
-    return { founders, others };
-  }, [individuals]);
-
-  const founderGeo = useMemo(() => buildPositions(founders, 2.05), [founders]);
-  const othersGeo  = useMemo(() => buildPositions(others,   2.05), [others]);
-
-  return (
-    <>
-      {/* Gold glow layer for founders */}
-      <points geometry={founderGeo}>
-        <pointsMaterial
-          map={spriteTex}
-          size={0.6}
-          color="#ffd700"
-          sizeAttenuation
-          transparent
-          opacity={0.15}
-          depthWrite={false}
-          alphaTest={0.01}
-        />
-      </points>
-      {/* Blue/pink mixed glow layer for all other individuals */}
-      <points geometry={othersGeo}>
-        <pointsMaterial
-          map={spriteTex}
-          size={0.4}
-          color="#8899ff"
-          sizeAttenuation
-          transparent
-          opacity={0.12}
-          depthWrite={false}
-          alphaTest={0.01}
+          alphaTest={0.005}
         />
       </points>
     </>
@@ -463,7 +413,6 @@ function RotatingGroup({
       {individuals.length > 0 && (
         <>
           {trailSnapshots.length > 0 && <PopulationTrails snapshots={trailSnapshots} />}
-          <PopulationGlow individuals={individuals} />
           <PopulationDots individuals={individuals} groupRef={groupRef} onSelect={onSelect} />
           <PopClickCatcher individuals={individuals} groupRef={groupRef} onSelect={onSelect} />
         </>
