@@ -36,8 +36,13 @@ export default function AnalysisPanel() {
     try {
       const { data } = await axios.post(`/api/analysis/${currentSim.id}`, { message: msg, stats, events: events.slice(0, 20) }, { headers: { Authorization: `Bearer ${accessToken}` } });
       setMessages(m => [...m, { role: 'assistant', content: data.response }]);
-    } catch {
-      setMessages(m => [...m, { role: 'assistant', content: lang === 'en' ? 'Analysis failed. Is the simulation running?' : 'Analiz başarısız.' }]);
+    } catch (err: any) {
+      const serverMsg = err?.response?.data?.error || err?.response?.data?.response;
+      const isOverload = err?.response?.status === 503 || err?.response?.status === 529;
+      const fallback = isOverload
+        ? (lang === 'en' ? 'AI model is busy right now. Please try again in a moment.' : 'AI model şu an meşgul. Lütfen biraz bekleyip tekrar deneyin.')
+        : (lang === 'en' ? 'Analysis failed. Is the simulation running?' : 'Analiz başarısız. Simülasyon çalışıyor mu?');
+      setMessages(m => [...m, { role: 'assistant', content: serverMsg || fallback }]);
     }
     setLoading(false);
   }
