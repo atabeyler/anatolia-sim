@@ -3,8 +3,9 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import * as THREE from 'three';
 
-// NASA Blue Marble textures (three.js official examples repo)
-const EARTH_MAP = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/textures/planets/earth_atmos_2048.jpg';
+// Color: Solar System Scope 4K equirectangular (CC BY 4.0, Wikimedia CDN — CORS enabled)
+const EARTH_MAP  = 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Solarsystemscope_texture_8k_earth_daymap.jpg/4096px-Solarsystemscope_texture_8k_earth_daymap.jpg';
+// Bump + specular: three.js examples at 2048px (fine for detail maps)
 const EARTH_BUMP = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/textures/planets/earth_normal_2048.jpg';
 const EARTH_SPEC = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/textures/planets/earth_specular_2048.jpg';
 
@@ -29,12 +30,13 @@ function GlobeMesh() {
   const [earthTex, bumpTex, specTex] = useMemo(() => {
     const loader = new THREE.TextureLoader();
     const maxAniso = gl.capabilities.getMaxAnisotropy();
-    const load = (url: string) => {
+    const load = (url: string, srgb = false) => {
       const t = loader.load(url);
       t.anisotropy = maxAniso;
+      if (srgb) t.colorSpace = THREE.SRGBColorSpace;
       return t;
     };
-    return [load(EARTH_MAP), load(EARTH_BUMP), load(EARTH_SPEC)];
+    return [load(EARTH_MAP, true), load(EARTH_BUMP), load(EARTH_SPEC)];
   }, [gl]);
 
   return (
