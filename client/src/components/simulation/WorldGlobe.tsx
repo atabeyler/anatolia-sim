@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import * as THREE from 'three';
@@ -159,7 +159,7 @@ function GridLines() {
 }
 
 /** Build positions array for a subset of individuals at a given radius. */
-function buildPositions(individuals: any[], r: number): THREE.BufferGeometry {
+function buildPositions(individuals: { x?: number; y?: number }[], r: number): THREE.BufferGeometry {
   const positions: number[] = [];
   for (const ind of individuals) {
     const lat = ((ind.y ?? 0) * Math.PI) / 180;
@@ -171,7 +171,7 @@ function buildPositions(individuals: any[], r: number): THREE.BufferGeometry {
     );
   }
   const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  g.setAttribute('position', new THREE.Float32BufferAttribute(positions.length ? positions : [0, 0, 0], 3));
   return g;
 }
 
@@ -274,7 +274,10 @@ function PopulationDots({
   );
 }
 
+/** Soft glow halo behind each dot — uses sprite texture so it renders as circles, not squares. */
 function PopulationGlow({ individuals }: { individuals: any[] }) {
+  const spriteTex = useMemo(() => makeSpriteTexture(), []);
+
   const { founders, others } = useMemo(() => {
     const founders: any[] = [];
     const others: any[] = [];
@@ -295,12 +298,64 @@ function PopulationGlow({ individuals }: { individuals: any[] }) {
     <>
       {/* Gold glow layer for founders */}
       <points geometry={founderGeo}>
-        <pointsMaterial size={0.6} color="#ffd700" sizeAttenuation transparent opacity={0.15} depthWrite={false} />
+        <pointsMaterial
+          map={spriteTex}
+          size={0.6}
+          color="#ffd700"
+          sizeAttenuation
+          transparent
+          opacity={0.15}
+          depthWrite={false}
+          alphaTest={0.01}
+        />
       </points>
       {/* Blue/pink mixed glow layer for all other individuals */}
       <points geometry={othersGeo}>
-        <pointsMaterial size={0.4} color="#8899ff" sizeAttenuation transparent opacity={0.12} depthWrite={false} />
+        <pointsMaterial
+          map={spriteTex}
+          size={0.4}
+          color="#8899ff"
+          sizeAttenuation
+          transparent
+          opacity={0.12}
+          depthWrite={false}
+          alphaTest={0.01}
+        />
       </points>
+    </>
+  );
+}
+
+/** Fading trail dots showing past positions — updated each polling cycle (~8 s). */
+function PopulationTrails({ snapshots }: { snapshots: { x: number; y: number }[][] }) {
+  const spriteTex = useMemo(() => makeSpriteTexture(), []);
+
+  // snapshots[0] = oldest, snapshots[last] = most recent past positions
+  const layers = useMemo(() => snapshots.map((snapshot, idx) => {
+    const age = snapshots.length - 1 - idx; // 0 = most recent past, higher = older
+    return {
+      geo: buildPositions(snapshot, 2.023),
+      opacity: Math.max(0.04, 0.35 - age * 0.06),
+      size: Math.max(0.035, 0.08 - age * 0.008),
+    };
+  }), [snapshots]);
+
+  return (
+    <>
+      {layers.map((layer, i) => (
+        <points key={i} geometry={layer.geo}>
+          <pointsMaterial
+            map={spriteTex}
+            size={layer.size}
+            color="#88aaee"
+            sizeAttenuation
+            transparent
+            opacity={layer.opacity}
+            depthWrite={false}
+            alphaTest={0.01}
+          />
+        </points>
+      ))}
     </>
   );
 }
@@ -371,6 +426,8 @@ function PopClickCatcher({
   );
 }
 
+const TRAIL_DEPTH = 6; // number of past snapshots to retain
+
 function RotatingGroup({
   individuals,
   onSelect,
@@ -385,6 +442,19 @@ function RotatingGroup({
     if (groupRef.current) groupRef.current.rotation.y += delta * 0.025;
   });
 
+  // Track position history: when individuals updates, push previous snapshot onto trail
+  const prevIndRef = useRef<any[]>([]);
+  const [trailSnapshots, setTrailSnapshots] = useState<{ x: number; y: number }[][]>([]);
+
+  useEffect(() => {
+    const prev = prevIndRef.current;
+    if (prev.length > 0) {
+      const snapshot = prev.map(ind => ({ x: ind.x ?? 0, y: ind.y ?? 0 }));
+      setTrailSnapshots(s => [...s, snapshot].slice(-TRAIL_DEPTH));
+    }
+    prevIndRef.current = individuals;
+  }, [individuals]);
+
   return (
     <group ref={groupRef}>
       <GlobeMesh />
@@ -392,6 +462,7 @@ function RotatingGroup({
       {onGlobeClick && <GlobeClickCatcher groupRef={groupRef} onGlobeClick={onGlobeClick} />}
       {individuals.length > 0 && (
         <>
+          {trailSnapshots.length > 0 && <PopulationTrails snapshots={trailSnapshots} />}
           <PopulationGlow individuals={individuals} />
           <PopulationDots individuals={individuals} groupRef={groupRef} onSelect={onSelect} />
           <PopClickCatcher individuals={individuals} groupRef={groupRef} onSelect={onSelect} />
