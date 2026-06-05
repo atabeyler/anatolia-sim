@@ -4,7 +4,7 @@ import { useSimStore } from '../../store/simStore';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const SPEEDS = [1, 10, 100, 1000];
+const SPEEDS = [1, 5, 20, 100];
 
 function Seg({ label, value, color = '#c0ccee' }: { label: string; value: string; color?: string }) {
   return (
@@ -19,8 +19,14 @@ function Divider() {
   return <div className="w-px h-6 flex-shrink-0" style={{ background: 'rgba(79,110,247,0.25)' }} />;
 }
 
-function SettingsOverlay({ onClose }: { onClose: () => void }) {
-  const { lang, toggleLang, speedMultiplier, setSpeed } = useSimStore();
+function SettingsOverlay({
+  onClose,
+  onSpeedChange,
+}: {
+  onClose: () => void;
+  onSpeedChange: (speed: number) => void;
+}) {
+  const { lang, toggleLang, speedMultiplier } = useSimStore();
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -66,7 +72,7 @@ function SettingsOverlay({ onClose }: { onClose: () => void }) {
           <div className="font-share-tech text-sim-muted tracking-widest mb-1.5" style={{ fontSize: 8 }}>SİMÜLASYON HIZI</div>
           <div className="flex gap-1">
             {SPEEDS.map(s => (
-              <button key={s} onClick={() => setSpeed(s)}
+              <button key={s} onClick={() => onSpeedChange(s)}
                 className="flex-1 font-share-tech tracking-widest transition-all"
                 style={{
                   padding: '4px 0', fontSize: 10,
@@ -230,6 +236,29 @@ export default function TopBar() {
   const [showSettings, setShowSettings] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
+  async function changeSpeed(speed: number) {
+    if (!currentSim || !accessToken) return;
+    if (!SPEEDS.includes(speed)) {
+      setSimError('Geçersiz hız değeri');
+      setTimeout(() => setSimError(''), 3000);
+      return;
+    }
+
+    const previous = speedMultiplier;
+    setSpeed(speed);
+    setSimError('');
+
+    try {
+      await axios.post(`/api/simulations/${currentSim.id}/speed`, { speed_multiplier: speed }, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    } catch (err: any) {
+      setSpeed(previous);
+      setSimError(err.response?.data?.error ?? 'Hız değiştirilemedi');
+      setTimeout(() => setSimError(''), 3000);
+    }
+  }
+
   async function handleTerminate() {
     if (!currentSim || !accessToken) return;
     const confirmed = window.confirm(
@@ -254,6 +283,7 @@ export default function TopBar() {
 
   async function toggleSim() {
     if (!currentSim || !accessToken) return;
+    if (simLoading) return;
     setSimLoading(true);
     setSimError('');
     try {
@@ -321,7 +351,7 @@ export default function TopBar() {
           {!isMobile && (
             <div className="flex gap-0.5">
               {SPEEDS.map(s => (
-                <button key={s} onClick={() => setSpeed(s)}
+                <button key={s} onClick={() => changeSpeed(s)}
                   className="font-share-tech transition-all"
                   style={{
                     padding: '2px 5px', fontSize: 9,
@@ -428,7 +458,7 @@ export default function TopBar() {
           <Menu size={13} />
         </button>
 
-        {showSettings && <SettingsOverlay onClose={() => setShowSettings(false)} />}
+        {showSettings && <SettingsOverlay onClose={() => setShowSettings(false)} onSpeedChange={changeSpeed} />}
         {showMenu && <MenuOverlay onClose={() => setShowMenu(false)} onTerminate={handleTerminate} />}
       </div>
     </div>

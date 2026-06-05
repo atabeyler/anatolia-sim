@@ -163,6 +163,7 @@ export default function SimulationPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPage, setMenuPage] = useState<'language' | 'guide' | 'about' | 'mission' | 'contact' | null>(null);
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
+  const [actionBusy, setActionBusy] = useState(false);
 
   // Responsive breakpoint
   useEffect(() => {
@@ -247,17 +248,26 @@ export default function SimulationPage() {
 
   async function toggleSim() {
     if (!currentSim || !accessToken) return;
+    if (actionBusy) return;
+    setActionBusy(true);
     const action = currentSim.status === 'running' ? 'pause' : 'start';
-    await axios.post(`/api/simulations/${currentSim.id}/${action}`, {}, { headers: { Authorization: `Bearer ${accessToken}` } });
-    setCurrentSim({ ...currentSim, status: action === 'start' ? 'running' : 'paused' });
+    try {
+      await axios.post(`/api/simulations/${currentSim.id}/${action}`, {}, { headers: { Authorization: `Bearer ${accessToken}` } });
+      setCurrentSim({ ...currentSim, status: action === 'start' ? 'running' : 'paused' });
+    } finally {
+      setActionBusy(false);
+    }
   }
 
   async function changeSpeed(s: number) {
+    if (!SPEEDS.includes(s) || !currentSim || !accessToken) return;
+    const previous = speedMultiplier;
     setSpeed(s);
-    if (!simId || !accessToken) return;
     try {
       await axios.post(`/api/simulations/${simId}/speed`, { speed_multiplier: s }, { headers: { Authorization: `Bearer ${accessToken}` } });
-    } catch { /* optimistic — ignore error */ }
+    } catch {
+      setSpeed(previous);
+    }
   }
 
   async function terminateSim() {

@@ -6,6 +6,8 @@ import { Mic, MicOff, Loader2 } from 'lucide-react';
 
 type AriaState = 'idle' | 'listening' | 'processing';
 
+const ALLOWED_SPEEDS = [1, 5, 20, 100];
+
 const SpeechRec: any = typeof window !== 'undefined'
   ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null)
   : null;
@@ -370,7 +372,9 @@ export default function AriaButton() {
       case 'navigate_panel': case 'open_panel': setActivePanel(action.panel ?? null); break;
       case 'close_panel': setActivePanel(null); break;
       case 'change_speed': case 'set_speed': {
-        const spd = Number(action.speed) || 1; setSpeed(spd);
+        const requested = Number(action.speed) || 1;
+        const spd = ALLOWED_SPEEDS.includes(requested) ? requested : 1;
+        setSpeed(spd);
         if (currentSim && accessToken)
           axios.post(`/api/simulations/${currentSim.id}/speed`, { speed_multiplier: spd }, { headers: { Authorization: `Bearer ${accessToken}` } }).catch(() => {});
         break;
