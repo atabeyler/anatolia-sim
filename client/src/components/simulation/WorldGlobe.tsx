@@ -347,7 +347,7 @@ function PopulationDots({
       const d = Math.hypot(wx - e.point.x, py - e.point.y, wz - e.point.z);
       if (d < minDist) { minDist = d; minIdx = i; }
     });
-    if (minIdx >= 0 && minDist < 0.3) { e.stopPropagation(); onSelect(individuals[minIdx]); }
+    if (minIdx >= 0 && minDist < 0.06) { e.stopPropagation(); onSelect(individuals[minIdx]); }
   };
 
   return (
@@ -440,7 +440,7 @@ function PopClickCatcher({
           const d = Math.hypot(wx - e.point.x, py - e.point.y, wz - e.point.z);
           if (d < minDist) { minDist = d; minIdx = i; }
         });
-        if (minIdx >= 0 && minDist < 0.3) { e.stopPropagation(); onSelect(individuals[minIdx]); }
+        if (minIdx >= 0 && minDist < 0.06) { e.stopPropagation(); onSelect(individuals[minIdx]); }
       }}
     >
       <sphereGeometry args={[2.03, 32, 32]} />
