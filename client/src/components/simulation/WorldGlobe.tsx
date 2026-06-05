@@ -16,14 +16,11 @@ function makeSpriteTexture(): THREE.CanvasTexture {
   canvas.height = size;
   const ctx = canvas.getContext('2d')!;
   const half = size / 2;
-  const grad = ctx.createRadialGradient(half, half, 0, half, half, half);
-  grad.addColorStop(0,   'rgba(255,255,255,1)');
-  grad.addColorStop(0.15,'rgba(255,255,255,0.95)');
-  grad.addColorStop(0.4, 'rgba(255,255,255,0.6)');
-  grad.addColorStop(0.7, 'rgba(255,255,255,0.15)');
-  grad.addColorStop(1,   'rgba(255,255,255,0)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, size, size);
+  // Sharp solid circle — no glow/halo falloff
+  ctx.beginPath();
+  ctx.arc(half, half, half * 0.55, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,1)';
+  ctx.fill();
   return new THREE.CanvasTexture(canvas);
 }
 
@@ -233,43 +230,43 @@ function PopulationDots({
 
   return (
     <>
-      {/* Founders — gold, larger */}
+      {/* Founders — gold */}
       <points geometry={founderGeo} onClick={handleClick}>
         <pointsMaterial
           map={spriteTex}
-          size={0.28}
+          size={0.12}
           color="#ffd700"
           sizeAttenuation
           transparent
           opacity={1.0}
           depthWrite={false}
-          alphaTest={0.005}
+          alphaTest={0.5}
         />
       </points>
       {/* Males — blue */}
       <points geometry={maleGeo} onClick={handleClick}>
         <pointsMaterial
           map={spriteTex}
-          size={0.18}
+          size={0.07}
           color="#70aaff"
           sizeAttenuation
           transparent
           opacity={1.0}
           depthWrite={false}
-          alphaTest={0.005}
+          alphaTest={0.5}
         />
       </points>
       {/* Females — pink */}
       <points geometry={femaleGeo} onClick={handleClick}>
         <pointsMaterial
           map={spriteTex}
-          size={0.18}
+          size={0.07}
           color="#ff9abf"
           sizeAttenuation
           transparent
           opacity={1.0}
           depthWrite={false}
-          alphaTest={0.005}
+          alphaTest={0.5}
         />
       </points>
     </>
