@@ -15,13 +15,37 @@ function makeSpriteTexture(): THREE.CanvasTexture {
   canvas.height = size;
   const ctx = canvas.getContext('2d')!;
   const half = size / 2;
-  // Sharp solid circle — no glow/halo falloff
   ctx.beginPath();
   ctx.arc(half, half, half * 0.55, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(255,255,255,1)';
   ctx.fill();
   return new THREE.CanvasTexture(canvas);
 }
+
+/** Simple horizontal-band canvas texture for gas giants. */
+function makeStripeTex(bands: string[]): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d')!;
+  const bh = canvas.height / bands.length;
+  bands.forEach((color, i) => {
+    ctx.fillStyle = color;
+    ctx.fillRect(0, Math.floor(i * bh), canvas.width, Math.ceil(bh) + 1);
+  });
+  return new THREE.CanvasTexture(canvas);
+}
+
+const JUPITER_BANDS = [
+  '#c88b3a','#e8c890','#c05820','#e8d4a8',
+  '#a86828','#e4c488','#b87038','#ead4a0',
+  '#c07030','#e8c890',
+];
+const SATURN_BANDS = [
+  '#e8d8a8','#d0c090','#ead8a8','#c8b080','#ead8a8','#d4c898','#e8d8a8',
+];
+
+// ─── Globe ───────────────────────────────────────────────────────────────────
 
 function GlobeMesh() {
   const { gl } = useThree();
@@ -56,12 +80,10 @@ function GlobeMesh() {
 function Globe() {
   return (
     <>
-      {/* Inner atmosphere glow */}
       <mesh scale={1.015}>
         <sphereGeometry args={[2, 32, 32]} />
         <meshStandardMaterial color="#88aaff" transparent opacity={0.12} side={THREE.BackSide} />
       </mesh>
-      {/* Outer atmosphere glow */}
       <mesh scale={1.045}>
         <sphereGeometry args={[2, 32, 32]} />
         <meshStandardMaterial color="#2255bb" transparent opacity={0.06} side={THREE.BackSide} />
@@ -69,6 +91,8 @@ function Globe() {
     </>
   );
 }
+
+// ─── Sun & Moon ──────────────────────────────────────────────────────────────
 
 function Sun() {
   const groupRef = useRef<THREE.Group>(null);
@@ -88,17 +112,14 @@ function Sun() {
 
   return (
     <group ref={groupRef} position={[18, 4, 0]}>
-      {/* Core */}
       <mesh>
         <sphereGeometry args={[0.45, 24, 24]} />
         <meshBasicMaterial color="#ffe060" />
       </mesh>
-      {/* Corona */}
       <mesh scale={1.6}>
         <sphereGeometry args={[0.45, 16, 16]} />
         <primitive object={coronaMat} />
       </mesh>
-      {/* Sun light — illuminates globe */}
       <pointLight intensity={4.5} color="#fff8e0" distance={80} decay={1.2} />
     </group>
   );
@@ -123,11 +144,124 @@ function Moon() {
         <sphereGeometry args={[0.2, 20, 20]} />
         <meshStandardMaterial color="#b0b8c8" roughness={0.92} metalness={0.02} />
       </mesh>
-      {/* Faint moonlight */}
       <pointLight intensity={0.08} color="#c8d8ff" distance={10} />
     </group>
   );
 }
+
+// ─── Solar System ─────────────────────────────────────────────────────────────
+
+/** Faint orbit ring drawn in the ecliptic plane. */
+function OrbitPath({ dist }: { dist: number }) {
+  const geo = useMemo(() => {
+    const pts: number[] = [];
+    const N = 256;
+    for (let i = 0; i <= N; i++) {
+      const a = (i / N) * Math.PI * 2;
+      pts.push(Math.cos(a) * dist, 0, Math.sin(a) * dist);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    return g;
+  }, [dist]);
+
+  return (
+    <line geometry={geo}>
+      <lineBasicMaterial color="#1a2a5a" transparent opacity={0.20} />
+    </line>
+  );
+}
+
+interface PlanetProps {
+  radius: number;
+  dist: number;
+  speed: number;
+  incl: number;
+  color: string;
+  roughness?: number;
+  map?: THREE.CanvasTexture;
+  rings?: boolean;
+}
+
+function Planet({ radius, dist, speed, incl, color, roughness = 0.75, map, rings }: PlanetProps) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    const t = clock.elapsedTime * speed;
+    ref.current.position.set(
+      Math.cos(t) * dist,
+      Math.sin(t * 0.35) * dist * incl,
+      Math.sin(t) * dist,
+    );
+  });
+
+  return (
+    <group ref={ref}>
+      <mesh>
+        <sphereGeometry args={[radius, 36, 36]} />
+        <meshStandardMaterial
+          map={map}
+          color={map ? '#ffffff' : color}
+          roughness={roughness}
+          metalness={0.04}
+        />
+      </mesh>
+      {rings && (
+        <mesh rotation={[Math.PI * 0.48, 0.2, 0.15]}>
+          <ringGeometry args={[radius * 1.45, radius * 2.4, 80]} />
+          <meshBasicMaterial color="#c8b888" transparent opacity={0.55} side={THREE.DoubleSide} />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
+function SolarSystem() {
+  const jupiterMap = useMemo(() => makeStripeTex(JUPITER_BANDS), []);
+  const saturnMap  = useMemo(() => makeStripeTex(SATURN_BANDS),  []);
+
+  return (
+    <>
+      {/* Mercury */}
+      <group key="mercury">
+        <OrbitPath dist={22} />
+        <Planet radius={0.10} dist={22} speed={0.074} incl={0.08} color="#9a9a9a" roughness={0.9} />
+      </group>
+      {/* Venus */}
+      <group key="venus">
+        <OrbitPath dist={30} />
+        <Planet radius={0.20} dist={30} speed={0.050} incl={0.04} color="#e8d4a0" roughness={0.65} />
+      </group>
+      {/* Mars */}
+      <group key="mars">
+        <OrbitPath dist={45} />
+        <Planet radius={0.13} dist={45} speed={0.028} incl={0.17} color="#c1440e" roughness={0.85} />
+      </group>
+      {/* Jupiter */}
+      <group key="jupiter">
+        <OrbitPath dist={75} />
+        <Planet radius={0.75} dist={75} speed={0.012} incl={0.06} color="#c2956a" roughness={0.6} map={jupiterMap} />
+      </group>
+      {/* Saturn + rings */}
+      <group key="saturn">
+        <OrbitPath dist={110} />
+        <Planet radius={0.60} dist={110} speed={0.008} incl={0.18} color="#e8d5a0" roughness={0.55} map={saturnMap} rings />
+      </group>
+      {/* Uranus */}
+      <group key="uranus">
+        <OrbitPath dist={148} />
+        <Planet radius={0.38} dist={148} speed={0.005} incl={0.48} color="#7de8e8" roughness={0.45} />
+      </group>
+      {/* Neptune */}
+      <group key="neptune">
+        <OrbitPath dist={185} />
+        <Planet radius={0.36} dist={185} speed={0.003} incl={0.10} color="#4169e1" roughness={0.45} />
+      </group>
+    </>
+  );
+}
+
+// ─── Globe grid & population ──────────────────────────────────────────────────
 
 function GridLines() {
   const geo = useMemo(() => {
@@ -159,7 +293,6 @@ function GridLines() {
   );
 }
 
-/** Build positions array for a subset of individuals at a given radius. */
 function buildPositions(individuals: { x?: number; y?: number }[], r: number): THREE.BufferGeometry {
   const positions: number[] = [];
   for (const ind of individuals) {
@@ -188,17 +321,11 @@ function PopulationDots({
   const spriteTex = useMemo(() => makeSpriteTexture(), []);
 
   const { founders, males, females } = useMemo(() => {
-    const founders: any[] = [];
-    const males: any[] = [];
-    const females: any[] = [];
+    const founders: any[] = [], males: any[] = [], females: any[] = [];
     for (const ind of individuals) {
-      if (!ind.parent_1_id && !ind.parent_2_id) {
-        founders.push(ind);
-      } else if (ind.sex === 'male') {
-        males.push(ind);
-      } else {
-        females.push(ind);
-      }
+      if (!ind.parent_1_id && !ind.parent_2_id) founders.push(ind);
+      else if (ind.sex === 'male') males.push(ind);
+      else females.push(ind);
     }
     return { founders, males, females };
   }, [individuals]);
@@ -207,12 +334,10 @@ function PopulationDots({
   const maleGeo    = useMemo(() => buildPositions(males,    2.025), [males]);
   const femaleGeo  = useMemo(() => buildPositions(females,  2.025), [females]);
 
-  // Click handler shared across all three layers — finds nearest individual in world space.
   const handleClick = (e: import('@react-three/fiber').ThreeEvent<MouseEvent>) => {
     if (!onSelect || individuals.length === 0) return;
     const r = 2.025;
-    let minDist = Infinity;
-    let minIdx = -1;
+    let minDist = Infinity, minIdx = -1;
     const ry = groupRef.current?.rotation.y ?? 0;
     individuals.forEach((ind, i) => {
       const lat = ((ind.y ?? 0) * Math.PI) / 180;
@@ -220,68 +345,33 @@ function PopulationDots({
       const px = r * Math.cos(lat) * Math.sin(lon);
       const py = r * Math.sin(lat);
       const pz = r * Math.cos(lat) * Math.cos(lon);
-      // Rotate local point into world space (y-axis rotation only)
       const wx = px * Math.cos(ry) + pz * Math.sin(ry);
       const wz = -px * Math.sin(ry) + pz * Math.cos(ry);
       const d = Math.hypot(wx - e.point.x, py - e.point.y, wz - e.point.z);
       if (d < minDist) { minDist = d; minIdx = i; }
     });
-    // Only consume the click if an individual is actually selected
     if (minIdx >= 0 && minDist < 0.3) { e.stopPropagation(); onSelect(individuals[minIdx]); }
   };
 
   return (
     <>
-      {/* Founders — gold */}
       <points geometry={founderGeo} onClick={handleClick}>
-        <pointsMaterial
-          map={spriteTex}
-          size={0.12}
-          color="#ffd700"
-          sizeAttenuation
-          transparent
-          opacity={1.0}
-          depthWrite={false}
-          alphaTest={0.5}
-        />
+        <pointsMaterial map={spriteTex} size={0.12} color="#ffd700" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.5} />
       </points>
-      {/* Males — blue */}
       <points geometry={maleGeo} onClick={handleClick}>
-        <pointsMaterial
-          map={spriteTex}
-          size={0.07}
-          color="#70aaff"
-          sizeAttenuation
-          transparent
-          opacity={1.0}
-          depthWrite={false}
-          alphaTest={0.5}
-        />
+        <pointsMaterial map={spriteTex} size={0.07} color="#70aaff" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.5} />
       </points>
-      {/* Females — pink */}
       <points geometry={femaleGeo} onClick={handleClick}>
-        <pointsMaterial
-          map={spriteTex}
-          size={0.07}
-          color="#ff9abf"
-          sizeAttenuation
-          transparent
-          opacity={1.0}
-          depthWrite={false}
-          alphaTest={0.5}
-        />
+        <pointsMaterial map={spriteTex} size={0.07} color="#ff9abf" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.5} />
       </points>
     </>
   );
 }
 
-/** Fading trail dots showing past positions — updated each polling cycle (~8 s). */
 function PopulationTrails({ snapshots }: { snapshots: { x: number; y: number }[][] }) {
   const spriteTex = useMemo(() => makeSpriteTexture(), []);
-
-  // snapshots[0] = oldest, snapshots[last] = most recent past positions
   const layers = useMemo(() => snapshots.map((snapshot, idx) => {
-    const age = snapshots.length - 1 - idx; // 0 = most recent past, higher = older
+    const age = snapshots.length - 1 - idx;
     return {
       geo: buildPositions(snapshot, 2.023),
       opacity: Math.max(0.04, 0.35 - age * 0.06),
@@ -293,16 +383,7 @@ function PopulationTrails({ snapshots }: { snapshots: { x: number; y: number }[]
     <>
       {layers.map((layer, i) => (
         <points key={i} geometry={layer.geo}>
-          <pointsMaterial
-            map={spriteTex}
-            size={layer.size}
-            color="#88aaee"
-            sizeAttenuation
-            transparent
-            opacity={layer.opacity}
-            depthWrite={false}
-            alphaTest={0.01}
-          />
+          <pointsMaterial map={spriteTex} size={layer.size} color="#88aaee" sizeAttenuation transparent opacity={layer.opacity} depthWrite={false} alphaTest={0.01} />
         </points>
       ))}
     </>
@@ -334,7 +415,6 @@ function GlobeClickCatcher({
   );
 }
 
-/** Transparent sphere that catches population-dot clicks and finds the nearest individual. */
 function PopClickCatcher({
   individuals,
   groupRef,
@@ -345,14 +425,12 @@ function PopClickCatcher({
   onSelect?: (ind: any) => void;
 }) {
   if (!onSelect || individuals.length === 0) return null;
-
   return (
     <mesh
       onClick={(e) => {
         if (!onSelect || individuals.length === 0) return;
         const r = 2.025;
-        let minDist = Infinity;
-        let minIdx = -1;
+        let minDist = Infinity, minIdx = -1;
         const ry = groupRef.current?.rotation.y ?? 0;
         individuals.forEach((ind, i) => {
           const lat = ((ind.y ?? 0) * Math.PI) / 180;
@@ -365,7 +443,6 @@ function PopClickCatcher({
           const d = Math.hypot(wx - e.point.x, py - e.point.y, wz - e.point.z);
           if (d < minDist) { minDist = d; minIdx = i; }
         });
-        // Only consume the click if an individual is actually selected
         if (minIdx >= 0 && minDist < 0.3) { e.stopPropagation(); onSelect(individuals[minIdx]); }
       }}
     >
@@ -375,7 +452,7 @@ function PopClickCatcher({
   );
 }
 
-const TRAIL_DEPTH = 6; // number of past snapshots to retain
+const TRAIL_DEPTH = 6;
 
 function RotatingGroup({
   individuals,
@@ -391,7 +468,6 @@ function RotatingGroup({
     if (groupRef.current) groupRef.current.rotation.y += delta * 0.025;
   });
 
-  // Track position history: when individuals updates, push previous snapshot onto trail
   const prevIndRef = useRef<any[]>([]);
   const [trailSnapshots, setTrailSnapshots] = useState<{ x: number; y: number }[][]>([]);
 
@@ -420,6 +496,8 @@ function RotatingGroup({
   );
 }
 
+// ─── Main export ──────────────────────────────────────────────────────────────
+
 export default function WorldGlobe({
   individuals = [],
   onSelect,
@@ -442,13 +520,14 @@ export default function WorldGlobe({
       <directionalLight position={[0, -5, 4]} intensity={1.0} color="#ffffff" />
       <Sun />
       <Moon />
-      <Stars radius={200} depth={80} count={6000} factor={5} saturation={0} fade speed={0.3} />
+      <SolarSystem />
+      <Stars radius={250} depth={80} count={6000} factor={5} saturation={0} fade speed={0.3} />
       <Globe />
       <RotatingGroup individuals={individuals} onSelect={onSelect} onGlobeClick={onGlobeClick} />
       <OrbitControls
         enablePan={false}
         minDistance={2.15}
-        maxDistance={14}
+        maxDistance={220}
         rotateSpeed={0.45}
         zoomSpeed={0.7}
         dampingFactor={0.08}
