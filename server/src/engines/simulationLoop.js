@@ -37,8 +37,6 @@ export class SimulationEngine {
     this.settlements = [];
     this.events = [];
     this.generation = 0;
-    this.totalBirths = 0;
-    this.totalDeaths = 0;
     this.running = false;
     this.speedMultiplier = simulation.speed_multiplier ?? 1;
     this.onTick = null;
@@ -205,7 +203,6 @@ export class SimulationEngine {
       const p2 = this.population.get(nb.parent_2_id);
       if (p1 && p2) inheritEpigenome(nb, p1, p2);
       this.population.set(nb.id, nb);
-      if (!nb.is_dead) this.totalBirths++;
       tickEvents.push({ type: 'birth', individual_id: nb.id, day, importance: 'low' });
       const nbLabel = nb.phenotype?.name ?? `${nb.sex === 'male' ? '♂' : '♀'}-${nb.id.slice(-4).toUpperCase()}`;
       const p1Name = p1?.phenotype?.name ?? (p1 ? `${p1.sex === 'male' ? '♂' : '♀'}-${p1.id.slice(-4).toUpperCase()}` : '?');
@@ -230,7 +227,6 @@ export class SimulationEngine {
         ind.alive = false;
         ind.death_day = day;
         ind.death_cause = cause;
-        this.totalDeaths++;
         tickEvents.push({ type: 'death_of_kin', individual_id: ind.id, day });
         const deadName = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
         this.logEvent(day, 'death', `${deadName} died: ${cause}`, { individual_id: ind.id, cause, name: deadName }, 1);
@@ -679,7 +675,7 @@ export class SimulationEngine {
       day,
       year: Math.floor(day / 365),
       population: alive.length,
-      total_ever: this.totalBirths + 2,
+      total_ever: this.population.size,
       avg_age: Math.round(avgAge * 10) / 10,
       sex_ratio: alive.filter(i => i.sex === 'male').length / Math.max(1, alive.length),
       avg_intelligence: alive.reduce((s, i) => s + (i.phenotype?.fluid_intelligence ?? 0), 0) / Math.max(1, alive.length),
@@ -693,8 +689,8 @@ export class SimulationEngine {
       water_abundance: Math.round((this.worldState.water_abundance ?? 0.7) * 100) / 100,
       biome: this.worldState.biome ?? 'mediterranean',
       has_disaster: !!(this.worldState.recent_disaster),
-      births: this.totalBirths,
-      deaths: this.totalDeaths,
+      births: Math.max(0, this.population.size - 2),
+      deaths: Math.max(0, this.population.size - alive.length),
       word_count: new Set(alive.flatMap(i => Object.keys(i.language?.vocabulary ?? {}))).size,
       max_language_stage: Math.max(0, ...alive.map(i => i.language?.stage ?? 0)),
       mean_wealth: Math.round(econStats.mean_wealth * 100) / 100,
