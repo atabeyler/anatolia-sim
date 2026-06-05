@@ -379,6 +379,7 @@ export default function SimulationPage() {
                 { key: 'tech', label: lang === 'tr' ? 'TEKNOLOJİ' : 'TECH',    value: stats?.technologies ?? '—',  color: '#d4a838' },
                 { key: 'sea',  label: lang === 'tr' ? 'MEVSİM' : 'SEASON',value: seasonLabel,                 color: '#a0b4ff' },
                 { key: 'temp', label: lang === 'tr' ? 'SICAKLIK' : 'TEMP', value: stats?.temperature !== undefined ? `${stats.temperature}°` : '—', color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
+                { key: 'wthr', label: lang === 'tr' ? 'HAVA' : 'WEATHER', value: (() => { const icons: Record<string,string> = { clear: '☀️', rain: '🌧', heavy_rain: '⛈', snow: '❄️', blizzard: '🌨', storm: '🌩', heat_wave: '🔥', drought: '🏜' }; return icons[(stats as any)?.weather] ?? '☀️'; })(), color: '#e0d080' },
               ].map(({ key, label, value, color }) => (
               <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '2px 7px' : '2px 10px', borderRight: '1px solid #4a1a1a', flexShrink: 0, minWidth: isMobile ? 42 : 52 }}>
                 <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{label}</span>

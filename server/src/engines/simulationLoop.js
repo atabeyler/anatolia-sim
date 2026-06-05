@@ -242,7 +242,22 @@ export class SimulationEngine {
       }
     }
 
-    // 11. Natural disaster — disabled; triggered via god mode only
+    // 11. Weather event logging — log when weather type changes
+    if (this.worldState.current_weather !== this._lastLoggedWeather) {
+      const w = this.worldState.current_weather;
+      if (w && w !== 'clear') {
+        const WEATHER_NAMES = {
+          rain: 'Yağmur', heavy_rain: 'Şiddetli yağmur', snow: 'Kar',
+          blizzard: 'Tipi fırtınası', storm: 'Fırtına',
+          heat_wave: 'Sıcak hava dalgası', drought: 'Kuraklık',
+        };
+        const label = WEATHER_NAMES[w] ?? w;
+        const pct = Math.round((this.worldState.weather_intensity ?? 0.5) * 100);
+        const severity = (w === 'blizzard' || w === 'drought') ? 4 : (w === 'storm' || w === 'heavy_rain') ? 3 : 2;
+        this.logEvent(day, 'weather', `${label} başladı (%${pct} şiddet, ${this.worldState.weather_days_remaining} gün)`, { weather: w, intensity: this.worldState.weather_intensity }, severity);
+      }
+      this._lastLoggedWeather = this.worldState.current_weather;
+    }
 
     // 12. Language evolution
     const genCount = this.estimateGenerations();
@@ -398,6 +413,9 @@ export class SimulationEngine {
     else if (ageYears > 60) speed = 0.002;
     else                    speed = 0.012;
 
+    // Weather slows movement (blizzard/storm are most severe)
+    speed *= (this.worldState.weather_move_mult ?? 1.0);
+
     // Founders are fully sedentary — food and water are at their home site
     if (ind.is_founder) speed *= 0.1;
 
@@ -506,6 +524,39 @@ export class SimulationEngine {
 
     // Age-related decline
     if (ageYears > 50) health.hp = Math.max(0, health.hp - (ageYears - 50) * 0.00005);
+
+    // Weather health effects
+    const hpDelta = this.worldState.weather_hp_delta ?? 0;
+    if (hpDelta < 0) {
+      const ph = individual.phenotype ?? {};
+      const endurance     = ph.physical_endurance  ?? 0.5;
+      const resilience    = ph.stress_resilience   ?? 0.4;
+      const metabolism    = ph.metabolism          ?? 0.5;
+      // Cold tolerance (0–1): high endurance + resilience helps
+      const coldTolerance = endurance * 0.5 + resilience * 0.3 + 0.2;
+      // Heat tolerance (0–1): high metabolism + endurance helps
+      const heatTolerance = metabolism * 0.3 + endurance * 0.4 + 0.3;
+
+      if (this.worldState.weather_cold_risk) {
+        const temp = this.worldState.temperature ?? 10;
+        // Damage scales with how far below the individual's cold threshold the temp drops
+        const coldThreshold = coldTolerance * 15 - 5; // roughly -5°C to +10°C range
+        if (temp < coldThreshold) {
+          const coldStress = Math.min(1, (coldThreshold - temp) / 30);
+          health.hp = Math.max(0, health.hp + hpDelta * coldStress * (1.2 - coldTolerance));
+        }
+      } else if (this.worldState.weather_heat_risk) {
+        const temp = this.worldState.temperature ?? 25;
+        const heatThreshold = 28 + heatTolerance * 12; // roughly 28–40°C range
+        if (temp > heatThreshold) {
+          const heatStress = Math.min(1, (temp - heatThreshold) / 20);
+          health.hp = Math.max(0, health.hp + hpDelta * heatStress * (1.2 - heatTolerance));
+        }
+      } else {
+        // Non-temperature weather (storm, heavy_rain, drought) — resilience reduces impact
+        health.hp = Math.max(0, health.hp + hpDelta * (1.0 - resilience * 0.5));
+      }
+    }
 
     individual.health_score = health.hp;
   }
@@ -648,6 +699,8 @@ export class SimulationEngine {
       water_abundance: Math.round((this.worldState.water_abundance ?? 0.7) * 100) / 100,
       biome: this.worldState.biome ?? 'mediterranean',
       has_disaster: !!(this.worldState.recent_disaster),
+      weather: this.worldState.current_weather ?? 'clear',
+      weather_intensity: Math.round((this.worldState.weather_intensity ?? 0.5) * 100) / 100,
       births: Math.max(0, this.population.size - 2),
       deaths: Math.max(0, this.population.size - alive.length),
       word_count: new Set(alive.flatMap(i => Object.keys(i.language?.vocabulary ?? {}))).size,
