@@ -73,6 +73,10 @@ export class SimulationEngine {
       }
     }
     this.groups = [...groupMap.values()];
+
+    // Restore cumulative counters from DB records (non-founders = born, is_dead = died)
+    this.totalBirths = individuals.filter(i => i.parent_1_id || i.parent_2_id).length;
+    this.totalDeaths = individuals.filter(i => i.is_dead).length;
   }
 
   async start() {
