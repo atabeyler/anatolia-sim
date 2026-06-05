@@ -3,7 +3,7 @@ import { useSimStore } from '../../store/simStore';
 import { translateEventDescription, type LangCode } from '../../utils/i18n';
 
 const LANGUAGE_STAGES = [
-  { id: 0, name: 'Pre-linguistic',  nameTr: 'Dil Öncesi',      desc: 'No symbolic communication',        descTr: 'Sembolik iletişim yok',               color: '#555' },
+  { id: 0, name: 'Pre-linguistic',  nameTr: 'Dil Öncesi',      desc: 'No symbolic communication',        descTr: 'Sembolik iletişim yok',               color: '#8898c8' },
   { id: 1, name: 'Gestural',        nameTr: 'Jestsel',          desc: 'Pointing, body language',           descTr: 'İşaret, beden dili',                  color: '#8b7355' },
   { id: 2, name: 'Emotional Sound', nameTr: 'Duygusal Ses',     desc: 'Shared emotional vocalizations',    descTr: 'Ortak duygusal sesler',               color: '#6b8e23' },
   { id: 3, name: 'Proto-Words',     nameTr: 'Proto-Kelimeler',  desc: 'Consistent sound-meaning pairs',    descTr: 'Tutarlı ses-anlam eşleşmeleri',       color: '#4682b4' },
@@ -46,7 +46,7 @@ export default function LanguagePanel() {
               >
                 <div
                   className="w-2 h-2 rounded-full mt-1 flex-shrink-0"
-                  style={{ backgroundColor: isReached ? stage.color : '#333' }}
+                  style={{ backgroundColor: isReached ? stage.color : '#5a6a7a' }}
                 />
                 <div>
                   <div className={`text-sm font-medium ${isReached ? 'text-sim-text' : 'text-sim-muted'}`}>

@@ -23,7 +23,7 @@ function evColor(type: string) {
   if (type?.includes('discovery'))  return '#d4a838';
   if (type?.includes('disaster'))   return '#f97316';
   if (type?.includes('belief'))     return '#a855f7';
-  return '#4a7060';
+  return '#8abda0';
 }
 
 function evIcon(type: string) {
@@ -128,8 +128,8 @@ export default function EventsPanel() {
           <button key={f.id} onClick={() => setFilter(f.id)}
             style={{
               padding: '2px 6px', fontSize: 12,
-              border: `1px solid ${filter === f.id ? f.color : '#cc2222'}`,
-              color: filter === f.id ? f.color : '#3a6040',
+              border: `1px solid ${filter === f.id ? f.color : 'rgba(160,200,176,0.3)'}`,
+              color: filter === f.id ? f.color : '#8abda0',
               background: filter === f.id ? `${f.color}14` : 'transparent',
               fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer',
             }}>
@@ -140,13 +140,13 @@ export default function EventsPanel() {
       </div>
 
       {/* Total */}
-      <div style={{ fontSize: 12, color: '#2a5040', marginBottom: 6, letterSpacing: '0.06em' }}>
+      <div style={{ fontSize: 12, color: '#8abda0', marginBottom: 6, letterSpacing: '0.06em' }}>
         {visible.length} / {summaryTotal || events.length} {lang === 'tr' ? 'olay' : 'events'}
       </div>
 
       {/* Event list */}
       {visible.length === 0 ? (
-        <div style={{ fontSize: 12, color: '#2a4a3a', textAlign: 'center', padding: '24px 0', fontStyle: 'italic' }}>
+        <div style={{ fontSize: 12, color: '#8abda0', textAlign: 'center', padding: '24px 0', fontStyle: 'italic' }}>
           {lang === 'tr' ? 'Olay bulunamadı.' : 'No events found.'}
         </div>
       ) : visible.map((ev, i) => {
@@ -165,14 +165,14 @@ export default function EventsPanel() {
             <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1.1, color, marginTop: 1 }}>{icon}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', gap: 6, marginBottom: 2, alignItems: 'center' }}>
-                <span style={{ fontSize: 12, color: '#3a6040', fontFamily: 'Orbitron, monospace', flexShrink: 0 }}>
+                <span style={{ fontSize: 12, color: '#8abda0', fontFamily: 'Orbitron, monospace', flexShrink: 0 }}>
                   Y{String(ev.sim_year).padStart(4, '0')} G{String(ev.sim_day % 365).padStart(3, '0')}
                 </span>
                 <span style={{ fontSize: 12, color: `${color}88`, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                   {translateEventType(ev.event_type, lang as LangCode)}
                 </span>
               </div>
-              <div style={{ fontSize: 12, color: i < 5 ? color : '#6a9a7a', lineHeight: 1.45, wordBreak: 'break-word' }}>
+              <div style={{ fontSize: 12, color: i < 5 ? color : '#a0c8b0', lineHeight: 1.45, wordBreak: 'break-word' }}>
                 {desc}
               </div>
             </div>

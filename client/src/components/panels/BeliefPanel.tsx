@@ -51,7 +51,7 @@ export default function BeliefPanel() {
                 }`}
               >
                 <div className="flex justify-between items-center mb-0.5">
-                  <span className="text-sm font-medium" style={{ color: discovered ? info.color : '#555' }}>
+                  <span className="text-sm font-medium" style={{ color: discovered ? info.color : '#a0c8b0' }}>
                     {lang === 'tr' ? info.nameTr : info.name}
                   </span>
                   <span className="text-sm text-sim-muted">

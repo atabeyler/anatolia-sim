@@ -57,7 +57,7 @@ function PersonRow({ obj, fallbackId, tag, lang }: { obj?: any; fallbackId?: str
   const alive = isAlive(obj);
   const isMale = obj?.sex === 'male';
   const nameColor = alive ? (isMale ? '#8ab0ff' : '#ffaac8') : '#7a4a4a';
-  const dotColor  = alive ? (isMale ? '#6090ff' : '#ff8ab0') : '#5a3a3a';
+  const dotColor  = alive ? (isMale ? '#6090ff' : '#ff8ab0') : '#a05050';
   const displayName = obj
     ? nameFromId(obj.id, obj.sex, obj.phenotype?.name ?? obj.name)
     : `ID:${fallbackId?.slice(-6)}`;
@@ -65,7 +65,7 @@ function PersonRow({ obj, fallbackId, tag, lang }: { obj?: any; fallbackId?: str
     <div className="flex items-center gap-1.5 mb-0.5" style={{ paddingLeft: 10 }}>
       <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: dotColor }} />
       <span className="font-share-tech" style={{ fontSize: 12, color: nameColor }}>{displayName}</span>
-      {tag && <span className="font-share-tech" style={{ fontSize: 12, color: '#5a7a6a', marginLeft: 2 }}>{tag}</span>}
+      {tag && <span className="font-share-tech" style={{ fontSize: 12, color: '#8abda0', marginLeft: 2 }}>{tag}</span>}
       {obj && (
         alive
           ? <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>{parseFloat(obj.age_years ?? 0).toFixed(0)}{lang === 'tr' ? ' yaş' : ' yr'}</span>
@@ -81,7 +81,7 @@ function PersonRow({ obj, fallbackId, tag, lang }: { obj?: any; fallbackId?: str
 function FamilySection({ label, indent, children }: { label: string; indent: number; children: React.ReactNode }) {
   return (
     <div className="mb-2" style={{ marginLeft: indent * 8 }}>
-      <div style={{ fontSize: 12, color: '#4a6a58', letterSpacing: '0.08em', marginBottom: 3, borderLeft: '1px solid #2a4a38', paddingLeft: 4 }}>
+      <div style={{ fontSize: 12, color: '#8abda0', letterSpacing: '0.08em', marginBottom: 3, borderLeft: '1px solid rgba(160,200,176,0.3)', paddingLeft: 4 }}>
         {label}
       </div>
       {children}
@@ -416,7 +416,7 @@ export default function PopulationPanel() {
               padding: '3px 0', fontSize: 12,
               background: filter === f ? 'rgba(79,110,247,0.2)' : 'transparent',
               border: `1px solid ${filter === f ? 'rgba(79,110,247,0.5)' : 'rgba(79,110,247,0.15)'}`,
-              color: filter === f ? '#c0ccff' : '#4a5578',
+              color: filter === f ? '#c0ccff' : '#8898c8',
             }}>
             {f === 'all' ? 'TÜMÜ' : f === 'male' ? 'ERKEK' : 'KADIN'}
           </button>
@@ -512,12 +512,12 @@ export default function PopulationPanel() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="font-share-tech font-bold tracking-wider truncate"
-                          style={{ fontSize: 12, color: isMale ? '#7a6a8a' : '#8a6a7a' }}>
+                          style={{ fontSize: 12, color: isMale ? '#a090b8' : '#b090a0' }}>
                           {name}
                         </span>
                       </div>
                       <div className="flex items-center gap-1 mt-0.5">
-                        <span className="font-share-tech" style={{ fontSize: 12, color: '#703030' }}>
+                        <span className="font-share-tech" style={{ fontSize: 12, color: '#c07070' }}>
                           {causeLabel(ind.death_cause, lang)}
                         </span>
                         <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>·</span>

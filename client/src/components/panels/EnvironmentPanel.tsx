@@ -45,7 +45,7 @@ function Bar({ value, color, max = 1 }: { value: number; color: string; max?: nu
 function StatRow({ label, value, unit = '', color = '#a0b4ff' }: { label: string; value: string | number; unit?: string; color?: string }) {
   return (
     <div className="flex justify-between items-center py-0.5">
-      <span className="font-share-tech" style={{ fontSize: 12, color: '#6878a8' }}>{label}</span>
+      <span className="font-share-tech" style={{ fontSize: 12, color: '#a0b4ff' }}>{label}</span>
       <span className="font-orbitron font-bold" style={{ fontSize: 12, color }}>{value}{unit}</span>
     </div>
   );
@@ -79,7 +79,7 @@ export default function EnvironmentPanel() {
 
       {/* Biome badge */}
       <div className="mb-3 px-2 py-1.5" style={{ background: `${biomeInfo.color}12`, border: `1px solid ${biomeInfo.color}40` }}>
-        <div className="font-share-tech tracking-widest" style={{ fontSize: 12, color: '#6878a8' }}>BİYOM</div>
+        <div className="font-share-tech tracking-widest" style={{ fontSize: 12, color: '#a0b4ff' }}>BİYOM</div>
         <div className="font-orbitron font-bold mt-0.5" style={{ fontSize: 12, color: biomeInfo.color }}>
           {lang === 'tr' ? biomeInfo.tr : biome.replace(/_/g, ' ').toUpperCase()}
         </div>

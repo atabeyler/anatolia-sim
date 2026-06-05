@@ -51,7 +51,7 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
           {displayTitle.toUpperCase()}
         </span>
         <div className="flex-1" />
-        <button onClick={() => setActivePanel(null)} style={{ color: '#3a6040', lineHeight: 0 }}>
+        <button onClick={() => setActivePanel(null)} style={{ color: '#a0c8b0', lineHeight: 0 }}>
           <X size={13} />
         </button>
       </div>
@@ -65,7 +65,7 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
       {/* Footer bar */}
       <div className="px-3 py-1 flex-shrink-0"
         style={{ borderTop: '1px solid #cc2222', background: 'rgba(0,8,4,0.9)' }}>
-        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 12, color: '#3a1a1a', letterSpacing: '0.15em' }}>
+        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 12, color: '#6a4040', letterSpacing: '0.15em' }}>
           MODULE/{displayTitle.toUpperCase().replace(/ /g, '_')}
         </span>
       </div>
