@@ -28,17 +28,12 @@ export function updateLanguageStage(individual, groupSize, generationCount) {
   return { upgraded: false };
 }
 
-const MAX_VOCABULARY = 800;
-
 export function learnFromTeacher(learner, teacher) {
   const teacherWords = Object.keys(teacher.language.vocabulary ?? {});
   if (teacherWords.length === 0) return;
-  const vocab = learner.language.vocabulary;
-  if (Object.keys(vocab).length >= MAX_VOCABULARY) return;
   const maxLearn = Math.floor(learner.phenotype.fluid_intelligence * 3);
   for (const word of teacherWords.slice(0, maxLearn)) {
-    if (!vocab[word]) vocab[word] = teacher.language.vocabulary[word];
-    if (Object.keys(vocab).length >= MAX_VOCABULARY) break;
+    if (!learner.language.vocabulary[word]) learner.language.vocabulary[word] = teacher.language.vocabulary[word];
   }
 }
 

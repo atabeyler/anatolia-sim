@@ -354,11 +354,6 @@ export class SimulationEngine {
     const currentAlive = [...this.population.values()].filter(i => !i.is_dead);
     const stats = this.computeStats(day, currentAlive);
 
-    // 22. Periodic memory cleanup (every checkpoint interval)
-    if (day % CHECKPOINT_INTERVAL === 0) {
-      this.pruneMemory(day);
-    }
-
     // 22. Checkpoint (fire-and-forget — never block the simulation loop)
     if (day % CHECKPOINT_INTERVAL === 0 && this.onCheckpoint) {
       this.onCheckpoint({
@@ -390,42 +385,6 @@ export class SimulationEngine {
       console.error(`[SimulationEngine] tick() error on day ${this.currentDay}:`, err);
       this.currentDay++;
     }
-  }
-
-  pruneMemory(day) {
-    // Remove dead individuals that have been dead > 730 days (safe: infants grow past
-    // mother-follow at age 2, pregnancies deliver within 280 days)
-    const cutoff = day - 730;
-    for (const [id, ind] of this.population) {
-      if (ind.is_dead && (ind.death_day ?? 0) < cutoff) {
-        this.population.delete(id);
-      }
-    }
-
-    // Prune relationships to 50 strongest per living individual (prevents O(n²) growth)
-    for (const ind of this.population.values()) {
-      if (ind.is_dead || !ind.psychology?.relationships) continue;
-      const rels = ind.psychology.relationships;
-      const keys = Object.keys(rels);
-      if (keys.length > 50) {
-        keys.sort((a, b) => Math.abs(rels[b]) - Math.abs(rels[a]));
-        for (const k of keys.slice(50)) delete rels[k];
-      }
-    }
-
-    // Cap trauma_events at 20 most recent per individual
-    for (const ind of this.population.values()) {
-      if (ind.is_dead || !ind.psychology?.trauma_events) continue;
-      if (ind.psychology.trauma_events.length > 20) {
-        ind.psychology.trauma_events = ind.psychology.trauma_events.slice(-20);
-      }
-    }
-
-    // Remove extinct groups (no living members) and their settlements
-    const aliveIds = new Set([...this.population.values()].filter(i => !i.is_dead).map(i => i.id));
-    this.groups = this.groups.filter(g => g.member_ids.some(id => aliveIds.has(id)));
-    const liveGroupIds = new Set(this.groups.map(g => g.id));
-    this.settlements = this.settlements.filter(s => liveGroupIds.has(s.group_id));
   }
 
   moveIndividual(ind) {
