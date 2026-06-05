@@ -1,5 +1,5 @@
 import { useRef, useMemo, useState, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import * as THREE from 'three';
 
@@ -25,14 +25,17 @@ function makeSpriteTexture(): THREE.CanvasTexture {
 }
 
 function GlobeMesh() {
+  const { gl } = useThree();
   const [earthTex, bumpTex, specTex] = useMemo(() => {
     const loader = new THREE.TextureLoader();
-    return [
-      loader.load(EARTH_MAP),
-      loader.load(EARTH_BUMP),
-      loader.load(EARTH_SPEC),
-    ];
-  }, []);
+    const maxAniso = gl.capabilities.getMaxAnisotropy();
+    const load = (url: string) => {
+      const t = loader.load(url);
+      t.anisotropy = maxAniso;
+      return t;
+    };
+    return [load(EARTH_MAP), load(EARTH_BUMP), load(EARTH_SPEC)];
+  }, [gl]);
 
   return (
     <mesh>
@@ -445,7 +448,7 @@ export default function WorldGlobe({
       <RotatingGroup individuals={individuals} onSelect={onSelect} onGlobeClick={onGlobeClick} />
       <OrbitControls
         enablePan={false}
-        minDistance={2.8}
+        minDistance={2.15}
         maxDistance={14}
         rotateSpeed={0.45}
         zoomSpeed={0.7}
