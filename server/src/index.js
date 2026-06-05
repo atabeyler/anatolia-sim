@@ -93,13 +93,25 @@ wss.on('connection', async (ws, req) => {
 });
 
 async function main() {
-  try {
-    await migrate();
-    server.listen(PORT, () => {
-      console.log(`✅ ANATOLİA-SİM Server running on port ${PORT}`);
-      console.log(`✅ WebSocket server ready`);
-    });
-  } catch (err) { console.error('Failed to start server:', err); process.exit(1); }
+  const delays = [2000, 4000, 8000, 16000];
+  for (let attempt = 0; attempt <= delays.length; attempt++) {
+    try {
+      await migrate();
+      server.listen(PORT, () => {
+        console.log(`✅ ANATOLİA-SİM Server running on port ${PORT}`);
+        console.log(`✅ WebSocket server ready`);
+      });
+      return;
+    } catch (err) {
+      if (attempt < delays.length) {
+        console.error(`DB connect failed (attempt ${attempt + 1}), retrying in ${delays[attempt] / 1000}s:`, err.message);
+        await new Promise(r => setTimeout(r, delays[attempt]));
+      } else {
+        console.error('Failed to start server after all retries:', err);
+        process.exit(1);
+      }
+    }
+  }
 }
 
 main();
