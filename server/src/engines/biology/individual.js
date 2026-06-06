@@ -73,7 +73,10 @@ export function createFounder(params = {}) {
 
 export function createChild(parent1, parent2, birthDay, simulationId, communityLangStage = 0, phonology = null) {
   const sex = Math.random() < 0.5 ? 'male' : 'female';
-  const genome = combineGametes(createGamete(parent1.genome), createGamete(parent2.genome), sex);
+  const p1Stress = parent1.epigenome?.BDNF_PROMOTER?.methylation ?? 0.5;
+  const p2Stress = parent2.epigenome?.BDNF_PROMOTER?.methylation ?? 0.5;
+  const stressMult = 1 + Math.max(p1Stress, p2Stress) * 0.5;
+  const genome = combineGametes(createGamete(parent1.genome, stressMult), createGamete(parent2.genome, stressMult), sex);
   const phenotype = computePhenotype(genome);
   // Name emerges from the civilization's own phonological system, not a pre-written list
   phenotype.name = phonology ? generateName(phonology, communityLangStage) : null;

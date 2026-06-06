@@ -140,4 +140,15 @@ router.post('/:simId/talk/:individualId', authenticate, requireSimulationOwner, 
   } catch (err) { console.error(err); res.status(500).json({ error: 'Conversation failed' }); }
 });
 
+router.post('/:simId/quarantine', authenticate, requireSimulationOwner, async (req, res) => {
+  try {
+    const { simId } = req.params;
+    const { enabled } = req.body;
+    const engine = simulationManager.getEngine(simId);
+    if (!engine) return res.status(400).json({ error: 'Simulation not running' });
+    engine.worldState.quarantine_mode = !!enabled;
+    res.json({ quarantine_mode: engine.worldState.quarantine_mode });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Quarantine failed' }); }
+});
+
 export default router;

@@ -68,6 +68,7 @@ export default function TechnologyPanel() {
   const { stats, events, lang } = useSimStore();
 
   const totalTechs = stats?.technologies ?? 0;
+  const techProgress = stats?.tech_progress ?? {};
   const discoveredList = events
     .filter(e => e.event_type === 'technology')
     .map(e => e.description?.replace('Technology discovered: ', '') ?? '');
@@ -88,18 +89,34 @@ export default function TechnologyPanel() {
           <div className="space-y-1">
             {tier.techs.map(techId => {
               const isDiscovered = discoveredSet.has(techId) || totalTechs > tier.tier * 5;
+              const progress = techProgress[techId] ?? 0;
               return (
                 <div
                   key={techId}
-                  className={`flex items-center gap-2 p-1.5 rounded ${isDiscovered ? 'bg-sim-accent/10' : 'bg-sim-surface/30'}`}
+                  className={`p-1.5 rounded ${isDiscovered ? 'bg-sim-accent/10' : 'bg-sim-surface/30'}`}
                 >
-                  {isDiscovered
-                    ? <Check size={10} className="text-sim-accent flex-shrink-0" />
-                    : <Lock size={10} className="text-sim-muted flex-shrink-0" />
-                  }
-                  <span className={isDiscovered ? 'text-sim-text' : 'text-sim-muted'}>
-                    {TECH_NAMES[techId]?.[lang === 'tr' ? 'tr' : 'en'] ?? techId}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {isDiscovered
+                      ? <Check size={10} className="text-sim-accent flex-shrink-0" />
+                      : <Lock size={10} className="text-sim-muted flex-shrink-0" />
+                    }
+                    <span className={isDiscovered ? 'text-sim-text' : 'text-sim-muted'}>
+                      {TECH_NAMES[techId]?.[lang === 'tr' ? 'tr' : 'en'] ?? techId}
+                    </span>
+                    {!isDiscovered && progress > 0 && (
+                      <span className="ml-auto text-sim-muted" style={{ fontSize: 10 }}>
+                        {(progress * 100).toFixed(0)}%
+                      </span>
+                    )}
+                  </div>
+                  {!isDiscovered && progress > 0 && (
+                    <div className="mt-1 h-0.5 bg-sim-border rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-sim-accent/60 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(100, progress * 100)}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
               );
             })}

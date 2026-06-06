@@ -216,6 +216,34 @@ export default function LanguagePanel() {
         </div>
       )}
 
+      {/* Language Drift — dialect divergence between groups */}
+      {stats && stats.groups > 1 && (
+        <div className="bg-sim-surface/50 rounded-lg p-3 mb-3 border border-sim-border/30">
+          <div className="text-sim-muted text-xs uppercase tracking-widest mb-2">
+            {lang === 'en' ? 'Dialect Divergence' : 'Lehçe Farklılaşması'}
+          </div>
+          <div className="flex items-center gap-3 mb-1.5">
+            <div className="flex-1">
+              <div className="h-1.5 bg-sim-border rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${Math.min(100, (stats.groups / 10) * 100)}%`,
+                    background: 'linear-gradient(90deg, #4f6ef7, #9370db)',
+                  }}
+                />
+              </div>
+            </div>
+            <span className="text-sim-text text-xs font-medium">{stats.groups} {lang === 'en' ? 'groups' : 'grup'}</span>
+          </div>
+          <p className="text-sim-muted text-xs leading-relaxed">
+            {lang === 'en'
+              ? `${stats.word_count ?? 0} unique words distributed across ${stats.groups} social groups. Isolated groups develop distinct phonological shifts over generations.`
+              : `${stats.word_count ?? 0} benzersiz kelime ${stats.groups} sosyal gruba dağılmış. İzole gruplar nesiller boyunca farklı ses değişimleri geliştirir.`}
+          </p>
+        </div>
+      )}
+
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {lang === 'en' ? 'Language Events' : 'Dil Olayları'}

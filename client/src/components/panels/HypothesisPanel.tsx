@@ -47,6 +47,32 @@ export default function HypothesisPanel() {
 
   return (
     <DetailPanel panelId="hypothesis" title="Hypothesis Test" titleTr="Hipotez Testi">
+      {/* Adam & Eve Core Metrics */}
+      {stats && (
+        <div className="bg-sim-surface rounded-lg p-3 mb-3">
+          <div className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
+            {lang === 'en' ? 'Adam & Eve Hypothesis Metrics' : 'Adem & Havva Hipotez Metrikleri'}
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            {[
+              { label: lang === 'en' ? 'Avg Consciousness' : 'Ort. Bilinç', value: ((stats.avg_consciousness ?? 0) * 100).toFixed(1) + '%' },
+              { label: lang === 'en' ? 'Max ToM Stage' : 'Max ZihinKur.', value: stats.max_tom_stage ?? 0 },
+              { label: lang === 'en' ? 'Word Count' : 'Kelime Sayısı', value: stats.word_count ?? 0 },
+              { label: lang === 'en' ? 'Lang Stage' : 'Dil Aşaması', value: stats.max_language_stage ?? 0 },
+              { label: lang === 'en' ? 'Technologies' : 'Teknolojiler', value: stats.technologies ?? 0 },
+              { label: lang === 'en' ? 'Beliefs' : 'İnançlar', value: stats.beliefs ?? 0 },
+              { label: lang === 'en' ? 'Art Forms' : 'Sanat Biçimleri', value: stats.art_forms ?? 0 },
+              { label: lang === 'en' ? 'QoL Index' : 'YYK Endeksi', value: ((stats.qol_index ?? 0) * 100).toFixed(1) + '%' },
+            ].map(({ label, value }) => (
+              <div key={label} className="bg-sim-bg rounded p-1.5">
+                <div className="text-sim-muted" style={{ fontSize: 10 }}>{label}</div>
+                <div className="text-sim-text font-medium text-sm">{value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="bg-sim-surface rounded-lg p-3 mb-3 flex items-start gap-2">
         <FlaskConical size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
         <p className="text-sim-muted text-sm">
