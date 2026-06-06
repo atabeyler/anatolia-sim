@@ -461,6 +461,19 @@ export class SimulationEngine {
       }
     }
 
+    // ── Ungrouped adults (18+): soft pull toward home to stay in mating range ─
+    if (ageYears >= 18 && !ind.group_id && !ind.is_founder) {
+      const homeX = this.worldState.longitude ?? 0;
+      const homeY = this.worldState.latitude  ?? 0;
+      const dx = homeX - (ind.x ?? 0);
+      const dy = homeY - (ind.y ?? 0);
+      const dist = Math.hypot(dx, dy);
+      if (dist > 4) {
+        const pull = Math.min(1, (dist - 4) / 8) * 0.8;
+        ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
+      }
+    }
+
     const step = speed * (0.6 + Math.random() * 0.8);
     ind.x = Math.max(-180, Math.min(180, (ind.x ?? 0) + Math.cos(ind._moveAngle) * step));
     ind.y = Math.max(-85,  Math.min(85,  (ind.y ?? 0) + Math.sin(ind._moveAngle) * step));
@@ -675,6 +688,26 @@ export class SimulationEngine {
           if (counts[b]) counts[b][alive[idx].sex === 'male' ? 'male' : 'female']++;
         }
         return bands.map(b => ({ group: b, male: counts[b].male, female: counts[b].female }));
+      })(),
+      death_stats: (() => {
+        const dead = [...this.population.values()].filter(i => i.is_dead && i.death_day != null && i.birth_day != null);
+        if (!dead.length) return { count: 0, avg_age: null, infant_deaths: 0, child_deaths: 0, causes: {} };
+        const deathAges = dead.map(i => (i.death_day - i.birth_day) / 365);
+        const avgDeathAge = deathAges.reduce((a, b) => a + b, 0) / dead.length;
+        const infantDeaths = deathAges.filter(a => a < 1).length;
+        const childDeaths  = deathAges.filter(a => a >= 1 && a < 15).length;
+        const causes = {};
+        for (const i of dead) {
+          const c = i.death_cause ?? 'unknown';
+          causes[c] = (causes[c] ?? 0) + 1;
+        }
+        return {
+          count: dead.length,
+          avg_age: Math.round(avgDeathAge * 10) / 10,
+          infant_deaths: infantDeaths,
+          child_deaths: childDeaths,
+          causes,
+        };
       })(),
     };
   }
