@@ -387,12 +387,11 @@ export default function LoginPage() {
 
       {/* Coordinate display bottom — pushed up to avoid footer overlap */}
       <div
-        className="fixed left-3 z-20 font-share-tech tracking-widest"
+        className="fixed bottom-16 right-3 left-auto sm:bottom-48 sm:left-3 sm:right-auto z-20 font-share-tech tracking-widest text-right sm:text-left"
         style={{
-          bottom: 48,
           fontSize: 'clamp(11px, 1.05vw, 14px)',
           color: '#c0c8e8',
-          maxWidth: 'calc(100vw - 24px)',
+          maxWidth: 'min(calc(100vw - 24px), 420px)',
         }}
       >
         <div style={{ whiteSpace: 'normal', overflowWrap: 'anywhere', lineHeight: 1.35 }}>
