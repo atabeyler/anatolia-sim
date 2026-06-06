@@ -4,4 +4,13 @@ export const ASTRONOMY_KNOWLEDGE={lunar_tracking:{requires_obs:['lunar_cycle'],i
 const CDESC={lunar_cycle:'The moon completes another cycle of phases',solstice:'The sun reaches its extreme position',equinox:'Day and night are of equal length',star_rising:'A prominent star rises at sunset',eclipse_solar:'The sun is obscured — a solar eclipse',eclipse_lunar:'The moon turns blood red — a lunar eclipse',planet_motion:'A wandering star moves against the fixed stars',comet:'A bright object with a tail crosses the sky'};
 const KDESC={lunar_tracking:'The phases of the moon can be predicted',seasonal_calendar:'A calendar based on sun and moon positions is developed',star_map:'Named star constellations guide navigation',eclipse_prediction:'Solar and lunar eclipses can be predicted',planetary_model:'A model explains the motion of wandering stars'};
 export function processAstronomyTick(population,observations,astronomyKnowledge,discoveredTechs,simDay){const events=[];for(const[eid,ev]of Object.entries(CEV)){if(ev.rare&&Math.random()>0.001)continue;if(!ev.rare&&simDay%Math.round(ev.period_days)<1&&Math.random()<ev.observability&&!observations.has(eid)){observations.add(eid);events.push({type:'celestial_observation',event_id:eid,day:simDay,importance:eid.includes('eclipse')?'high':'low',description:CDESC[eid]??eid});}}const obs=population.filter(i=>!i.is_dead&&i.life_stage!=='INFANT'&&i.life_stage!=='CHILD'&&i.phenotype.curiosity>0.5);for(const o of obs){const foxp2=o.language?.foxp2_expression??0;for(const[kid,k]of Object.entries(ASTRONOMY_KNOWLEDGE)){if(astronomyKnowledge.has(kid)||o.phenotype.fluid_intelligence<k.iq_min||foxp2<k.foxp2_min||(k.requires_obs?.some(x=>!observations.has(x)))||(k.requires_tech?.some(t=>!discoveredTechs.has(t))))continue;if(Math.random()<o.phenotype.curiosity*o.phenotype.fluid_intelligence*0.0001){astronomyKnowledge.add(kid);events.push({type:'astronomy_discovery',knowledge_id:kid,discoverer_id:o.id,day:simDay,importance:k.iq_min>0.6?'high':'medium',description:KDESC[kid]??kid});}}}return events;}
-export function getAstronomyBonus(ak){if(ak.has('seasonal_calendar'))return{farming_efficiency:0.15};if(ak.has('star_map'))return{navigation:0.25,seafaring:0.2};if(ak.has('lunar_tracking'))return{navigation:0.1};return{};}
+// Accumulate ALL known astronomy bonuses instead of returning the first match.
+export function getAstronomyBonus(ak){
+  const b={};
+  if(ak.has('lunar_tracking'))   { b.navigation=(b.navigation??0)+0.10; }
+  if(ak.has('seasonal_calendar')){ b.farming_efficiency=(b.farming_efficiency??0)+0.15; }
+  if(ak.has('star_map'))         { b.navigation=(b.navigation??0)+0.20; b.seafaring=0.20; }
+  if(ak.has('eclipse_prediction')){ b.farming_efficiency=(b.farming_efficiency??0)+0.05; }
+  if(ak.has('planetary_model'))  { b.navigation=(b.navigation??0)+0.10; b.innovation_rate=0.10; }
+  return b;
+}

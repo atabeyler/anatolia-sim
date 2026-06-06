@@ -152,6 +152,10 @@ export class SimulationEngine {
     this.worldState.farming_bonus = astroBonus.farming_efficiency ?? 0;
     this.worldState.navigation_bonus = astroBonus.navigation ?? 0;
 
+    // 2c. Soil health — derived from average microbiome diversity
+    const avgMBDiv = alive.reduce((s, i) => s + (i.microbiome?.diversity ?? 0.5), 0) / Math.max(1, alive.length);
+    this.worldState.soil_health = 0.3 + avgMBDiv * 0.7;
+
     // 3. Economy — gather resources, consume, produce goods
     for (const ind of alive) {
       const gathered = gatherResources(ind, this.worldState, this.discoveredTechs);
@@ -787,6 +791,7 @@ export class SimulationEngine {
 
   // Base daily probability of a natural disaster (per biome/weather)
   _naturalDisasterProbability(ws) {
+    if (ws.quarantine_mode) return 0;
     const biomeRisk = {
       mediterranean: 0.0003, coastal: 0.0005, tropical_rainforest: 0.0006,
       tropical_savanna: 0.0005, temperate_forest: 0.0003, boreal_forest: 0.0002,
@@ -889,6 +894,14 @@ export class SimulationEngine {
       max_language_stage: Math.max(0, ...alive.map(i => i.language?.stage ?? 0)),
       avg_consciousness: Math.round(alive.reduce((s, i) => s + (i.mind?.consciousness ?? 0), 0) / Math.max(1, alive.length) * 1000) / 1000,
       max_tom_stage: Math.max(0, ...alive.map(i => i.psychology?.theory_of_mind ?? 0)),
+      tech_progress: Object.fromEntries([...this.techProgress.entries()]),
+      qol_index: (() => {
+        const c = alive.reduce((s, i) => s + (i.mind?.consciousness ?? 0), 0) / Math.max(1, alive.length);
+        const langStg = alive.reduce((s, i) => s + (i.language?.stage ?? 0), 0) / Math.max(1, alive.length);
+        const hp = alive.reduce((s, i) => s + (i.health_score ?? 0.5), 0) / Math.max(1, alive.length);
+        const wb = alive.reduce((s, i) => s + (i.psychology?.wellbeing ?? 0.5), 0) / Math.max(1, alive.length);
+        return Math.round((c * 0.3 + (langStg / 6) * 0.2 + hp * 0.3 + wb * 0.2) * 1000) / 1000;
+      })(),
       mean_wealth: Math.round(econStats.mean_wealth * 100) / 100,
       gini: Math.round(econStats.gini * 100) / 100,
       happiness_index: Math.round(psychStats.happiness_index * 100) / 100,

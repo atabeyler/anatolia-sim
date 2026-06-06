@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Dna, TreePine, Telescope, Brain, MessageSquare, Cpu, Flame, Swords, Coins, Music, Building2, Scale, Microscope, HeartPulse, Zap, Clock, Bot, FlaskConical, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Dna, TreePine, Telescope, Brain, MessageSquare, Cpu, Flame, Swords, Coins, Music, Building2, Scale, Microscope, HeartPulse, Zap, Clock, Bot, FlaskConical, Users, GitBranch, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSimStore } from '../../store/simStore';
 
 const MODULES = [
@@ -19,6 +19,7 @@ const MODULES = [
   { id: 'microbiome',   icon: Microscope,     label: 'Microbiome',     labelTr: 'Mikrobiyom' },
   { id: 'psychology',   icon: HeartPulse,     label: 'Psychology',     labelTr: 'Psikoloji' },
   { id: 'epigenetics',  icon: Zap,            label: 'Epigenetics',    labelTr: 'Epigenetik' },
+  { id: 'genealogy',    icon: GitBranch,      label: 'Genealogy',      labelTr: 'Soy Ağacı' },
   { id: 'god',          icon: Zap,            label: 'God Mode',       labelTr: 'Tanrı Modu',     divider: true, accent: '#f97316' },
   { id: 'timemachine',  icon: Clock,          label: 'Time Machine',   labelTr: 'Zaman Makinesi', accent: '#00d4ff' },
   { id: 'analysis',     icon: Bot,            label: 'AI Analysis',    labelTr: 'AI Analiz',      accent: '#4ecb71' },

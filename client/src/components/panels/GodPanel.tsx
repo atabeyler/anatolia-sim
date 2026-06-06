@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import axios from 'axios';
-import { Zap, Droplets, Wind, Activity, MessageCircle, Mountain, Star, Heart, Skull, RefreshCw } from 'lucide-react';
+import { Zap, Droplets, Wind, Activity, MessageCircle, Mountain, Star, Heart, Skull, RefreshCw, Shield } from 'lucide-react';
 
 const INTERVENTIONS = [
   { id: 'earthquake', label: 'Earthquake', labelTr: 'Deprem',   icon: Zap,      color: 'text-orange-400', params: { magnitude: 6, lat: 0, lon: 0, radius: 100 } },
@@ -21,6 +21,7 @@ export default function GodPanel() {
   const [status, setStatus] = useState('');
   const [population, setPopulation] = useState<any[]>([]);
   const [selectedIndId, setSelectedIndId] = useState('');
+  const [quarantine, setQuarantine] = useState(false);
 
   useEffect(() => {
     if (!currentSim || !accessToken) return;
@@ -47,6 +48,17 @@ export default function GodPanel() {
     if (!currentSim || !selectedIndId) return;
     if (!window.confirm(lang === 'en' ? 'Instantly kill this individual?' : 'Bu bireyi anında öldür?')) return;
     await intervene('instant_death', { individual_id: selectedIndId });
+  }
+
+  async function toggleQuarantine() {
+    if (!currentSim) return;
+    const next = !quarantine;
+    try {
+      await axios.post(`/api/god/${currentSim.id}/quarantine`, { enabled: next }, { headers: { Authorization: `Bearer ${accessToken}` } });
+      setQuarantine(next);
+      setStatus(next ? (lang === 'en' ? '✓ Quarantine ON — disasters suppressed' : '✓ Karantina AKTİF — afetler bastırıldı') : (lang === 'en' ? '✓ Quarantine OFF' : '✓ Karantina KAPALI'));
+    } catch { setStatus('✗ Failed'); }
+    setTimeout(() => setStatus(''), 4000);
   }
 
   async function refreshPopulation() {
@@ -168,6 +180,29 @@ export default function GodPanel() {
             {response}
           </div>
         )}
+      </div>
+
+      {/* Quarantine Mode */}
+      <div className="mb-4">
+        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+          <Shield size={10} />
+          {lang === 'en' ? 'Quarantine Mode' : 'Karantina Modu'}
+        </h4>
+        <button
+          onClick={toggleQuarantine}
+          className={`w-full flex items-center justify-center gap-2 p-2 rounded-lg transition-colors border ${
+            quarantine
+              ? 'bg-green-700/30 border-green-500/50 text-green-300'
+              : 'bg-sim-surface border-sim-border text-sim-muted hover:border-sim-accent/40'
+          }`}
+        >
+          <Shield size={12} />
+          <span style={{ fontSize: 12 }}>
+            {quarantine
+              ? (lang === 'en' ? 'Quarantine: ON (disasters suppressed)' : 'Karantina: AKTİF (afetler bastırıldı)')
+              : (lang === 'en' ? 'Quarantine: OFF' : 'Karantina: KAPALI')}
+          </span>
+        </button>
       </div>
 
       <div className="text-sm text-sim-muted text-center pt-2 border-t border-sim-border/30">

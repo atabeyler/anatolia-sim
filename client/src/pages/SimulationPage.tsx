@@ -24,6 +24,7 @@ import MicrobiomePanel from '../components/panels/MicrobiomePanel';
 import PsychologyPanel from '../components/panels/PsychologyPanel';
 import EpigeneticsPanel from '../components/panels/EpigeneticsPanel';
 import GodPanel from '../components/panels/GodPanel';
+import GenealogyPanel from '../components/panels/GenealogyPanel';
 import TimeMachinePanel from '../components/panels/TimeMachinePanel';
 import AnalysisPanel from '../components/panels/AnalysisPanel';
 import HypothesisPanel from '../components/panels/HypothesisPanel';
@@ -746,6 +747,7 @@ export default function SimulationPage() {
       <MicrobiomePanel />
       <PsychologyPanel />
       <EpigeneticsPanel />
+      <GenealogyPanel />
       <GodPanel />
       <TimeMachinePanel />
       <AnalysisPanel />

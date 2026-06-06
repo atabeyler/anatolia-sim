@@ -29,6 +29,8 @@ interface SimStats {
   max_language_stage?: number;
   avg_consciousness?: number;
   max_tom_stage?: number;
+  tech_progress?: Record<string, number>;
+  qol_index?: number;
 }
 
 interface SimEvent {

@@ -82,21 +82,21 @@ export function createGenome(overrides = {}) {
   return chromosomes;
 }
 
-export function createGamete(genome) {
+export function createGamete(genome, stressMultiplier = 1.0) {
   const gamete = {};
   for (const locusId of LOCI_KEYS) {
     const locus = genome[locusId];
     if (!locus) continue;
     const crossover = Math.random() < 0.5;
     const chosen = crossover ? locus.allele2.value : locus.allele1.value;
-    const mutated = applyMutation(chosen, locusId);
+    const mutated = applyMutation(chosen, locusId, stressMultiplier);
     gamete[locusId] = mutated;
   }
   return gamete;
 }
 
-function applyMutation(value, locusId) {
-  const mutationProb = 35 / LOCI_KEYS.length;
+function applyMutation(value, locusId, stressMultiplier = 1.0) {
+  const mutationProb = 35 / LOCI_KEYS.length * stressMultiplier;
   if (Math.random() < mutationProb) {
     const effect = (Math.random() - 0.5) * 0.1;
     return Math.max(0, Math.min(1, value + effect));
