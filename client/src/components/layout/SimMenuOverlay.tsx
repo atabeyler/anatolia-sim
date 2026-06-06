@@ -120,10 +120,10 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions, menuPag
               </button>
             ))}
             {mobileActions}
-            <div style={{ padding: '8px 14px', borderTop: '1px solid #0a1a10', marginTop: 4 }}>
-              <div style={{ fontSize: 11, color: '#00e887', letterSpacing: '0.06em', lineHeight: 1.6, textShadow: '0 0 8px rgba(0,232,135,0.35)' }}>
+            <div style={{ padding: '8px clamp(10px, 2vw, 14px)', borderTop: '1px solid #0a1a10', marginTop: 4, display: 'flex', justifyContent: 'center' }}>
+              <div style={{ fontSize: 'clamp(10px, 1.35vw, 13px)', color: '#00e887', letterSpacing: '0.06em', lineHeight: 1.55, textShadow: '0 0 8px rgba(0,232,135,0.35)', textAlign: 'center', maxWidth: '100%', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                 <div>RST Q-Nation 200120401018 © 2026</div>
-                <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.</div>
+                <div style={{ whiteSpace: 'normal', lineHeight: 1.5 }}>Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.</div>
               </div>
             </div>
           </div>
@@ -249,9 +249,11 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions, menuPag
             <Bullet>{lang === 'tr' ? 'Dil gelişimi için nüfusun 5+ kişilik gruplar halinde bir arada yaşaması gerekir' : 'Language development requires groups of 5+ individuals living together'}</Bullet>
             <Bullet>{lang === 'tr' ? 'Tarayıcıyı kapatmak simülasyonu durdurmaz; sunucu arka planda çalışmayı sürdürür' : 'Closing the browser does not stop the simulation; the server keeps running in the background'}</Bullet>
 
-            <div style={{ marginTop: 16, paddingTop: 8, borderTop: '1px solid #0a1a10', fontSize: 11, color: '#00e887', letterSpacing: '0.06em', lineHeight: 1.6, textShadow: '0 0 8px rgba(0,232,135,0.25)' }}>
-              <div>ANATOLİA-SİM · RST Q-Nation 200120401018 © 2026</div>
-              <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.</div>
+            <div style={{ marginTop: 16, paddingTop: 8, borderTop: '1px solid #0a1a10', display: 'flex', justifyContent: 'center' }}>
+              <div style={{ fontSize: 'clamp(10px, 1.3vw, 13px)', color: '#00e887', letterSpacing: '0.06em', lineHeight: 1.55, textShadow: '0 0 8px rgba(0,232,135,0.25)', maxWidth: '100%', width: '100%', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+                <div>ANATOLİA-SİM · RST Q-Nation 200120401018 © 2026</div>
+                <div style={{ whiteSpace: 'normal', lineHeight: 1.5 }}>Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.</div>
+              </div>
             </div>
           </div>
         )}
