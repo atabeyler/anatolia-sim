@@ -122,7 +122,7 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions, menuPag
             {mobileActions}
             <div style={{ padding: '8px 14px', borderTop: '1px solid #0a1a10', marginTop: 4 }}>
               <div style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.08em', textShadow: '0 0 8px rgba(0,232,135,0.35)' }}>
-                RST Q-Nation 200120401018 · Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026
+                RST Q-Nation 200120401018 © 2026 · <span style={{ whiteSpace: 'nowrap' }}>Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.</span>
               </div>
             </div>
           </div>
@@ -249,7 +249,7 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions, menuPag
             <Bullet>{lang === 'tr' ? 'Tarayıcıyı kapatmak simülasyonu durdurmaz; sunucu arka planda çalışmayı sürdürür' : 'Closing the browser does not stop the simulation; the server keeps running in the background'}</Bullet>
 
             <div style={{ marginTop: 16, paddingTop: 8, borderTop: '1px solid #0a1a10', fontSize: 14, color: '#00e887', letterSpacing: '0.06em', textShadow: '0 0 8px rgba(0,232,135,0.25)' }}>
-              ANATOLİA-SİM · RST Q-Nation 200120401018 · © 2026 Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.
+              ANATOLİA-SİM · RST Q-Nation 200120401018 © 2026 · <span style={{ whiteSpace: 'nowrap' }}>Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.</span>
             </div>
           </div>
         )}
