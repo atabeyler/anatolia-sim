@@ -157,7 +157,15 @@ export class SimulationEngine {
       this.updatePhysiology(ind, resourcePressure);
     }
 
-    // 4b. Movement — individuals wander on the map
+    // 4b. Movement — compute band centroid once, then move each individual
+    if (alive.length > 0) {
+      this._bandCentroid = {
+        x: alive.reduce((s, i) => s + (i.x ?? 0), 0) / alive.length,
+        y: alive.reduce((s, i) => s + (i.y ?? 0), 0) / alive.length,
+      };
+    } else {
+      this._bandCentroid = { x: this.worldState.longitude ?? 0, y: this.worldState.latitude ?? 0 };
+    }
     for (const ind of alive) {
       this.moveIndividual(ind);
     }
@@ -410,100 +418,53 @@ export class SimulationEngine {
     // Base speed in degrees/day
     let speed;
     if (ageYears < 12)      speed = 0.008;
-    else if (ageYears > 60) speed = 0.002;
-    else                    speed = 0.012;
+    else if (ageYears > 60) speed = 0.003;
+    else                    speed = 0.010;
 
-    // Weather slows movement (blizzard/storm are most severe)
     speed *= (this.worldState.weather_move_mult ?? 1.0);
+    if (ind.health?.pregnancy) speed *= 0.4;
 
-    // Founders are fully sedentary — food and water are at their home site
-    if (ind.is_founder) speed *= 0.1;
-
-    if ((ind.satiation ?? 0.5) < 0.3 && !ind.is_founder) speed *= 1.4;
-    if (ind.health?.pregnancy)                            speed *= 0.4;
-
-    // Persistent direction with slow random drift
+    // Random direction with slow drift
     if (ind._moveAngle === undefined) ind._moveAngle = Math.random() * Math.PI * 2;
-    ind._moveAngle += (Math.random() - 0.5) * 0.3;
+    ind._moveAngle += (Math.random() - 0.5) * 0.25;
 
-    // ── Founders: strong pull back toward home ───────────────────────────────
-    if (ind.is_founder && ind.home_x !== undefined) {
-      const dx = ind.home_x - (ind.x ?? 0);
-      const dy = ind.home_y - (ind.y ?? 0);
-      const distFromHome = Math.hypot(dx, dy);
-      if (distFromHome > 0.01) {
-        ind._moveAngle = Math.atan2(dy, dx) * 0.98 + ind._moveAngle * 0.02;
-      }
-    }
-
-    // ── Group territory anchor — all members stay near territory center ──────
-    if (ind.group_id && !ind.is_founder) {
-      const grp = this.groups.find(g => g.id === ind.group_id);
-      if (grp?.territory) {
-        const dx = grp.territory.x - (ind.x ?? 0);
-        const dy = grp.territory.y - (ind.y ?? 0);
-        const dist = Math.hypot(dx, dy);
-        const pullRadius = grp.territory.radius ?? 1;
-        if (dist > pullRadius * 0.5) {
-          const pull = Math.min(1, (dist - pullRadius * 0.5) / pullRadius) * 0.75;
-          ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
-        }
-      }
-    }
-
-    // ── Child-parent attachment: ages 2–12 follow parent closely ────────────
-    if (ageYears >= 2 && ageYears < 12) {
-      const parent = this.population.get(ind.parent_1_id) ?? this.population.get(ind.parent_2_id);
-      if (parent && !parent.is_dead) {
-        const dx = (parent.x ?? 0) - (ind.x ?? 0);
-        const dy = (parent.y ?? 0) - (ind.y ?? 0);
-        const dist = Math.hypot(dx, dy);
-        if (dist > 0.05) {
-          const pull = Math.min(1, dist / 0.5) * 0.9;
-          ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
-        }
-      }
-    }
-
-    // ── Adolescents (12–18): stay reasonably close to parents ───────────────
-    if (ageYears >= 12 && ageYears < 18) {
-      const parent = this.population.get(ind.parent_1_id) ?? this.population.get(ind.parent_2_id);
-      if (parent && !parent.is_dead) {
-        const dx = (parent.x ?? 0) - (ind.x ?? 0);
-        const dy = (parent.y ?? 0) - (ind.y ?? 0);
-        const dist = Math.hypot(dx, dy);
-        if (dist > 0.3) {
-          const pull = Math.min(1, dist / 2) * 0.5;
-          ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
-        }
-      }
-    }
-
-    // ── Ungrouped adults (18+): soft pull toward home to stay in mating range ─
-    if (ageYears >= 18 && !ind.group_id && !ind.is_founder) {
-      const homeX = this.worldState.longitude ?? 0;
-      const homeY = this.worldState.latitude  ?? 0;
+    // ── Founders: çıpa — yuva noktasına güçlü çekim ──────────────────────────
+    if (ind.is_founder) {
+      speed *= 0.12;
+      const homeX = ind.home_x ?? (this.worldState.longitude ?? 0);
+      const homeY = ind.home_y ?? (this.worldState.latitude  ?? 0);
       const dx = homeX - (ind.x ?? 0);
       const dy = homeY - (ind.y ?? 0);
       const dist = Math.hypot(dx, dy);
-      if (dist > 4) {
-        const pull = Math.min(1, (dist - 4) / 8) * 0.8;
+      if (dist > 0.005) {
+        ind._moveAngle = Math.atan2(dy, dx) * 0.97 + ind._moveAngle * 0.03;
+      }
+    } else {
+      // ── Herkes: grup centroidine çekim — aile bandı birlikte kalır ──────────
+      const cx = this._bandCentroid?.x ?? (this.worldState.longitude ?? 0);
+      const cy = this._bandCentroid?.y ?? (this.worldState.latitude  ?? 0);
+      const dx = cx - (ind.x ?? 0);
+      const dy = cy - (ind.y ?? 0);
+      const dist = Math.hypot(dx, dy);
+      // 0.3° içinde serbest dolaşım, dışarısı çekim
+      if (dist > 0.3) {
+        const pull = Math.min(1, (dist - 0.3) / 2) * 0.88;
         ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
       }
     }
 
-    const step = speed * (0.6 + Math.random() * 0.8);
+    const step = speed * (0.5 + Math.random() * 0.8);
     ind.x = Math.max(-180, Math.min(180, (ind.x ?? 0) + Math.cos(ind._moveAngle) * step));
     ind.y = Math.max(-85,  Math.min(85,  (ind.y ?? 0) + Math.sin(ind._moveAngle) * step));
 
-    // ── Founders: hard position clamp — essentially stationary ───────────────
+    // ── Kurucular: yuva çevresine sert sınır (0.04°) ─────────────────────────
     if (ind.is_founder && ind.home_x !== undefined) {
       const dx = ind.x - ind.home_x;
       const dy = ind.y - ind.home_y;
       const dist = Math.hypot(dx, dy);
-      if (dist > 0.02) {
-        ind.x = ind.home_x + (dx / dist) * 0.02;
-        ind.y = ind.home_y + (dy / dist) * 0.02;
+      if (dist > 0.04) {
+        ind.x = ind.home_x + (dx / dist) * 0.04;
+        ind.y = ind.home_y + (dy / dist) * 0.04;
       }
     }
   }
