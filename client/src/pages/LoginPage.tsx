@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import FooterBar from '../components/layout/FooterBar';
+import SimMenuOverlay from '../components/layout/SimMenuOverlay';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
@@ -251,6 +252,8 @@ const STATUS = [
 export default function LoginPage() {
   const navigate = useNavigate();
   const { setUser, lang } = useSimStore();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPage, setMenuPage] = useState<'language' | 'guide' | 'about' | 'mission' | 'contact' | null>(null);
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [form, setForm] = useState({ user_code: '', reg_user_code: '', first_name: '', last_name: '', tc_no: '', email: '', password: '' });
   const [error, setError] = useState('');
@@ -328,6 +331,33 @@ export default function LoginPage() {
     <div className="relative min-h-screen overflow-y-auto flex flex-col items-center justify-center bg-[#030310] scanlines">
       {/* Matrix rain — first-load only */}
       {showMatrix && <MatrixRain onDone={() => setShowMatrix(false)} />}
+
+      {/* MENÜ button — top right */}
+      <button
+        onClick={() => setMenuOpen(true)}
+        className="fixed z-30 font-share-tech tracking-widest"
+        style={{
+          top: 12,
+          right: 12,
+          fontSize: 11,
+          padding: '5px 10px',
+          background: 'rgba(4,4,15,0.85)',
+          border: '1px solid rgba(79,110,247,0.35)',
+          color: '#a0b4ff',
+          letterSpacing: '0.25em',
+          backdropFilter: 'blur(8px)',
+          clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
+        }}
+      >
+        MENÜ
+      </button>
+
+      <SimMenuOverlay
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        menuPage={menuPage}
+        onMenuPageChange={setMenuPage}
+      />
 
       {/* Backgrounds */}
       <StarField />
