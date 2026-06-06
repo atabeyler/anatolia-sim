@@ -261,6 +261,7 @@ export default function TopBar() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showSettings, setShowSettings] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [customSpeed, setCustomSpeed] = useState('');
 
   async function changeSpeed(speed: number) {
     if (!currentSim || !accessToken) return;
@@ -283,6 +284,11 @@ export default function TopBar() {
       setSimError(err.response?.data?.error ?? 'Hız değiştirilemedi');
       setTimeout(() => setSimError(''), 3000);
     }
+  }
+
+  function applyCustomSpeed() {
+    const v = parseInt(customSpeed);
+    if (v >= 1 && v <= 1000) { changeSpeed(v); setCustomSpeed(''); }
   }
 
   async function handleTerminate() {
@@ -375,7 +381,7 @@ export default function TopBar() {
           </button>
 
           {!isMobile && (
-            <div className="flex gap-0.5">
+            <div className="flex items-center gap-0.5">
               {SPEEDS.map(s => (
                 <button key={s} onClick={() => changeSpeed(s)}
                   className="font-share-tech transition-all"
@@ -388,6 +394,21 @@ export default function TopBar() {
                   {s}×
                 </button>
               ))}
+              <input
+                type="number" min={1} max={1000}
+                value={customSpeed}
+                onChange={e => setCustomSpeed(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') applyCustomSpeed(); }}
+                placeholder="hız"
+                className="font-share-tech bg-[#0a0a1a] text-sim-text focus:outline-none"
+                style={{ fontSize: 9, padding: '2px 4px', width: 42, border: '1px solid rgba(79,110,247,0.22)', color: '#9aabcf' }}
+              />
+              <button
+                onClick={applyCustomSpeed}
+                className="font-share-tech transition-all"
+                style={{ fontSize: 9, padding: '2px 6px', background: 'rgba(79,110,247,0.18)', border: '1px solid rgba(79,110,247,0.35)', color: '#c0ccff' }}>
+                SET
+              </button>
             </div>
           )}
 
