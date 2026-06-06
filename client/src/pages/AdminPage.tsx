@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import FooterBar from '../components/layout/FooterBar';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
@@ -233,11 +234,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        <div className="text-center mt-8">
-          <span className="font-share-tech text-sim-muted/30 tracking-widest" style={{ fontSize: 9 }}>
-            BOLD ASKERİ TEKNOLOJİ VE SAVUNMA SANAYİ A.Ş. © 2026 · RST Q-Nation 200120401018
-          </span>
-        </div>
+        <FooterBar mode="inline" className="mt-8" />
       </div>
     </div>
   );

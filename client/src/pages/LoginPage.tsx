@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import FooterBar from '../components/layout/FooterBar';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
@@ -499,9 +500,7 @@ export default function LoginPage() {
           </div>
 
           {/* Footer */}
-          <p className="text-in mt-6 mb-2 text-center px-4" style={{ animationDelay: '600ms', fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(9px, 1vw, 14px)', letterSpacing: '0.15em', color: '#00e887', textShadow: '0 0 6px #00e887, 0 0 16px rgba(0,232,135,0.6)' }}>
-            RST Q-Nation 200120401018 · Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026
-          </p>
+          <FooterBar mode="inline" className="text-in mt-6 mb-2 px-4" style={{ animationDelay: '600ms' }} />
         </div>
       )}
     </div>
