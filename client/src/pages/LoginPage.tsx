@@ -298,6 +298,11 @@ export default function LoginPage() {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [pendingCode, lang]);
 
+  useEffect(() => {
+    document.body.classList.add('login-page-active');
+    return () => document.body.classList.remove('login-page-active');
+  }, []);
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
