@@ -328,7 +328,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-y-auto flex flex-col items-center justify-center bg-[#030310] scanlines">
+    <div className="relative min-h-screen overflow-x-hidden overflow-y-auto lg:overflow-hidden flex flex-col items-center justify-center bg-[#030310] scanlines">
       {/* Matrix rain — first-load only */}
       {showMatrix && <MatrixRain onDone={() => setShowMatrix(false)} />}
 
