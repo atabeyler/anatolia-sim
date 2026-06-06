@@ -21,8 +21,30 @@ export function createFounder(params = {}) {
   // High OXTR (oxytocin receptor) + AVPR1A (vasopressin) gives them high parental_care,
   // which children inherit genetically through combineGametes.
   const founderGenomeDefaults = {
-    OXTR_01:   { a1: 0.82, a2: 0.82 },
-    AVPR1A_01: { a1: 0.78, a2: 0.78 },
+    // Social bonding — passes to children via Mendelian inheritance
+    OXTR_01:    { a1: 0.82, a2: 0.82 },
+    AVPR1A_01:  { a1: 0.78, a2: 0.78 },
+    // Immunity & longevity — founders must survive long enough to found the lineage
+    IMMUNE_01:  { a1: 0.88, a2: 0.85 },
+    IMMUNE_02:  { a1: 0.85, a2: 0.82 },
+    TERT_01:    { a1: 0.85, a2: 0.85 },
+    APOE_01:    { a1: 0.80, a2: 0.80 },
+    // Language & cognition — hypothesis requires founders to develop proto-language
+    FOXP2_01:   { a1: 0.90, a2: 0.88 },
+    CNTNAP2_01: { a1: 0.82, a2: 0.80 },
+    BDNF_01:    { a1: 0.80, a2: 0.78 },
+    COMT_01:    { a1: 0.78, a2: 0.76 },
+    DTNBP1_01:  { a1: 0.80, a2: 0.78 },
+    // Consciousness potential — critical for the emergent consciousness hypothesis
+    NRXN1_01:   { a1: 0.82, a2: 0.80 },
+    SHANK3_01:  { a1: 0.80, a2: 0.78 },
+    RELN_01:    { a1: 0.80, a2: 0.78 },
+    // Curiosity & motivation — drives exploration and discovery
+    DRD4_01:    { a1: 0.75, a2: 0.75 },
+    DRD2_01:    { a1: 0.75, a2: 0.72 },
+    // Physical survival
+    STRENGTH_01: { a1: 0.78, a2: 0.75 },
+    ACTN3_01:    { a1: 0.76, a2: 0.74 },
   };
   const genome = createGenome({ ...founderGenomeDefaults, ...(params.genome ?? {}) });
   const phenotype = computePhenotype(genome);
@@ -43,7 +65,7 @@ export function createFounder(params = {}) {
     mind: createInitialMind(phenotype),
     social: createInitialSocial(),
     skills: [], beliefs: {},
-    language: createInitialLanguage(phenotype),
+    language: createInitialLanguage(phenotype, true),
     memory: { social: [], events: [], knowledge: [] },
     parent_1_id: null, parent_2_id: null, inbreeding_coeff: 0,
   };
@@ -110,11 +132,15 @@ function createInitialSocial() {
   };
 }
 
-function createInitialLanguage(phenotype) {
+function createInitialLanguage(phenotype, isFounder = false) {
   return {
     stage: 0, stage_name: 'pre-linguistic',
     vocabulary: {}, grammar: false, writing: false,
-    foxp2_expression: phenotype.language_capacity,
+    // Founders are adults who have already developed expression through life experience.
+    // Newborns start near zero and grow through social interaction (see updateFoxp2Expression).
+    foxp2_expression: isFounder
+      ? phenotype.language_capacity * 0.7
+      : phenotype.language_capacity * 0.1,
   };
 }
 
