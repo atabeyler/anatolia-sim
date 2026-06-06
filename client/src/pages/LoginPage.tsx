@@ -346,10 +346,10 @@ export default function LoginPage() {
         {STATUS.map((s, i) => (
           <div key={s.label} className="flex items-center gap-1 boot-in" style={{ animationDelay: `${i * 80}ms` }}>
             <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.ok ? 'bg-sim-green pulse-live' : 'bg-sim-red'}`} />
-            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#c0c8e8', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(9px, 0.85vw, 12px)', color: '#c0c8e8', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
               {lang === 'tr' ? s.labelTr : s.label}
             </span>
-            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 9, color: '#4ecb71', marginLeft: 2, whiteSpace: 'nowrap' }}>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(9px, 0.85vw, 12px)', color: '#4ecb71', marginLeft: 2, whiteSpace: 'nowrap' }}>
               {s.val}
             </span>
           </div>
@@ -357,7 +357,7 @@ export default function LoginPage() {
       </div>
 
       {/* Coordinate display bottom — pushed up to avoid footer overlap */}
-      <div className="fixed left-3 z-20 font-share-tech tracking-widest" style={{ bottom: 48, fontSize: 10, color: '#c0c8e8' }}>
+      <div className="fixed left-3 z-20 font-share-tech tracking-widest" style={{ bottom: 48, fontSize: 'clamp(9px, 0.85vw, 12px)', color: '#c0c8e8' }}>
         <div>LAT: {coords?.lat ?? '39.9334°N'} · LON: {coords?.lon ?? '32.8597°E'}</div>
         <div style={{ marginTop: 2 }}>SYS: ANATOLİA-SIM v1.0 · BUILD 2026</div>
       </div>
@@ -499,7 +499,7 @@ export default function LoginPage() {
           </div>
 
           {/* Footer */}
-          <p className="text-in mt-6 mb-2 text-center px-4" style={{ animationDelay: '600ms', fontFamily: 'Share Tech Mono, monospace', fontSize: '12px', letterSpacing: '0.15em', color: '#00e887', textShadow: '0 0 6px #00e887, 0 0 16px rgba(0,232,135,0.6)' }}>
+          <p className="text-in mt-6 mb-2 text-center px-4" style={{ animationDelay: '600ms', fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(9px, 0.85vw, 12px)', letterSpacing: '0.15em', color: '#00e887', textShadow: '0 0 6px #00e887, 0 0 16px rgba(0,232,135,0.6)' }}>
             RST Q-Nation 200120401018 · Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026
           </p>
         </div>
