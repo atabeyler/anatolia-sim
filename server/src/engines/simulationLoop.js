@@ -237,7 +237,8 @@ export class SimulationEngine {
       const nbLabel = nb.phenotype?.name ?? `${nb.sex === 'male' ? '♂' : '♀'}-${nb.id.slice(-4).toUpperCase()}`;
       const p1Name = p1?.phenotype?.name ?? (p1 ? `${p1.sex === 'male' ? '♂' : '♀'}-${p1.id.slice(-4).toUpperCase()}` : '?');
       const p2Name = p2?.phenotype?.name ?? (p2 ? `${p2.sex === 'male' ? '♂' : '♀'}-${p2.id.slice(-4).toUpperCase()}` : '?');
-      this.logEvent(day, 'birth', `Born: ${nbLabel} (${p1Name} & ${p2Name})`, { individual_id: nb.id, name: nbLabel, parent_1_name: p1Name, parent_2_name: p2Name }, 1);
+      const birthLabel = nb.is_twin ? `Twin born: ${nbLabel}` : `Born: ${nbLabel}`;
+      this.logEvent(day, 'birth', `${birthLabel} (${p1Name} & ${p2Name})`, { individual_id: nb.id, name: nbLabel, parent_1_name: p1Name, parent_2_name: p2Name, is_twin: nb.is_twin ?? false }, nb.is_twin ? 2 : 1);
     }
 
     // 9. Microbiome & disease outbreaks

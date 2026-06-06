@@ -69,7 +69,7 @@ export function createChild(parent1, parent2, birthDay, simulationId, communityL
     language: createInitialLanguage(phenotype),
     memory: { social: [], events: [], knowledge: [] },
     parent_1_id: parent1.id, parent_2_id: parent2.id,
-    inbreeding_coeff: 0, is_twin: Math.random() < 0.012,
+    inbreeding_coeff: 0, is_twin: false,
   };
 }
 

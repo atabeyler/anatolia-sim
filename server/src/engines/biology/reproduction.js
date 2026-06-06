@@ -42,8 +42,8 @@ export function checkReproduction(population, currentDay, simulationId, communit
       if (father) {
         if (!female.social) female.social = {};
         if (!female.social.children_ids) female.social.children_ids = [];
-        const { child, motherSurvives } = deliverBirth(female, father, currentDay, simulationId, communityLangStage, phonology);
-        newborns.push(child);
+        const { children, motherSurvives } = deliverBirth(female, father, currentDay, simulationId, communityLangStage, phonology);
+        newborns.push(...children);
         if (!motherSurvives) { female.alive = false; female.is_dead = true; female.death_day = currentDay; female.death_cause = 'birth_complications'; }
       }
       female.health.pregnancy = null;
@@ -66,8 +66,32 @@ function conceptionProbability(female, male, currentDay) {
 
 function deliverBirth(mother, father, birthDay, simulationId, communityLangStage = 0, phonology = null) {
   const motherSurvives = Math.random() > 0.02;
-  const child = createChild(mother, father, birthDay, simulationId, communityLangStage, phonology);
-  if (Math.random() < 0.05) { child.alive = false; child.is_dead = true; child.death_day = birthDay; child.death_cause = 'birth_complications'; }
-  mother.social.children_ids.push(child.id);
-  return { child, motherSurvives };
+  const children = [];
+
+  const first = createChild(mother, father, birthDay, simulationId, communityLangStage, phonology);
+  if (Math.random() < 0.05) { first.alive = false; first.is_dead = true; first.death_day = birthDay; first.death_cause = 'birth_complications'; }
+  children.push(first);
+
+  // İkiz ihtimali FSHR_01 (folikül uyarıcı hormon reseptörü) genine bağlı:
+  // düşük fertilite ~%0, orta ~%1.7, yüksek ~%4.5
+  const fshr = mother.phenotype?.fertility ?? 0.5;
+  const twinChance = Math.max(0, 0.003 + (fshr - 0.3) * 0.07);
+
+  if (Math.random() < twinChance) {
+    const twin = createChild(mother, father, birthDay, simulationId, communityLangStage, phonology);
+    twin.is_twin = true;
+    if (Math.random() < 0.08) { twin.alive = false; twin.is_dead = true; twin.death_day = birthDay; twin.death_cause = 'birth_complications'; }
+    children.push(twin);
+
+    // Üçüz: ikiz şansının %10'u kadar
+    if (Math.random() < twinChance * 0.1) {
+      const triplet = createChild(mother, father, birthDay, simulationId, communityLangStage, phonology);
+      triplet.is_twin = true;
+      if (Math.random() < 0.12) { triplet.alive = false; triplet.is_dead = true; triplet.death_day = birthDay; triplet.death_cause = 'birth_complications'; }
+      children.push(triplet);
+    }
+  }
+
+  mother.social.children_ids.push(...children.map(c => c.id));
+  return { children, motherSurvives };
 }
