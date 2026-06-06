@@ -29,6 +29,9 @@ export function checkReproduction(population, currentDay, simulationId, communit
         father_id: male.id, conception_day: currentDay,
         due_day: currentDay + PREGNANCY_MIN + Math.floor(Math.random() * 14),
       };
+      // Çiftleşme dürtüsü sıfırlanır — biyolojik tatmin
+      female.mating_urge = 0;
+      male.mating_urge = Math.max(0, (male.mating_urge ?? 0) - 0.7);
     }
   }
 

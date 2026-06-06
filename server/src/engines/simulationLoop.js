@@ -157,6 +157,11 @@ export class SimulationEngine {
       this.updatePhysiology(ind, resourcePressure);
     }
 
+    // 4c. Mating urge — biological drive, builds daily
+    for (const ind of alive) {
+      this.updateMatingUrge(ind);
+    }
+
     // 4b. Movement — compute band centroid once, then move each individual
     if (alive.length > 0) {
       this._bandCentroid = {
@@ -446,10 +451,29 @@ export class SimulationEngine {
       const dx = cx - (ind.x ?? 0);
       const dy = cy - (ind.y ?? 0);
       const dist = Math.hypot(dx, dy);
-      // 0.3° içinde serbest dolaşım, dışarısı çekim
       if (dist > 0.3) {
         const pull = Math.min(1, (dist - 0.3) / 2) * 0.88;
         ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
+      }
+
+      // ── Çiftleşme dürtüsü: yüksekse yakın uygun bireye yönel ───────────────
+      if (ageYears >= 13 && !ind.health?.pregnancy && (ind.mating_urge ?? 0) > 0.65) {
+        const oppSex = ind.sex === 'male' ? 'female' : 'male';
+        let nearestDist = 10; // derece cinsinden arama yarıçapı
+        let nearestPartner = null;
+        for (const other of this.population.values()) {
+          if (other.is_dead || other.id === ind.id || other.sex !== oppSex) continue;
+          const otherAge = other.age / 365;
+          if (otherAge < 13 || otherAge > 65 || other.health?.pregnancy) continue;
+          const d = Math.hypot((other.x ?? 0) - (ind.x ?? 0), (other.y ?? 0) - (ind.y ?? 0));
+          if (d < nearestDist) { nearestDist = d; nearestPartner = other; }
+        }
+        if (nearestPartner) {
+          const pdx = (nearestPartner.x ?? 0) - (ind.x ?? 0);
+          const pdy = (nearestPartner.y ?? 0) - (ind.y ?? 0);
+          const urgePull = Math.min(0.85, ((ind.mating_urge - 0.65) / 0.35) * 0.75);
+          ind._moveAngle = Math.atan2(pdy, pdx) * urgePull + ind._moveAngle * (1 - urgePull);
+        }
       }
     }
 
@@ -533,6 +557,48 @@ export class SimulationEngine {
     }
 
     individual.health_score = health.hp;
+  }
+
+  updateMatingUrge(ind) {
+    if (ind.is_dead) return;
+    const ageYears = ind.age / 365;
+
+    // Ergenlik öncesi veya çok yaşlı — dürtü yok
+    if (ageYears < 13 || ageYears > 72) { ind.mating_urge = 0; return; }
+
+    // Hamilelikte sıfır
+    if (ind.health?.pregnancy) { ind.mating_urge = 0; return; }
+
+    if (ind.mating_urge === undefined) ind.mating_urge = Math.random() * 0.4;
+
+    // Günlük birikim hızı
+    let rate = 0.006; // ~170 günde 1'e ulaşır
+
+    // Yaş etkisi: 18-35 en yüksek, sonra yavaşlar
+    if (ageYears < 18)       rate *= 0.55;
+    else if (ageYears < 35)  rate *= 1.2;
+    else if (ageYears > 55)  rate *= 0.55;
+    else if (ageYears > 65)  rate *= 0.25;
+
+    // Sağlık etkisi: aç veya hasta → dürtü azalır
+    const hp  = ind.health?.hp       ?? 0.8;
+    const cal = ind.health?.calories ?? 0.7;
+    if (hp < 0.35 || cal < 0.25)        rate *= 0.15;
+    else if (hp > 0.7 && cal > 0.6)     rate *= 1.1;
+
+    // Mevsim: ilkbahar ve yaz biraz artırır
+    const season = this.worldState.season ?? 'spring';
+    if (season === 'spring' || season === 'summer') rate *= 1.15;
+
+    // Bireysel fenotip: fertilite yüksekse dürtü de yüksek
+    const fertility = ind.phenotype?.fertility ?? 0.5;
+    rate *= (0.65 + fertility * 0.7);
+
+    // Psikolojik stres dürtüyü bastırır
+    const stress = ind.psychology?.stress_level ?? 0.3;
+    if (stress > 0.7) rate *= 0.4;
+
+    ind.mating_urge = Math.min(1, (ind.mating_urge ?? 0) + rate);
   }
 
   processSocialInteractions(alive, day, tickEvents) {
