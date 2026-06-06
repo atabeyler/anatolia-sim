@@ -68,7 +68,7 @@ export function learnFromTeacher(learner, teacher) {
   }
 }
 
-export function generateProtoWord(concept, groupId) {
+export function generateProtoWord(concept, groupId) { // exported for bootstrap seeding
   const seed = hashStr(concept + groupId);
   const c = 'bdfghjklmnprstvwz', v = 'aeiou';
   const len = 1 + (seed % 3);
