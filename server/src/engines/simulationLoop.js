@@ -796,12 +796,32 @@ export class SimulationEngine {
           const c = i.death_cause ?? 'unknown';
           causes[c] = (causes[c] ?? 0) + 1;
         }
+        return { count: dead.length, avg_age: Math.round(avgDeathAge * 10) / 10, infant_deaths: infantDeaths, child_deaths: childDeaths, causes };
+      })(),
+      founders: (() => {
+        const all = [...this.population.values()].filter(i => i.is_founder);
+        return all.map(i => ({
+          sex: i.sex,
+          age: Math.round(getAge(i, day)),
+          alive: !i.is_dead,
+          note: 'Kurucular tasarım gereği sabit konumdadır — aile bandının çıpasıdır',
+        }));
+      })(),
+      movement_context: (() => {
+        if (!alive.length) return null;
+        const avgUrge   = alive.reduce((s, i) => s + (i.mating_urge ?? 0), 0) / alive.length;
+        const avgCal    = alive.reduce((s, i) => s + (i.health?.calories ?? 0.7), 0) / alive.length;
+        const avgHyd    = alive.reduce((s, i) => s + (i.health?.hydration ?? 0.7), 0) / alive.length;
+        const cx = this._bandCentroid?.x ?? 0;
+        const cy = this._bandCentroid?.y ?? 0;
+        const avgDist   = alive.reduce((s, i) => s + Math.hypot((i.x??0)-cx, (i.y??0)-cy), 0) / alive.length;
+        const dominant  = avgCal < 0.38 ? 'yiyecek arama' : avgHyd < 0.32 ? 'su arama' : avgUrge > 0.65 ? 'çiftleşme arayışı' : 'bant uyumu (birlikte kalma)';
         return {
-          count: dead.length,
-          avg_age: Math.round(avgDeathAge * 10) / 10,
-          infant_deaths: infantDeaths,
-          child_deaths: childDeaths,
-          causes,
+          dominant_drive: dominant,
+          avg_mating_urge: Math.round(avgUrge * 100) / 100,
+          avg_calories: Math.round(avgCal * 100) / 100,
+          avg_hydration: Math.round(avgHyd * 100) / 100,
+          avg_dist_from_center_deg: Math.round(avgDist * 100) / 100,
         };
       })(),
     };

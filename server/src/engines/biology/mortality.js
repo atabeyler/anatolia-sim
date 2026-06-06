@@ -21,8 +21,8 @@ export function computeDailyDeathRisk(individual, currentDay, environment) {
   if (individual.is_founder && age < 60) return 0;
   const { health, phenotype } = individual;
   let baseRisk = 0;
-  if      (age < 1)  baseRisk = 0.00040;
-  else if (age < 5)  baseRisk = 0.00015;
+  if      (age < 1)  baseRisk = 0.00022;
+  else if (age < 5)  baseRisk = 0.00010;
   else if (age < 15) baseRisk = 0.000027;
   else if (age < 45) baseRisk = 0.000027;
   else if (age < 60) baseRisk = 0.000069;
