@@ -154,6 +154,7 @@ export function computePhenotype(genome) {
     empathy:              (g('OXTR_01') + g('RELN_01')) / 2,
     cooperation:          Math.min(1, g('AVPR1A_01') * 0.5 + g('OXTR_01') * 0.35 + (1 - g('MAOA_01')) * 0.15),
     altruism:             Math.max(0, g('OXTR_01') * 0.7 + (1 - g('MAOA_01')) * 0.3),
+    parental_care:        Math.min(1, g('OXTR_01') * 0.6 + g('AVPR1A_01') * 0.4),
     aggression:           g('MAOA_01'),
     dominance:            Math.min(1, g('DRD2_01') * 0.5 + g('MAOA_01') * 0.3 + g('DISC1_01') * 0.2),
     curiosity:            g('DRD4_01'),

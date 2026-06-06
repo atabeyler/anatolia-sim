@@ -174,15 +174,32 @@ export class SimulationEngine {
     for (const ind of alive) {
       this.moveIndividual(ind);
     }
-    // Infants travel with their mother
+    // Co-movement: children physically travel with their primary caregiver.
+    // Snap strength is derived from the caregiver's parental_care phenotype (OXTR_01 x AVPR1A_01),
+    // so this is genetics-driven — not a scripted rule. Founders pass high parental_care to
+    // children via combineGametes; subsequent generations inherit it the same way.
     for (const ind of alive) {
-      if ((ind.age / 365) < 2 && ind.parent_1_id) {
-        const mother = this.population.get(ind.parent_1_id);
-        if (mother && !mother.is_dead) {
-          ind.x = mother.x + (Math.random() - 0.5) * 0.005;
-          ind.y = mother.y + (Math.random() - 0.5) * 0.005;
-        }
-      }
+      const ageYears = ind.age / 365;
+      if (ageYears >= 15) continue; // teens move independently (centroid cohesion handles them)
+
+      const p1 = this.population.get(ind.parent_1_id);
+      const p2 = this.population.get(ind.parent_2_id);
+      const p1care = (p1 && !p1.is_dead) ? (p1.phenotype?.parental_care ?? 0.5) : -1;
+      const p2care = (p2 && !p2.is_dead) ? (p2.phenotype?.parental_care ?? 0.5) : -1;
+      const caregiver = p1care >= p2care && p1care >= 0 ? p1
+                      : p2care > p1care  && p2care >= 0 ? p2
+                      : null;
+      if (!caregiver) continue;
+
+      const parentCare = caregiver.phenotype?.parental_care ?? 0.5;
+      // snapStr: nearly 1.0 for infants, tapers to ~0 at age 14, scales with parental_care
+      const ageBlend = Math.min(1, ageYears / 14);
+      const snapStr  = Math.max(0, parentCare * (1 - ageBlend * 0.9));
+      if (snapStr < 0.05) continue;
+
+      const scatter = 0.003 + ageYears * 0.006;
+      ind.x = caregiver.x * snapStr + ind.x * (1 - snapStr) + (Math.random() - 0.5) * scatter;
+      ind.y = caregiver.y * snapStr + ind.y * (1 - snapStr) + (Math.random() - 0.5) * scatter;
     }
 
     // 5. Psychology — mental state
@@ -463,48 +480,6 @@ export class SimulationEngine {
         ind._moveAngle = Math.atan2(bdy, bdx) * pull + ind._moveAngle * (1 - pull);
       }
 
-      // ── Çocuk-ebeveyn bağı: 18 yaş altı ebeveynine güçlü çekilir ─────────
-      if (ageYears < 18) {
-        const parent = this.population.get(ind.parent_1_id)
-                    ?? this.population.get(ind.parent_2_id);
-        if (parent && !parent.is_dead) {
-          const pdx  = (parent.x ?? 0) - (ind.x ?? 0);
-          const pdy  = (parent.y ?? 0) - (ind.y ?? 0);
-          const dist = Math.hypot(pdx, pdy);
-          if (dist > 0.05) {
-            // Küçükken çok güçlü, büyüdükçe azalır
-            const str  = ageYears < 5 ? 0.95 : ageYears < 12 ? 0.85 : 0.55;
-            const pull = Math.min(1, dist / 1.0) * str;
-            ind._moveAngle = Math.atan2(pdy, pdx) * pull + ind._moveAngle * (1 - pull);
-          }
-        }
-      }
-
-      // ── Ebeveynlik dürtüsü: küçük çocuğu olan yetişkin ona yönelir ───────
-      if (ageYears >= 18) {
-        let youngestChild = null;
-        let youngChildAge = 999;
-        for (const other of this.population.values()) {
-          if (other.is_dead) continue;
-          if (other.parent_1_id !== ind.id && other.parent_2_id !== ind.id) continue;
-          const childAge = other.age / 365;
-          if (childAge < 12 && childAge < youngChildAge) {
-            youngChildAge = childAge;
-            youngestChild = other;
-          }
-        }
-        if (youngestChild) {
-          const cdx  = (youngestChild.x ?? 0) - (ind.x ?? 0);
-          const cdy  = (youngestChild.y ?? 0) - (ind.y ?? 0);
-          const dist = Math.hypot(cdx, cdy);
-          if (dist > 0.2) {
-            const str  = youngChildAge < 2 ? 0.80 : 0.50;
-            const pull = Math.min(1, dist / 2.0) * str;
-            ind._moveAngle = Math.atan2(cdy, cdx) * pull + ind._moveAngle * (1 - pull);
-          }
-        }
-      }
-
       // ── Hafıza temelli yiyecek arama ──────────────────────────────────────
       if ((ind.satiation ?? 0.5) > 0.72) {
         ind._goodFoodAngle = ind._moveAngle;
@@ -721,6 +696,29 @@ export class SimulationEngine {
       // Language learning from parent (faster than random encounter)
       if (parent.language?.stage > (ind.language?.stage ?? 0) && Math.random() < 0.1) {
         learnFromTeacher(ind, parent);
+      }
+
+      // Observational learning: children near high-care parents develop stronger parental bonding.
+      // This is the "non-founder" transmission pathway — purely genetic inheritance + developmental
+      // plasticity, no scripted drive. The phenotypic boost here stays with the individual for life
+      // and shapes how they treat THEIR children (who are then kept close via the co-movement pass).
+      if (ageYears >= 2 && ageYears < 15 && dist < 1.5 && ind.phenotype) {
+        const parentCare = parent.phenotype?.parental_care ?? 0.5;
+        if (parentCare > 0.55) {
+          const currentCare = ind.phenotype.parental_care ?? 0.5;
+          const gap = parentCare - currentCare;
+          // Only pulls upward toward the parent's level — can't exceed 92% (some variation preserved)
+          if (gap > 0) {
+            ind.phenotype.parental_care = Math.min(0.92, currentCare + gap * 0.00008);
+          }
+          // Prime OXTR epigenetic mark (heritable for 2 generations via inheritEpigenome)
+          if (ind.epigenome?.OXTR_METHYL) {
+            ind.epigenome.OXTR_METHYL.methylation = Math.max(
+              0.22,
+              ind.epigenome.OXTR_METHYL.methylation - 0.000015
+            );
+          }
+        }
       }
 
       // Tech learning: parent's discovered techs boost child's discovery

@@ -16,7 +16,14 @@ function pick(list) {
 
 export function createFounder(params = {}) {
   const sex = params.sex ?? (Math.random() < 0.5 ? 'male' : 'female');
-  const genome = createGenome(params.genome ?? {});
+  // Founders are prehistoric survivors — they self-selected for strong social bonding.
+  // High OXTR (oxytocin receptor) + AVPR1A (vasopressin) gives them high parental_care,
+  // which children inherit genetically through combineGametes.
+  const founderGenomeDefaults = {
+    OXTR_01:   { a1: 0.82, a2: 0.82 },
+    AVPR1A_01: { a1: 0.78, a2: 0.78 },
+  };
+  const genome = createGenome({ ...founderGenomeDefaults, ...(params.genome ?? {}) });
   const phenotype = computePhenotype(genome);
   const appearance = params.appearance ?? {};
   phenotype.name = params.name?.trim() || null; // founders get user-supplied name or none
