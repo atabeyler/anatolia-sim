@@ -157,19 +157,49 @@ export class SimulationEngine {
       this.updatePhysiology(ind, resourcePressure);
     }
 
-    // 4b. Movement — individuals wander on the map
+    // 4c. Mating urge — biological drive, builds daily
+    for (const ind of alive) {
+      this.updateMatingUrge(ind);
+    }
+
+    // 4b. Movement — compute band centroid once, then move each individual
+    if (alive.length > 0) {
+      this._bandCentroid = {
+        x: alive.reduce((s, i) => s + (i.x ?? 0), 0) / alive.length,
+        y: alive.reduce((s, i) => s + (i.y ?? 0), 0) / alive.length,
+      };
+    } else {
+      this._bandCentroid = { x: this.worldState.longitude ?? 0, y: this.worldState.latitude ?? 0 };
+    }
     for (const ind of alive) {
       this.moveIndividual(ind);
     }
-    // Infants travel with their mother
+    // Co-movement: children physically travel with their primary caregiver.
+    // Snap strength is derived from the caregiver's parental_care phenotype (OXTR_01 x AVPR1A_01),
+    // so this is genetics-driven — not a scripted rule. Founders pass high parental_care to
+    // children via combineGametes; subsequent generations inherit it the same way.
     for (const ind of alive) {
-      if ((ind.age / 365) < 2 && ind.parent_1_id) {
-        const mother = this.population.get(ind.parent_1_id);
-        if (mother && !mother.is_dead) {
-          ind.x = mother.x + (Math.random() - 0.5) * 0.005;
-          ind.y = mother.y + (Math.random() - 0.5) * 0.005;
-        }
-      }
+      const ageYears = ind.age / 365;
+      if (ageYears >= 15) continue; // teens move independently (centroid cohesion handles them)
+
+      const p1 = this.population.get(ind.parent_1_id);
+      const p2 = this.population.get(ind.parent_2_id);
+      const p1care = (p1 && !p1.is_dead) ? (p1.phenotype?.parental_care ?? 0.5) : -1;
+      const p2care = (p2 && !p2.is_dead) ? (p2.phenotype?.parental_care ?? 0.5) : -1;
+      const caregiver = p1care >= p2care && p1care >= 0 ? p1
+                      : p2care > p1care  && p2care >= 0 ? p2
+                      : null;
+      if (!caregiver) continue;
+
+      const parentCare = caregiver.phenotype?.parental_care ?? 0.5;
+      // snapStr: nearly 1.0 for infants, tapers to ~0 at age 14, scales with parental_care
+      const ageBlend = Math.min(1, ageYears / 14);
+      const snapStr  = Math.max(0, parentCare * (1 - ageBlend * 0.9));
+      if (snapStr < 0.05) continue;
+
+      const scatter = 0.003 + ageYears * 0.006;
+      ind.x = caregiver.x * snapStr + ind.x * (1 - snapStr) + (Math.random() - 0.5) * scatter;
+      ind.y = caregiver.y * snapStr + ind.y * (1 - snapStr) + (Math.random() - 0.5) * scatter;
     }
 
     // 5. Psychology — mental state
@@ -242,7 +272,22 @@ export class SimulationEngine {
       }
     }
 
-    // 11. Natural disaster — disabled; triggered via god mode only
+    // 11. Weather event logging — log when weather type changes
+    if (this.worldState.current_weather !== this._lastLoggedWeather) {
+      const w = this.worldState.current_weather;
+      if (w && w !== 'clear') {
+        const WEATHER_NAMES = {
+          rain: 'Yağmur', heavy_rain: 'Şiddetli yağmur', snow: 'Kar',
+          blizzard: 'Tipi fırtınası', storm: 'Fırtına',
+          heat_wave: 'Sıcak hava dalgası', drought: 'Kuraklık',
+        };
+        const label = WEATHER_NAMES[w] ?? w;
+        const pct = Math.round((this.worldState.weather_intensity ?? 0.5) * 100);
+        const severity = (w === 'blizzard' || w === 'drought') ? 4 : (w === 'storm' || w === 'heavy_rain') ? 3 : 2;
+        this.logEvent(day, 'weather', `${label} başladı (%${pct} şiddet, ${this.worldState.weather_days_remaining} gün)`, { weather: w, intensity: this.worldState.weather_intensity }, severity);
+      }
+      this._lastLoggedWeather = this.worldState.current_weather;
+    }
 
     // 12. Language evolution
     const genCount = this.estimateGenerations();
@@ -392,100 +437,91 @@ export class SimulationEngine {
     const ageYears = ind.age / 365;
     if (ageYears < 2) return; // handled by infant-follow logic
 
-    // Base speed in degrees/day
     let speed;
     if (ageYears < 12)      speed = 0.008;
-    else if (ageYears > 60) speed = 0.002;
-    else                    speed = 0.012;
+    else if (ageYears > 60) speed = 0.003;
+    else                    speed = 0.010;
 
-    // Founders are fully sedentary — food and water are at their home site
-    if (ind.is_founder) speed *= 0.1;
+    speed *= (this.worldState.weather_move_mult ?? 1.0);
+    if (ind.health?.pregnancy) speed *= 0.4;
 
-    if ((ind.satiation ?? 0.5) < 0.3 && !ind.is_founder) speed *= 1.4;
-    if (ind.health?.pregnancy)                            speed *= 0.4;
+    // ── Hayatta kalma stresi: temel ihtiyaçlar ne kadar karşılanmıyor ────────
+    const cal = ind.health?.calories  ?? 0.7;
+    const hyd = ind.health?.hydration ?? 0.7;
+    const survivalStress = Math.min(1, Math.max(0,
+      Math.max((0.45 - cal) / 0.45, (0.35 - hyd) / 0.35)
+    ));
+    if (survivalStress > 0.15) speed *= (1 + survivalStress * 0.9);
 
-    // Persistent direction with slow random drift
     if (ind._moveAngle === undefined) ind._moveAngle = Math.random() * Math.PI * 2;
-    ind._moveAngle += (Math.random() - 0.5) * 0.3;
+    ind._moveAngle += (Math.random() - 0.5) * 0.25;
 
-    // ── Founders: strong pull back toward home ───────────────────────────────
-    if (ind.is_founder && ind.home_x !== undefined) {
-      const dx = ind.home_x - (ind.x ?? 0);
-      const dy = ind.home_y - (ind.y ?? 0);
-      const distFromHome = Math.hypot(dx, dy);
-      if (distFromHome > 0.01) {
-        ind._moveAngle = Math.atan2(dy, dx) * 0.98 + ind._moveAngle * 0.02;
+    if (ind.is_founder) {
+      // ── Kurucular: sabit yuva çıpası ──────────────────────────────────────
+      speed *= 0.08;
+      const homeX = ind.home_x ?? (this.worldState.longitude ?? 0);
+      const homeY = ind.home_y ?? (this.worldState.latitude  ?? 0);
+      const hdx   = homeX - (ind.x ?? 0);
+      const hdy   = homeY - (ind.y ?? 0);
+      if (Math.hypot(hdx, hdy) > 0.005) {
+        ind._moveAngle = Math.atan2(hdy, hdx) * 0.97 + ind._moveAngle * 0.03;
       }
-    }
+    } else {
+      // ── Bant uyumu: centroide çekim ──────────────────────────────────────
+      const cx      = this._bandCentroid?.x ?? (this.worldState.longitude ?? 0);
+      const cy      = this._bandCentroid?.y ?? (this.worldState.latitude  ?? 0);
+      const bdx     = cx - (ind.x ?? 0);
+      const bdy     = cy - (ind.y ?? 0);
+      const bdist   = Math.hypot(bdx, bdy);
+      const freeZone    = 0.3 + survivalStress * 1.2;
+      const cohesionStr = Math.max(0.15, 0.88 - survivalStress * 0.65);
+      if (bdist > freeZone) {
+        const pull = Math.min(1, (bdist - freeZone) / 2) * cohesionStr;
+        ind._moveAngle = Math.atan2(bdy, bdx) * pull + ind._moveAngle * (1 - pull);
+      }
 
-    // ── Group territory anchor — all members stay near territory center ──────
-    if (ind.group_id && !ind.is_founder) {
-      const grp = this.groups.find(g => g.id === ind.group_id);
-      if (grp?.territory) {
-        const dx = grp.territory.x - (ind.x ?? 0);
-        const dy = grp.territory.y - (ind.y ?? 0);
-        const dist = Math.hypot(dx, dy);
-        const pullRadius = grp.territory.radius ?? 1;
-        if (dist > pullRadius * 0.5) {
-          const pull = Math.min(1, (dist - pullRadius * 0.5) / pullRadius) * 0.75;
-          ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
+      // ── Hafıza temelli yiyecek arama ──────────────────────────────────────
+      if ((ind.satiation ?? 0.5) > 0.72) {
+        ind._goodFoodAngle = ind._moveAngle;
+      } else if (survivalStress > 0.35 && ind._goodFoodAngle !== undefined) {
+        const memPull = Math.min(0.55, survivalStress * 0.6);
+        ind._moveAngle = ind._goodFoodAngle * memPull + ind._moveAngle * (1 - memPull);
+      }
+
+      // ── Çiftleşme dürtüsü: temel ihtiyaçlar karşılandığında devreye girer ─
+      if (cal > 0.38 && hyd > 0.32 && !ind.health?.pregnancy
+          && ageYears >= 13 && (ind.mating_urge ?? 0) > 0.65) {
+        const oppSex = ind.sex === 'male' ? 'female' : 'male';
+        let nearestDist = 10;
+        let nearestPartner = null;
+        for (const other of this.population.values()) {
+          if (other.is_dead || other.id === ind.id || other.sex !== oppSex) continue;
+          const otherAge = other.age / 365;
+          if (otherAge < 13 || otherAge > 65 || other.health?.pregnancy) continue;
+          const d = Math.hypot((other.x ?? 0) - (ind.x ?? 0), (other.y ?? 0) - (ind.y ?? 0));
+          if (d < nearestDist) { nearestDist = d; nearestPartner = other; }
+        }
+        if (nearestPartner) {
+          const pdx = (nearestPartner.x ?? 0) - (ind.x ?? 0);
+          const pdy = (nearestPartner.y ?? 0) - (ind.y ?? 0);
+          const urgePull = Math.min(0.72, ((ind.mating_urge - 0.65) / 0.35) * 0.65);
+          ind._moveAngle = Math.atan2(pdy, pdx) * urgePull + ind._moveAngle * (1 - urgePull);
         }
       }
     }
 
-    // ── Child-parent attachment: ages 2–12 follow parent closely ────────────
-    if (ageYears >= 2 && ageYears < 12) {
-      const parent = this.population.get(ind.parent_1_id) ?? this.population.get(ind.parent_2_id);
-      if (parent && !parent.is_dead) {
-        const dx = (parent.x ?? 0) - (ind.x ?? 0);
-        const dy = (parent.y ?? 0) - (ind.y ?? 0);
-        const dist = Math.hypot(dx, dy);
-        if (dist > 0.05) {
-          const pull = Math.min(1, dist / 0.5) * 0.9;
-          ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
-        }
-      }
-    }
-
-    // ── Adolescents (12–18): stay reasonably close to parents ───────────────
-    if (ageYears >= 12 && ageYears < 18) {
-      const parent = this.population.get(ind.parent_1_id) ?? this.population.get(ind.parent_2_id);
-      if (parent && !parent.is_dead) {
-        const dx = (parent.x ?? 0) - (ind.x ?? 0);
-        const dy = (parent.y ?? 0) - (ind.y ?? 0);
-        const dist = Math.hypot(dx, dy);
-        if (dist > 0.3) {
-          const pull = Math.min(1, dist / 2) * 0.5;
-          ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
-        }
-      }
-    }
-
-    // ── Ungrouped adults (18+): soft pull toward home to stay in mating range ─
-    if (ageYears >= 18 && !ind.group_id && !ind.is_founder) {
-      const homeX = this.worldState.longitude ?? 0;
-      const homeY = this.worldState.latitude  ?? 0;
-      const dx = homeX - (ind.x ?? 0);
-      const dy = homeY - (ind.y ?? 0);
-      const dist = Math.hypot(dx, dy);
-      if (dist > 4) {
-        const pull = Math.min(1, (dist - 4) / 8) * 0.8;
-        ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
-      }
-    }
-
-    const step = speed * (0.6 + Math.random() * 0.8);
+    const step = speed * (0.5 + Math.random() * 0.8);
     ind.x = Math.max(-180, Math.min(180, (ind.x ?? 0) + Math.cos(ind._moveAngle) * step));
     ind.y = Math.max(-85,  Math.min(85,  (ind.y ?? 0) + Math.sin(ind._moveAngle) * step));
 
-    // ── Founders: hard position clamp — essentially stationary ───────────────
+    // ── Kurucular: sert konum sınırı ──────────────────────────────────────────
     if (ind.is_founder && ind.home_x !== undefined) {
-      const dx = ind.x - ind.home_x;
-      const dy = ind.y - ind.home_y;
+      const dx   = ind.x - ind.home_x;
+      const dy   = ind.y - ind.home_y;
       const dist = Math.hypot(dx, dy);
-      if (dist > 0.02) {
-        ind.x = ind.home_x + (dx / dist) * 0.02;
-        ind.y = ind.home_y + (dy / dist) * 0.02;
+      if (dist > 0.04) {
+        ind.x = ind.home_x + (dx / dist) * 0.04;
+        ind.y = ind.home_y + (dy / dist) * 0.04;
       }
     }
   }
@@ -520,7 +556,82 @@ export class SimulationEngine {
     // Age-related decline
     if (ageYears > 50) health.hp = Math.max(0, health.hp - (ageYears - 50) * 0.00005);
 
+    // Weather health effects
+    const hpDelta = this.worldState.weather_hp_delta ?? 0;
+    if (hpDelta < 0) {
+      const ph = individual.phenotype ?? {};
+      const endurance     = ph.physical_endurance  ?? 0.5;
+      const resilience    = ph.stress_resilience   ?? 0.4;
+      const metabolism    = ph.metabolism          ?? 0.5;
+      // Cold tolerance (0–1): high endurance + resilience helps
+      const coldTolerance = endurance * 0.5 + resilience * 0.3 + 0.2;
+      // Heat tolerance (0–1): high metabolism + endurance helps
+      const heatTolerance = metabolism * 0.3 + endurance * 0.4 + 0.3;
+
+      if (this.worldState.weather_cold_risk) {
+        const temp = this.worldState.temperature ?? 10;
+        // Damage scales with how far below the individual's cold threshold the temp drops
+        const coldThreshold = coldTolerance * 15 - 5; // roughly -5°C to +10°C range
+        if (temp < coldThreshold) {
+          const coldStress = Math.min(1, (coldThreshold - temp) / 30);
+          health.hp = Math.max(0, health.hp + hpDelta * coldStress * (1.2 - coldTolerance));
+        }
+      } else if (this.worldState.weather_heat_risk) {
+        const temp = this.worldState.temperature ?? 25;
+        const heatThreshold = 28 + heatTolerance * 12; // roughly 28–40°C range
+        if (temp > heatThreshold) {
+          const heatStress = Math.min(1, (temp - heatThreshold) / 20);
+          health.hp = Math.max(0, health.hp + hpDelta * heatStress * (1.2 - heatTolerance));
+        }
+      } else {
+        // Non-temperature weather (storm, heavy_rain, drought) — resilience reduces impact
+        health.hp = Math.max(0, health.hp + hpDelta * (1.0 - resilience * 0.5));
+      }
+    }
+
     individual.health_score = health.hp;
+  }
+
+  updateMatingUrge(ind) {
+    if (ind.is_dead) return;
+    const ageYears = ind.age / 365;
+
+    // Ergenlik öncesi veya çok yaşlı — dürtü yok
+    if (ageYears < 13 || ageYears > 72) { ind.mating_urge = 0; return; }
+
+    // Hamilelikte sıfır
+    if (ind.health?.pregnancy) { ind.mating_urge = 0; return; }
+
+    if (ind.mating_urge === undefined) ind.mating_urge = Math.random() * 0.4;
+
+    // Günlük birikim hızı
+    let rate = 0.006; // ~170 günde 1'e ulaşır
+
+    // Yaş etkisi: 18-35 en yüksek, sonra yavaşlar
+    if (ageYears < 18)       rate *= 0.55;
+    else if (ageYears < 35)  rate *= 1.2;
+    else if (ageYears > 55)  rate *= 0.55;
+    else if (ageYears > 65)  rate *= 0.25;
+
+    // Sağlık etkisi: aç veya hasta → dürtü azalır
+    const hp  = ind.health?.hp       ?? 0.8;
+    const cal = ind.health?.calories ?? 0.7;
+    if (hp < 0.35 || cal < 0.25)        rate *= 0.15;
+    else if (hp > 0.7 && cal > 0.6)     rate *= 1.1;
+
+    // Mevsim: ilkbahar ve yaz biraz artırır
+    const season = this.worldState.season ?? 'spring';
+    if (season === 'spring' || season === 'summer') rate *= 1.15;
+
+    // Bireysel fenotip: fertilite yüksekse dürtü de yüksek
+    const fertility = ind.phenotype?.fertility ?? 0.5;
+    rate *= (0.65 + fertility * 0.7);
+
+    // Psikolojik stres dürtüyü bastırır
+    const stress = ind.psychology?.stress_level ?? 0.3;
+    if (stress > 0.7) rate *= 0.4;
+
+    ind.mating_urge = Math.min(1, (ind.mating_urge ?? 0) + rate);
   }
 
   processSocialInteractions(alive, day, tickEvents) {
@@ -585,6 +696,29 @@ export class SimulationEngine {
       // Language learning from parent (faster than random encounter)
       if (parent.language?.stage > (ind.language?.stage ?? 0) && Math.random() < 0.1) {
         learnFromTeacher(ind, parent);
+      }
+
+      // Observational learning: children near high-care parents develop stronger parental bonding.
+      // This is the "non-founder" transmission pathway — purely genetic inheritance + developmental
+      // plasticity, no scripted drive. The phenotypic boost here stays with the individual for life
+      // and shapes how they treat THEIR children (who are then kept close via the co-movement pass).
+      if (ageYears >= 2 && ageYears < 15 && dist < 1.5 && ind.phenotype) {
+        const parentCare = parent.phenotype?.parental_care ?? 0.5;
+        if (parentCare > 0.55) {
+          const currentCare = ind.phenotype.parental_care ?? 0.5;
+          const gap = parentCare - currentCare;
+          // Only pulls upward toward the parent's level — can't exceed 92% (some variation preserved)
+          if (gap > 0) {
+            ind.phenotype.parental_care = Math.min(0.92, currentCare + gap * 0.00008);
+          }
+          // Prime OXTR epigenetic mark (heritable for 2 generations via inheritEpigenome)
+          if (ind.epigenome?.OXTR_METHYL) {
+            ind.epigenome.OXTR_METHYL.methylation = Math.max(
+              0.22,
+              ind.epigenome.OXTR_METHYL.methylation - 0.000015
+            );
+          }
+        }
       }
 
       // Tech learning: parent's discovered techs boost child's discovery
@@ -661,6 +795,8 @@ export class SimulationEngine {
       water_abundance: Math.round((this.worldState.water_abundance ?? 0.7) * 100) / 100,
       biome: this.worldState.biome ?? 'mediterranean',
       has_disaster: !!(this.worldState.recent_disaster),
+      weather: this.worldState.current_weather ?? 'clear',
+      weather_intensity: Math.round((this.worldState.weather_intensity ?? 0.5) * 100) / 100,
       births: Math.max(0, this.population.size - 2),
       deaths: Math.max(0, this.population.size - alive.length),
       word_count: new Set(alive.flatMap(i => Object.keys(i.language?.vocabulary ?? {}))).size,
@@ -701,12 +837,32 @@ export class SimulationEngine {
           const c = i.death_cause ?? 'unknown';
           causes[c] = (causes[c] ?? 0) + 1;
         }
+        return { count: dead.length, avg_age: Math.round(avgDeathAge * 10) / 10, infant_deaths: infantDeaths, child_deaths: childDeaths, causes };
+      })(),
+      founders: (() => {
+        const all = [...this.population.values()].filter(i => i.is_founder);
+        return all.map(i => ({
+          sex: i.sex,
+          age: Math.round(getAge(i, day)),
+          alive: !i.is_dead,
+          note: 'Kurucular tasarım gereği sabit konumdadır — aile bandının çıpasıdır',
+        }));
+      })(),
+      movement_context: (() => {
+        if (!alive.length) return null;
+        const avgUrge   = alive.reduce((s, i) => s + (i.mating_urge ?? 0), 0) / alive.length;
+        const avgCal    = alive.reduce((s, i) => s + (i.health?.calories ?? 0.7), 0) / alive.length;
+        const avgHyd    = alive.reduce((s, i) => s + (i.health?.hydration ?? 0.7), 0) / alive.length;
+        const cx = this._bandCentroid?.x ?? 0;
+        const cy = this._bandCentroid?.y ?? 0;
+        const avgDist   = alive.reduce((s, i) => s + Math.hypot((i.x??0)-cx, (i.y??0)-cy), 0) / alive.length;
+        const dominant  = avgCal < 0.38 ? 'yiyecek arama' : avgHyd < 0.32 ? 'su arama' : avgUrge > 0.65 ? 'çiftleşme arayışı' : 'bant uyumu (birlikte kalma)';
         return {
-          count: dead.length,
-          avg_age: Math.round(avgDeathAge * 10) / 10,
-          infant_deaths: infantDeaths,
-          child_deaths: childDeaths,
-          causes,
+          dominant_drive: dominant,
+          avg_mating_urge: Math.round(avgUrge * 100) / 100,
+          avg_calories: Math.round(avgCal * 100) / 100,
+          avg_hydration: Math.round(avgHyd * 100) / 100,
+          avg_dist_from_center_deg: Math.round(avgDist * 100) / 100,
         };
       })(),
     };
