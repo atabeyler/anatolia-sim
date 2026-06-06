@@ -30,7 +30,7 @@ router.post('/:simId/intervene', authenticate, requireSimulationOwner, async (re
           if (dist < radius) {
             const risk = (magnitude - 4) / 5 * (1 - dist / radius);
             if (Math.random() < risk) { markDead(ind, engine.currentDay, 'earthquake'); deaths++; }
-            else ind.health.hp = Math.max(0.1, ind.health.hp - risk * 0.5);
+            else { if (!ind.health) ind.health = { hp: 1.0, calories: 1.0, hydration: 1.0, disease: null, injuries: [] }; ind.health.hp = Math.max(0.1, (ind.health.hp ?? 1) - risk * 0.5); }
             affected++;
           }
         }
@@ -50,8 +50,13 @@ router.post('/:simId/intervene', authenticate, requireSimulationOwner, async (re
         const { mortality_rate = 0.2, spread_rate = 0.5 } = params;
         for (const ind of alive) {
           if (Math.random() < spread_rate) {
-            if (Math.random() < mortality_rate * (1 - ind.phenotype.immune_strength)) { markDead(ind, engine.currentDay, 'epidemic'); deaths++; }
-            else ind.health.disease = { type: 'epidemic', duration: 21, daily_mortality_risk: 0.01 };
+            if (Math.random() < mortality_rate * (1 - (ind.phenotype.immune_strength ?? 0.5))) { markDead(ind, engine.currentDay, 'epidemic'); deaths++; }
+            else {
+              if (!ind.infections) ind.infections = [];
+              if (!ind.infections.some(x => x.pathogen_id === 'epidemic')) {
+                ind.infections.push({ pathogen_id: 'epidemic', days_remaining: 21, infected_day: engine.currentDay, severity: mortality_rate });
+              }
+            }
             affected++;
           }
         }
@@ -59,7 +64,11 @@ router.post('/:simId/intervene', authenticate, requireSimulationOwner, async (re
       }
       case 'genetic_boost': {
         const ind = engine.population.get(params.individual_id);
-        if (ind) { ind.phenotype[params.trait] = Math.min(1, (ind.phenotype[params.trait] ?? 0.5) + params.amount); affected = 1; }
+        if (ind && !ind.is_dead) {
+          if (!ind.is_founder) return res.status(400).json({ error: 'Genetic boost only applies to founders — simulation integrity rule' });
+          ind.phenotype[params.trait] = Math.min(1, (ind.phenotype[params.trait] ?? 0.5) + params.amount);
+          affected = 1;
+        }
         break;
       }
       case 'instant_death': {
@@ -80,7 +89,7 @@ router.post('/:simId/intervene', authenticate, requireSimulationOwner, async (re
           if (dist < radius) {
             const risk = (power / 10) * Math.exp(-dist / (radius * 0.4));
             if (Math.random() < risk * 0.5) { markDead(ind, engine.currentDay, 'volcano'); deaths++; }
-            else ind.health.hp = Math.max(0.1, ind.health.hp - risk * 0.4);
+            else { if (!ind.health) ind.health = { hp: 1.0, calories: 1.0, hydration: 1.0, disease: null, injuries: [] }; ind.health.hp = Math.max(0.1, (ind.health.hp ?? 1) - risk * 0.4); }
             affected++;
           }
         }

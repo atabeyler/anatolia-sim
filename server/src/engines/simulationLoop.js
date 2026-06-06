@@ -4,7 +4,7 @@ import { rollDeath } from './biology/mortality.js';
 import { checkReproduction } from './biology/reproduction.js';
 import { updateWorldState, computeResourcePressure } from './environment/environmentEngine.js';
 import { buildPhonology } from './language/nameEngine.js';
-import { updateLanguageStage, learnFromTeacher, updateFoxp2Expression, tryAcquireWordFromEnvironment, CORE_CONCEPTS } from './language/languageEngine.js';
+import { updateLanguageStage, learnFromTeacher, updateFoxp2Expression, tryAcquireWordFromEnvironment, generateProtoWord, CORE_CONCEPTS } from './language/languageEngine.js';
 import { tryDiscoverTech } from './technology/technologyEngine.js';
 import { getAge } from './biology/individual.js';
 import { processGroupDynamics, assignGroupRoles } from './social/socialEngine.js';
@@ -12,7 +12,7 @@ import { gatherResources, consumeResources, produceGoods, attemptTrade, computeE
 import { tryFormBelief, updateBeliefSpread, checkRitualEmergence } from './belief/beliefEngine.js';
 import { processCultureTick } from './culture/cultureEngine.js';
 import { processArtTick, applyArtEffects } from './art/artEngine.js';
-import { processArchitectureTick, createSettlement } from './architecture/architectureEngine.js';
+import { processArchitectureTick, createSettlement, checkSettlementOvercrowding } from './architecture/architectureEngine.js';
 import { processLawTick } from './law/lawEngine.js';
 import { processMicrobiomeTick, spreadInfection, updateGutMicrobiome, computeHealthStats } from './microbiome/microbiomeEngine.js';
 import { initializePsychology, updateMentalState, processBonding, computePopulationPsychStats } from './psychology/psychologyEngine.js';
@@ -140,6 +140,10 @@ export class SimulationEngine {
     if (this.worldState.natural_disaster) {
       this.processDisaster(this.worldState.natural_disaster, alive, day);
     }
+    // recent_disaster fades after 120 days (meaningful grace period for belief formation)
+    if (this.worldState.recent_disaster && day - (this.worldState.recent_disaster_day ?? 0) > 120) {
+      this.worldState.recent_disaster = null;
+    }
 
     // 2. Epigenetics & microbiome daily update
     for (const ind of alive) {
@@ -244,7 +248,9 @@ export class SimulationEngine {
       const langBonus = (ind.language?.stage ?? 0) / 6 * 0.00005;
       const socialBonus = ind.group_id ? 0.00002 : 0;
       const stressPenalty = (ind.psychology?.stress_level ?? 0.3) * 0.00003;
-      ind.mind.consciousness = Math.min(1, Math.max(0,
+      // Genetic ceiling: consciousness cannot exceed potential × 1.2 (20% headroom for cultural effects)
+      const geneticCap = Math.min(1, potential * 1.2);
+      ind.mind.consciousness = Math.min(geneticCap, Math.max(0,
         (ind.mind.consciousness ?? 0) + potential * 0.0001 + langBonus + socialBonus - stressPenalty
       ));
     }
@@ -339,6 +345,15 @@ export class SimulationEngine {
     for (const ind of alive) {
       const langResult = updateLanguageStage(ind, alive.length, genCount, ind.group_id ?? 'global');
       if (langResult?.upgraded) {
+        // Bootstrap: seed 5 CORE_CONCEPTS when first reaching stage 2+ so lexical emergence starts
+        if (langResult.newStage >= 2) {
+          ind.language.vocabulary = ind.language.vocabulary ?? {};
+          for (const concept of CORE_CONCEPTS.slice(0, 5)) {
+            if (!ind.language.vocabulary[concept]) {
+              ind.language.vocabulary[concept] = generateProtoWord(concept, ind.group_id ?? 'global');
+            }
+          }
+        }
         const name = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
         const stageName = langResult.stageName ?? ind.language?.stage_name ?? 'language';
         tickEvents.push({
@@ -431,6 +446,12 @@ export class SimulationEngine {
       for (const ev of archEvents) {
         tickEvents.push(ev);
         this.logEvent(day, 'architecture', ev.description, ev, ev.importance === 'high' ? 4 : 2);
+      }
+      const groupSize = alive.filter(i => i.group_id === settlement.group_id).length;
+      const crowdEv = checkSettlementOvercrowding(settlement, groupSize, day);
+      if (crowdEv) {
+        tickEvents.push(crowdEv);
+        this.logEvent(day, 'architecture', crowdEv.description, crowdEv, 3);
       }
     }
     // Create settlement for new groups
@@ -838,15 +859,15 @@ export class SimulationEngine {
         this.logEvent(day, 'disaster', `${type} killed ${deaths} individuals`, { type, deaths, ...disaster }, 5);
       }
       this.worldState.recent_disaster = type;
+      this.worldState.recent_disaster_day = day;
     }
     // Clear after processing
     this.worldState.natural_disaster = null;
-    // recent_disaster fades after a few days
-    if (day % 10 === 0) this.worldState.recent_disaster = null;
   }
 
   estimateGenerations() {
-    const oldest = Math.max(...[...this.population.values()].map(i => this.currentDay - (i.birth_day ?? 0)), 0);
+    const ages = [...this.population.values()].map(i => this.currentDay - (i.birth_day ?? 0));
+    const oldest = ages.length > 0 ? Math.max(...ages) : 0;
     return Math.floor(oldest / (25 * 365));
   }
 

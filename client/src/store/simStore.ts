@@ -31,6 +31,9 @@ interface SimStats {
   max_tom_stage?: number;
   tech_progress?: Record<string, number>;
   qol_index?: number;
+  social_order?: number;
+  astronomy_knowledge?: number;
+  weather?: string;
 }
 
 interface SimEvent {

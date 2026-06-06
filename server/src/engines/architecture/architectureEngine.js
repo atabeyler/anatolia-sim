@@ -8,5 +8,6 @@ function getBuildPriority(s,gs,ws){const ex=new Set(s.structures?.map(x=>x.type)
 function hasMat(s,m){if(!m||m.length===0)return true;return m.every(x=>(s.stockpile?.[x]??0)>=1);}
 function consumeMat(s,m){if(!s.stockpile)s.stockpile={};for(const x of m)s.stockpile[x]=Math.max((s.stockpile[x]??0)-1,0);}
 export function computeSettlementCapacity(s){return(s.structures??[]).reduce((c,x)=>c+(STRUCTURE_TYPES[x.type]?.capacity??0),0);}
+export function checkSettlementOvercrowding(settlement,groupSize,simDay){const cap=computeSettlementCapacity(settlement);if(cap>0&&groupSize>cap*1.2){return{type:'settlement_overcrowded',settlement_id:settlement.id,day:simDay,importance:'medium',description:`${settlement.name??'The settlement'} is overcrowded (${groupSize} of ${cap} capacity)`};}return null;}
 export function computeSettlementDefense(s){return(s.structures?.filter(x=>x.type==='defensive_wall'||x.type==='city_wall')??[]).reduce((d,w)=>d+w.condition*0.5,0);}
 export function createSettlement(group,worldState,simDay){return{id:`settlement_${simDay}_${Math.random().toString(36).slice(2,6)}`,name:null,group_id:group.id,x:group.territory?.x??0,y:group.territory?.y??0,biome:worldState.biome,structures:[],labor_pool:0,stockpile:{},founded_day:simDay};}
