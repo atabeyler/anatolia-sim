@@ -150,9 +150,8 @@ export default function DashboardPage() {
               <span className="hidden sm:inline">ÇIKIŞ</span>
             </button>
             <button onClick={() => setMenuOpen(true)}
-              className="flex items-center gap-1 font-share-tech transition-all hover:brightness-110"
-              style={{ padding: '5px 8px', fontSize: 13, border: '1px solid rgba(200,34,34,0.5)', color: '#9abaaa', background: 'transparent', letterSpacing: '0.08em' }}>
-              ☰<span className="hidden sm:inline ml-1" style={{ fontSize: 11 }}>MENÜ</span>
+              style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid rgba(160,200,176,0.35)', color: '#a0c8b0', background: 'transparent', fontSize: 14, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
+              ☰ MENÜ
             </button>
           </div>
         </div>

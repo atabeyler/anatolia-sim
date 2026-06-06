@@ -335,21 +335,10 @@ export default function LoginPage() {
       {/* MENÜ button — top right */}
       <button
         onClick={() => setMenuOpen(true)}
-        className="fixed z-30 font-share-tech tracking-widest"
-        style={{
-          top: 12,
-          right: 12,
-          fontSize: 11,
-          padding: '5px 10px',
-          background: 'rgba(4,4,15,0.85)',
-          border: '1px solid rgba(79,110,247,0.35)',
-          color: '#a0b4ff',
-          letterSpacing: '0.25em',
-          backdropFilter: 'blur(8px)',
-          clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))',
-        }}
+        className="fixed z-30"
+        style={{ top: 12, right: 12, display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid rgba(160,200,176,0.35)', color: '#a0c8b0', background: 'transparent', fontSize: 14, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}
       >
-        MENÜ
+        ☰ MENÜ
       </button>
 
       <SimMenuOverlay
