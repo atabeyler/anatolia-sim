@@ -215,6 +215,10 @@ html { height: 100%; }
   white-space: nowrap;
 }
 
+.footer-bar-rights {
+  white-space: nowrap;
+}
+
 @media (max-width: 720px) {
   .footer-bar-text {
     white-space: normal;
@@ -224,6 +228,10 @@ html { height: 100%; }
   }
 
   .footer-bar-company {
+    white-space: normal;
+  }
+
+  .footer-bar-rights {
     white-space: normal;
   }
 }
