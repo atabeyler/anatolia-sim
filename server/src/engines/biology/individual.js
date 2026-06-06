@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { createGenome, createGamete, combineGametes, computePhenotype } from './genome.js';
 import { generateName } from '../language/nameEngine.js';
+import { inheritEpigenome, initializeEpigenome } from '../epigenetics/epigeneticsEngine.js';
 
 export const LIFE_STAGE = {
   INFANT:     { name: 'infant',     minAge: 0,  maxAge: 2   },
@@ -55,13 +56,18 @@ export function createChild(parent1, parent2, birthDay, simulationId, communityL
   // Name emerges from the civilization's own phonological system, not a pre-written list
   phenotype.name = phonology ? generateName(phonology, communityLangStage) : null;
   phenotype.height_cm = Math.round(150 + phenotype.height_factor * 45);
-  return {
+
+  // Ensure parents have epigenomes before inheriting
+  if (!parent1.epigenome || Object.keys(parent1.epigenome).length === 0) initializeEpigenome(parent1);
+  if (!parent2.epigenome || Object.keys(parent2.epigenome).length === 0) initializeEpigenome(parent2);
+
+  const child = {
     id: uuidv4(), simulation_id: simulationId,
     birth_day: birthDay, death_day: null, alive: true, sex,
     x: parent1.x + (Math.random() - 0.5) * 0.04,
     y: parent1.y + (Math.random() - 0.5) * 0.04,
     genome, phenotype,
-    epigenome: inheritEpigenome(parent1, parent2),
+    epigenome: {},
     health: createInitialHealth(phenotype, true),
     mind: createInitialMind(phenotype),
     social: createInitialSocial(),
@@ -71,6 +77,11 @@ export function createChild(parent1, parent2, birthDay, simulationId, communityL
     parent_1_id: parent1.id, parent_2_id: parent2.id,
     inbreeding_coeff: 0, is_twin: false,
   };
+
+  // Populate epigenome with proper heritability-weighted inheritance
+  inheritEpigenome(child, parent1, parent2);
+
+  return child;
 }
 
 function createInitialHealth(phenotype, isNewborn = false) {
@@ -107,17 +118,6 @@ function createInitialLanguage(phenotype) {
   };
 }
 
-function inheritEpigenome(parent1, parent2) {
-  const inherited = {};
-  for (const epi of [parent1.epigenome, parent2.epigenome]) {
-    for (const [key, val] of Object.entries(epi)) {
-      if (val.heritable && val.generation_count > 0) {
-        inherited[key] = { ...val, generation_count: val.generation_count - 1 };
-      }
-    }
-  }
-  return inherited;
-}
 
 export function getAge(individual, currentDay) {
   return (currentDay - individual.birth_day) / 365;
