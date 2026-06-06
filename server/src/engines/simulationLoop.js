@@ -269,7 +269,7 @@ export class SimulationEngine {
       if (ind.is_dead && !ind.death_day) {
         ind.death_day = day;
         const deadName2 = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
-        this.logEvent(day, 'death', `${deadName2} died: ${ind.cause_of_death ?? 'unknown'}`, { individual_id: ind.id, name: deadName2 }, 1);
+        this.logEvent(day, 'death', `${deadName2} died: ${ind.death_cause ?? ind.cause_of_death ?? 'unknown'}`, { individual_id: ind.id, name: deadName2 }, 1);
       }
     }
 
