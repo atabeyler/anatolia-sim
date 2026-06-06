@@ -26,7 +26,7 @@ export default function GodPanel() {
     if (!currentSim || !accessToken) return;
     axios.get(`/api/simulations/${currentSim.id}/population?alive=true&limit=50`, { headers: { Authorization: `Bearer ${accessToken}` } })
       .then(r => { setPopulation(r.data); if (r.data.length > 0) setSelectedIndId(r.data[0].id); })
-      .catch(() => {});
+      .catch(() => setPopulation([]));
   }, [currentSim?.id, accessToken]);
 
   async function intervene(type: string, params: any) {

@@ -20,7 +20,7 @@ export default function TimeMachinePanel() {
     if (!currentSim || !accessToken) return;
     axios.get(`/api/simulations/${currentSim.id}/checkpoints`, { headers: { Authorization: `Bearer ${accessToken}` } })
       .then(r => setCheckpoints(r.data))
-      .catch(() => {});
+      .catch(() => setCheckpoints([]));
   }
 
   useEffect(() => { loadCheckpoints(); }, [currentSim?.id]);
