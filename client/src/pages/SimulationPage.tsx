@@ -310,6 +310,14 @@ export default function SimulationPage() {
     return idx === 0 ? '#a0e8c0' : `rgba(80,160,110,${Math.max(0.25, 1 - idx * 0.07)})`;
   }
 
+  const uiText = {
+    live: lang === 'tr' ? 'CANLI' : 'LIVE',
+    speed: lang === 'tr' ? 'HIZ' : 'SPEED',
+    set: lang === 'tr' ? 'AYARLA' : 'SET',
+    creatorTime: lang === 'tr' ? 'KURUCU ZAMANI' : 'CREATOR TIME',
+    user: lang === 'tr' ? 'KULLANICI' : 'USER',
+  };
+
   const sidebarW = sidebarExpanded ? 180 : 44;
 
   return (
@@ -348,7 +356,7 @@ export default function SimulationPage() {
 
           {!isMobile && (
             <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: 6 }}>
-              <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em' }}>KURUCU ZAMANI</span>
+              <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em' }}>{uiText.creatorTime}</span>
               <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.05em' }}>{realTime}</span>
             </div>
           )}
@@ -410,13 +418,13 @@ export default function SimulationPage() {
                 background: 'rgba(10,10,30,0.45)',
                 clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))',
               }}>
-                <span style={{ fontSize: 8, color: '#a0c8b0', letterSpacing: '0.18em' }}>{lang === 'tr' ? 'KULLANICI' : 'USER'}</span>
+                <span style={{ fontSize: 8, color: '#a0c8b0', letterSpacing: '0.18em' }}>{uiText.user}</span>
                 <span style={{ fontSize: 12, color: '#e0e0f0', letterSpacing: '0.08em', fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
                   {user.username.toUpperCase()}
                 </span>
               </div>
             )}
-            {!isMobile && <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em', flexShrink: 0 }}>HIZ</span>}
+            {!isMobile && <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em', flexShrink: 0 }}>{uiText.speed}</span>}
             {SPEEDS.map(s => (
               <button key={s} onClick={() => changeSpeed(s)}
                 style={{
@@ -442,7 +450,7 @@ export default function SimulationPage() {
               <button
                 onClick={applyCustomSpeed}
                 style={{ padding: '2px 7px', fontSize: 13, border: '1px solid rgba(0,232,135,0.4)', color: '#00e887', background: 'rgba(0,232,135,0.08)', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0, letterSpacing: '0.05em' }}>
-                SET
+                {uiText.set}
               </button>
             </>)}
             {!isMobile && (
