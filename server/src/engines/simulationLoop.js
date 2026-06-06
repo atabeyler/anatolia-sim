@@ -38,6 +38,8 @@ export class SimulationEngine {
     this.events = [];
     this.generation = 0;
     this.running = false;
+    this._todayBirths = 0;
+    this._todayDeaths = 0;
     this.speedMultiplier = simulation.speed_multiplier ?? 1;
     this.onTick = null;
     this.onEvent = null;
@@ -100,6 +102,8 @@ export class SimulationEngine {
 
   async tick() {
     try {
+    this._todayBirths = 0;
+    this._todayDeaths = 0;
     const day = this.currentDay;
     for (const ind of this.population.values()) {
       ind.alive = !ind.is_dead;
@@ -248,6 +252,7 @@ export class SimulationEngine {
       const p2 = this.population.get(nb.parent_2_id);
       if (p1 && p2) inheritEpigenome(nb, p1, p2);
       this.population.set(nb.id, nb);
+      this._todayBirths++;
       tickEvents.push({ type: 'birth', individual_id: nb.id, day, importance: 'low' });
       const nbLabel = nb.phenotype?.name ?? `${nb.sex === 'male' ? '♂' : '♀'}-${nb.id.slice(-4).toUpperCase()}`;
       const p1Name = p1?.phenotype?.name ?? (p1 ? `${p1.sex === 'male' ? '♂' : '♀'}-${p1.id.slice(-4).toUpperCase()}` : '?');
@@ -273,6 +278,7 @@ export class SimulationEngine {
         ind.alive = false;
         ind.death_day = day;
         ind.death_cause = cause;
+        this._todayDeaths++;
         tickEvents.push({ type: 'death_of_kin', individual_id: ind.id, day });
         const deadName = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
         this.logEvent(day, 'death', `${deadName} died: ${cause}`, { individual_id: ind.id, cause, name: deadName }, 1);
@@ -787,6 +793,7 @@ export class SimulationEngine {
           ind.death_day = day;
           ind.death_cause = type;
           deaths++;
+          this._todayDeaths++;
         }
       }
       if (deaths > 0) {
@@ -841,8 +848,8 @@ export class SimulationEngine {
       has_disaster: !!(this.worldState.recent_disaster),
       weather: this.worldState.current_weather ?? 'clear',
       weather_intensity: Math.round((this.worldState.weather_intensity ?? 0.5) * 100) / 100,
-      births: Math.max(0, this.population.size - 2),
-      deaths: Math.max(0, this.population.size - alive.length),
+      births: this._todayBirths,
+      deaths: this._todayDeaths,
       word_count: new Set(alive.flatMap(i => Object.keys(i.language?.vocabulary ?? {}))).size,
       max_language_stage: Math.max(0, ...alive.map(i => i.language?.stage ?? 0)),
       mean_wealth: Math.round(econStats.mean_wealth * 100) / 100,

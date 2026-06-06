@@ -122,12 +122,16 @@ function serializeIndividual(ind, currentDay) {
     death_cause: ind.death_cause ?? null,
     genome: ind.genome,
     phenotype: ind.phenotype,
+    epigenome: ind.epigenome ?? null,
     health: ind.health,
     mind: ind.mind,
+    psychology: ind.psychology ?? null,
     social: ind.social,
     skills: ind.skills,
     beliefs: ind.beliefs,
     language: ind.language,
+    microbiome: ind.microbiome ?? null,
+    inventory: ind.inventory ?? null,
   };
 }
 
