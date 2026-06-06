@@ -439,31 +439,33 @@ export class SimulationEngine {
     if (ind._moveAngle === undefined) ind._moveAngle = Math.random() * Math.PI * 2;
     ind._moveAngle += (Math.random() - 0.5) * 0.25;
 
-    // ── Kurucular: yuva çıpası ────────────────────────────────────────────────
-    if (ind.is_founder) {
-      speed *= 0.12;
-      const homeX = ind.home_x ?? (this.worldState.longitude ?? 0);
-      const homeY = ind.home_y ?? (this.worldState.latitude  ?? 0);
-      const dx = homeX - (ind.x ?? 0);
-      const dy = homeY - (ind.y ?? 0);
-      if (Math.hypot(dx, dy) > 0.005) {
-        ind._moveAngle = Math.atan2(dy, dx) * 0.97 + ind._moveAngle * 0.03;
-      }
-    } else {
-      // ── Bant uyumu: açken zayıflar, tok ve sağlıklıyken güçlenir ────────────
-      const cx = this._bandCentroid?.x ?? (this.worldState.longitude ?? 0);
-      const cy = this._bandCentroid?.y ?? (this.worldState.latitude  ?? 0);
-      const dx = cx - (ind.x ?? 0);
-      const dy = cy - (ind.y ?? 0);
-      const dist = Math.hypot(dx, dy);
-      const freeZone    = 0.3 + survivalStress * 1.2;   // açken daha geniş alan
-      const cohesionStr = Math.max(0.15, 0.88 - survivalStress * 0.65);
-      if (dist > freeZone) {
-        const pull = Math.min(1, (dist - freeZone) / 2) * cohesionStr;
-        ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
-      }
+    // ── Herkes: bant centroidine çekim (kurucular dahil) ──────────────────────
+    const cx = this._bandCentroid?.x ?? (this.worldState.longitude ?? 0);
+    const cy = this._bandCentroid?.y ?? (this.worldState.latitude  ?? 0);
+    const bdx = cx - (ind.x ?? 0);
+    const bdy = cy - (ind.y ?? 0);
+    const bdist = Math.hypot(bdx, bdy);
+    const freeZone    = 0.3 + survivalStress * 1.2;
+    const cohesionStr = Math.max(0.15, 0.88 - survivalStress * 0.65);
+    if (bdist > freeZone) {
+      const pull = Math.min(1, (bdist - freeZone) / 2) * cohesionStr;
+      ind._moveAngle = Math.atan2(bdy, bdx) * pull + ind._moveAngle * (1 - pull);
+    }
 
-      // ── Hafıza temelli yiyecek arama ─────────────────────────────────────────
+    // ── Yumuşak yuva çekimi: bant 8°'den fazla sürüklendiyse geri çekilir ────
+    // (biom kaynakları başlangıç koordinatlarına bağlı — çok uzağa gitmemeli)
+    const homeX = this.worldState.longitude ?? 0;
+    const homeY = this.worldState.latitude  ?? 0;
+    const hdx   = homeX - (ind.x ?? 0);
+    const hdy   = homeY - (ind.y ?? 0);
+    const hdist = Math.hypot(hdx, hdy);
+    if (hdist > 8) {
+      const homePull = Math.min(0.5, (hdist - 8) / 15) * 0.35;
+      ind._moveAngle = Math.atan2(hdy, hdx) * homePull + ind._moveAngle * (1 - homePull);
+    }
+
+    if (!ind.is_founder) {
+      // ── Hafıza temelli yiyecek arama ───────────────────────────────────────
       if ((ind.satiation ?? 0.5) > 0.72) {
         ind._goodFoodAngle = ind._moveAngle;
       } else if (survivalStress > 0.35 && ind._goodFoodAngle !== undefined) {
@@ -496,16 +498,6 @@ export class SimulationEngine {
     const step = speed * (0.5 + Math.random() * 0.8);
     ind.x = Math.max(-180, Math.min(180, (ind.x ?? 0) + Math.cos(ind._moveAngle) * step));
     ind.y = Math.max(-85,  Math.min(85,  (ind.y ?? 0) + Math.sin(ind._moveAngle) * step));
-
-    if (ind.is_founder && ind.home_x !== undefined) {
-      const dx = ind.x - ind.home_x;
-      const dy = ind.y - ind.home_y;
-      const dist = Math.hypot(dx, dy);
-      if (dist > 0.04) {
-        ind.x = ind.home_x + (dx / dist) * 0.04;
-        ind.y = ind.home_y + (dy / dist) * 0.04;
-      }
-    }
   }
 
   updatePhysiology(individual, resourcePressure) {
