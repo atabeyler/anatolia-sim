@@ -162,6 +162,7 @@ export default function SimulationPage() {
   const [selectedInd, setSelectedInd] = useState<any>(null);
   const [globeCoord, setGlobeCoord] = useState<{ lat: number; lon: number } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [customSpeed, setCustomSpeed] = useState('');
   const [menuPage, setMenuPage] = useState<'language' | 'guide' | 'about' | 'mission' | 'contact' | null>(null);
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
   const [actionBusy, setActionBusy] = useState(false);
@@ -261,7 +262,7 @@ export default function SimulationPage() {
   }
 
   async function changeSpeed(s: number) {
-    if (!SPEEDS.includes(s) || !currentSim || !accessToken) return;
+    if (!Number.isInteger(s) || s < 1 || s > 1000 || !currentSim || !accessToken) return;
     const previous = speedMultiplier;
     setSpeed(s);
     try {
@@ -269,6 +270,11 @@ export default function SimulationPage() {
     } catch {
       setSpeed(previous);
     }
+  }
+
+  function applyCustomSpeed() {
+    const v = parseInt(customSpeed);
+    if (v >= 1 && v <= 1000) { changeSpeed(v); setCustomSpeed(''); }
   }
 
   async function terminateSim() {
@@ -405,6 +411,21 @@ export default function SimulationPage() {
                 {s}×
               </button>
             ))}
+            {!isMobile && (<>
+              <input
+                type="number" min={1} max={1000}
+                value={customSpeed}
+                onChange={e => setCustomSpeed(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') applyCustomSpeed(); }}
+                placeholder={`${speedMultiplier}×`}
+                style={{ fontSize: 13, padding: '2px 5px', width: 48, background: 'transparent', border: '1px solid rgba(160,200,176,0.3)', color: '#a0c8b0', fontFamily: 'Share Tech Mono, monospace', outline: 'none', flexShrink: 0 }}
+              />
+              <button
+                onClick={applyCustomSpeed}
+                style={{ padding: '2px 7px', fontSize: 13, border: '1px solid rgba(0,232,135,0.4)', color: '#00e887', background: 'rgba(0,232,135,0.08)', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0, letterSpacing: '0.05em' }}>
+                SET
+              </button>
+            </>)}
             {!isMobile && (
               <button onClick={terminateSim}
                 style={{ padding: '2px 6px', fontSize: 14, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.05em', cursor: 'pointer', flexShrink: 0 }}>
