@@ -88,7 +88,7 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions, menuPag
       style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       onClick={close}>
       <div
-        style={{ background: 'rgba(0,4,2,0.98)', border: '1px solid #cc2222', minWidth: 0, maxWidth: 480, width: '92vw', fontFamily: 'Share Tech Mono, monospace', boxShadow: '0 8px 40px rgba(0,0,0,0.8)', overflow: 'hidden' }}
+        style={{ background: 'rgba(0,4,2,0.98)', border: '1px solid #cc2222', width: 'clamp(300px, 90vw, 560px)', fontFamily: 'Share Tech Mono, monospace', boxShadow: '0 8px 40px rgba(0,0,0,0.8)', overflow: 'hidden' }}
         onClick={e => e.stopPropagation()}>
 
         {/* Header */}
