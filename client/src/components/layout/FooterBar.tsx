@@ -6,6 +6,13 @@ const TEXT_STYLE: React.CSSProperties = {
   letterSpacing: '0.15em',
   color: '#00e887',
   textShadow: '0 0 6px #00e887, 0 0 16px rgba(0,232,135,0.6)',
+  lineHeight: 1.1,
+  display: 'inline-flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: 0,
+  maxWidth: '100%',
+  textAlign: 'center',
 };
 
 const WRAPPER_BASE: React.CSSProperties = {
@@ -23,9 +30,9 @@ interface FooterBarProps {
 export default function FooterBar({ mode = 'fixed', className = '', style }: FooterBarProps) {
   const wrapperStyle: React.CSSProperties =
     mode === 'fixed'
-      ? { ...WRAPPER_BASE, position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, padding: '5px 16px' }
+      ? { ...WRAPPER_BASE, position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, padding: '5px 12px', display: 'flex', justifyContent: 'center', alignItems: 'center' }
       : mode === 'flow'
-      ? { ...WRAPPER_BASE, flexShrink: 0, padding: '4px 10px' }
+      ? { ...WRAPPER_BASE, flexShrink: 0, padding: '4px 10px', display: 'flex', justifyContent: 'center', alignItems: 'center' }
       : { padding: '0', background: 'transparent', border: 'none' };
 
   return (

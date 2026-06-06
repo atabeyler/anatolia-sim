@@ -365,40 +365,40 @@ export default function LoginPage() {
       <div
         className="fixed top-3 left-3 z-20"
         style={{
-          display: showMatrix ? 'none' : 'grid',
-          gridTemplateColumns: 'repeat(2, auto)',
-          columnGap: 12,
-          rowGap: 2,
+          display: showMatrix ? 'none' : 'flex',
+          flexDirection: 'column',
+          gap: 8,
           maxWidth: 'calc(100vw - 24px)',
         }}
       >
-        {STATUS.map((s, i) => (
-          <div key={s.label} className="flex items-center gap-1 boot-in" style={{ animationDelay: `${i * 80}ms` }}>
-            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.ok ? 'bg-sim-green pulse-live' : 'bg-sim-red'}`} />
-            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(11px, 1.05vw, 14px)', color: '#c0c8e8', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
-              {lang === 'tr' ? s.labelTr : s.label}
-            </span>
-            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(11px, 1.05vw, 14px)', color: '#4ecb71', marginLeft: 2, whiteSpace: 'nowrap' }}>
-              {s.val}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* Coordinate display bottom — pushed up to avoid footer overlap */}
-      <div
-        className="fixed bottom-16 right-3 left-auto sm:bottom-48 sm:left-3 sm:right-auto z-20 font-share-tech tracking-widest text-right sm:text-left"
-        style={{
-          fontSize: 'clamp(11px, 1.05vw, 14px)',
-          color: '#c0c8e8',
-          maxWidth: 'min(calc(100vw - 24px), 420px)',
-        }}
-      >
-        <div style={{ whiteSpace: 'normal', overflowWrap: 'anywhere', lineHeight: 1.35 }}>
-          LAT: {coords?.lat ?? '39.9334°N'} · LON: {coords?.lon ?? '32.8597°E'}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, auto)', columnGap: 12, rowGap: 2 }}>
+          {STATUS.map((s, i) => (
+            <div key={s.label} className="flex items-center gap-1 boot-in" style={{ animationDelay: `${i * 80}ms` }}>
+              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.ok ? 'bg-sim-green pulse-live' : 'bg-sim-red'}`} />
+              <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(11px, 1.05vw, 14px)', color: '#c0c8e8', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+                {lang === 'tr' ? s.labelTr : s.label}
+              </span>
+              <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(11px, 1.05vw, 14px)', color: '#4ecb71', marginLeft: 2, whiteSpace: 'nowrap' }}>
+                {s.val}
+              </span>
+            </div>
+          ))}
         </div>
-        <div style={{ marginTop: 2, whiteSpace: 'normal', overflowWrap: 'anywhere', lineHeight: 1.35 }}>
-          SYS: ANATOLİA-SIM v1.0 · BUILD 2026
+
+        <div
+          className="font-share-tech tracking-widest"
+          style={{
+            fontSize: 'clamp(11px, 1.05vw, 14px)',
+            color: '#c0c8e8',
+            maxWidth: 'min(calc(100vw - 24px), 420px)',
+          }}
+        >
+          <div style={{ whiteSpace: 'normal', overflowWrap: 'anywhere', lineHeight: 1.25 }}>
+            LAT: {coords?.lat ?? '39.9334°N'} · LON: {coords?.lon ?? '32.8597°E'}
+          </div>
+          <div style={{ marginTop: 1, whiteSpace: 'normal', overflowWrap: 'anywhere', lineHeight: 1.25 }}>
+            SYS: ANATOLİA-SIM v1.0 · BUILD 2026
+          </div>
         </div>
       </div>
 
