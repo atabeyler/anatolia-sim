@@ -17,7 +17,8 @@ import { processLawTick } from './law/lawEngine.js';
 import { processMicrobiomeTick, spreadInfection, updateGutMicrobiome, computeHealthStats } from './microbiome/microbiomeEngine.js';
 import { initializePsychology, updateMentalState, processBonding, computePopulationPsychStats } from './psychology/psychologyEngine.js';
 import { initializeEpigenome, inheritEpigenome, updateEpigenome } from './epigenetics/epigeneticsEngine.js';
-import { processAstronomyTick } from './astronomy/astronomyEngine.js';
+import { processAstronomyTick, getAstronomyBonus } from './astronomy/astronomyEngine.js';
+import { computeSocialOrder } from './law/lawEngine.js';
 
 const SOCIAL_INTERACTION_RADIUS = 5;  // degrees (~500 km) — was 50 (causes O(n²) explosion)
 const CHECKPOINT_INTERVAL = 365;
@@ -144,6 +145,11 @@ export class SimulationEngine {
       updateEpigenome(ind, this.worldState, day);
       updateGutMicrobiome(ind, this.worldState);
     }
+
+    // 2b. Apply astronomy bonuses to world state (farming efficiency, navigation)
+    const astroBonus = getAstronomyBonus(this.astronomyKnowledge);
+    this.worldState.farming_bonus = astroBonus.farming_efficiency ?? 0;
+    this.worldState.navigation_bonus = astroBonus.navigation ?? 0;
 
     // 3. Economy — gather resources, consume, produce goods
     for (const ind of alive) {
@@ -406,6 +412,8 @@ export class SimulationEngine {
         if (ev.importance !== 'low') this.logEvent(day, 'law', ev.description ?? ev.norm_id, ev, ev.importance === 'high' ? 4 : 2);
       }
       tickEvents.push(...lawEvents);
+      // Update social order metric — affects trade willingness and cooperation signals
+      group.social_order = computeSocialOrder(group);
     }
 
     // 19. Astronomy
@@ -840,6 +848,8 @@ export class SimulationEngine {
       beliefs: this.discoveredBeliefs.size,
       art_forms: this.discoveredArts.size,
       groups: this.groups.length,
+      social_order: this.groups.length ? Math.round(this.groups.reduce((s, g) => s + (g.social_order ?? 0), 0) / this.groups.length * 100) / 100 : 0,
+      astronomy_knowledge: this.astronomyKnowledge.size,
       season: this.worldState.season,
       temperature: Math.round(this.worldState.temperature),
       food_abundance: Math.round(this.worldState.food_abundance * 100) / 100,
