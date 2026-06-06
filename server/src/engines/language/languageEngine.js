@@ -8,7 +8,10 @@ const LANGUAGE_STAGES = [
   { stage: 6, name: 'writing',          foxp2_min: 0.85, group_min: 50, gen_min: 50 },
 ];
 
-export function updateLanguageStage(individual, groupSize, generationCount) {
+// How many CORE_CONCEPTS to seed at each language stage upgrade
+const VOCAB_SEED_AT_STAGE = { 3: 10, 4: 18, 5: 28, 6: 28 };
+
+export function updateLanguageStage(individual, groupSize, generationCount, groupId = 'default') {
   const foxp2 = individual.phenotype.language_capacity;
   const currentStage = individual.language.stage;
   for (let i = LANGUAGE_STAGES.length - 1; i >= 0; i--) {
@@ -20,6 +23,15 @@ export function updateLanguageStage(individual, groupSize, generationCount) {
         individual.language.stage_name = s.name;
         if (i >= 4) individual.language.grammar = true;
         if (i >= 6) individual.language.writing = true;
+        // Seed vocabulary for newly accessible concepts at this stage
+        const seedCount = VOCAB_SEED_AT_STAGE[i];
+        if (seedCount) {
+          const vocab = individual.language.vocabulary ?? {};
+          for (const concept of CORE_CONCEPTS.slice(0, seedCount)) {
+            if (!vocab[concept]) vocab[concept] = generateProtoWord(concept, groupId);
+          }
+          individual.language.vocabulary = vocab;
+        }
         return { upgraded: true, prevStage, newStage: i, stageName: s.name };
       }
       break;

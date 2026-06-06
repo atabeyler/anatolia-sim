@@ -293,7 +293,7 @@ export class SimulationEngine {
     // 12. Language evolution
     const genCount = this.estimateGenerations();
     for (const ind of alive) {
-      const langResult = updateLanguageStage(ind, alive.length, genCount);
+      const langResult = updateLanguageStage(ind, alive.length, genCount, ind.group_id ?? 'global');
       if (langResult?.upgraded) {
         const name = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
         const stageName = langResult.stageName ?? ind.language?.stage_name ?? 'language';
