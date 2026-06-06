@@ -835,7 +835,7 @@ export class SimulationEngine {
         const childDeaths  = deathAges.filter(a => a >= 1 && a < 15).length;
         const causes = {};
         for (const i of dead) {
-          const c = i.death_cause ?? 'unknown';
+          const c = i.death_cause ?? i.cause_of_death ?? 'unknown';
           causes[c] = (causes[c] ?? 0) + 1;
         }
         return { count: dead.length, avg_age: Math.round(avgDeathAge * 10) / 10, infant_deaths: infantDeaths, child_deaths: childDeaths, causes };

@@ -49,7 +49,7 @@ function buildEngineContext(engine) {
     const inf  = ages.filter(a => a < 1).length;
     const ch   = ages.filter(a => a >= 1 && a < 15).length;
     const causes = {};
-    for (const i of dead) { const c = i.death_cause ?? 'unknown'; causes[c] = (causes[c] ?? 0) + 1; }
+    for (const i of dead) { const c = i.death_cause ?? i.cause_of_death ?? 'unknown'; causes[c] = (causes[c] ?? 0) + 1; }
     const topCauses = Object.entries(causes).sort((a, b) => b[1] - a[1]).slice(0, 4)
       .map(([k, v]) => `${k}:${v}`).join(', ');
     deathLine = `Ölümler: ${dead.length} toplam, Ortalama ölüm yaşı: ${avg} yıl, ` +

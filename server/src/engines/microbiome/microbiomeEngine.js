@@ -34,7 +34,7 @@ export function processMicrobiomeTick(population,worldState,simDay){
       // Mortality reduced by immune strength and current health
       const dailyMortality=path.base_mortality*(1-(ind.phenotype?.immune_strength??0.5)*0.7)*(1-(ind.health_score??0.5)*0.3)/path.duration_days;
       if(Math.random()<dailyMortality){
-        ind.is_dead=true;ind.cause_of_death=`disease_${inf.pathogen_id}`;ind.death_day=simDay;
+        ind.is_dead=true;ind.death_cause=`disease_${inf.pathogen_id}`;ind.death_day=simDay;
       }
       if(inf.days_remaining<=0||ind.is_dead){
         ind.infections=ind.infections.filter(i=>i!==inf);
