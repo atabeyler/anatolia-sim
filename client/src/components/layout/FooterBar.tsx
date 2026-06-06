@@ -31,7 +31,7 @@ export default function FooterBar({ mode = 'fixed', className = '', style }: Foo
   return (
     <div style={{ ...wrapperStyle, ...style }} className={className}>
       <span style={TEXT_STYLE}>
-        RST Q-Nation 200120401018 · Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026
+        RST Q-Nation 200120401018 © 2026 · <span style={{ whiteSpace: 'nowrap' }}>Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.</span>
       </span>
     </div>
   );
