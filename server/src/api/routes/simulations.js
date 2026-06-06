@@ -216,8 +216,7 @@ router.post('/:id/complete', authenticate, requireSimulationOwner, async (req, r
 router.post('/:id/speed', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const speed = Number(req.body.speed_multiplier);
-    const allowed = new Set([1, 5, 20, 100, 150]);
-    if (!allowed.has(speed)) return res.status(400).json({ error: 'Invalid speed multiplier' });
+    if (!Number.isInteger(speed) || speed < 1 || speed > 1000) return res.status(400).json({ error: 'Hız 1-1000 arasında tam sayı olmalı' });
     simulationManager.setSpeed(req.params.id, speed);
     const { rows } = await query(
       'UPDATE simulations SET speed_multiplier = $1, updated_at = NOW() WHERE id = $2 RETURNING speed_multiplier',

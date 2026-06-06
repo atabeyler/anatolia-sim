@@ -4,7 +4,7 @@ import { useSimStore } from '../../store/simStore';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const SPEEDS = [1, 5, 20, 100, 150];
+const SPEEDS = [1, 5, 20, 100];
 
 function Seg({ label, value, color = '#c0ccee' }: { label: string; value: string; color?: string }) {
   return (
@@ -27,6 +27,7 @@ function SettingsOverlay({
   onSpeedChange: (speed: number) => void;
 }) {
   const { lang, toggleLang, speedMultiplier } = useSimStore();
+  const [customSpeed, setCustomSpeed] = useState('');
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -70,7 +71,7 @@ function SettingsOverlay({
         {/* Speed */}
         <div>
           <div className="font-share-tech text-sim-muted tracking-widest mb-1.5" style={{ fontSize: 8 }}>SİMÜLASYON HIZI</div>
-          <div className="flex gap-1">
+          <div className="flex gap-1 mb-1">
             {SPEEDS.map(s => (
               <button key={s} onClick={() => onSpeedChange(s)}
                 className="flex-1 font-share-tech tracking-widest transition-all"
@@ -83,6 +84,31 @@ function SettingsOverlay({
                 {s}×
               </button>
             ))}
+          </div>
+          <div className="flex gap-1">
+            <input
+              type="number" min={1} max={1000}
+              value={customSpeed}
+              onChange={e => setCustomSpeed(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  const v = parseInt(customSpeed);
+                  if (v >= 1 && v <= 1000) { onSpeedChange(v); setCustomSpeed(''); }
+                }
+              }}
+              placeholder={`${speedMultiplier}×`}
+              className="font-share-tech tracking-widest bg-[#0a0a1a] text-sim-text focus:outline-none"
+              style={{ fontSize: 10, padding: '4px 6px', width: 60, border: '1px solid rgba(79,110,247,0.25)', color: '#9aabcf' }}
+            />
+            <button
+              onClick={() => {
+                const v = parseInt(customSpeed);
+                if (v >= 1 && v <= 1000) { onSpeedChange(v); setCustomSpeed(''); }
+              }}
+              className="font-share-tech tracking-widest transition-all"
+              style={{ fontSize: 10, padding: '4px 8px', background: 'rgba(79,110,247,0.2)', border: '1px solid rgba(79,110,247,0.4)', color: '#c0ccff' }}>
+              SET
+            </button>
           </div>
         </div>
       </div>
@@ -238,8 +264,8 @@ export default function TopBar() {
 
   async function changeSpeed(speed: number) {
     if (!currentSim || !accessToken) return;
-    if (!SPEEDS.includes(speed)) {
-      setSimError('Geçersiz hız değeri');
+    if (!Number.isInteger(speed) || speed < 1 || speed > 1000) {
+      setSimError('Hız 1-1000 arası tam sayı olmalı');
       setTimeout(() => setSimError(''), 3000);
       return;
     }
