@@ -32,7 +32,8 @@ export function processMicrobiomeTick(population,worldState,simDay){
       const path=PATHOGEN_TYPES[inf.pathogen_id];
       if(!path)continue;
       // Mortality reduced by immune strength and current health
-      const dailyMortality=path.base_mortality*(1-(ind.phenotype?.immune_strength??0.5)*0.7)*(1-(ind.health_score??0.5)*0.3)/path.duration_days;
+      const totalImmunity=Math.min((ind.phenotype?.immune_strength??0.5)*0.7+(ind.health?.microbiome_immunity??0),0.95);
+      const dailyMortality=path.base_mortality*(1-totalImmunity)*(1-(ind.health?.hp??0.5)*0.3)/path.duration_days;
       if(Math.random()<dailyMortality){
         ind.is_dead=true;ind.death_cause=`disease_${inf.pathogen_id}`;ind.death_day=simDay;
       }
@@ -75,7 +76,9 @@ export function updateGutMicrobiome(individual,worldState){
   if(!individual.microbiome)individual.microbiome={diversity:0.5,composition:{}};
   const dd=worldState.food_abundance*0.5+(individual.inventory?.dried_food?0.1:0)+(individual.inventory?.food>3?0.2:0);
   individual.microbiome.diversity=individual.microbiome.diversity*0.95+dd*0.05;
-  individual.phenotype.immune_strength=Math.min((individual.phenotype.immune_strength??0.5)*0.99+individual.microbiome.diversity*0.01,1.0);
+  // Store microbiome immunity boost separately from genetic immune_strength phenotype
+  if(!individual.health)individual.health={};
+  individual.health.microbiome_immunity=Math.min(individual.microbiome.diversity*0.3,0.3);
 }
 
 export function computeHealthStats(population){

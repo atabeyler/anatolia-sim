@@ -70,13 +70,14 @@ function t(lang: string, en: string, tr: string) {
 export default function BiologyPanel() {
   const { stats, lang, currentSim, accessToken } = useSimStore();
   const [individuals, setIndividuals] = useState<any[]>([]);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!currentSim || !accessToken) return;
     const headers = { Authorization: `Bearer ${accessToken}` };
     const load = () => axios.get(`/api/simulations/${currentSim.id}/population?alive=true`, { headers })
-      .then(r => setIndividuals(r.data))
-      .catch(() => {});
+      .then(r => { setIndividuals(r.data); setLoadError(false); })
+      .catch(() => setLoadError(true));
     load();
     const timer = setInterval(load, 5000);
     return () => clearInterval(timer);
@@ -89,6 +90,11 @@ export default function BiologyPanel() {
 
   return (
     <DetailPanel panelId="biology" title="Biology" titleTr="Biyoloji">
+      {loadError && (
+        <div className="mb-2 px-3 py-2 text-xs font-share-tech text-sim-red bg-sim-red/10 border border-sim-red/30 rounded">
+          {t(lang, 'Failed to load individual data. Retrying…', 'Bireysel veri yüklenemedi. Yeniden deneniyor…')}
+        </div>
+      )}
       <Section title={t(lang, 'Population Vitals', 'Nüfus Değerleri')}>
         <MetricRow label={t(lang, 'Population', 'Nüfus')} value={pop} />
         <MetricRow label={t(lang, 'Avg Age', 'Ortalama Yaş')} value={`${avgAge.toFixed(1)} yr`} />

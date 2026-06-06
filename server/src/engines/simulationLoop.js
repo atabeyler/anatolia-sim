@@ -364,7 +364,8 @@ export class SimulationEngine {
         this.logEvent(day, 'belief', beliefEvent.description, beliefEvent, beliefEvent.importance === 'high' ? 4 : 2);
       }
     }
-    updateBeliefSpread(alive, this.discoveredBeliefs, this.groups, day);
+    const spreadEvents = updateBeliefSpread(alive, this.discoveredBeliefs, this.groups, day);
+    tickEvents.push(...spreadEvents);
     for (const group of this.groups) {
       const ritualEvent = checkRitualEmergence(group, alive, this.discoveredBeliefs, day);
       if (ritualEvent) {

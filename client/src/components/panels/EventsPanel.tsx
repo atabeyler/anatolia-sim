@@ -79,7 +79,7 @@ export default function EventsPanel() {
         setSummaryCounts(r.data?.countsByType ?? {});
         setSummaryTotal(r.data?.total ?? 0);
       })
-      .catch(() => {});
+      .catch(() => { setSummaryCounts({}); });
     load();
     const timer = setInterval(load, 5000);
     return () => {
