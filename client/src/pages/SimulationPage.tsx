@@ -153,7 +153,7 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
 export default function SimulationPage() {
   const { simId } = useParams<{ simId: string }>();
   const navigate = useNavigate();
-  const { accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, speedMultiplier, setSpeed, resetLiveState, setEvents } = useSimStore();
+  const { user, accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, speedMultiplier, setSpeed, resetLiveState, setEvents } = useSimStore();
   const [individuals, setIndividuals] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'harita' | 'durum'>('harita');
@@ -319,21 +319,21 @@ export default function SimulationPage() {
       <div style={{ flexShrink: 0, background: 'rgba(0,0,0,0.97)', borderBottom: '1px solid #4a1a1a' }}>
 
         {/* Row 1: Logo | SIM time | [ARIA desktop] | [clock desktop] | BAŞLAT/DURDUR */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 8, padding: isMobile ? '4px 8px' : '5px 10px', borderBottom: '1px solid #4a1a1a' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <div style={{ position: 'relative', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div className="neon-breathe" style={{ position: 'absolute', inset: 0, borderRadius: '999px', border: '1px solid rgba(79,158,247,0.5)', boxShadow: '0 0 8px rgba(79,158,247,0.5)' }} />
-              <Globe size={11} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 6px rgba(79,158,247,0.95)) drop-shadow(0 0 12px rgba(79,158,247,0.45))' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 8, padding: isMobile ? '4px 8px' : '5px 10px', borderBottom: '1px solid #4a1a1a' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              <div style={{ position: 'relative', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="neon-breathe" style={{ position: 'absolute', inset: 0, borderRadius: '999px', border: '1px solid rgba(79,158,247,0.5)', boxShadow: '0 0 8px rgba(79,158,247,0.5)' }} />
+                <Globe size={11} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 6px rgba(79,158,247,0.95)) drop-shadow(0 0 12px rgba(79,158,247,0.45))' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1, gap: 2 }}>
+                <span style={{ fontSize: isMobile ? 12 : 14, fontFamily: 'Orbitron, monospace', fontWeight: 900, color: '#e0e0f0', letterSpacing: isMobile ? '0.12em' : '0.2em', textShadow: '0 0 10px rgba(79,158,247,0.35)' }}>
+                  ANATOLİA-SİM
+                </span>
+                <span style={{ fontSize: isMobile ? 10 : 11, fontFamily: 'Share Tech Mono, monospace', fontWeight: 700, color: '#cc2222', letterSpacing: isMobile ? '0.16em' : '0.22em', textAlign: 'left', width: '100%' }}>
+                  {lang === 'tr' ? 'SİM MEDENİYET' : 'SIM CIVILIZATION'}
+                </span>
+              </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1, gap: 2 }}>
-              <span style={{ fontSize: isMobile ? 12 : 14, fontFamily: 'Orbitron, monospace', fontWeight: 900, color: '#e0e0f0', letterSpacing: isMobile ? '0.12em' : '0.2em', textShadow: '0 0 10px rgba(79,158,247,0.35)' }}>
-                ANATOLİA-SİM
-              </span>
-              <span style={{ fontSize: isMobile ? 10 : 11, fontFamily: 'Share Tech Mono, monospace', fontWeight: 700, color: '#cc2222', letterSpacing: isMobile ? '0.16em' : '0.22em', textAlign: 'center', width: '100%' }}>
-                {lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}
-              </span>
-            </div>
-          </div>
 
           <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: isMobile ? 3 : 6 }}>
             <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em' }}>
@@ -397,6 +397,25 @@ export default function SimulationPage() {
 
           {/* HIZ + controls — right of stats */}
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 3 : 4, flexShrink: 0, paddingLeft: isMobile ? 6 : 8, borderLeft: '1px solid #4a1a1a' }}>
+            {user && (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-end',
+                justifyContent: 'center',
+                gap: 1,
+                padding: '2px 8px',
+                marginRight: 2,
+                border: '1px solid rgba(160,200,176,0.24)',
+                background: 'rgba(10,10,30,0.45)',
+                clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))',
+              }}>
+                <span style={{ fontSize: 8, color: '#a0c8b0', letterSpacing: '0.18em' }}>{lang === 'tr' ? 'KULLANICI' : 'USER'}</span>
+                <span style={{ fontSize: 12, color: '#e0e0f0', letterSpacing: '0.08em', fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
+                  {user.username.toUpperCase()}
+                </span>
+              </div>
+            )}
             {!isMobile && <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em', flexShrink: 0 }}>HIZ</span>}
             {SPEEDS.map(s => (
               <button key={s} onClick={() => changeSpeed(s)}
