@@ -120,6 +120,21 @@ export class SimulationEngine {
     updateWorldState(this.worldState, day);
     const resourcePressure = computeResourcePressure(this.worldState, alive.length);
 
+    // 1b. Natural disaster check — low-probability random events per biome
+    if (alive.length >= 4 && !this.worldState.natural_disaster) {
+      const disasterChance = this._naturalDisasterProbability(this.worldState);
+      if (Math.random() < disasterChance) {
+        const disaster = this._pickNaturalDisaster(this.worldState);
+        if (disaster) {
+          this.worldState.natural_disaster = disaster;
+          this.logEvent(day, 'disaster', `Natural disaster: ${disaster.type}`, disaster, 5);
+        }
+      }
+    }
+    if (this.worldState.natural_disaster) {
+      this.processDisaster(this.worldState.natural_disaster, alive, day);
+    }
+
     // 2. Epigenetics & microbiome daily update
     for (const ind of alive) {
       updateEpigenome(ind, this.worldState, day);
@@ -729,6 +744,34 @@ export class SimulationEngine {
         this.logEvent(day, 'technology', `Technology discovered: ${tech.tech_id}`, tech, 4);
       }
     }
+  }
+
+  // Base daily probability of a natural disaster (per biome/weather)
+  _naturalDisasterProbability(ws) {
+    const biomeRisk = {
+      mediterranean: 0.0003, coastal: 0.0005, tropical_rainforest: 0.0006,
+      tropical_savanna: 0.0005, temperate_forest: 0.0003, boreal_forest: 0.0002,
+      tundra: 0.0002, mountain: 0.0007, grassland: 0.0003, desert: 0.0004,
+    };
+    let base = biomeRisk[ws.biome] ?? 0.0003;
+    // Drought/blizzard weather increases fire/freeze risk
+    if (ws.current_weather === 'drought') base *= 2;
+    if (ws.current_weather === 'blizzard') base *= 1.5;
+    return base;
+  }
+
+  // Pick a disaster type appropriate to the current biome/weather
+  _pickNaturalDisaster(ws) {
+    const biome = ws.biome ?? 'mediterranean';
+    const weather = ws.current_weather ?? 'clear';
+    const candidates = [];
+    if (['mountain', 'coastal', 'temperate_forest'].includes(biome)) candidates.push({ type: 'earthquake', mortality_factor: 0.08 });
+    if (['coastal', 'tropical_rainforest', 'tropical_savanna'].includes(biome) || weather === 'heavy_rain') candidates.push({ type: 'flood', mortality_factor: 0.07 });
+    if (['desert', 'grassland', 'mediterranean'].includes(biome) || weather === 'drought') candidates.push({ type: 'wildfire', mortality_factor: 0.05 });
+    if (['tundra', 'boreal_forest'].includes(biome) || weather === 'blizzard') candidates.push({ type: 'blizzard_disaster', mortality_factor: 0.06 });
+    // Generic fallback
+    candidates.push({ type: 'drought_event', mortality_factor: 0.03 });
+    return candidates[Math.floor(Math.random() * candidates.length)];
   }
 
   processDisaster(disasters, alive, day) {
