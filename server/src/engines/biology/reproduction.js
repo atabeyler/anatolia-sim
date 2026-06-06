@@ -69,7 +69,7 @@ function deliverBirth(mother, father, birthDay, simulationId, communityLangStage
   const children = [];
 
   const first = createChild(mother, father, birthDay, simulationId, communityLangStage, phonology);
-  if (Math.random() < 0.05) { first.alive = false; first.is_dead = true; first.death_day = birthDay; first.death_cause = 'birth_complications'; }
+  if (Math.random() < 0.02) { first.alive = false; first.is_dead = true; first.death_day = birthDay; first.death_cause = 'birth_complications'; }
   children.push(first);
 
   // İkiz ihtimali FSHR_01 (folikül uyarıcı hormon reseptörü) genine bağlı:
@@ -80,14 +80,14 @@ function deliverBirth(mother, father, birthDay, simulationId, communityLangStage
   if (Math.random() < twinChance) {
     const twin = createChild(mother, father, birthDay, simulationId, communityLangStage, phonology);
     twin.is_twin = true;
-    if (Math.random() < 0.08) { twin.alive = false; twin.is_dead = true; twin.death_day = birthDay; twin.death_cause = 'birth_complications'; }
+    if (Math.random() < 0.05) { twin.alive = false; twin.is_dead = true; twin.death_day = birthDay; twin.death_cause = 'birth_complications'; }
     children.push(twin);
 
     // Üçüz: ikiz şansının %10'u kadar
     if (Math.random() < twinChance * 0.1) {
       const triplet = createChild(mother, father, birthDay, simulationId, communityLangStage, phonology);
       triplet.is_twin = true;
-      if (Math.random() < 0.12) { triplet.alive = false; triplet.is_dead = true; triplet.death_day = birthDay; triplet.death_cause = 'birth_complications'; }
+      if (Math.random() < 0.08) { triplet.alive = false; triplet.is_dead = true; triplet.death_day = birthDay; triplet.death_cause = 'birth_complications'; }
       children.push(triplet);
     }
   }

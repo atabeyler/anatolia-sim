@@ -71,9 +71,9 @@ function determineCause(individual, currentDay, environment) {
   if (age < 15)  return Math.random() < 0.5 ? DEATH_CAUSES.INFECTION : DEATH_CAUSES.TRAUMA;
   if (age < 45) {
     const r = Math.random();
-    if (r < 0.4) return DEATH_CAUSES.INFECTION;
-    if (r < 0.7) return DEATH_CAUSES.TRAUMA;
-    if (r < 0.85) return DEATH_CAUSES.GENETIC;
+    if (r < 0.45) return DEATH_CAUSES.INFECTION;
+    if (r < 0.75) return DEATH_CAUSES.TRAUMA;
+    if (r < 0.97) return DEATH_CAUSES.GENETIC;
     return DEATH_CAUSES.PREDATOR;
   }
   // 45+
