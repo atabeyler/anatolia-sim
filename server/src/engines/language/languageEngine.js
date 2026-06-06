@@ -8,11 +8,10 @@ const LANGUAGE_STAGES = [
   { stage: 6, name: 'writing',          foxp2_min: 0.85, group_min: 50, gen_min: 50 },
 ];
 
-// How many CORE_CONCEPTS to seed at each language stage upgrade
-const VOCAB_SEED_AT_STAGE = { 3: 10, 4: 18, 5: 28, 6: 28 };
-
 export function updateLanguageStage(individual, groupSize, generationCount, groupId = 'default') {
-  const foxp2 = individual.phenotype.language_capacity;
+  // Stage check uses expressed foxp2, not genetic ceiling.
+  // Expression grows through social interaction (see updateFoxp2Expression).
+  const foxp2 = individual.language?.foxp2_expression ?? individual.phenotype.language_capacity * 0.15;
   const currentStage = individual.language.stage;
   for (let i = LANGUAGE_STAGES.length - 1; i >= 0; i--) {
     const s = LANGUAGE_STAGES[i];
@@ -23,21 +22,41 @@ export function updateLanguageStage(individual, groupSize, generationCount, grou
         individual.language.stage_name = s.name;
         if (i >= 4) individual.language.grammar = true;
         if (i >= 6) individual.language.writing = true;
-        // Seed vocabulary for newly accessible concepts at this stage
-        const seedCount = VOCAB_SEED_AT_STAGE[i];
-        if (seedCount) {
-          const vocab = individual.language.vocabulary ?? {};
-          for (const concept of CORE_CONCEPTS.slice(0, seedCount)) {
-            if (!vocab[concept]) vocab[concept] = generateProtoWord(concept, groupId);
-          }
-          individual.language.vocabulary = vocab;
-        }
+        // No vocabulary seeding — words must emerge through observation and social teaching.
         return { upgraded: true, prevStage, newStage: i, stageName: s.name };
       }
       break;
     }
   }
   return { upgraded: false };
+}
+
+// FOXP2 expression grows toward genetic ceiling through social language use.
+// This models developmental plasticity: the gene provides potential, experience
+// drives actual expression. Founders start at 70% of their cap (already adults);
+// newborns start at 10% and grow through group interaction.
+export function updateFoxp2Expression(individual, groupMemberCount = 0) {
+  const geneticCap = individual.phenotype.language_capacity;
+  const current = individual.language.foxp2_expression ?? geneticCap * 0.1;
+  const socialGain = Math.min(groupMemberCount, 10) * 0.000015;
+  const stagingGain = individual.language.stage > 0 ? 0.000005 : 0;
+  individual.language.foxp2_expression = Math.min(geneticCap, current + socialGain + stagingGain);
+}
+
+// Organic word acquisition: an individual coins a sound-label for a concept
+// they have directly encountered. Requires stage 2+ and sufficient foxp2 expression.
+// Founders (high foxp2, adult-level expression) will coin words much faster than
+// newborns. Other individuals acquire vocabulary mainly through learnFromTeacher.
+export function tryAcquireWordFromEnvironment(individual, concept, groupId) {
+  if (!individual.language || individual.language.stage < 2) return false;
+  if (individual.language.vocabulary?.[concept]) return false;
+  const foxp2 = individual.language.foxp2_expression ?? individual.phenotype.language_capacity * 0.1;
+  if (foxp2 < 0.35) return false;
+  const iq = individual.phenotype?.fluid_intelligence ?? 0.5;
+  if (Math.random() > foxp2 * iq * 0.15) return false;
+  individual.language.vocabulary = individual.language.vocabulary ?? {};
+  individual.language.vocabulary[concept] = generateProtoWord(concept, groupId);
+  return true;
 }
 
 export function learnFromTeacher(learner, teacher) {

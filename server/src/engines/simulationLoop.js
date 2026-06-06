@@ -4,7 +4,7 @@ import { rollDeath } from './biology/mortality.js';
 import { checkReproduction } from './biology/reproduction.js';
 import { updateWorldState, computeResourcePressure } from './environment/environmentEngine.js';
 import { buildPhonology } from './language/nameEngine.js';
-import { updateLanguageStage, learnFromTeacher } from './language/languageEngine.js';
+import { updateLanguageStage, learnFromTeacher, updateFoxp2Expression, tryAcquireWordFromEnvironment, CORE_CONCEPTS } from './language/languageEngine.js';
 import { tryDiscoverTech } from './technology/technologyEngine.js';
 import { getAge } from './biology/individual.js';
 import { processGroupDynamics, assignGroupRoles } from './social/socialEngine.js';
@@ -41,6 +41,7 @@ export class SimulationEngine {
     this.running = false;
     this._todayBirths = 0;
     this._todayDeaths = 0;
+    this.techProgress = new Map();
     this.speedMultiplier = simulation.speed_multiplier ?? 1;
     this.onTick = null;
     this.onEvent = null;
@@ -232,6 +233,18 @@ export class SimulationEngine {
       updateMentalState(ind, tickEvents, this.worldState, day);
     }
 
+    // 5b. Consciousness update — emerges from genetics × language × social context
+    for (const ind of alive) {
+      if (!ind.mind) continue;
+      const potential = ind.phenotype?.consciousness_potential ?? 0;
+      const langBonus = (ind.language?.stage ?? 0) / 6 * 0.00005;
+      const socialBonus = ind.group_id ? 0.00002 : 0;
+      const stressPenalty = (ind.psychology?.stress_level ?? 0.3) * 0.00003;
+      ind.mind.consciousness = Math.min(1, Math.max(0,
+        (ind.mind.consciousness ?? 0) + potential * 0.0001 + langBonus + socialBonus - stressPenalty
+      ));
+    }
+
     // 6. Social groups
     const socialEvents = processGroupDynamics(alive, this.groups, day);
     tickEvents.push(...socialEvents);
@@ -347,9 +360,26 @@ export class SimulationEngine {
     // 12b. Social learning: children near parents learn faster
     this.processFamilyLearning(alive, day, tickEvents);
 
+    // 12c. FOXP2 expression — grows through social language use (developmental plasticity)
+    for (const ind of alive) {
+      const groupSize = ind.group_id
+        ? alive.filter(o => o.group_id === ind.group_id && o.id !== ind.id).length
+        : 0;
+      updateFoxp2Expression(ind, groupSize);
+    }
+
+    // 12d. Organic vocabulary acquisition — individuals coin words from their environment
+    for (const ind of alive) {
+      if ((ind.language?.stage ?? 0) < 2) continue;
+      const unknownConcepts = CORE_CONCEPTS.filter(c => !ind.language.vocabulary?.[c]);
+      if (unknownConcepts.length === 0) continue;
+      const concept = unknownConcepts[Math.floor(Math.random() * Math.min(4, unknownConcepts.length))];
+      tryAcquireWordFromEnvironment(ind, concept, ind.group_id ?? 'global');
+    }
+
     // 13. Technology discovery
     for (const ind of alive) {
-      const discoveries = tryDiscoverTech(ind, this.discoveredTechs, this.worldState, day);
+      const discoveries = tryDiscoverTech(ind, this.discoveredTechs, this.worldState, day, this.techProgress);
       for (const tech of discoveries) {
         tickEvents.push({ ...tech, type: 'discovery', individual_id: tech.discoverer_id });
         this.logEvent(day, 'technology', `Technology discovered: ${tech.tech_id}`, tech, 4);
@@ -560,13 +590,7 @@ export class SimulationEngine {
   updatePhysiology(individual, resourcePressure) {
     if (!individual.health) individual.health = { hp: 0.8, calories: 0.6, hydration: 0.6 };
     const { health } = individual;
-    // Founders stay perfectly healthy until age 60 — no sickness, injuries, hunger damage
     const ageYears = individual.age / 365;
-    if (individual.is_founder && ageYears < 60) {
-      health.hp = 1.0; health.calories = 1.0; health.hydration = 1.0;
-      individual.health_score = 1.0; individual.satiation = 1.0;
-      return;
-    }
 
     // Satiation-based health update
     const satiationScore = individual.satiation ?? 0.5;
@@ -753,7 +777,7 @@ export class SimulationEngine {
       }
 
       // Tech learning: parent's discovered techs boost child's discovery
-      const discoveries = tryDiscoverTech(ind, this.discoveredTechs, this.worldState, day);
+      const discoveries = tryDiscoverTech(ind, this.discoveredTechs, this.worldState, day, this.techProgress);
       for (const tech of discoveries) {
         tickEvents.push({ ...tech, type: 'discovery', individual_id: tech.discoverer_id });
         this.logEvent(day, 'technology', `Technology discovered: ${tech.tech_id}`, tech, 4);
@@ -863,6 +887,8 @@ export class SimulationEngine {
       deaths: this._todayDeaths,
       word_count: new Set(alive.flatMap(i => Object.keys(i.language?.vocabulary ?? {}))).size,
       max_language_stage: Math.max(0, ...alive.map(i => i.language?.stage ?? 0)),
+      avg_consciousness: Math.round(alive.reduce((s, i) => s + (i.mind?.consciousness ?? 0), 0) / Math.max(1, alive.length) * 1000) / 1000,
+      max_tom_stage: Math.max(0, ...alive.map(i => i.psychology?.theory_of_mind ?? 0)),
       mean_wealth: Math.round(econStats.mean_wealth * 100) / 100,
       gini: Math.round(econStats.gini * 100) / 100,
       happiness_index: Math.round(psychStats.happiness_index * 100) / 100,

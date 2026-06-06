@@ -25,14 +25,22 @@ export const TECH_TREE = {
   metallurgy_iron: { tier: 4, requires: ['metallurgy_copper'],   difficulty: 6.0, iq_min: 0.7,  env_trigger: 'iron_ore' },
 };
 
-export function tryDiscoverTech(individual, discoveredTechs, worldState, simDay) {
+// Iterative discovery: each eligible tick adds progress; discovery fires when >= 1.0.
+// Multiple individuals contributing to the same technology speeds up discovery
+// proportionally — collective problem-solving, not a single lucky roll.
+export function tryDiscoverTech(individual, discoveredTechs, worldState, simDay, techProgress) {
   const discoveries = [];
   for (const techId of Object.keys(TECH_TREE)) {
     if (discoveredTechs.has(techId)) continue;
     const p = computeDiscoveryProbability(individual, techId, discoveredTechs, worldState);
-    if (p > 0 && Math.random() < p) {
+    if (p <= 0) continue;
+    const prev = techProgress?.get(techId) ?? 0;
+    const next = prev + p;
+    if (techProgress) techProgress.set(techId, next);
+    if (next >= 1.0) {
       discoveries.push({ tech_id: techId, discoverer_id: individual.id, discovery_day: simDay, x: individual.x, y: individual.y });
       discoveredTechs.add(techId);
+      if (techProgress) techProgress.delete(techId);
     }
   }
   return discoveries;

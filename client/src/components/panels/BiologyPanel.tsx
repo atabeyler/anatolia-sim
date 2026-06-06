@@ -101,6 +101,8 @@ export default function BiologyPanel() {
         <MetricRow label={t(lang, 'Sex Ratio M:F', 'Cinsiyet Oranı E:K')} value={`${(sexRatio * 100).toFixed(0)}% / ${((1 - sexRatio) * 100).toFixed(0)}%`} />
         <MetricRow label={t(lang, 'Avg Intelligence', 'Ortalama Zekâ')} value={(avgIntel * 100).toFixed(1) + '%'} />
         <MetricRow label={t(lang, 'Sick Rate', 'Hastalık Oranı')} value={`${((stats?.sick_rate ?? 0) * 100).toFixed(1)}%`} />
+        <MetricRow label={t(lang, 'Avg Consciousness', 'Ort. Bilinç')} value={`${((stats?.avg_consciousness ?? 0) * 100).toFixed(2)}%`} />
+        <MetricRow label={t(lang, 'Max ToM Stage', 'Maks. Zihin Teorisi')} value={`${stats?.max_tom_stage ?? 0} / 3`} />
       </Section>
 
       <Section title={t(lang, 'Genome Activity', 'Genom Aktivitesi')}>

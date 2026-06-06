@@ -27,6 +27,8 @@ interface SimStats {
   deaths?: number;
   word_count?: number;
   max_language_stage?: number;
+  avg_consciousness?: number;
+  max_tom_stage?: number;
 }
 
 interface SimEvent {
