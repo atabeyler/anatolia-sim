@@ -216,7 +216,7 @@ router.post('/:id/complete', authenticate, requireSimulationOwner, async (req, r
 router.post('/:id/speed', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const speed = Number(req.body.speed_multiplier);
-    const allowed = new Set([1, 5, 20, 100]);
+    const allowed = new Set([1, 5, 20, 100, 150]);
     if (!allowed.has(speed)) return res.status(400).json({ error: 'Invalid speed multiplier' });
     simulationManager.setSpeed(req.params.id, speed);
     const { rows } = await query(

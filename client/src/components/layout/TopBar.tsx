@@ -4,7 +4,7 @@ import { useSimStore } from '../../store/simStore';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const SPEEDS = [1, 5, 20, 100];
+const SPEEDS = [1, 5, 20, 100, 150];
 
 function Seg({ label, value, color = '#c0ccee' }: { label: string; value: string; color?: string }) {
   return (
