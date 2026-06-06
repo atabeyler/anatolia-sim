@@ -360,7 +360,7 @@ export default function DashboardPage() {
 
       {/* Footer — fixed to bottom of viewport */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, textAlign: 'center', padding: '6px 16px', background: 'rgba(3,3,16,0.97)', borderTop: '1px solid rgba(0,232,135,0.15)' }}>
-        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: '12px', letterSpacing: '0.15em', color: '#00e887', textShadow: '0 0 6px #00e887, 0 0 16px rgba(0,232,135,0.6)' }}>
+        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(9px, 1vw, 14px)', letterSpacing: '0.15em', color: '#00e887', textShadow: '0 0 6px #00e887, 0 0 16px rgba(0,232,135,0.6)' }}>
           RST Q-Nation 200120401018 · Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026
         </span>
       </div>
