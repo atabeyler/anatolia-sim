@@ -420,7 +420,6 @@ export class SimulationEngine {
     const ageYears = ind.age / 365;
     if (ageYears < 2) return; // handled by infant-follow logic
 
-    // Base speed in degrees/day
     let speed;
     if (ageYears < 12)      speed = 0.008;
     else if (ageYears > 60) speed = 0.003;
@@ -429,37 +428,54 @@ export class SimulationEngine {
     speed *= (this.worldState.weather_move_mult ?? 1.0);
     if (ind.health?.pregnancy) speed *= 0.4;
 
-    // Random direction with slow drift
+    // ── Hayatta kalma stresi: temel ihtiyaçlar ne kadar karşılanmıyor ────────
+    const cal = ind.health?.calories  ?? 0.7;
+    const hyd = ind.health?.hydration ?? 0.7;
+    const survivalStress = Math.min(1, Math.max(0,
+      Math.max((0.45 - cal) / 0.45, (0.35 - hyd) / 0.35)
+    ));
+    if (survivalStress > 0.15) speed *= (1 + survivalStress * 0.9);
+
     if (ind._moveAngle === undefined) ind._moveAngle = Math.random() * Math.PI * 2;
     ind._moveAngle += (Math.random() - 0.5) * 0.25;
 
-    // ── Founders: çıpa — yuva noktasına güçlü çekim ──────────────────────────
+    // ── Kurucular: yuva çıpası ────────────────────────────────────────────────
     if (ind.is_founder) {
       speed *= 0.12;
       const homeX = ind.home_x ?? (this.worldState.longitude ?? 0);
       const homeY = ind.home_y ?? (this.worldState.latitude  ?? 0);
       const dx = homeX - (ind.x ?? 0);
       const dy = homeY - (ind.y ?? 0);
-      const dist = Math.hypot(dx, dy);
-      if (dist > 0.005) {
+      if (Math.hypot(dx, dy) > 0.005) {
         ind._moveAngle = Math.atan2(dy, dx) * 0.97 + ind._moveAngle * 0.03;
       }
     } else {
-      // ── Herkes: grup centroidine çekim — aile bandı birlikte kalır ──────────
+      // ── Bant uyumu: açken zayıflar, tok ve sağlıklıyken güçlenir ────────────
       const cx = this._bandCentroid?.x ?? (this.worldState.longitude ?? 0);
       const cy = this._bandCentroid?.y ?? (this.worldState.latitude  ?? 0);
       const dx = cx - (ind.x ?? 0);
       const dy = cy - (ind.y ?? 0);
       const dist = Math.hypot(dx, dy);
-      if (dist > 0.3) {
-        const pull = Math.min(1, (dist - 0.3) / 2) * 0.88;
+      const freeZone    = 0.3 + survivalStress * 1.2;   // açken daha geniş alan
+      const cohesionStr = Math.max(0.15, 0.88 - survivalStress * 0.65);
+      if (dist > freeZone) {
+        const pull = Math.min(1, (dist - freeZone) / 2) * cohesionStr;
         ind._moveAngle = Math.atan2(dy, dx) * pull + ind._moveAngle * (1 - pull);
       }
 
-      // ── Çiftleşme dürtüsü: yüksekse yakın uygun bireye yönel ───────────────
-      if (ageYears >= 13 && !ind.health?.pregnancy && (ind.mating_urge ?? 0) > 0.65) {
+      // ── Hafıza temelli yiyecek arama ─────────────────────────────────────────
+      if ((ind.satiation ?? 0.5) > 0.72) {
+        ind._goodFoodAngle = ind._moveAngle;
+      } else if (survivalStress > 0.35 && ind._goodFoodAngle !== undefined) {
+        const memPull = Math.min(0.55, survivalStress * 0.6);
+        ind._moveAngle = ind._goodFoodAngle * memPull + ind._moveAngle * (1 - memPull);
+      }
+
+      // ── Çiftleşme dürtüsü: temel ihtiyaçlar karşılandığında devreye girer ───
+      if (cal > 0.38 && hyd > 0.32 && !ind.health?.pregnancy
+          && ageYears >= 13 && (ind.mating_urge ?? 0) > 0.65) {
         const oppSex = ind.sex === 'male' ? 'female' : 'male';
-        let nearestDist = 10; // derece cinsinden arama yarıçapı
+        let nearestDist = 10;
         let nearestPartner = null;
         for (const other of this.population.values()) {
           if (other.is_dead || other.id === ind.id || other.sex !== oppSex) continue;
@@ -471,7 +487,7 @@ export class SimulationEngine {
         if (nearestPartner) {
           const pdx = (nearestPartner.x ?? 0) - (ind.x ?? 0);
           const pdy = (nearestPartner.y ?? 0) - (ind.y ?? 0);
-          const urgePull = Math.min(0.85, ((ind.mating_urge - 0.65) / 0.35) * 0.75);
+          const urgePull = Math.min(0.72, ((ind.mating_urge - 0.65) / 0.35) * 0.65);
           ind._moveAngle = Math.atan2(pdy, pdx) * urgePull + ind._moveAngle * (1 - urgePull);
         }
       }
@@ -481,7 +497,6 @@ export class SimulationEngine {
     ind.x = Math.max(-180, Math.min(180, (ind.x ?? 0) + Math.cos(ind._moveAngle) * step));
     ind.y = Math.max(-85,  Math.min(85,  (ind.y ?? 0) + Math.sin(ind._moveAngle) * step));
 
-    // ── Kurucular: yuva çevresine sert sınır (0.04°) ─────────────────────────
     if (ind.is_founder && ind.home_x !== undefined) {
       const dx = ind.x - ind.home_x;
       const dy = ind.y - ind.home_y;
