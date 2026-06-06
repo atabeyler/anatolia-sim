@@ -18,13 +18,13 @@ const BIOMES = {
 // cold_risk / heat_risk: whether individual cold/heat tolerance matters
 const WEATHER_TYPES = {
   clear:      { duration: [3, 12], move_mult: 1.00, water_delta:  0.00, food_delta:  0.00, hp_delta:  0.000, cold_risk: false, heat_risk: false },
-  rain:       { duration: [2,  6], move_mult: 0.85, water_delta:  0.18, food_delta:  0.00, hp_delta:  0.000, cold_risk: false, heat_risk: false },
-  heavy_rain: { duration: [1,  4], move_mult: 0.55, water_delta:  0.35, food_delta: -0.10, hp_delta: -0.0008,cold_risk: false, heat_risk: false },
-  snow:       { duration: [2,  8], move_mult: 0.50, water_delta:  0.05, food_delta: -0.15, hp_delta: -0.0015,cold_risk: true,  heat_risk: false },
-  blizzard:   { duration: [1,  3], move_mult: 0.18, water_delta:  0.00, food_delta: -0.28, hp_delta: -0.0045,cold_risk: true,  heat_risk: false },
-  storm:      { duration: [1,  3], move_mult: 0.40, water_delta:  0.10, food_delta: -0.18, hp_delta: -0.001, cold_risk: false, heat_risk: false },
-  heat_wave:  { duration: [3, 10], move_mult: 0.72, water_delta: -0.15, food_delta: -0.18, hp_delta: -0.0015,cold_risk: false, heat_risk: true  },
-  drought:    { duration: [5, 20], move_mult: 1.00, water_delta: -0.30, food_delta: -0.25, hp_delta: -0.0005,cold_risk: false, heat_risk: false  },
+  rain:       { duration: [2,  6], move_mult: 0.85, water_delta:  0.10, food_delta:  0.00, hp_delta:  0.000, cold_risk: false, heat_risk: false },
+  heavy_rain: { duration: [1,  4], move_mult: 0.55, water_delta:  0.18, food_delta: -0.05, hp_delta: -0.0006,cold_risk: false, heat_risk: false },
+  snow:       { duration: [2,  8], move_mult: 0.50, water_delta:  0.03, food_delta: -0.07, hp_delta: -0.001, cold_risk: true,  heat_risk: false },
+  blizzard:   { duration: [1,  3], move_mult: 0.18, water_delta:  0.00, food_delta: -0.10, hp_delta: -0.0025,cold_risk: true,  heat_risk: false },
+  storm:      { duration: [1,  3], move_mult: 0.40, water_delta:  0.06, food_delta: -0.08, hp_delta: -0.0008,cold_risk: false, heat_risk: false },
+  heat_wave:  { duration: [3, 10], move_mult: 0.72, water_delta: -0.08, food_delta: -0.08, hp_delta: -0.001, cold_risk: false, heat_risk: true  },
+  drought:    { duration: [5, 20], move_mult: 1.00, water_delta: -0.15, food_delta: -0.12, hp_delta: -0.0004,cold_risk: false, heat_risk: false  },
 };
 
 // Probabilities (per simulation day) that a new weather event of each type begins,
