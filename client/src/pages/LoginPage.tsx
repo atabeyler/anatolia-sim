@@ -362,14 +362,23 @@ export default function LoginPage() {
 
 
       {/* System status top-left — 2-col grid on mobile to save vertical space */}
-      <div className="fixed top-3 left-3 z-20" style={{ display: showMatrix ? 'none' : 'grid', gridTemplateColumns: 'repeat(2, auto)', columnGap: 12, rowGap: 2 }}>
+      <div
+        className="fixed top-3 left-3 z-20"
+        style={{
+          display: showMatrix ? 'none' : 'grid',
+          gridTemplateColumns: 'repeat(2, auto)',
+          columnGap: 12,
+          rowGap: 2,
+          maxWidth: 'calc(100vw - 24px)',
+        }}
+      >
         {STATUS.map((s, i) => (
           <div key={s.label} className="flex items-center gap-1 boot-in" style={{ animationDelay: `${i * 80}ms` }}>
             <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.ok ? 'bg-sim-green pulse-live' : 'bg-sim-red'}`} />
-            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(9px, 1vw, 14px)', color: '#c0c8e8', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(11px, 1.05vw, 14px)', color: '#c0c8e8', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
               {lang === 'tr' ? s.labelTr : s.label}
             </span>
-            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(9px, 1vw, 14px)', color: '#4ecb71', marginLeft: 2, whiteSpace: 'nowrap' }}>
+            <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(11px, 1.05vw, 14px)', color: '#4ecb71', marginLeft: 2, whiteSpace: 'nowrap' }}>
               {s.val}
             </span>
           </div>
@@ -377,9 +386,21 @@ export default function LoginPage() {
       </div>
 
       {/* Coordinate display bottom — pushed up to avoid footer overlap */}
-      <div className="fixed left-3 z-20 font-share-tech tracking-widest" style={{ bottom: 48, fontSize: 'clamp(9px, 1vw, 14px)', color: '#c0c8e8' }}>
-        <div>LAT: {coords?.lat ?? '39.9334°N'} · LON: {coords?.lon ?? '32.8597°E'}</div>
-        <div style={{ marginTop: 2 }}>SYS: ANATOLİA-SIM v1.0 · BUILD 2026</div>
+      <div
+        className="fixed left-3 z-20 font-share-tech tracking-widest"
+        style={{
+          bottom: 48,
+          fontSize: 'clamp(11px, 1.05vw, 14px)',
+          color: '#c0c8e8',
+          maxWidth: 'calc(100vw - 24px)',
+        }}
+      >
+        <div style={{ whiteSpace: 'normal', overflowWrap: 'anywhere', lineHeight: 1.35 }}>
+          LAT: {coords?.lat ?? '39.9334°N'} · LON: {coords?.lon ?? '32.8597°E'}
+        </div>
+        <div style={{ marginTop: 2, whiteSpace: 'normal', overflowWrap: 'anywhere', lineHeight: 1.35 }}>
+          SYS: ANATOLİA-SIM v1.0 · BUILD 2026
+        </div>
       </div>
 
       {/* Main content */}
@@ -422,7 +443,10 @@ export default function LoginPage() {
           </div>
 
           {/* Form panel */}
-          <div className="w-[460px] max-w-full hud-panel relative boot-in" style={{ animationDelay: '300ms', padding: '22px 28px' }}>
+          <div
+            className="w-[460px] max-w-full hud-panel relative boot-in"
+            style={{ animationDelay: '300ms', padding: 'clamp(16px, 3vw, 22px) clamp(16px, 3.5vw, 28px)' }}
+          >
             <span className="hud-corner-tr" />
             <span className="hud-corner-bl" />
 
@@ -430,7 +454,7 @@ export default function LoginPage() {
             <div className="absolute -top-px left-6 right-6 flex items-center justify-center">
               <div className="bg-[#030310] px-3 flex items-center gap-2">
                 <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
-                <span className="font-share-tech text-sim-accent tracking-[0.1em] sm:tracking-[0.3em]" style={{ fontSize: 'clamp(11px, 3.8vw, 18px)' }}>
+                <span className="font-share-tech text-sim-accent tracking-[0.1em] sm:tracking-[0.3em]" style={{ fontSize: 'clamp(12px, 3.8vw, 18px)' }}>
                   {mode === 'login' ? (lang === 'tr' ? 'KİMLİK DOĞRULAMA' : 'IDENTITY VERIFICATION') : (lang === 'tr' ? 'HESAP OLUŞTURMA' : 'ACCOUNT CREATION')}
                 </span>
                 <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
@@ -441,7 +465,7 @@ export default function LoginPage() {
             <div className="flex gap-1 mb-3 mt-2">
               {(['login', 'register'] as const).map(m => (
                 <button key={m} type="button" onClick={() => setMode(m)}
-                  style={{ fontSize: 16 }}
+                  style={{ fontSize: 'clamp(14px, 1.4vw, 16px)' }}
                   className={`flex-1 py-2.5 font-share-tech tracking-widest uppercase transition-all border ${
                     mode === m
                       ? 'bg-sim-accent/20 border-sim-accent/60 text-sim-accent shadow-neon-sm'
@@ -486,12 +510,12 @@ export default function LoginPage() {
               </>)}
 
               {error && (
-                <div className="mb-3 px-3 py-2 border-l-2 border-sim-red bg-sim-red/10 font-share-tech text-sim-red tracking-wide" style={{ fontSize: 14 }}>
+                <div className="mb-3 px-3 py-2 border-l-2 border-sim-red bg-sim-red/10 font-share-tech text-sim-red tracking-wide" style={{ fontSize: 'clamp(13px, 1.15vw, 14px)' }}>
                   ⚠ {error}
                 </div>
               )}
               {success && (
-                <div className="mb-3 px-3 py-2 border-l-2 border-sim-green bg-sim-green/10 font-share-tech text-sim-green tracking-wide" style={{ fontSize: 14 }}>
+                <div className="mb-3 px-3 py-2 border-l-2 border-sim-green bg-sim-green/10 font-share-tech text-sim-green tracking-wide" style={{ fontSize: 'clamp(13px, 1.15vw, 14px)' }}>
                   ✓ {success}
                 </div>
               )}
@@ -499,7 +523,7 @@ export default function LoginPage() {
               <button type="submit" disabled={loading}
                 className="w-full py-3.5 font-orbitron font-semibold tracking-[0.2em] text-white transition-all disabled:opacity-40 neon-breathe relative overflow-hidden"
                 style={{
-                  fontSize: 18,
+                  fontSize: 'clamp(15px, 1.5vw, 18px)',
                   background: loading ? 'rgba(79,110,247,0.3)' : 'linear-gradient(135deg, rgba(79,110,247,0.35) 0%, rgba(79,110,247,0.2) 100%)',
                   border: '1px solid rgba(79,110,247,0.6)',
                   clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))',
