@@ -349,11 +349,38 @@ router.post('/:id/restore/:checkpointId', authenticate, requireSimulationOwner, 
       const snapshot = Array.isArray(cp.population_snapshot) ? cp.population_snapshot : JSON.parse(cp.population_snapshot);
       await query('DELETE FROM individuals WHERE simulation_id = $1', [req.params.id]);
       for (const ind of snapshot) {
-        await query(`INSERT INTO individuals (id,simulation_id,birth_day,death_day,alive,sex,x,y,genome,phenotype,language,parent_1_id,parent_2_id)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-          ON CONFLICT (id) DO NOTHING`,
-          [ind.id, req.params.id, ind.birth_day, ind.death_day, !ind.is_dead, ind.sex, ind.x, ind.y,
-           JSON.stringify(ind.genome ?? {}), JSON.stringify(ind.phenotype ?? {}), JSON.stringify({ stage: ind.language_stage ?? 0 }), ind.parent_1_id, ind.parent_2_id]);
+        // Restore language: prefer full language object, fall back to stage-only
+        const langObj = ind.language ?? { stage: ind.language_stage ?? 0 };
+        await query(
+          `INSERT INTO individuals
+            (id,simulation_id,birth_day,death_day,alive,sex,x,y,
+             genome,phenotype,epigenome,health,psychology,
+             beliefs,inventory,language,
+             parent_1_id,parent_2_id,group_id,
+             death_cause,satiation,mating_urge,inbreeding_coeff,
+             age,is_founder,social,
+             _water_fear,_fears,_water_experience)
+           VALUES
+            ($1,$2,$3,$4,$5,$6,$7,$8,
+             $9,$10,$11,$12,$13,
+             $14,$15,$16,
+             $17,$18,$19,
+             $20,$21,$22,$23,
+             $24,$25,$26,
+             $27,$28,$29)
+           ON CONFLICT (id) DO NOTHING`,
+          [
+            ind.id, req.params.id, ind.birth_day, ind.death_day, !ind.is_dead, ind.sex, ind.x ?? 0, ind.y ?? 0,
+            JSON.stringify(ind.genome ?? {}), JSON.stringify(ind.phenotype ?? {}),
+            JSON.stringify(ind.epigenome ?? {}), JSON.stringify(ind.health ?? {}), JSON.stringify(ind.psychology ?? {}),
+            JSON.stringify(Array.isArray(ind.beliefs) ? ind.beliefs : []), JSON.stringify(ind.inventory ?? {}),
+            JSON.stringify(langObj),
+            ind.parent_1_id ?? null, ind.parent_2_id ?? null, ind.group_id ?? null,
+            ind.death_cause ?? null, ind.satiation ?? 1, ind.mating_urge ?? 0, ind.inbreeding_coeff ?? 0,
+            ind.age ?? 0, ind.is_founder ?? false, JSON.stringify(ind.social ?? {}),
+            ind._waterFear ?? null, JSON.stringify(ind._fears ?? null), ind._waterExperience ?? null,
+          ]
+        );
       }
     }
     res.json({ message: 'Checkpoint restored', sim_day: cp.sim_day, sim_year: cp.sim_year });
