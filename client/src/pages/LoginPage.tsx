@@ -278,17 +278,15 @@ function MatrixRain({ phase }: { phase: Phase }) {
   );
 }
 
-/* ── Status indicators ────────────────────────────────────── */
-const STATUS = [
-  { label: 'CORE SYSTEMS',   labelTr: 'ÇEKİRDEK SİSTEMLER',  ok: true, val: '100%'  },
-  { label: 'PHYSICS ENGINE', labelTr: 'FİZİK MOTORU',          ok: true, val: 'v2.4'  },
-  { label: 'GENOME MATRIX',  labelTr: 'GENOM MATRİSİ',         ok: true, val: '46 CHR'},
-  { label: 'EPIGENOME',      labelTr: 'EPİGENOM',              ok: true, val: '6 LOCI'},
-  { label: 'NEURAL NET',     labelTr: 'SİNİR AĞI',             ok: true, val: 'ACTIVE'},
-  { label: 'CLIMATE SIM',    labelTr: 'İKLİM SİMÜL.',          ok: true, val: 'SYNC'  },
-  { label: 'LANGUAGE CORE',  labelTr: 'DİL ÇEKİRDEĞİ',        ok: true, val: 'READY' },
-  { label: 'SOCIAL MATRIX',  labelTr: 'SOSYAL MATRİS',         ok: true, val: 'INIT'  },
-];
+/* ── System status shape ──────────────────────────────────── */
+interface SysStatus {
+  status: 'online' | 'degraded';
+  genome_loci: number;
+  epi_loci: number;
+  lang_stages: number;
+  active_sims: number;
+  total_population: number;
+}
 
 /* ── Main Login Component ─────────────────────────────────── */
 export default function LoginPage() {
@@ -303,10 +301,16 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<Phase>('full');
   const [scrambling, setScrambling] = useState(false);
+  const [sysStatus, setSysStatus] = useState<SysStatus | null>(null);
   const [pendingCode, setPendingCode] = useState('');
   const [coords, setCoords] = useState<{ lat: string; lon: string } | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const f = (k: string) => (e: any) => setForm(p => ({ ...p, [k]: e.target.value }));
+
+  // Fetch real engine/db stats for the status panel
+  useEffect(() => {
+    axios.get<SysStatus>('/api/system/status').then(r => setSysStatus(r.data)).catch(() => {});
+  }, []);
 
   // Phase timeline: full (0–1.5s) → fade + scramble (1.5s) → bg (3.9s)
   useEffect(() => {
@@ -412,40 +416,57 @@ export default function LoginPage() {
         style={{ background: 'radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%)', bottom: '20%', right: '25%', filter: 'blur(30px)', zIndex: 3 }} />
 
       {/* System status top-left */}
-      <div
-        className="fixed top-3 left-3 z-20"
-        style={{
-          display: phase === 'full' ? 'none' : 'flex',
-          flexDirection: 'column',
-          gap: 8,
-          maxWidth: 'calc(100vw - 24px)',
-          opacity: phase === 'fade' ? 0 : 1,
-          transition: 'opacity 1.5s ease',
-          transitionDelay: '1s',
-        }}
-      >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, auto)', columnGap: 12, rowGap: 2 }}>
-          {STATUS.map((s, i) => (
-            <div key={s.label} className="flex items-center gap-1 boot-in" style={{ animationDelay: `${i * 80}ms` }}>
-              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.ok ? 'bg-sim-green pulse-live' : 'bg-sim-red'}`} />
-              <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(11px, 1.05vw, 14px)', color: '#c0c8e8', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
-                {lang === 'tr' ? s.labelTr : s.label}
-              </span>
-              <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(11px, 1.05vw, 14px)', color: '#4ecb71', marginLeft: 2, whiteSpace: 'nowrap' }}>
-                {s.val}
-              </span>
+      {(() => {
+        const ss = sysStatus;
+        const tr = lang === 'tr';
+        const dot = '…';
+        const STATUS = [
+          { label: 'CORE SYSTEMS',   labelTr: 'ÇEKİRDEK SİSTEMLER', ok: ss?.status === 'online', val: ss ? (ss.status === 'online' ? 'ONLINE' : 'DEGRADED') : dot },
+          { label: 'PHYSICS ENGINE', labelTr: 'FİZİK MOTORU',         ok: true,                   val: 'v2.4' },
+          { label: 'GENOME MATRIX',  labelTr: 'GENOM MATRİSİ',        ok: true,                   val: ss ? `${ss.genome_loci} LOCI` : dot },
+          { label: 'EPIGENOME',      labelTr: 'EPİGENOM',             ok: true,                   val: ss ? `${ss.epi_loci} LOCI` : dot },
+          { label: 'NEURAL NET',     labelTr: 'SİNİR AĞI',            ok: !!ss,                   val: ss ? 'ACTIVE' : 'CONN…' },
+          { label: 'CLIMATE SIM',    labelTr: 'İKLİM SİMÜL.',         ok: true,                   val: ss ? (ss.active_sims > 0 ? `${ss.active_sims} ${tr ? 'AKTİF' : 'ACTIVE'}` : (tr ? 'HAZIR' : 'READY')) : dot },
+          { label: 'LANGUAGE CORE',  labelTr: 'DİL ÇEKİRDEĞİ',       ok: true,                   val: ss ? `${ss.lang_stages} ${tr ? 'AŞAMA' : 'STAGE'}` : dot },
+          { label: 'SOCIAL MATRIX',  labelTr: 'SOSYAL MATRİS',        ok: true,                   val: ss ? (ss.total_population > 0 ? `${ss.total_population.toLocaleString()} ${tr ? 'BİREY' : 'IND'}` : (tr ? 'HAZIR' : 'READY')) : dot },
+        ];
+        return (
+          <div
+            className="fixed top-3 left-3 z-20"
+            style={{
+              display: phase === 'full' ? 'none' : 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              maxWidth: 'calc(100vw - 24px)',
+              opacity: phase === 'fade' ? 0 : 1,
+              transition: 'opacity 1.5s ease',
+              transitionDelay: '1s',
+            }}
+          >
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, auto)', columnGap: 12, rowGap: 2 }}>
+              {STATUS.map((s, i) => (
+                <div key={s.label} className="flex items-center gap-1 boot-in" style={{ animationDelay: `${i * 80}ms` }}>
+                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.ok ? 'bg-sim-green pulse-live' : 'bg-sim-red'}`} />
+                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(11px, 1.05vw, 14px)', color: '#c0c8e8', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+                    {tr ? s.labelTr : s.label}
+                  </span>
+                  <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(11px, 1.05vw, 14px)', color: '#4ecb71', marginLeft: 2, whiteSpace: 'nowrap' }}>
+                    {s.val}
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="font-share-tech tracking-widest" style={{ fontSize: 'clamp(11px, 1.05vw, 14px)', color: '#c0c8e8', maxWidth: 'min(calc(100vw - 24px), 420px)' }}>
-          <div style={{ whiteSpace: 'normal', overflowWrap: 'anywhere', lineHeight: 1.25 }}>
-            LAT: {coords?.lat ?? '39.9334°N'} · LON: {coords?.lon ?? '32.8597°E'}
+            <div className="font-share-tech tracking-widest" style={{ fontSize: 'clamp(11px, 1.05vw, 14px)', color: '#c0c8e8', maxWidth: 'min(calc(100vw - 24px), 420px)' }}>
+              <div style={{ whiteSpace: 'normal', overflowWrap: 'anywhere', lineHeight: 1.25 }}>
+                LAT: {coords?.lat ?? '39.9334°N'} · LON: {coords?.lon ?? '32.8597°E'}
+              </div>
+              <div style={{ marginTop: 1, whiteSpace: 'normal', overflowWrap: 'anywhere', lineHeight: 1.25 }}>
+                SYS: ANATOLİA-SİM v1.0 · BUILD 2026
+              </div>
+            </div>
           </div>
-          <div style={{ marginTop: 1, whiteSpace: 'normal', overflowWrap: 'anywhere', lineHeight: 1.25 }}>
-            SYS: ANATOLİA-SIM v1.0 · BUILD 2026
-          </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Main content — always in DOM, fades in as intro overlay dissolves */}
       <div

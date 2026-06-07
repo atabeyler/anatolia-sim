@@ -67,6 +67,26 @@ app.use('/api/aria', ariaRouter);
 app.use('/api/admin', adminRouter);
 app.get('/api/health', (_, res) => res.json({ status: 'ok', version: '1.0.0' }));
 
+// Public system status — no auth required; consumed by the login page status panel
+app.get('/api/system/status', async (_, res) => {
+  try {
+    const [simRes, popRes] = await Promise.all([
+      query("SELECT COUNT(*) FROM simulations WHERE status = 'running'"),
+      query('SELECT COUNT(*) FROM individuals WHERE alive = true'),
+    ]);
+    res.json({
+      status: 'online',
+      genome_loci: 32,
+      epi_loci: 8,
+      lang_stages: 7,
+      active_sims: parseInt(simRes.rows[0].count, 10),
+      total_population: parseInt(popRes.rows[0].count, 10),
+    });
+  } catch {
+    res.json({ status: 'degraded', genome_loci: 32, epi_loci: 8, lang_stages: 7, active_sims: 0, total_population: 0 });
+  }
+});
+
 if (existsSync(clientDist)) {
   app.use(express.static(clientDist));
   app.get('*', (req, res, next) => {
