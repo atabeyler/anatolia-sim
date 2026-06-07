@@ -652,6 +652,15 @@ export class SimulationEngine {
     return events;
   }
 
+  // Shortest-path angle interpolation — avoids the ±π wrapping bug
+  // where linear blending of e.g. +3 and -3 gives 0 (opposite direction).
+  _lerpAngle(from, to, t) {
+    let diff = to - from;
+    while (diff >  Math.PI) diff -= 2 * Math.PI;
+    while (diff < -Math.PI) diff += 2 * Math.PI;
+    return from + diff * t;
+  }
+
   moveIndividual(ind) {
     if (ind.is_dead) return;
     const ageYears = ind.age / 365;
@@ -684,7 +693,7 @@ export class SimulationEngine {
       const hdx   = homeX - (ind.x ?? 0);
       const hdy   = homeY - (ind.y ?? 0);
       if (Math.hypot(hdx, hdy) > 0.005) {
-        ind._moveAngle = Math.atan2(hdy, hdx) * 0.97 + ind._moveAngle * 0.03;
+        ind._moveAngle = this._lerpAngle(ind._moveAngle, Math.atan2(hdy, hdx), 0.97);
       }
     } else {
       // ── Bant uyumu: centroide çekim ──────────────────────────────────────
@@ -697,7 +706,7 @@ export class SimulationEngine {
       const cohesionStr = Math.max(0.15, 0.88 - survivalStress * 0.65);
       if (bdist > freeZone) {
         const pull = Math.min(1, (bdist - freeZone) / 2) * cohesionStr;
-        ind._moveAngle = Math.atan2(bdy, bdx) * pull + ind._moveAngle * (1 - pull);
+        ind._moveAngle = this._lerpAngle(ind._moveAngle, Math.atan2(bdy, bdx), pull);
       }
 
       // ── Hafıza temelli yiyecek arama ──────────────────────────────────────
@@ -705,7 +714,7 @@ export class SimulationEngine {
         ind._goodFoodAngle = ind._moveAngle;
       } else if (survivalStress > 0.35 && ind._goodFoodAngle !== undefined) {
         const memPull = Math.min(0.55, survivalStress * 0.6);
-        ind._moveAngle = ind._goodFoodAngle * memPull + ind._moveAngle * (1 - memPull);
+        ind._moveAngle = this._lerpAngle(ind._moveAngle, ind._goodFoodAngle, memPull);
       }
 
       // ── Çiftleşme dürtüsü: temel ihtiyaçlar karşılandığında devreye girer ─
@@ -725,7 +734,7 @@ export class SimulationEngine {
           const pdx = (nearestPartner.x ?? 0) - (ind.x ?? 0);
           const pdy = (nearestPartner.y ?? 0) - (ind.y ?? 0);
           const urgePull = Math.min(0.72, ((ind.mating_urge - 0.65) / 0.35) * 0.65);
-          ind._moveAngle = Math.atan2(pdy, pdx) * urgePull + ind._moveAngle * (1 - urgePull);
+          ind._moveAngle = this._lerpAngle(ind._moveAngle, Math.atan2(pdy, pdx), urgePull);
         }
       }
     }
