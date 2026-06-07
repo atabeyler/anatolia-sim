@@ -349,38 +349,89 @@ router.post('/:id/restore/:checkpointId', authenticate, requireSimulationOwner, 
       const snapshot = Array.isArray(cp.population_snapshot) ? cp.population_snapshot : JSON.parse(cp.population_snapshot);
       await query('DELETE FROM individuals WHERE simulation_id = $1', [req.params.id]);
       for (const ind of snapshot) {
-        // Restore language: prefer full language object, fall back to stage-only
-        const langObj = ind.language ?? { stage: ind.language_stage ?? 0 };
+        // Restore language: prefer full object, fall back to stage-only
+        const langObj = ind.language && typeof ind.language === 'object' && !Array.isArray(ind.language)
+          ? ind.language : { stage: ind.language_stage ?? 0 };
+        // Mirror group_id into social so engine can reconstruct groups on load
+        const socialObj = { ...(ind.social ?? {}), group_id: ind.group_id ?? ind.social?.group_id ?? null };
+        // mind holds consciousness and other in-memory cognition state
+        const mindObj = ind.mind ?? {};
+        // Volatile fields (satiation, mating_urge, etc.) are stored in mind._volatile
+        // so they survive the DB round-trip without requiring new schema columns
+        mindObj._volatile = {
+          satiation: ind.satiation ?? 1,
+          mating_urge: ind.mating_urge ?? 0,
+          inbreeding_coeff: ind.inbreeding_coeff ?? 0,
+          age: ind.age ?? 0,
+          _waterFear: ind._waterFear ?? null,
+          _fears: ind._fears ?? null,
+          _waterExperience: ind._waterExperience ?? null,
+          inventory: ind.inventory ?? null,
+          psychology: ind.psychology ?? null,
+        };
         await query(
           `INSERT INTO individuals
             (id,simulation_id,birth_day,death_day,alive,sex,x,y,
-             genome,phenotype,epigenome,health,psychology,
-             beliefs,inventory,language,
-             parent_1_id,parent_2_id,group_id,
-             death_cause,satiation,mating_urge,inbreeding_coeff,
-             age,is_founder,social,
-             _water_fear,_fears,_water_experience)
+             genome,phenotype,epigenome,health,mind,social,
+             skills,beliefs,language,memory,
+             parent_1_id,parent_2_id,death_cause)
            VALUES
             ($1,$2,$3,$4,$5,$6,$7,$8,
-             $9,$10,$11,$12,$13,
-             $14,$15,$16,
-             $17,$18,$19,
-             $20,$21,$22,$23,
-             $24,$25,$26,
-             $27,$28,$29)
+             $9,$10,$11,$12,$13,$14,
+             $15,$16,$17,$18,
+             $19,$20,$21)
            ON CONFLICT (id) DO NOTHING`,
           [
-            ind.id, req.params.id, ind.birth_day, ind.death_day, !ind.is_dead, ind.sex, ind.x ?? 0, ind.y ?? 0,
+            ind.id, req.params.id, ind.birth_day, ind.death_day ?? null, !ind.is_dead, ind.sex, ind.x ?? 0, ind.y ?? 0,
             JSON.stringify(ind.genome ?? {}), JSON.stringify(ind.phenotype ?? {}),
-            JSON.stringify(ind.epigenome ?? {}), JSON.stringify(ind.health ?? {}), JSON.stringify(ind.psychology ?? {}),
-            JSON.stringify(Array.isArray(ind.beliefs) ? ind.beliefs : []), JSON.stringify(ind.inventory ?? {}),
-            JSON.stringify(langObj),
-            ind.parent_1_id ?? null, ind.parent_2_id ?? null, ind.group_id ?? null,
-            ind.death_cause ?? null, ind.satiation ?? 1, ind.mating_urge ?? 0, ind.inbreeding_coeff ?? 0,
-            ind.age ?? 0, ind.is_founder ?? false, JSON.stringify(ind.social ?? {}),
-            ind._waterFear ?? null, JSON.stringify(ind._fears ?? null), ind._waterExperience ?? null,
+            JSON.stringify(ind.epigenome ?? {}), JSON.stringify(ind.health ?? {}),
+            JSON.stringify(mindObj), JSON.stringify(socialObj),
+            JSON.stringify(ind.skills ?? []),
+            JSON.stringify(Array.isArray(ind.beliefs) ? ind.beliefs : []),
+            JSON.stringify(langObj), JSON.stringify(ind.memory ?? {}),
+            ind.parent_1_id ?? null, ind.parent_2_id ?? null, ind.death_cause ?? null,
           ]
         );
+      }
+      // If engine is still in memory, reload it from the restored snapshot directly
+      // so the live state is immediately consistent without a full restart
+      const liveEngine = simulationManager.getEngine(req.params.id);
+      if (liveEngine) {
+        liveEngine.currentDay = cp.sim_day;
+        liveEngine.worldState = cp.world_state ?? liveEngine.worldState;
+        liveEngine.population.clear();
+        liveEngine.groups = [];
+        for (const ind of snapshot) {
+          const restored = { ...ind };
+          restored.is_dead = ind.is_dead ?? false;
+          restored.beliefs = new Set(Array.isArray(ind.beliefs) ? ind.beliefs : []);
+          // Restore volatile fields
+          if (ind.satiation !== undefined) restored.satiation = ind.satiation;
+          if (ind.mating_urge !== undefined) restored.mating_urge = ind.mating_urge;
+          if (ind.inbreeding_coeff !== undefined) restored.inbreeding_coeff = ind.inbreeding_coeff;
+          if (ind.age !== undefined) restored.age = ind.age;
+          if (ind._waterFear !== undefined) restored._waterFear = ind._waterFear;
+          if (ind._fears !== undefined) restored._fears = ind._fears;
+          if (ind._waterExperience !== undefined) restored._waterExperience = ind._waterExperience;
+          if (ind.inventory) restored.inventory = ind.inventory;
+          if (ind.psychology) restored.psychology = ind.psychology;
+          liveEngine.population.set(restored.id, restored);
+        }
+        // Rebuild groups
+        const groupMap = new Map();
+        for (const ind of liveEngine.population.values()) {
+          if (ind.group_id && !ind.is_dead) {
+            if (!groupMap.has(ind.group_id)) {
+              groupMap.set(ind.group_id, {
+                id: ind.group_id, name: null, founder_id: null, leader_id: null,
+                member_ids: [], territory: { x: ind.x ?? 0, y: ind.y ?? 0, radius: 0.3 },
+                alliances: [], rival_ids: [], internal_tension: 0, prestige: 0.1, founded_day: 0,
+              });
+            }
+            groupMap.get(ind.group_id).member_ids.push(ind.id);
+          }
+        }
+        liveEngine.groups = [...groupMap.values()];
       }
     }
     res.json({ message: 'Checkpoint restored', sim_day: cp.sim_day, sim_year: cp.sim_year });

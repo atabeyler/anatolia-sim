@@ -162,7 +162,10 @@ function parseIndividual(row) {
   // is_founder / home_x / home_y are never DB columns, so reconstruct here.
   const isFounder = (row.birth_day ?? 0) < 0;
   const social = row.social ?? {};
-  return {
+  const mind = row.mind ?? {};
+  // Volatile fields saved by Time Machine restore are stashed in mind._volatile
+  const volatile = mind._volatile ?? {};
+  const parsed = {
     ...row,
     is_dead: isDead,
     alive: !isDead,
@@ -177,6 +180,17 @@ function parseIndividual(row) {
     beliefs: Array.isArray(row.beliefs) ? row.beliefs : [],
     memory: row.memory ?? { social: [], events: [], knowledge: [] },
   };
+  // Restore volatile in-memory fields if present from a Time Machine restore
+  if (volatile.satiation !== undefined) parsed.satiation = volatile.satiation;
+  if (volatile.mating_urge !== undefined) parsed.mating_urge = volatile.mating_urge;
+  if (volatile.inbreeding_coeff !== undefined) parsed.inbreeding_coeff = volatile.inbreeding_coeff;
+  if (volatile.age !== undefined) parsed.age = volatile.age;
+  if (volatile._waterFear !== undefined) parsed._waterFear = volatile._waterFear;
+  if (volatile._fears !== undefined) parsed._fears = volatile._fears;
+  if (volatile._waterExperience !== undefined) parsed._waterExperience = volatile._waterExperience;
+  if (volatile.inventory) parsed.inventory = volatile.inventory;
+  if (volatile.psychology) parsed.psychology = volatile.psychology;
+  return parsed;
 }
 
 export const simulationManager = new SimulationManager();
