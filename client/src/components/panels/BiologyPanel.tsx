@@ -3,20 +3,20 @@ import axios from 'axios';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 
-const GENE_LABELS: Record<string, { en: string; tr: string }> = {
-  FOXP2: { en: 'Language (FOXP2)', tr: 'Dil (FOXP2)' },
-  OXTR: { en: 'Bonding (OXTR)', tr: 'Bağlanma (OXTR)' },
-  DRD4: { en: 'Novelty (DRD4)', tr: 'Yenilik (DRD4)' },
-  MAOA: { en: 'Impulse (MAOA)', tr: 'Dürtü (MAOA)' },
-  BDNF: { en: 'Plasticity (BDNF)', tr: 'Esneklik (BDNF)' },
-  fluid_intelligence: { en: 'Intelligence', tr: 'Zekâ' },
-  physical_strength: { en: 'Strength', tr: 'Güç' },
-  empathy: { en: 'Empathy', tr: 'Empati' },
-  curiosity: { en: 'Curiosity', tr: 'Merak' },
-  conscientiousness: { en: 'Conscientiousness', tr: 'Özenlilik' },
-  aggression: { en: 'Aggression', tr: 'Saldırganlık' },
-  immune_strength: { en: 'Immunity', tr: 'Bağışıklık' },
-  artistic_sense: { en: 'Art Sense', tr: 'Sanat Duyusu' },
+const GENE_LABELS: Record<string, { en: string; tr: string; phenoKey: string }> = {
+  FOXP2: { en: 'Language (FOXP2)', tr: 'Dil (FOXP2)', phenoKey: 'language_capacity' },
+  OXTR: { en: 'Bonding (OXTR)', tr: 'Bağlanma (OXTR)', phenoKey: 'social_bonding' },
+  DRD4: { en: 'Novelty (DRD4)', tr: 'Yenilik (DRD4)', phenoKey: 'curiosity' },
+  MAOA: { en: 'Impulse (MAOA)', tr: 'Dürtü (MAOA)', phenoKey: 'aggression' },
+  BDNF: { en: 'Plasticity (BDNF)', tr: 'Esneklik (BDNF)', phenoKey: 'learning_rate' },
+  fluid_intelligence: { en: 'Intelligence', tr: 'Zekâ', phenoKey: 'fluid_intelligence' },
+  physical_strength: { en: 'Strength', tr: 'Güç', phenoKey: 'physical_strength' },
+  empathy: { en: 'Empathy', tr: 'Empati', phenoKey: 'empathy' },
+  curiosity: { en: 'Curiosity', tr: 'Merak', phenoKey: 'curiosity' },
+  conscientiousness: { en: 'Conscientiousness', tr: 'Özenlilik', phenoKey: 'conscientiousness' },
+  aggression: { en: 'Aggression', tr: 'Saldırganlık', phenoKey: 'aggression' },
+  immune_strength: { en: 'Immunity', tr: 'Bağışıklık', phenoKey: 'immune_strength' },
+  artistic_sense: { en: 'Art Sense', tr: 'Sanat Duyusu', phenoKey: 'artistic_sense' },
 };
 
 const HAIR_TR: Record<string, string> = {
@@ -113,20 +113,26 @@ export default function BiologyPanel() {
             'Gen lokusları davranışları yönlendirir. Değerler mayoz ve mutasyondan ortaya çıkar.'
           )}
         </p>
-        {Object.entries(GENE_LABELS).slice(0, 6).map(([key, labels]) => (
-          <div key={key} className="mb-1">
-            <div className="flex justify-between mb-0.5">
-              <span className="text-sim-muted">{labels[lang === 'en' ? 'en' : 'tr']}</span>
-              <span className="text-sim-accent">{(avgIntel * (0.7 + Math.random() * 0.6) * 100).toFixed(0)}%</span>
+        {Object.entries(GENE_LABELS).slice(0, 6).map(([key, labels]) => {
+          const phenoKey = labels.phenoKey;
+          const vals = individuals.map((ind: any) => ind.phenotype?.[phenoKey] ?? 0).filter((v: number) => v > 0);
+          const avg = vals.length ? vals.reduce((a: number, b: number) => a + b, 0) / vals.length : 0;
+          const pct = Math.round(avg * 100);
+          return (
+            <div key={key} className="mb-1">
+              <div className="flex justify-between mb-0.5">
+                <span className="text-sim-muted">{labels[lang === 'en' ? 'en' : 'tr']}</span>
+                <span className="text-sim-accent">{pct}%</span>
+              </div>
+              <div className="h-1 bg-sim-border rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-sim-accent rounded-full"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
             </div>
-            <div className="h-1 bg-sim-border rounded-full overflow-hidden">
-              <div
-                className="h-full bg-sim-accent rounded-full"
-                style={{ width: `${Math.min(100, avgIntel * (0.7 + Math.random() * 0.6) * 100)}%` }}
-              />
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </Section>
 
       <Section title={t(lang, 'Living Individuals', 'Yaşayan Bireyler')}>

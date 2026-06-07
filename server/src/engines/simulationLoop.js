@@ -2,6 +2,7 @@
 
 import { rollDeath } from './biology/mortality.js';
 import { checkReproduction } from './biology/reproduction.js';
+import { computeInbreedingCoefficient } from './biology/genome.js';
 import { updateWorldState, computeResourcePressure } from './environment/environmentEngine.js';
 import { buildPhonology } from './language/nameEngine.js';
 import { updateLanguageStage, learnFromTeacher, updateFoxp2Expression, tryAcquireWordFromEnvironment, generateProtoWord, CORE_CONCEPTS } from './language/languageEngine.js';
@@ -332,6 +333,7 @@ export class SimulationEngine {
       const p2 = this.population.get(nb.parent_2_id);
       if (p1 && p2) inheritEpigenome(nb, p1, p2);
       this.population.set(nb.id, nb);
+      nb.inbreeding_coeff = computeInbreedingCoefficient(nb, this.population);
       this._todayBirths++;
       this.totalBirths++;
       tickEvents.push({ type: 'birth', individual_id: nb.id, day, importance: 'low' });
@@ -984,19 +986,9 @@ export class SimulationEngine {
         learnFromTeacher(ind, parent);
       }
 
-      // Epigenetic priming: proximity to a high-care parent gently demethylates OXTR,
-      // which is heritable for 2 generations via inheritEpigenome. This is the correct
-      // Cardinal-Rule-compliant pathway — the effect propagates through inheritance, not
-      // direct phenotype mutation.
-      if (ageYears >= 2 && ageYears < 15 && dist < 1.5 && ind.epigenome?.OXTR_METHYL) {
-        const parentCare = parent.phenotype?.parental_care ?? 0.5;
-        if (parentCare > 0.55) {
-          ind.epigenome.OXTR_METHYL.methylation = Math.max(
-            0.22,
-            ind.epigenome.OXTR_METHYL.methylation - 0.000015
-          );
-        }
-      }
+      // Note: epigenetic effects of parental care are mediated exclusively through the
+      // child's own stress and satiation signals fed into updateEpigenome each tick.
+      // Direct epigenome writes on non-founders are forbidden by the Cardinal Rule.
 
       // Tech learning: parent's discovered techs boost child's discovery
       const discoveries = tryDiscoverTech(ind, this.discoveredTechs, this.worldState, day, this.techProgress);
