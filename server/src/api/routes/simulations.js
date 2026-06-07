@@ -132,6 +132,9 @@ function serializeIndividual(ind, currentDay) {
     language: ind.language,
     microbiome: ind.microbiome ?? null,
     inventory: ind.inventory ?? null,
+    inbreeding_coeff: ind.inbreeding_coeff ?? 0,
+    is_founder: ind.is_founder ?? false,
+    group_role: ind.group_role ?? null,
   };
 }
 
