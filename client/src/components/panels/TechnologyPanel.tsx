@@ -78,7 +78,7 @@ export default function TechnologyPanel() {
     <DetailPanel panelId="technology" title="Technology" titleTr="Teknoloji">
       <div className="flex justify-between items-center bg-sim-surface rounded-lg p-3 mb-2">
         <span className="text-sim-muted">{lang === 'en' ? 'Discovered' : 'Keşfedilen'}</span>
-        <span className="text-sim-gold font-bold text-lg">{totalTechs} / 38</span>
+        <span className="text-sim-gold font-bold text-lg">{totalTechs} / {stats?.total_techs ?? 25}</span>
       </div>
 
       {TECH_TIERS.map(tier => (
