@@ -18,6 +18,7 @@ import { processMicrobiomeTick, spreadInfection, updateGutMicrobiome, computeHea
 import { initializePsychology, updateMentalState, processBonding, computePopulationPsychStats } from './psychology/psychologyEngine.js';
 import { initializeEpigenome, inheritEpigenome, updateEpigenome } from './epigenetics/epigeneticsEngine.js';
 import { processAstronomyTick, getAstronomyBonus } from './astronomy/astronomyEngine.js';
+import { isOnLand } from '../utils/landMask.js';
 import { computeSocialOrder } from './law/lawEngine.js';
 
 const SOCIAL_INTERACTION_RADIUS = 5;  // degrees (~500 km) — was 50 (causes O(n²) explosion)
@@ -251,6 +252,37 @@ export class SimulationEngine {
       const scatter = 0.003 + ageYears * 0.006;
       ind.x = caregiver.x * snapStr + ind.x * (1 - snapStr) + (Math.random() - 0.5) * scatter;
       ind.y = caregiver.y * snapStr + ind.y * (1 - snapStr) + (Math.random() - 0.5) * scatter;
+    }
+
+    // 4c. Su deneyimi ve gözlemsel yüzme öğrenimi
+    // _waterExperience: 0→1 arası birikimli değer, genomda değil bellekte.
+    // Suda hayatta kalan bireyler deneyim kazanır; ebeveynini izleyen çocuklar
+    // gözlemsel öğrenmeyle bu deneyimin küçük bir kısmını edinir.
+    for (const ind of alive) {
+      if (ind._inWater) {
+        // Her suda geçen tick'te biraz deneyim kazanır (çok yavaş)
+        ind._waterExperience = Math.min(1, (ind._waterExperience ?? 0) + 0.002);
+      }
+    }
+    // Gözlemsel öğrenme: ebeveyn sudan yeni çıktıysa (önceki tick'te suda, şimdi değil),
+    // yakındaki çocukları bunu görür ve bir miktar deneyim edinir.
+    for (const ind of alive) {
+      const wasInWater = ind._wasInWater ?? false;
+      const nowOnLand  = !ind._inWater;
+      if (wasInWater && nowOnLand) {
+        // Bu birey sudan çıktı — yakındaki çocuklar gözlem kazanır
+        for (const other of alive) {
+          if (other.id === ind.id) continue;
+          const otherAge = (other.age ?? 0) / 365;
+          if (otherAge > 20) continue; // gençler daha kolay öğrenir
+          const dist = Math.hypot((other.x ?? 0) - (ind.x ?? 0), (other.y ?? 0) - (ind.y ?? 0));
+          if (dist > 1.5) continue; // görüş mesafesi ~150km
+          const isChild = other.parent_1_id === ind.id || other.parent_2_id === ind.id;
+          const gain = isChild ? 0.003 : 0.0005; // ebeveynden öğrenme daha etkili
+          other._waterExperience = Math.min(1, (other._waterExperience ?? 0) + gain);
+        }
+      }
+      ind._wasInWater = ind._inWater; // bir sonraki tick için geçmiş durumu sakla
     }
 
     // 5. Psychology — mental state
@@ -739,9 +771,26 @@ export class SimulationEngine {
       }
     }
 
+    // ── Su panik içgüdüsü: HP %60'ın altına düşünce en son bilinen kara
+    //    yönüne dönme. Bu bir gen değil — acı/tehlike farkındalığı. ───────────
+    if (ind._inWater && (ind.health?.hp ?? 1) < 0.6 && ind._lastLandX !== undefined) {
+      const ldx = ind._lastLandX - (ind.x ?? 0);
+      const ldy = ind._lastLandY - (ind.y ?? 0);
+      const panicPull = Math.min(0.9, (0.6 - (ind.health?.hp ?? 1)) * 3);
+      ind._moveAngle = this._lerpAngle(ind._moveAngle, Math.atan2(ldy, ldx), panicPull);
+    }
+
     const step = speed * (0.5 + Math.random() * 0.8);
     ind.x = Math.max(-180, Math.min(180, (ind.x ?? 0) + Math.cos(ind._moveAngle) * step));
     ind.y = Math.max(-85,  Math.min(85,  (ind.y ?? 0) + Math.sin(ind._moveAngle) * step));
+
+    // Track water state; remember last land position for panic-return logic
+    const nowInWater = !isOnLand(ind.y, ind.x);
+    if (!nowInWater) {
+      ind._lastLandX = ind.x;
+      ind._lastLandY = ind.y;
+    }
+    ind._inWater = nowInWater;
 
     // ── Kurucular: sert konum sınırı ──────────────────────────────────────────
     if (ind.is_founder && ind.home_x !== undefined) {
@@ -810,6 +859,20 @@ export class SimulationEngine {
         // Non-temperature weather (storm, heavy_rain, drought) — resilience reduces impact
         health.hp = Math.max(0, health.hp + hpDelta * (1.0 - resilience * 0.5));
       }
+    }
+
+    // Drowning: being in water drains HP. Rate is reduced by accumulated water
+    // experience (_waterExperience) gained through survival and observation —
+    // no swimming gene, purely behavioural memory.
+    if (individual._inWater) {
+      const ageYears  = (individual.age ?? 0) / 365;
+      const ageFactor = ageYears < 5 ? 2.0 : ageYears > 60 ? 1.5 : 1.0;
+      const skill     = Math.min(1, individual._waterExperience ?? 0);
+      // Fully experienced swimmer still takes 15% of base damage — water is never safe
+      const drownRate = 0.008 * (1 - skill * 0.85) * ageFactor;
+      health.hp = Math.max(0, health.hp - drownRate);
+      health.calories  = Math.max(0, (health.calories  ?? 0.5) - 0.004 * (1 - skill * 0.5));
+      health.hydration = Math.min(1, (health.hydration ?? 0.5) + 0.01);
     }
 
     individual.health_score = health.hp;
