@@ -259,12 +259,21 @@ router.get('/:id/population', authenticate, requireSimulationOwner, async (req, 
 
 router.get('/:id/events', authenticate, requireSimulationOwner, async (req, res) => {
   try {
-    const { limit = 50, importance } = req.query;
-    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
-    let sql = 'SELECT * FROM simulation_events WHERE simulation_id = $1';
+    const { limit = 50, importance, types, offset = 0 } = req.query;
+    const safeLimit  = Math.min(Math.max(parseInt(limit,  10) || 50,  1), 1000);
+    const safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
     const params = [req.params.id];
-    if (importance) { sql += ` AND importance >= $2`; params.push(parseInt(importance, 10) || 1); }
-    sql += ` ORDER BY sim_day DESC LIMIT ${safeLimit}`;
+    let sql = 'SELECT * FROM simulation_events WHERE simulation_id = $1';
+    if (importance) { sql += ` AND importance >= $${params.length + 1}`; params.push(parseInt(importance, 10) || 1); }
+    if (types) {
+      const typeList = String(types).split(',').map(t => t.trim()).filter(Boolean);
+      if (typeList.length > 0) {
+        const placeholders = typeList.map((_, i) => `$${params.length + i + 1}`).join(', ');
+        sql += ` AND event_type IN (${placeholders})`;
+        params.push(...typeList);
+      }
+    }
+    sql += ` ORDER BY sim_day DESC LIMIT ${safeLimit} OFFSET ${safeOffset}`;
     const { rows } = await query(sql, params);
     res.json(rows);
   } catch { res.status(500).json({ error: 'Failed to fetch events' }); }

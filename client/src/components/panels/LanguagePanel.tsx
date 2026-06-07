@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { translateEventDescription, type LangCode } from '../../utils/i18n';
@@ -29,16 +31,8 @@ const V_SYSTEMS = [
 ];
 
 const BIOME_C_BIAS: Record<string, number> = {
-  mediterranean: 0,
-  coastal: 1,
-  tropical_rainforest: 2,
-  tropical_savanna: 2,
-  temperate_forest: 3,
-  boreal_forest: 4,
-  tundra: 4,
-  mountain: 3,
-  grassland: 1,
-  desert: 0,
+  mediterranean: 0, coastal: 1, tropical_rainforest: 2, tropical_savanna: 2,
+  temperate_forest: 3, boreal_forest: 4, tundra: 4, mountain: 3, grassland: 1, desert: 0,
 };
 
 function buildPhonology(phonologySeed: number, biome = 'mediterranean') {
@@ -49,54 +43,221 @@ function buildPhonology(phonologySeed: number, biome = 'mediterranean') {
   const c3 = C_CLASSES[(s * 7 + 1) % C_CLASSES.length];
   const vowels = V_SYSTEMS[(s * 5 + biomeBias) % V_SYSTEMS.length];
   const clanSuffix = c3.slice(0, 3).map(c => c + vowels[0]);
-  return {
-    consonants: [...new Set([...c1, ...c2])],
-    vowels,
-    clanSuffix,
-  };
+  return { consonants: [...new Set([...c1, ...c2])], vowels, clanSuffix };
 }
 
 function buildSurfaceForms(phonology: ReturnType<typeof buildPhonology>, stage: number) {
-  const consonants = phonology.consonants;
-  const vowels = phonology.vowels;
+  const { consonants, vowels } = phonology;
   const forms: string[] = [];
-
-  if (stage >= 2) {
-    forms.push(...vowels.slice(0, 3));
-  }
-
-  if (stage >= 3) {
-    for (const c of consonants.slice(0, 3)) {
-      for (const v of vowels.slice(0, 3)) forms.push(`${c}${v}`);
-    }
-  }
-
-  if (stage >= 4) {
-    for (const c of consonants.slice(0, 2)) {
-      for (const v of vowels.slice(0, 2)) forms.push(`${c}${v}${c}`);
-    }
-  }
-
-  if (stage >= 5) {
-    for (const c of consonants.slice(0, 2)) {
-      forms.push(`${c}${vowels[0]}-${c}${vowels[1] ?? vowels[0]}`);
-    }
-  }
-
-  if (stage >= 6) {
-    forms.push(...phonology.clanSuffix);
-  }
-
+  if (stage >= 2) forms.push(...vowels.slice(0, 3));
+  if (stage >= 3) for (const c of consonants.slice(0, 3)) for (const v of vowels.slice(0, 3)) forms.push(`${c}${v}`);
+  if (stage >= 4) for (const c of consonants.slice(0, 2)) for (const v of vowels.slice(0, 2)) forms.push(`${c}${v}${c}`);
+  if (stage >= 5) for (const c of consonants.slice(0, 2)) forms.push(`${c}${vowels[0]}-${c}${vowels[1] ?? vowels[0]}`);
+  if (stage >= 6) forms.push(...phonology.clanSuffix);
   return [...new Set(forms)].slice(0, 9);
 }
 
-function channelLabel(stage: number, lang: 'tr' | 'en') {
-  const item = LANGUAGE_STAGES[stage];
-  return lang === 'tr' ? item.nameTr : item.name;
+function evColor(type: string) {
+  if (type === 'communication') return '#a0b4ff';
+  if (type === 'word')          return '#7dd3fc';
+  return '#a0c8b0';
+}
+function evIcon(type: string) {
+  if (type === 'communication') return '🔤';
+  if (type === 'word')          return '◆';
+  return '◈';
+}
+function evLabel(type: string, lang: string) {
+  if (type === 'communication') return lang === 'tr' ? 'iletişim' : 'comm';
+  if (type === 'word')          return lang === 'tr' ? 'kelime'   : 'word';
+  return lang === 'tr' ? 'dil' : 'lang';
 }
 
+// ── Archive Modal ────────────────────────────────────────────────────────────
+
+const ARCHIVE_FILTERS = [
+  { id: 'all',           labelTr: 'Tümü',      labelEn: 'All' },
+  { id: 'language',      labelTr: 'Dil',        labelEn: 'Language' },
+  { id: 'communication', labelTr: 'İletişim',   labelEn: 'Comm.' },
+  { id: 'word',          labelTr: 'Kelime',     labelEn: 'Word' },
+];
+
+const PAGE = 100;
+
+function LangArchiveModal({ simId, accessToken, lang: uiLang, onClose }: {
+  simId: string; accessToken: string; lang: string; onClose: () => void;
+}) {
+  const [rows,    setRows]    = useState<any[]>([]);
+  const [total,   setTotal]   = useState(0);
+  const [offset,  setOffset]  = useState(0);
+  const [filter,  setFilter]  = useState('all');
+  const [search,  setSearch]  = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const TYPES = 'language,word,communication';
+
+  useEffect(() => {
+    if (!simId || !accessToken) return;
+    let cancelled = false;
+    setLoading(true);
+    const headers = { Authorization: `Bearer ${accessToken}` };
+    // Load total count via summary
+    axios.get(`/api/simulations/${simId}/events/summary`, { headers })
+      .then(r => {
+        if (cancelled) return;
+        const c = r.data?.countsByType ?? {};
+        setTotal((c['language'] ?? 0) + (c['word'] ?? 0) + (c['communication'] ?? 0));
+      }).catch(() => {});
+    // Load first page
+    axios.get(`/api/simulations/${simId}/events`, {
+      headers, params: { types: TYPES, limit: PAGE, offset: 0 },
+    }).then(r => {
+      if (cancelled) return;
+      setRows(r.data ?? []);
+      setOffset(PAGE);
+    }).catch(() => {}).finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [simId, accessToken]);
+
+  async function loadMore() {
+    if (loading) return;
+    setLoading(true);
+    const headers = { Authorization: `Bearer ${accessToken}` };
+    try {
+      const r = await axios.get(`/api/simulations/${simId}/events`, {
+        headers, params: { types: TYPES, limit: PAGE, offset },
+      });
+      setRows(prev => [...prev, ...(r.data ?? [])]);
+      setOffset(o => o + PAGE);
+    } finally { setLoading(false); }
+  }
+
+  const filtered = rows.filter(ev => {
+    const t = String(ev.event_type ?? '');
+    if (filter !== 'all' && t !== filter) return false;
+    if (search) {
+      const desc = String(ev.description ?? '').toLowerCase();
+      if (!desc.includes(search.toLowerCase())) return false;
+    }
+    return true;
+  });
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div style={{ width: 640, maxWidth: '95vw', maxHeight: '88vh', display: 'flex', flexDirection: 'column', background: 'rgba(4,4,18,0.98)', border: '1px solid rgba(160,180,255,0.25)', boxShadow: '0 20px 60px rgba(0,0,0,0.8)' }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: '1px solid rgba(160,180,255,0.15)', flexShrink: 0 }}>
+          <span style={{ fontSize: 13, fontFamily: 'Orbitron, monospace', color: '#a0b4ff', fontWeight: 700, letterSpacing: '0.1em', flex: 1 }}>
+            {uiLang === 'tr' ? '📋 DİL & İLETİŞİM ARŞİVİ' : '📋 LANGUAGE & COMM. ARCHIVE'}
+          </span>
+          <span style={{ fontSize: 11, color: '#6a8878', fontFamily: 'Share Tech Mono, monospace' }}>
+            {total > 0 ? `${total} ${uiLang === 'tr' ? 'kayıt' : 'records'}` : ''}
+          </span>
+          <button onClick={onClose} style={{ color: '#6a8878', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 4px' }}>✕</button>
+        </div>
+
+        {/* Filter + Search */}
+        <div style={{ padding: '8px 14px', borderBottom: '1px solid rgba(160,180,255,0.08)', flexShrink: 0, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {ARCHIVE_FILTERS.map(f => (
+              <button key={f.id} onClick={() => setFilter(f.id)} style={{
+                padding: '2px 8px', fontSize: 11,
+                border: `1px solid ${filter === f.id ? '#a0b4ff' : 'rgba(160,180,255,0.2)'}`,
+                color: filter === f.id ? '#a0b4ff' : '#6a8878',
+                background: filter === f.id ? 'rgba(160,180,255,0.1)' : 'transparent',
+                fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer',
+              }}>
+                {uiLang === 'tr' ? f.labelTr : f.labelEn}
+              </button>
+            ))}
+          </div>
+          <input
+            value={search} onChange={e => setSearch(e.target.value)}
+            placeholder={uiLang === 'tr' ? 'Açıklamada ara…' : 'Search descriptions…'}
+            style={{
+              flex: 1, minWidth: 120, padding: '2px 8px', fontSize: 11,
+              background: 'rgba(160,180,255,0.05)', border: '1px solid rgba(160,180,255,0.2)',
+              color: '#c0ccff', fontFamily: 'Share Tech Mono, monospace', outline: 'none',
+            }}
+          />
+        </div>
+
+        {/* Event list */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '6px 14px' }}>
+          {loading && filtered.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: '#6a8878', fontSize: 12, fontFamily: 'Share Tech Mono, monospace' }}>
+              {uiLang === 'tr' ? 'Yükleniyor…' : 'Loading…'}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: '#6a8878', fontSize: 12, fontStyle: 'italic' }}>
+              {uiLang === 'tr' ? 'Kayıt bulunamadı.' : 'No records found.'}
+            </div>
+          ) : filtered.map((ev, i) => {
+            const t = String(ev.event_type ?? '');
+            const color = evColor(t);
+            const icon  = evIcon(t);
+            const desc  = translateEventDescription(ev.description ?? '', uiLang as LangCode, ev);
+            return (
+              <div key={ev.id ?? i} style={{
+                display: 'flex', gap: 8, alignItems: 'flex-start',
+                padding: '5px 4px', borderBottom: '1px solid rgba(160,180,255,0.06)',
+              }}>
+                <span style={{ fontSize: 12, color, flexShrink: 0, marginTop: 1 }}>{icon}</span>
+                <div style={{ flexShrink: 0, width: 72 }}>
+                  <div style={{ fontSize: 10, color: '#4a6a6a', fontFamily: 'Orbitron, monospace' }}>
+                    Y{String(ev.sim_year ?? 0).padStart(3,'0')}
+                  </div>
+                  <div style={{ fontSize: 10, color: '#3a5a5a', fontFamily: 'Orbitron, monospace' }}>
+                    G{String((ev.sim_day ?? 0) % 365).padStart(3,'0')}
+                  </div>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 10, color: `${color}88`, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: 2 }}>
+                    {evLabel(t, uiLang)}
+                  </span>
+                  <div style={{ fontSize: 12, color: '#a0c8b0', lineHeight: 1.5, wordBreak: 'break-word' }}>
+                    {desc}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Load more */}
+          {rows.length >= offset && rows.length > 0 && (
+            <div style={{ textAlign: 'center', padding: '10px 0' }}>
+              <button onClick={loadMore} disabled={loading} style={{
+                padding: '4px 16px', fontSize: 11,
+                border: '1px solid rgba(160,180,255,0.3)', color: '#a0b4ff',
+                background: 'transparent', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer',
+                opacity: loading ? 0.5 : 1,
+              }}>
+                {loading ? (uiLang === 'tr' ? 'Yükleniyor…' : 'Loading…') : (uiLang === 'tr' ? `Daha fazla yükle (${rows.length}/${total})` : `Load more (${rows.length}/${total})`)}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Footer count */}
+        <div style={{ padding: '6px 14px', borderTop: '1px solid rgba(160,180,255,0.08)', flexShrink: 0 }}>
+          <span style={{ fontSize: 10, color: '#4a6a6a', fontFamily: 'Share Tech Mono, monospace' }}>
+            {filtered.length} / {rows.length} {uiLang === 'tr' ? 'gösteriliyor' : 'shown'} · {total} {uiLang === 'tr' ? 'toplam kayıt' : 'total records'}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Panel ───────────────────────────────────────────────────────────────
+
 export default function LanguagePanel() {
-  const { stats, events, lang, currentSim } = useSimStore();
+  const { stats, events, lang, currentSim, accessToken } = useSimStore();
+  const [archiveOpen, setArchiveOpen] = useState(false);
 
   const currentStage = Math.max(0, Math.min(6, stats?.max_language_stage ?? 0));
   const langEvents = events.filter(e => {
@@ -112,6 +273,16 @@ export default function LanguagePanel() {
 
   return (
     <DetailPanel panelId="language" title="Language" titleTr="Dil">
+
+      {archiveOpen && currentSim && accessToken && (
+        <LangArchiveModal
+          simId={currentSim.id}
+          accessToken={accessToken}
+          lang={lang}
+          onClose={() => setArchiveOpen(false)}
+        />
+      )}
+
       <div className="bg-sim-surface rounded-lg p-3 mb-2">
         <div className="text-sim-muted text-sm mb-1">{lang === 'en' ? 'Current Stage' : 'Mevcut Aşama'}</div>
         <div className="text-sim-gold font-bold text-base">
@@ -126,17 +297,13 @@ export default function LanguagePanel() {
           <div className="text-xs text-sim-text mb-1">{lang === 'tr' ? 'Ünsüzler' : 'Consonants'}</div>
           <div className="flex flex-wrap gap-1 mb-2">
             {phonology.consonants.map(item => (
-              <span key={item} className="px-2 py-0.5 rounded bg-sim-accent/10 text-sim-text text-xs border border-sim-accent/20">
-                {item}
-              </span>
+              <span key={item} className="px-2 py-0.5 rounded bg-sim-accent/10 text-sim-text text-xs border border-sim-accent/20">{item}</span>
             ))}
           </div>
           <div className="text-xs text-sim-text mb-1">{lang === 'tr' ? 'Ünlüler' : 'Vowels'}</div>
           <div className="flex flex-wrap gap-1">
             {phonology.vowels.map(item => (
-              <span key={item} className="px-2 py-0.5 rounded bg-sim-gold/10 text-sim-text text-xs border border-sim-gold/20">
-                {item}
-              </span>
+              <span key={item} className="px-2 py-0.5 rounded bg-sim-gold/10 text-sim-text text-xs border border-sim-gold/20">{item}</span>
             ))}
           </div>
         </div>
@@ -144,7 +311,7 @@ export default function LanguagePanel() {
         <div className="bg-sim-surface/70 rounded-lg p-3 border border-sim-border/40">
           <div className="text-sim-muted text-xs uppercase tracking-widest mb-2">{lang === 'en' ? 'Stage Channel' : 'Aşama Kanalı'}</div>
           <div className="text-sim-text text-sm mb-2">
-            {lang === 'tr' ? channelLabel(currentStage, 'tr') : channelLabel(currentStage, 'en')}
+            {lang === 'tr' ? LANGUAGE_STAGES[currentStage].nameTr : LANGUAGE_STAGES[currentStage].name}
           </div>
           <div className="text-sim-muted text-xs leading-relaxed">
             {lang === 'tr' ? LANGUAGE_STAGES[currentStage].descTr : LANGUAGE_STAGES[currentStage].desc}
@@ -159,9 +326,7 @@ export default function LanguagePanel() {
                 {lang === 'tr' ? 'Henüz kalıcı ses biçimi yok.' : 'No stable surface forms yet.'}
               </span>
             ) : surfaceForms.map(item => (
-              <span key={item} className="px-2 py-0.5 rounded bg-sim-green/10 text-sim-text text-xs border border-sim-green/20">
-                {item}
-              </span>
+              <span key={item} className="px-2 py-0.5 rounded bg-sim-green/10 text-sim-text text-xs border border-sim-green/20">{item}</span>
             ))}
           </div>
         </div>
@@ -185,17 +350,8 @@ export default function LanguagePanel() {
             const isReached = stage.id <= currentStage;
             const isCurrent = stage.id === currentStage;
             return (
-              <div
-                key={stage.id}
-                className={`flex items-start gap-3 p-2 rounded ${
-                  isCurrent ? 'bg-sim-accent/20 border border-sim-accent/40' :
-                  isReached ? 'bg-sim-surface/50' : 'opacity-40'
-                }`}
-              >
-                <div
-                  className="w-2 h-2 rounded-full mt-1 flex-shrink-0"
-                  style={{ backgroundColor: isReached ? stage.color : '#5a6a7a' }}
-                />
+              <div key={stage.id} className={`flex items-start gap-3 p-2 rounded ${isCurrent ? 'bg-sim-accent/20 border border-sim-accent/40' : isReached ? 'bg-sim-surface/50' : 'opacity-40'}`}>
+                <div className="w-2 h-2 rounded-full mt-1 flex-shrink-0" style={{ backgroundColor: isReached ? stage.color : '#5a6a7a' }} />
                 <div>
                   <div className={`text-sm font-medium ${isReached ? 'text-sim-text' : 'text-sim-muted'}`}>
                     {lang === 'en' ? stage.name : stage.nameTr}
@@ -219,7 +375,6 @@ export default function LanguagePanel() {
         </div>
       )}
 
-      {/* Language Drift — dialect divergence between groups */}
       {stats && stats.groups > 1 && (
         <div className="bg-sim-surface/50 rounded-lg p-3 mb-3 border border-sim-border/30">
           <div className="text-sim-muted text-xs uppercase tracking-widest mb-2">
@@ -228,42 +383,46 @@ export default function LanguagePanel() {
           <div className="flex items-center gap-3 mb-1.5">
             <div className="flex-1">
               <div className="h-1.5 bg-sim-border rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${Math.min(100, (stats.groups / 10) * 100)}%`,
-                    background: 'linear-gradient(90deg, #4f6ef7, #9370db)',
-                  }}
-                />
+                <div className="h-full rounded-full" style={{ width: `${Math.min(100, (stats.groups / 10) * 100)}%`, background: 'linear-gradient(90deg, #4f6ef7, #9370db)' }} />
               </div>
             </div>
             <span className="text-sim-text text-xs font-medium">{stats.groups} {lang === 'en' ? 'groups' : 'grup'}</span>
           </div>
           <p className="text-sim-muted text-xs leading-relaxed">
             {lang === 'en'
-              ? `${stats.word_count ?? 0} unique words distributed across ${stats.groups} social groups. Isolated groups develop distinct phonological shifts over generations.`
-              : `${stats.word_count ?? 0} benzersiz kelime ${stats.groups} sosyal gruba dağılmış. İzole gruplar nesiller boyunca farklı ses değişimleri geliştirir.`}
+              ? `${stats.word_count ?? 0} unique words across ${stats.groups} groups. Isolated groups develop distinct phonological shifts over generations.`
+              : `${stats.word_count ?? 0} benzersiz kelime ${stats.groups} gruba dağılmış. İzole gruplar nesiller boyunca farklı ses değişimleri geliştirir.`}
           </p>
         </div>
       )}
 
+      {/* Stream + Archive button */}
       <div>
-        <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Language & Communication Stream' : 'Dil & İletişim Akışı'}
-          <span style={{ fontSize: 11, fontWeight: 400, color: '#6a8878', marginLeft: 6 }}>
-            ({langEvents.length})
-          </span>
-        </h4>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest" style={{ margin: 0 }}>
+            {lang === 'en' ? 'Live Stream' : 'Canlı Akış'}
+            <span style={{ fontSize: 11, fontWeight: 400, color: '#6a8878', marginLeft: 6 }}>({langEvents.length})</span>
+          </h4>
+          {currentSim && accessToken && (
+            <button onClick={() => setArchiveOpen(true)} style={{
+              padding: '2px 10px', fontSize: 11,
+              border: '1px solid rgba(160,180,255,0.35)', color: '#a0b4ff',
+              background: 'rgba(160,180,255,0.07)', fontFamily: 'Share Tech Mono, monospace',
+              cursor: 'pointer', letterSpacing: '0.05em',
+            }}>
+              📋 {lang === 'tr' ? 'ARŞİV' : 'ARCHIVE'}
+            </button>
+          )}
+        </div>
+
         {langEvents.length === 0 ? (
           <p className="text-sim-muted italic text-sm">{lang === 'en' ? 'No language events yet.' : 'Henüz dil olayı yok.'}</p>
         ) : (
           <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
             {langEvents.slice(0, 30).map((ev, i) => {
               const t = String(ev.event_type ?? '');
-              const isComm = t === 'communication';
-              const isWord = t === 'word';
-              const color = isComm ? '#a0b4ff' : isWord ? '#7dd3fc' : '#a0c8b0';
-              const icon  = isComm ? '🔤' : isWord ? '◆' : '◈';
+              const color = evColor(t);
+              const icon  = evIcon(t);
               const desc  = translateEventDescription(ev.description ?? '', lang as LangCode, ev);
               return (
                 <div key={i} style={{
@@ -280,7 +439,7 @@ export default function LanguagePanel() {
                         Y{String(ev.sim_year ?? 0).padStart(3,'0')} G{String((ev.sim_day ?? 0) % 365).padStart(3,'0')}
                       </span>
                       <span style={{ fontSize: 10, color: `${color}88`, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                        {isComm ? (lang === 'tr' ? 'iletişim' : 'comm') : isWord ? (lang === 'tr' ? 'kelime' : 'word') : (lang === 'tr' ? 'dil' : 'lang')}
+                        {evLabel(t, lang)}
                       </span>
                     </div>
                     <div style={{ fontSize: 11, color: i < 5 ? color : '#8abda0', lineHeight: 1.45, wordBreak: 'break-word' }}>
