@@ -347,7 +347,12 @@ export function translateEventDescription(desc: string, lang: LangCode, event?: 
     .replace(/^(.+) completes a (.+)$/, (_: string, settlement: string, structure: string) => {
       const sKey = structure.replace(/_/g, ' ').trim();
       const settlementTr = settlement === 'The settlement' ? 'Yerleşim' : settlement;
-      return `${settlementTr}, ${STRUCTURE_TR[sKey] ?? sKey} tamamladı`;
+      return `${settlementTr}, ${STRUCTURE_TR[sKey] ?? sKey} inşaatını tamamladı`;
+    })
+    // Architecture: overcrowded
+    .replace(/^(.+) is overcrowded \((\d+) of (\d+) capacity\)$/, (_: string, settlement: string, cur: string, cap: string) => {
+      const settlementTr = settlement === 'The settlement' ? 'Yerleşim' : settlement;
+      return `${settlementTr} doldu taştı — ${cur} birey, kapasite: ${cap}`;
     })
 
     // Disasters

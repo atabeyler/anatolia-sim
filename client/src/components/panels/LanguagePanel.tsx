@@ -99,7 +99,10 @@ export default function LanguagePanel() {
   const { stats, events, lang, currentSim } = useSimStore();
 
   const currentStage = Math.max(0, Math.min(6, stats?.max_language_stage ?? 0));
-  const langEvents = events.filter(e => e.event_type === 'language' || e.event_type === 'word' || e.event_type?.includes?.('language'));
+  const langEvents = events.filter(e => {
+    const t = String(e.event_type ?? '');
+    return t === 'language' || t === 'word' || t === 'communication' || t.includes('language');
+  });
   const worldState = currentSim?.world_state ?? {};
   const phonologySeed = Number(worldState.phonology_seed ?? 0);
   const biome = String(worldState.biome ?? 'mediterranean');
@@ -246,17 +249,47 @@ export default function LanguagePanel() {
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Language Events' : 'Dil Olayları'}
+          {lang === 'en' ? 'Language & Communication Stream' : 'Dil & İletişim Akışı'}
+          <span style={{ fontSize: 11, fontWeight: 400, color: '#6a8878', marginLeft: 6 }}>
+            ({langEvents.length})
+          </span>
         </h4>
         {langEvents.length === 0 ? (
-          <p className="text-sim-muted italic">{lang === 'en' ? 'No language events yet.' : 'Henüz dil olayı yok.'}</p>
+          <p className="text-sim-muted italic text-sm">{lang === 'en' ? 'No language events yet.' : 'Henüz dil olayı yok.'}</p>
         ) : (
-          <div className="space-y-1 max-h-40 overflow-y-auto">
-            {langEvents.slice(0, 10).map((ev, i) => (
-              <div key={i} className="text-sim-muted text-sm py-0.5 border-b border-sim-border/30">
-                {translateEventDescription(ev.description ?? '', lang as LangCode, ev)}
-              </div>
-            ))}
+          <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+            {langEvents.slice(0, 30).map((ev, i) => {
+              const t = String(ev.event_type ?? '');
+              const isComm = t === 'communication';
+              const isWord = t === 'word';
+              const color = isComm ? '#a0b4ff' : isWord ? '#7dd3fc' : '#a0c8b0';
+              const icon  = isComm ? '🔤' : isWord ? '◆' : '◈';
+              const desc  = translateEventDescription(ev.description ?? '', lang as LangCode, ev);
+              return (
+                <div key={i} style={{
+                  display: 'flex', gap: 6, alignItems: 'flex-start',
+                  padding: '4px 6px',
+                  background: i === 0 ? `${color}0a` : 'transparent',
+                  border: `1px solid ${i < 3 ? color + '22' : 'transparent'}`,
+                  opacity: Math.max(0.35, 1 - i * 0.015),
+                }}>
+                  <span style={{ fontSize: 11, flexShrink: 0, color, marginTop: 1 }}>{icon}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', gap: 5, marginBottom: 1, alignItems: 'center' }}>
+                      <span style={{ fontSize: 10, color: '#6a8878', fontFamily: 'Orbitron, monospace', flexShrink: 0 }}>
+                        Y{String(ev.sim_year ?? 0).padStart(3,'0')} G{String((ev.sim_day ?? 0) % 365).padStart(3,'0')}
+                      </span>
+                      <span style={{ fontSize: 10, color: `${color}88`, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                        {isComm ? (lang === 'tr' ? 'iletişim' : 'comm') : isWord ? (lang === 'tr' ? 'kelime' : 'word') : (lang === 'tr' ? 'dil' : 'lang')}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11, color: i < 5 ? color : '#8abda0', lineHeight: 1.45, wordBreak: 'break-word' }}>
+                      {desc}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
