@@ -118,7 +118,7 @@ export default function DashboardPage() {
           backdropFilter: 'blur(20px)',
           boxShadow: '0 2px 20px rgba(200,34,34,0.5), 0 0 8px rgba(200,34,34,0.3)',
         }}>
-        <div className="max-w-5xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
+        <div className="w-full px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
           {/* Brand */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className="relative w-7 h-7 flex items-center justify-center">
