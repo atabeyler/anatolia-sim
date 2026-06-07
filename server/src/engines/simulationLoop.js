@@ -18,6 +18,7 @@ import { processMicrobiomeTick, spreadInfection, updateGutMicrobiome, computeHea
 import { initializePsychology, updateMentalState, processBonding, computePopulationPsychStats } from './psychology/psychologyEngine.js';
 import { initializeEpigenome, inheritEpigenome, updateEpigenome } from './epigenetics/epigeneticsEngine.js';
 import { processAstronomyTick, getAstronomyBonus } from './astronomy/astronomyEngine.js';
+import { isOnLand } from '../utils/landMask.js';
 import { computeSocialOrder } from './law/lawEngine.js';
 
 const SOCIAL_INTERACTION_RADIUS = 5;  // degrees (~500 km) — was 50 (causes O(n²) explosion)
@@ -742,6 +743,9 @@ export class SimulationEngine {
     const step = speed * (0.5 + Math.random() * 0.8);
     ind.x = Math.max(-180, Math.min(180, (ind.x ?? 0) + Math.cos(ind._moveAngle) * step));
     ind.y = Math.max(-85,  Math.min(85,  (ind.y ?? 0) + Math.sin(ind._moveAngle) * step));
+
+    // Track whether this individual is currently in water (for drowning/swimming logic)
+    ind._inWater = !isOnLand(ind.y, ind.x);
 
     // ── Kurucular: sert konum sınırı ──────────────────────────────────────────
     if (ind.is_founder && ind.home_x !== undefined) {
