@@ -41,6 +41,8 @@ export class SimulationEngine {
     this.running = false;
     this._todayBirths = 0;
     this._todayDeaths = 0;
+    this.totalBirths = 0;
+    this.totalDeaths = 0;
     this.techProgress = new Map();
     this.speedMultiplier = simulation.speed_multiplier ?? 1;
     this.onTick = null;
@@ -282,6 +284,7 @@ export class SimulationEngine {
       if (p1 && p2) inheritEpigenome(nb, p1, p2);
       this.population.set(nb.id, nb);
       this._todayBirths++;
+      this.totalBirths++;
       tickEvents.push({ type: 'birth', individual_id: nb.id, day, importance: 'low' });
       const nbLabel = nb.phenotype?.name ?? `${nb.sex === 'male' ? '♂' : '♀'}-${nb.id.slice(-4).toUpperCase()}`;
       const p1Name = p1?.phenotype?.name ?? (p1 ? `${p1.sex === 'male' ? '♂' : '♀'}-${p1.id.slice(-4).toUpperCase()}` : '?');
@@ -308,6 +311,7 @@ export class SimulationEngine {
         ind.death_day = day;
         ind.death_cause = cause;
         this._todayDeaths++;
+        this.totalDeaths++;
         tickEvents.push({ type: 'death_of_kin', individual_id: ind.id, day });
         const deadName = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
         this.logEvent(day, 'death', `${deadName} died: ${cause}`, { individual_id: ind.id, cause, name: deadName }, 1);
@@ -853,6 +857,7 @@ export class SimulationEngine {
           ind.death_cause = type;
           deaths++;
           this._todayDeaths++;
+          this.totalDeaths++;
         }
       }
       if (deaths > 0) {
@@ -909,8 +914,8 @@ export class SimulationEngine {
       has_disaster: !!(this.worldState.recent_disaster),
       weather: this.worldState.current_weather ?? 'clear',
       weather_intensity: Math.round((this.worldState.weather_intensity ?? 0.5) * 100) / 100,
-      births: this._todayBirths,
-      deaths: this._todayDeaths,
+      births: this.totalBirths,
+      deaths: this.totalDeaths,
       word_count: new Set(alive.flatMap(i => Object.keys(i.language?.vocabulary ?? {}))).size,
       max_language_stage: Math.max(0, ...alive.map(i => i.language?.stage ?? 0)),
       avg_consciousness: Math.round(alive.reduce((s, i) => s + (i.mind?.consciousness ?? 0), 0) / Math.max(1, alive.length) * 1000) / 1000,

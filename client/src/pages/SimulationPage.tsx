@@ -679,19 +679,19 @@ export default function SimulationPage() {
               <div style={{ height: '100%', overflowY: 'auto', padding: 12, background: '#000' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {[
-                    { l: 'NÜFUS',    v: stats?.population ?? '—',                                                                              c: '#00e887' },
-                    { l: 'YIL',      v: stats?.year ?? '—',                                                                                     c: '#7dd3fc' },
-                    { l: 'GÜN',      v: stats?.day ?? '—',                                                                                      c: '#a0b4ff' },
-                    { l: 'DOĞUM',    v: births,                                                                                                  c: '#4ecb71' },
-                    { l: 'ÖLÜM',     v: deaths,                                                                                                  c: '#e05a5a' },
-                    { l: 'KELİME',   v: wordCount,                                                                                               c: '#7dd3fc' },
-                    { l: 'ZEKA ORT.',v: stats?.avg_intelligence !== undefined ? (stats.avg_intelligence * 100).toFixed(0) + '%' : '—',           c: '#d4a838' },
-                    { l: 'MUTLULUK', v: stats?.happiness_index !== undefined ? (stats.happiness_index * 100).toFixed(0) + '%' : '—',             c: '#ff8ab0' },
-                    { l: 'HASTALIK', v: stats?.sick_rate !== undefined ? (stats.sick_rate * 100).toFixed(0) + '%' : '—',                         c: '#f97316' },
-                    { l: 'TEKNOLOJİ',v: stats?.technologies ?? '—',                                                                             c: '#4ecb71' },
-                    { l: 'İNANÇ',    v: stats?.beliefs ?? '—',                                                                                  c: '#a855f7' },
-                    { l: 'SICAKLIK', v: stats?.temperature !== undefined ? `${stats.temperature}°` : '—',                                        c: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
-                    { l: 'GRUPLAR',  v: stats?.groups ?? '—',                                                                                   c: '#d4a838' },
+                    { l: lang === 'tr' ? 'NÜFUS'      : 'POP.',      v: stats?.population ?? '—',                                                                 c: '#00e887' },
+                    { l: lang === 'tr' ? 'YIL'        : 'YEAR',      v: stats?.year ?? '—',                                                                        c: '#7dd3fc' },
+                    { l: lang === 'tr' ? 'GÜN'        : 'DAY',       v: stats?.day ?? '—',                                                                         c: '#a0b4ff' },
+                    { l: lang === 'tr' ? 'DOĞUM'      : 'BIRTHS',    v: births,                                                                                     c: '#4ecb71' },
+                    { l: lang === 'tr' ? 'ÖLÜM'       : 'DEATHS',    v: deaths,                                                                                     c: '#e05a5a' },
+                    { l: lang === 'tr' ? 'KELİME'     : 'WORDS',     v: wordCount,                                                                                  c: '#7dd3fc' },
+                    { l: lang === 'tr' ? 'ZEKA ORT.'  : 'AVG IQ',    v: stats?.avg_intelligence !== undefined ? (stats.avg_intelligence * 100).toFixed(0) + '%' : '—', c: '#d4a838' },
+                    { l: lang === 'tr' ? 'MUTLULUK'   : 'HAPPINESS', v: stats?.happiness_index !== undefined ? (stats.happiness_index * 100).toFixed(0) + '%' : '—',   c: '#ff8ab0' },
+                    { l: lang === 'tr' ? 'HASTALIK'   : 'DISEASE',   v: stats?.sick_rate !== undefined ? (stats.sick_rate * 100).toFixed(0) + '%' : '—',               c: '#f97316' },
+                    { l: lang === 'tr' ? 'TEKNOLOJİ'  : 'TECH',      v: stats?.technologies ?? '—',                                                                c: '#4ecb71' },
+                    { l: lang === 'tr' ? 'İNANÇ'      : 'BELIEFS',   v: stats?.beliefs ?? '—',                                                                    c: '#a855f7' },
+                    { l: lang === 'tr' ? 'SICAKLIK'   : 'TEMP',      v: stats?.temperature !== undefined ? `${stats.temperature}°` : '—',                          c: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
+                    { l: lang === 'tr' ? 'GRUPLAR'    : 'GROUPS',    v: stats?.groups ?? '—',                                                                      c: '#d4a838' },
                   ].map(({ l, v, c }) => (
                     <div key={l} style={{ background: 'rgba(0,20,10,0.6)', border: '1px solid #4a1a1a', padding: '8px 12px' }}>
                       <div style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em' }}>{l}</div>
