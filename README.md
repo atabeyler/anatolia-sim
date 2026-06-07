@@ -105,7 +105,14 @@ cd ../client && npm install
 ```bash
 cd server
 npm run db:migrate
-npm run db:seed        # creates admin account
+```
+
+Then seed the admin account via API (requires `ADMIN_SEED_TOKEN` from `.env`):
+
+```bash
+curl -X POST http://localhost:3001/api/admin/seed-admin \
+  -H "x-seed-token: YOUR_ADMIN_SEED_TOKEN" \
+  -H "Content-Type: application/json"
 ```
 
 ### Run Locally
