@@ -6,7 +6,7 @@ import { computeInbreedingCoefficient } from './biology/genome.js';
 import { updateWorldState, computeResourcePressure } from './environment/environmentEngine.js';
 import { buildPhonology } from './language/nameEngine.js';
 import { updateLanguageStage, learnFromTeacher, updateFoxp2Expression, tryAcquireWordFromEnvironment, generateProtoWord, CORE_CONCEPTS } from './language/languageEngine.js';
-import { tryDiscoverTech } from './technology/technologyEngine.js';
+import { tryDiscoverTech, TECH_TREE } from './technology/technologyEngine.js';
 import { getAge, LIFE_STAGE } from './biology/individual.js';
 import { processGroupDynamics, assignGroupRoles } from './social/socialEngine.js';
 import { gatherResources, consumeResources, produceGoods, attemptTrade, computeEconomicStats, initializeInventory } from './economy/economyEngine.js';
@@ -1184,6 +1184,7 @@ export class SimulationEngine {
       sex_ratio: alive.filter(i => i.sex === 'male').length / Math.max(1, alive.length),
       avg_intelligence: alive.reduce((s, i) => s + (i.phenotype?.fluid_intelligence ?? 0), 0) / Math.max(1, alive.length),
       technologies: this.discoveredTechs.size,
+      total_techs: Object.keys(TECH_TREE).length,
       beliefs: this.discoveredBeliefs.size,
       art_forms: this.discoveredArts.size,
       groups: this.groups.length,
@@ -1300,37 +1301,42 @@ export class SimulationEngine {
 }
 
 function compactIndividual(ind) {
+  // Ensure group_id is mirrored into social so it survives DB round-trip
+  const social = { ...(ind.social ?? {}), group_id: ind.group_id ?? ind.social?.group_id ?? null };
   return {
     id: ind.id,
     is_dead: ind.is_dead,
     sex: ind.sex,
     birth_day: ind.birth_day,
     death_day: ind.death_day,
-    death_cause: ind.death_cause,
+    death_cause: ind.death_cause ?? null,
     x: ind.x,
     y: ind.y,
     genome: ind.genome,
     phenotype: ind.phenotype,
-    epigenome: ind.epigenome,
-    health: ind.health,
-    health_score: ind.health_score,
-    psychology: ind.psychology,
-    beliefs: ind.beliefs ? [...ind.beliefs] : [],
-    inventory: ind.inventory,
-    group_id: ind.group_id,
+    epigenome: ind.epigenome ?? {},
+    health: ind.health ?? {},
+    mind: ind.mind ?? {},
+    social,
+    skills: ind.skills ?? [],
+    beliefs: ind.beliefs instanceof Set ? [...ind.beliefs] : (Array.isArray(ind.beliefs) ? ind.beliefs : []),
+    language: ind.language ?? {},
+    memory: ind.memory ?? {},
     parent_1_id: ind.parent_1_id,
     parent_2_id: ind.parent_2_id,
-    language: ind.language,
-    language_stage: ind.language?.stage,
-    social: ind.social,
-    satiation: ind.satiation,
-    mating_urge: ind.mating_urge,
-    inbreeding_coeff: ind.inbreeding_coeff,
-    _waterFear: ind._waterFear,
-    _fears: ind._fears,
-    _waterExperience: ind._waterExperience,
-    age: ind.age,
-    is_founder: ind.is_founder,
+    // Volatile in-memory state — preserved in snapshot for live engine reload
+    group_id: ind.group_id ?? null,
+    language_stage: ind.language?.stage ?? 0,
+    satiation: ind.satiation ?? 1,
+    mating_urge: ind.mating_urge ?? 0,
+    inbreeding_coeff: ind.inbreeding_coeff ?? 0,
+    age: ind.age ?? 0,
+    is_founder: ind.is_founder ?? false,
+    inventory: ind.inventory ?? null,
+    psychology: ind.psychology ?? null,
+    _waterFear: ind._waterFear ?? null,
+    _fears: ind._fears ?? null,
+    _waterExperience: ind._waterExperience ?? null,
   };
 }
 
