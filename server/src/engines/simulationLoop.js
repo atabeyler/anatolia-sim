@@ -77,6 +77,10 @@ export class SimulationEngine {
       }
     }
     this.groups = [...groupMap.values()];
+
+    // Restore counters from loaded state — otherwise resumed simulations show 0.
+    this.totalDeaths = [...this.population.values()].filter(i => i.is_dead).length;
+    this.totalBirths = [...this.population.values()].filter(i => !i.is_founder).length;
   }
 
   async start() {
