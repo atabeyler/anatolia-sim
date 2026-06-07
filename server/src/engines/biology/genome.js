@@ -108,11 +108,16 @@ export function combineGametes(gamete1, gamete2, childSex) {
   const genome = {};
   for (const locusId of LOCI_KEYS) {
     const meta = LOCI[locusId];
+    const a1 = gamete1[locusId] ?? randomAllele();
+    const a2 = gamete2[locusId] ?? randomAllele();
+    // X-linked loci: males are hemizygous — only one functional allele from mother's X.
+    const isXLinked = meta.type === 'x_linked';
+    const isMale = childSex === 'male';
     genome[locusId] = {
       locusId,
       chromosome: meta.chr,
-      allele1: { value: gamete1[locusId] ?? randomAllele(), origin: 'paternal' },
-      allele2: { value: gamete2[locusId] ?? randomAllele(), origin: 'maternal' },
+      allele1: { value: a1, origin: 'paternal' },
+      allele2: { value: isXLinked && isMale ? a1 : a2, origin: isXLinked && isMale ? 'hemizygous' : 'maternal' },
       expressionType: meta.type,
       trait: meta.trait,
     };
@@ -133,7 +138,7 @@ export function computePhenotype(genome) {
   const language_capacity = g('FOXP2_01') * 0.6 + g('CNTNAP2_01') * 0.4;
   const fluid_intelligence = (g('BDNF_01') + g('COMT_01') + g('DTNBP1_01') + g('NRG1_01') + g('DISC1_01')) / 5;
   const consciousness_potential = (g('NRXN1_01') + g('SHANK3_01') + g('RELN_01') + g('FOXP2_01')) / 4;
-  const belief_capacity = consciousness_potential > 0.55 ? (consciousness_potential - 0.55) / 0.45 : 0;
+  const belief_capacity = Math.max(0, (consciousness_potential - 0.1) / 0.9);
   const immune_strength = (g('IMMUNE_01') + g('IMMUNE_02')) / 2;
   const max_lifespan = 50 + g('TERT_01') * 50 + g('APOE_01') * 20;
 

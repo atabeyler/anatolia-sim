@@ -1,11 +1,11 @@
 const LANGUAGE_STAGES = [
   { stage: 0, name: 'pre-linguistic',   foxp2_min: 0,    group_min: 1,  gen_min: 0  },
   { stage: 1, name: 'gestural',         foxp2_min: 0,    group_min: 3,  gen_min: 0  },
-  { stage: 2, name: 'emotional-sounds', foxp2_min: 0.4,  group_min: 5,  gen_min: 2  },
-  { stage: 3, name: 'proto-words',      foxp2_min: 0.6,  group_min: 10, gen_min: 10 },
-  { stage: 4, name: 'syntax',           foxp2_min: 0.75, group_min: 20, gen_min: 20 },
-  { stage: 5, name: 'abstract',         foxp2_min: 0.8,  group_min: 30, gen_min: 30 },
-  { stage: 6, name: 'writing',          foxp2_min: 0.85, group_min: 50, gen_min: 50 },
+  { stage: 2, name: 'emotional-sounds', foxp2_min: 0.4,  group_min: 5,  gen_min: 1  },
+  { stage: 3, name: 'proto-words',      foxp2_min: 0.55, group_min: 8,  gen_min: 4  },
+  { stage: 4, name: 'syntax',           foxp2_min: 0.65, group_min: 15, gen_min: 8  },
+  { stage: 5, name: 'abstract',         foxp2_min: 0.72, group_min: 25, gen_min: 15 },
+  { stage: 6, name: 'writing',          foxp2_min: 0.80, group_min: 40, gen_min: 25 },
 ];
 
 export function updateLanguageStage(individual, groupSize, generationCount, groupId = 'default') {

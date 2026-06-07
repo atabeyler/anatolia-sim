@@ -53,7 +53,7 @@ export function computeDiscoveryProbability(individual, techId, discoveredTechs,
   if (individual.phenotype.fluid_intelligence < tech.iq_min) return 0;
   if (tech.language_stage_min && individual.language.stage < tech.language_stage_min) return 0;
   if (!checkEnvTrigger(tech.env_trigger, worldState)) return 0;
-  return Math.min((individual.phenotype.curiosity * individual.phenotype.fluid_intelligence * 0.5) / (tech.difficulty * 1000), 0.01);
+  return Math.min((individual.phenotype.curiosity * individual.phenotype.fluid_intelligence * 0.5) / (tech.difficulty * 500), 0.05);
 }
 
 function checkEnvTrigger(trigger, ws) {
