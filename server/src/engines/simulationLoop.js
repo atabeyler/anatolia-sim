@@ -254,7 +254,25 @@ export class SimulationEngine {
       ind.y = caregiver.y * snapStr + ind.y * (1 - snapStr) + (Math.random() - 0.5) * scatter;
     }
 
-    // 4c. Su deneyimi ve gözlemsel yüzme öğrenimi
+    // 4c. Tüm korkular zamanla azalır (unutma / yeniden uyum)
+    for (const ind of alive) {
+      if ((ind._waterFear ?? 0) > 0) {
+        ind._waterFear = Math.max(0, ind._waterFear - 0.0005);   // ~2000 gün
+      }
+      if (ind._fears) {
+        for (const key of Object.keys(ind._fears)) {
+          if (ind._fears[key] > 0) {
+            // Afet/yırtıcı korkusu daha yavaş azalır; kıtlık/hastalık daha hızlı
+            const decayRate = (key === 'predator' || key === 'disaster') ? 0.0003
+                            : (key === 'scarcity' || key === 'infection')  ? 0.001
+                            : 0.0005;
+            ind._fears[key] = Math.max(0, ind._fears[key] - decayRate);
+          }
+        }
+      }
+    }
+
+    // 4d. Su deneyimi ve gözlemsel yüzme öğrenimi
     // _waterExperience: 0→1 arası birikimli değer, genomda değil bellekte.
     // Suda hayatta kalan bireyler deneyim kazanır; ebeveynini izleyen çocuklar
     // gözlemsel öğrenmeyle bu deneyimin küçük bir kısmını edinir.
@@ -370,6 +388,10 @@ export class SimulationEngine {
         const deadName = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
         this.logEvent(day, 'death', `${deadName} died: ${cause}`, { individual_id: ind.id, cause, name: deadName }, 1);
         ind._death_logged = true;
+
+        // Tanıklık korkusu — gözlemsel öğrenme, gen değil.
+        // Her ölüm nedeni yakındaki bireylerde farklı bir korku izlenimi bırakır.
+        this._applyDeathWitnessFear(ind, cause, alive);
       }
     }
 
@@ -734,8 +756,12 @@ export class SimulationEngine {
       const bdx     = cx - (ind.x ?? 0);
       const bdy     = cy - (ind.y ?? 0);
       const bdist   = Math.hypot(bdx, bdy);
-      const freeZone    = 0.3 + survivalStress * 1.2;
-      const cohesionStr = Math.max(0.15, 0.88 - survivalStress * 0.65);
+      const predatorFear  = ind._fears?.predator ?? 0;
+      const disasterFear  = ind._fears?.disaster  ?? 0;
+      const panicLevel    = Math.max(predatorFear, disasterFear);
+      // Yırtıcı/afet korkusu: sürüye daha yakın kalma (freeZone küçülür, kohezyon artar)
+      const freeZone    = Math.max(0.05, 0.3 + survivalStress * 1.2 - panicLevel * 0.25);
+      const cohesionStr = Math.min(0.98, Math.max(0.15, 0.88 - survivalStress * 0.65 + panicLevel * 0.3));
       if (bdist > freeZone) {
         const pull = Math.min(1, (bdist - freeZone) / 2) * cohesionStr;
         ind._moveAngle = this._lerpAngle(ind._moveAngle, Math.atan2(bdy, bdx), pull);
@@ -744,8 +770,9 @@ export class SimulationEngine {
       // ── Hafıza temelli yiyecek arama ──────────────────────────────────────
       if ((ind.satiation ?? 0.5) > 0.72) {
         ind._goodFoodAngle = ind._moveAngle;
-      } else if (survivalStress > 0.35 && ind._goodFoodAngle !== undefined) {
-        const memPull = Math.min(0.55, survivalStress * 0.6);
+      } else if ((survivalStress > 0.35 || (ind._fears?.scarcity ?? 0) > 0.2) && ind._goodFoodAngle !== undefined) {
+        const scarcityBoost = Math.min(0.2, (ind._fears?.scarcity ?? 0) * 0.3);
+        const memPull = Math.min(0.70, survivalStress * 0.6 + scarcityBoost);
         ind._moveAngle = this._lerpAngle(ind._moveAngle, ind._goodFoodAngle, memPull);
       }
 
@@ -768,6 +795,21 @@ export class SimulationEngine {
           const urgePull = Math.min(0.72, ((ind.mating_urge - 0.65) / 0.35) * 0.65);
           ind._moveAngle = this._lerpAngle(ind._moveAngle, Math.atan2(pdy, pdx), urgePull);
         }
+      }
+    }
+
+    // ── Su korkusu: boğulmaya tanık olan birey suya yönelmekten kaçınır.
+    //    _waterFear zamanla azalır; kaçınma gücü korkuya orantılı. ────────────
+    if ((ind._waterFear ?? 0) > 0.05 && !ind._inWater && ind._lastLandX !== undefined) {
+      const step0 = speed * 0.7; // bir sonraki adımın tahmini pozisyonu
+      const testX = (ind.x ?? 0) + Math.cos(ind._moveAngle) * step0;
+      const testY = (ind.y ?? 0) + Math.sin(ind._moveAngle) * step0;
+      if (!isOnLand(testY, testX)) {
+        // Gidilecek yön su — kaçınma açısı hesapla (son kara pozisyonuna)
+        const ldx = (ind._lastLandX ?? ind.x ?? 0) - (ind.x ?? 0);
+        const ldy = (ind._lastLandY ?? ind.y ?? 0) - (ind.y ?? 0);
+        const avoidPull = Math.min(0.95, ind._waterFear ?? 0);
+        ind._moveAngle = this._lerpAngle(ind._moveAngle, Math.atan2(ldy, ldx), avoidPull);
       }
     }
 
@@ -1056,11 +1098,67 @@ export class SimulationEngine {
       if (deaths > 0) {
         this.logEvent(day, 'disaster', `${type} killed ${deaths} individuals`, { type, deaths, ...disaster }, 5);
       }
+      // Afeti yaşayan tüm hayatta kalanlar tanık sayılır — uzaklık fark etmez
+      // çünkü doğal afetler bölgesel olaylar.
+      for (const ind of alive) {
+        if (ind.is_dead) continue;
+        if (!ind._fears) ind._fears = {};
+        ind._fears.disaster = Math.min(1, (ind._fears.disaster ?? 0) + 0.5);
+        // Sel/deprem tipi afetler ek su/yer korkusu yaratır
+        if (type === 'flood') {
+          ind._waterFear = Math.min(1, (ind._waterFear ?? 0) + 0.3);
+        }
+      }
       this.worldState.recent_disaster = type;
       this.worldState.recent_disaster_day = day;
     }
     // Clear after processing
     this.worldState.natural_disaster = null;
+  }
+
+  // Tanıklık korkusu — her ölüm nedeni için yakındaki bireylere uygun korku uygular.
+  // 2° (~200 km) yarıçap, akrabalar daha güçlü etkilenir.
+  _applyDeathWitnessFear(dead, cause, alive) {
+    const WITNESS_RADIUS = 2.0;
+    for (const witness of alive) {
+      if (witness.id === dead.id || witness.is_dead) continue;
+      const dist = Math.hypot((witness.x ?? 0) - (dead.x ?? 0), (witness.y ?? 0) - (dead.y ?? 0));
+      if (dist > WITNESS_RADIUS) continue;
+
+      const isKin = witness.parent_1_id === dead.id || witness.parent_2_id === dead.id
+                 || dead.parent_1_id === witness.id || dead.parent_2_id === witness.id;
+      const proximity = Math.max(0, 1 - dist / WITNESS_RADIUS);
+      const base = isKin ? proximity * 0.7 : proximity * 0.4;
+
+      if (!witness._fears) witness._fears = {};
+
+      switch (cause) {
+        case 'drowning':
+          // Su korkusu — moveIndividual'da su yönünü bastırır
+          witness._waterFear = Math.min(1, (witness._waterFear ?? 0) + base);
+          break;
+        case 'predator':
+          // Yırtıcı korkusu — grup kohezyon artar, hız yükselir
+          witness._fears.predator = Math.min(1, (witness._fears.predator ?? 0) + base);
+          break;
+        case 'conflict':
+          // Şiddet korkusu — tanınan saldırgandan kaçınma, stres artar
+          witness._fears.conflict = Math.min(1, (witness._fears.conflict ?? 0) + base * 0.8);
+          break;
+        case 'starvation':
+        case 'dehydration':
+          // Kıtlık korkusu — yiyecek arama güdüsü güçlenir
+          witness._fears.scarcity = Math.min(1, (witness._fears.scarcity ?? 0) + base * 0.5);
+          break;
+        case 'infection':
+          // Hastalık korkusu — hasta bireylere yaklaşmaktan kaçınma
+          witness._fears.infection = Math.min(1, (witness._fears.infection ?? 0) + base * 0.4);
+          break;
+        default:
+          // Genel travma — stres artışı
+          witness._fears.general = Math.min(1, (witness._fears.general ?? 0) + base * 0.3);
+      }
+    }
   }
 
   estimateGenerations() {
