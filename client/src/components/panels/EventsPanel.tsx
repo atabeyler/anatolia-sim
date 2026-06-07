@@ -101,7 +101,7 @@ export default function EventsPanel() {
 
   const visible = filter === 'all'
     ? events
-    : events.filter(ev => ev.event_type?.toLowerCase().includes(filter));
+    : events.filter(ev => matchesCategory(ev, filter));
 
   const counts = useMemo(() => {
     const next: Record<string, number> = {};

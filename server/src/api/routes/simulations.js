@@ -280,7 +280,17 @@ router.get('/:id/events/summary', authenticate, requireSimulationOwner, async (r
       [req.params.id]
     );
     const countsByType = Object.fromEntries(rows.map(row => [row.event_type, row.count]));
-    const total = rows.reduce((sum, row) => sum + row.count, 0);
+
+    // Merge with in-memory events from the running engine (fills the gap when DB writes lag)
+    const engine = simulationManager.getEngine(req.params.id);
+    if (engine?.events?.length) {
+      for (const ev of engine.events) {
+        const t = ev.event_type ?? ev.type;
+        if (t) countsByType[t] = (countsByType[t] ?? 0) + 1;
+      }
+    }
+
+    const total = Object.values(countsByType).reduce((s, c) => s + c, 0);
     res.json({ total, countsByType });
   } catch (err) {
     console.error(err);
