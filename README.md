@@ -2,7 +2,7 @@
 
 **An agent-based civilization simulator built around a single scientific question:**
 
-> If two DNA-engineered individuals — an Adam and an Eve — are released into a simulated world, can their descendants independently develop consciousness, language, technology, belief systems, and civilization through nothing but genetic inheritance and observational learning?
+> If two DNA-engineered founding individuals are released into a simulated world, can their descendants independently develop consciousness, language, technology, belief systems, and civilization through nothing but genetic inheritance and observational learning?
 
 No individual other than the two founders is ever directly programmed. Every behavior that emerges in subsequent generations must arise from the same two mechanisms that drive real human evolution: **genetic transmission** and **social/observational learning**.
 
@@ -118,7 +118,7 @@ cd server && npm run dev
 cd client && npm run dev
 ```
 
-Open `http://localhost:5173`, create a simulation, place Adam & Eve, and press **Start**.
+Open `http://localhost:5173`, create a simulation, configure your two founding individuals, and press **Start**.
 
 ---
 
@@ -163,8 +163,6 @@ The project draws on:
 
 ## Project Notes
 
-> *"İki kurucu dışında hiçbir bireyi genetik aktarım ve gözlem öğrenmesi dışında kodlayamayız."*
->
 > No individual other than the two founders may be given any behavior except through genetic inheritance and observational learning. This constraint is the entire point of the experiment.
 
 ---
