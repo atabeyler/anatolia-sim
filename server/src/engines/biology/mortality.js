@@ -4,6 +4,7 @@ const DEATH_CAUSES = {
   INFECTION: 'infection', TRAUMA: 'trauma', STARVATION: 'starvation',
   DEHYDRATION: 'dehydration', BIRTH_COMP: 'birth_complications',
   GENETIC: 'genetic_disease', OLD_AGE: 'old_age', PREDATOR: 'predator', CONFLICT: 'conflict',
+  DROWNING: 'drowning',
 };
 
 // Target annual mortality rates (prehistoric hunter-gatherer baseline):
@@ -59,6 +60,7 @@ export function rollDeath(individual, currentDay, environment) {
 function determineCause(individual, currentDay, environment) {
   const { health } = individual;
   const age = getAge(individual, currentDay);
+  if (individual._inWater)                                          return DEATH_CAUSES.DROWNING;
   if ((health?.hydration ?? 1) < 0.1)                              return DEATH_CAUSES.DEHYDRATION;
   if ((health?.calories  ?? 1) < 0.05)                             return DEATH_CAUSES.STARVATION;
   if (health?.disease)                                              return DEATH_CAUSES.INFECTION;

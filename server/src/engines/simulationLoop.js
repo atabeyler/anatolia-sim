@@ -816,6 +816,16 @@ export class SimulationEngine {
       }
     }
 
+    // Drowning: being in water drains HP rapidly. No swimming gene —
+    // just physics. Rate scales with age (infants and elderly drown faster).
+    if (individual._inWater) {
+      const ageYears = (individual.age ?? 0) / 365;
+      const ageFactor = ageYears < 5 ? 2.0 : ageYears > 60 ? 1.5 : 1.0;
+      health.hp = Math.max(0, health.hp - 0.04 * ageFactor);
+      health.calories  = Math.max(0, (health.calories  ?? 0.5) - 0.02);
+      health.hydration = Math.min(1, (health.hydration ?? 0.5) + 0.01); // ironic
+    }
+
     individual.health_score = health.hp;
   }
 
