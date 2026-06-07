@@ -281,13 +281,11 @@ router.get('/:id/events/summary', authenticate, requireSimulationOwner, async (r
     );
     const countsByType = Object.fromEntries(rows.map(row => [row.event_type, row.count]));
 
-    // Merge with in-memory events from the running engine (fills the gap when DB writes lag)
+    // Override birth/death counts with engine memory (authoritative — event log undercounts disaster victims)
     const engine = simulationManager.getEngine(req.params.id);
-    if (engine?.events?.length) {
-      for (const ev of engine.events) {
-        const t = ev.event_type ?? ev.type;
-        if (t) countsByType[t] = (countsByType[t] ?? 0) + 1;
-      }
+    if (engine) {
+      countsByType['birth'] = engine.totalBirths;
+      countsByType['death'] = [...engine.population.values()].filter(i => i.is_dead).length;
     }
 
     const total = Object.values(countsByType).reduce((s, c) => s + c, 0);
