@@ -260,7 +260,7 @@ function EventsArchiveModal({ simId, accessToken, lang: uiLang, initialFilter, o
 // ── Main Panel ───────────────────────────────────────────────────────────────
 
 export default function EventsPanel() {
-  const { events, lang, currentSim, accessToken } = useSimStore();
+  const { events, lang, currentSim, accessToken, stats } = useSimStore();
   const [filter, setFilter] = useState('all');
   const [summaryCounts, setSummaryCounts] = useState<Record<string, number>>({});
   const [summaryTotal, setSummaryTotal] = useState(0);
@@ -282,7 +282,8 @@ export default function EventsPanel() {
       })
       .catch(() => { setSummaryCounts({}); });
     load();
-    const timer = setInterval(load, 5000);
+    // Poll less aggressively — birth/death now come from WebSocket stats
+    const timer = setInterval(load, 15000);
     return () => { active = false; clearInterval(timer); };
   }, [currentSim?.id, accessToken]);
 
@@ -293,15 +294,21 @@ export default function EventsPanel() {
   const counts = useMemo(() => {
     const next: Record<string, number> = {};
     for (const f of FILTERS.slice(1)) next[f.id] = 0;
+    // birth/death: use authoritative WebSocket stats for consistency with TopBar and PopulationPanel
+    next['birth'] = stats?.births ?? 0;
+    next['death'] = stats?.deaths ?? 0;
+    // other categories: derive from DB summary (less time-sensitive)
     for (const [eventType, count] of Object.entries(summaryCounts)) {
       const lower = eventType.toLowerCase();
+      if (lower === 'birth' || lower === 'death') continue;
       const fakeEvent = { event_type: lower };
       for (const f of FILTERS.slice(1)) {
+        if (f.id === 'birth' || f.id === 'death') continue;
         if (matchesCategory(fakeEvent, f.id)) next[f.id] += count;
       }
     }
     return next;
-  }, [summaryCounts]);
+  }, [summaryCounts, stats?.births, stats?.deaths]);
 
   const activeFilterObj = FILTERS.find(f => f.id === filter) ?? FILTERS[0];
 

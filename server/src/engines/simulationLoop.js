@@ -87,13 +87,21 @@ export class SimulationEngine {
     if (this.running) return;
     this.running = true;
     let fastBatch = 0;
+    let ticksSinceBroadcast = 0;
     while (this.running) {
       const alive = [...this.population.values()].filter(i => !i.is_dead);
       if (alive.length === 0) { this.running = false; break; }
+
+      // Throttle broadcast frequency at high speeds to keep all panels in sync
+      const spd = this.speedMultiplier;
+      const broadcastEvery = spd <= 20 ? 1 : spd <= 50 ? 2 : spd <= 100 ? 5 : 10;
+      this._broadcastThisTick = (ticksSinceBroadcast % broadcastEvery === 0);
+      ticksSinceBroadcast++;
+
       await this.tick();
-      if (this.speedMultiplier < 100) {
+      if (spd < 100) {
         fastBatch = 0;
-        await sleep(1000 / this.speedMultiplier);
+        await sleep(1000 / spd);
       } else {
         // At max speed: yield to event loop every 10 ticks so WebSocket/DB can breathe
         fastBatch++;
@@ -525,8 +533,8 @@ export class SimulationEngine {
       }).catch(err => console.error('[SimulationEngine] checkpoint error:', err));
     }
 
-    // 23. Broadcast
-    if (this.onTick) {
+    // 23. Broadcast (throttled at high speeds)
+    if (this.onTick && this._broadcastThisTick !== false) {
       this.onTick({ day, stats, events: this.events.slice(-20) });
     }
 
