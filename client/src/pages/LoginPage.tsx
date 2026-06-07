@@ -422,7 +422,7 @@ export default function LoginPage() {
         const dot = '…';
         const STATUS = [
           { label: 'CORE SYSTEMS',   labelTr: 'ÇEKİRDEK SİSTEMLER', ok: ss?.status === 'online', val: ss ? (ss.status === 'online' ? 'ONLINE' : 'DEGRADED') : dot },
-          { label: 'PHYSICS ENGINE', labelTr: 'FİZİK MOTORU',         ok: true,                   val: 'v2.4' },
+          { label: 'PHYSICS ENGINE', labelTr: 'FİZİK MOTORU',         ok: true,                   val: 'v1.0' },
           { label: 'GENOME MATRIX',  labelTr: 'GENOM MATRİSİ',        ok: true,                   val: ss ? `${ss.genome_loci} LOCI` : dot },
           { label: 'EPIGENOME',      labelTr: 'EPİGENOM',             ok: true,                   val: ss ? `${ss.epi_loci} LOCI` : dot },
           { label: 'NEURAL NET',     labelTr: 'SİNİR AĞI',            ok: !!ss,                   val: ss ? 'ACTIVE' : 'CONN…' },
