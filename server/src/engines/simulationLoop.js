@@ -295,6 +295,11 @@ export class SimulationEngine {
       const p2Name = p2?.phenotype?.name ?? (p2 ? `${p2.sex === 'male' ? '♂' : '♀'}-${p2.id.slice(-4).toUpperCase()}` : '?');
       const birthLabel = nb.is_twin ? `Twin born: ${nbLabel}` : `Born: ${nbLabel}`;
       this.logEvent(day, 'birth', `${birthLabel} (${p1Name} & ${p2Name})`, { individual_id: nb.id, name: nbLabel, parent_1_name: p1Name, parent_2_name: p2Name, is_twin: nb.is_twin ?? false }, nb.is_twin ? 2 : 1);
+      // Log death event for newborns lost to birth complications
+      if (nb.is_dead) {
+        nb._death_logged = true;
+        this.logEvent(day, 'death', `${nbLabel} died: birth_complications`, { individual_id: nb.id, cause: 'birth_complications', name: nbLabel }, 1);
+      }
     }
 
     // 9. Microbiome & disease outbreaks
@@ -319,15 +324,17 @@ export class SimulationEngine {
         tickEvents.push({ type: 'death_of_kin', individual_id: ind.id, day });
         const deadName = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
         this.logEvent(day, 'death', `${deadName} died: ${cause}`, { individual_id: ind.id, cause, name: deadName }, 1);
+        ind._death_logged = true;
       }
     }
 
-    // Handle already-dead from conflict/disease marked earlier
+    // Handle already-dead from conflict/disease/disaster/birth-complications marked earlier
     for (const ind of alive) {
-      if (ind.is_dead && !ind.death_day) {
-        ind.death_day = day;
+      if (ind.is_dead && !ind._death_logged) {
+        ind._death_logged = true;
+        ind.death_day = ind.death_day ?? day;
         const deadName2 = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
-        this.logEvent(day, 'death', `${deadName2} died: ${ind.death_cause ?? ind.cause_of_death ?? 'unknown'}`, { individual_id: ind.id, name: deadName2 }, 1);
+        this.logEvent(day, 'death', `${deadName2} died: ${ind.death_cause ?? ind.cause_of_death ?? 'unknown'}`, { individual_id: ind.id, cause: ind.death_cause ?? ind.cause_of_death ?? 'unknown', name: deadName2 }, 1);
       }
     }
 

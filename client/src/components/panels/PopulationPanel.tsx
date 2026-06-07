@@ -580,7 +580,7 @@ export default function PopulationPanel() {
             className="w-full flex items-center gap-2 px-2 py-1.5"
             style={{ background: 'rgba(160,80,80,0.08)', border: '1px solid rgba(160,80,80,0.25)' }}>
             <span className="font-share-tech tracking-widest flex-1 text-left" style={{ fontSize: 12, color: '#a05050' }}>
-              † {lang === 'tr' ? 'HAYATINI KAYBETTİLER' : 'DECEASED'} ({deadIndividuals.length})
+              † {lang === 'tr' ? 'HAYATINI KAYBETTİLER' : 'DECEASED'} ({stats?.deaths ?? deadIndividuals.length})
             </span>
             <ChevronDown size={10} style={{ color: '#a05050', transform: deadExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </button>
