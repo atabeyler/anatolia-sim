@@ -464,7 +464,8 @@ export default function PopulationPanel() {
 
   useEffect(() => {
     load();
-    intervalRef.current = setInterval(load, 10000);
+    // List refreshes every 20s; counts come from WebSocket stats (real-time)
+    intervalRef.current = setInterval(load, 20000);
     return () => clearInterval(intervalRef.current);
   }, [currentSim?.id]);
 
@@ -475,18 +476,26 @@ export default function PopulationPanel() {
     <DetailPanel panelId="population" title="Population" titleTr="Nüfus">
       {selected && <IndividualDetail ind={selected} allIndividuals={allForLookup} onClose={() => setSelected(null)} />}
 
-      {/* Summary bar */}
+      {/* Summary bar — always use WebSocket stats for consistency with TopBar */}
       <div className="flex gap-2 mb-3">
         <div className="flex-1 p-2 text-center" style={{ background: 'rgba(79,110,247,0.08)', border: '1px solid rgba(79,110,247,0.2)' }}>
           <div className="font-orbitron font-bold" style={{ color: '#4f6ef7', fontSize: 14 }}>{stats?.population ?? individuals.length}</div>
           <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 12 }}>TOPLAM</div>
         </div>
         <div className="flex-1 p-2 text-center" style={{ background: 'rgba(96,144,255,0.08)', border: '1px solid rgba(96,144,255,0.2)' }}>
-          <div className="font-orbitron font-bold" style={{ color: '#6090ff', fontSize: 14 }}>{individuals.filter(i => i.sex === 'male').length}</div>
+          <div className="font-orbitron font-bold" style={{ color: '#6090ff', fontSize: 14 }}>
+            {stats != null
+              ? Math.round(stats.population * (stats.sex_ratio ?? 0.5))
+              : individuals.filter(i => i.sex === 'male').length}
+          </div>
           <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 12 }}>ERKEK</div>
         </div>
         <div className="flex-1 p-2 text-center" style={{ background: 'rgba(255,138,176,0.08)', border: '1px solid rgba(255,138,176,0.2)' }}>
-          <div className="font-orbitron font-bold" style={{ color: '#ff8ab0', fontSize: 14 }}>{individuals.filter(i => i.sex === 'female').length}</div>
+          <div className="font-orbitron font-bold" style={{ color: '#ff8ab0', fontSize: 14 }}>
+            {stats != null
+              ? stats.population - Math.round(stats.population * (stats.sex_ratio ?? 0.5))
+              : individuals.filter(i => i.sex === 'female').length}
+          </div>
           <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 12 }}>KADIN</div>
         </div>
       </div>
@@ -580,7 +589,7 @@ export default function PopulationPanel() {
             className="w-full flex items-center gap-2 px-2 py-1.5"
             style={{ background: 'rgba(160,80,80,0.08)', border: '1px solid rgba(160,80,80,0.25)' }}>
             <span className="font-share-tech tracking-widest flex-1 text-left" style={{ fontSize: 12, color: '#a05050' }}>
-              † {lang === 'tr' ? 'HAYATINI KAYBETTİLER' : 'DECEASED'} ({stats?.deaths ?? deadIndividuals.length})
+              † {lang === 'tr' ? 'HAYATINI KAYBETTİLER' : 'DECEASED'} ({stats?.deaths ?? deadIndividuals.length ?? 0})
             </span>
             <ChevronDown size={10} style={{ color: '#a05050', transform: deadExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </button>
