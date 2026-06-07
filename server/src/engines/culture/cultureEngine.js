@@ -20,7 +20,8 @@ export function processCultureTick(population, groups, discoveredTechs, simDay) 
       if (Math.random() < avgArt * meme.spread_rate * 0.05 * consciousnessMult) {
         group.culture.add(memeId);
         group.internal_tension = Math.max(0, (group.internal_tension ?? 0.5) - 0.03);
-        events.push({ type: 'cultural_meme_emerged', meme_id: memeId, group_id: group.id, day: simDay, importance: meme.stage >= 4 ? 'high' : 'low', description: MEME_DESC[memeId] ?? memeId });
+        const groupLabel = group.name ?? `G-${(group.id ?? '').slice(-4).toUpperCase()}`;
+        events.push({ type: 'cultural_meme_emerged', meme_id: memeId, group_id: group.id, day: simDay, importance: meme.stage >= 4 ? 'high' : 'low', description: `[${groupLabel}, ${members.length} üye, bilinç:${avgConsciousness.toFixed(2)}] ${MEME_DESC[memeId] ?? memeId}` });
       }
     }
     // Cultural diffusion: fidelity scales with receiving group's consciousness
@@ -31,7 +32,10 @@ export function processCultureTick(population, groups, discoveredTechs, simDay) 
         const novel = [...(src.culture ?? [])].find(m => !group.culture.has(m));
         if (novel) {
           group.culture.add(novel);
-          events.push({ type: 'cultural_diffusion', meme_id: novel, from_group: src.id, to_group: group.id, day: simDay, importance: 'low' });
+          const fromLabel = src.name ?? `G-${(src.id ?? '').slice(-4).toUpperCase()}`;
+          const toLabel = group.name ?? `G-${(group.id ?? '').slice(-4).toUpperCase()}`;
+          const memeLabel = MEME_DESC[novel] ?? novel;
+          events.push({ type: 'cultural_diffusion', meme_id: novel, from_group: src.id, to_group: group.id, day: simDay, importance: 'low', description: `Kültür yayıldı: "${memeLabel}" — ${fromLabel} → ${toLabel}` });
         }
       }
     }

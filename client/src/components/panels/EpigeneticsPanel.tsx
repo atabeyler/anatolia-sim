@@ -6,6 +6,8 @@ const LOCI = [
   { id: 'BDNF_PROMOTER',  gene: 'BDNF',      effect: 'Neuroplasticity',   effectTr: 'Nöroplastisite',      desc: 'Early adversity reduces learning',    descTr: 'Erken zorluk öğrenmeyi azaltır' },
   { id: 'MAOA_REGULATION',gene: 'MAOA',      effect: 'Aggression',        effectTr: 'Saldırganlık',        desc: 'Early stress → permanent mark',      descTr: 'Erken stres → kalıcı iz' },
   { id: 'LEPTIN_RESIST',  gene: 'Metabolic', effect: 'Fat Storage',       effectTr: 'Yağ Depolama',        desc: 'Famine triggers metabolic shift',     descTr: 'Kıtlık metabolik kaymayı tetikler' },
+  { id: 'INSULIN_SENS',   gene: 'Metabolik', effect: 'Insulin Sensitivity', effectTr: 'İnsülin Duyarlılığı', desc: 'Nutrition shapes metabolic threshold', descTr: 'Beslenme metabolik eşiği şekillendirir' },
+  { id: 'AVP_REGULATION', gene: 'OXTR',      effect: 'Social Memory',       effectTr: 'Sosyal Bellek',        desc: 'Isolation erodes social recall',      descTr: 'Yalnızlık sosyal belleği aşındırır' },
   { id: 'OXTR_METHYL',    gene: 'OXTR',      effect: 'Social Bonding',    effectTr: 'Sosyal Bağlanma',     desc: 'Isolation demethylates bonding',      descTr: 'Yalıtım bağlanma izlerini değiştirir' },
   { id: 'IMMUNE_PRIMING', gene: 'Immune',    effect: 'Pathogen Memory',   effectTr: 'Patojen Belleği',     desc: 'Infection leaves lasting marks',      descTr: 'Enfeksiyon kalıcı izler bırakır' },
 ];

@@ -13,6 +13,8 @@ const FILTERS = [
   { id: 'discovery',  labelTr: 'Keşif',    labelEn: 'Discovery', color: '#d4a838' },
   { id: 'disaster',   labelTr: 'Afet',     labelEn: 'Disaster',  color: '#f97316' },
   { id: 'belief',     labelTr: 'İnanç',    labelEn: 'Belief',    color: '#a855f7' },
+  { id: 'culture',   labelTr: 'Kültür',   labelEn: 'Culture',   color: '#c084fc' },
+  { id: 'activity',  labelTr: 'Aktivite', labelEn: 'Activity',  color: '#f59e0b' },
 ];
 
 function evColor(type: string) {
@@ -23,6 +25,8 @@ function evColor(type: string) {
   if (type?.includes('discovery'))  return '#d4a838';
   if (type?.includes('disaster'))   return '#f97316';
   if (type?.includes('belief'))     return '#a855f7';
+  if (type?.includes('cultural') || type === 'norm_emerged' || type === 'norm_violation') return '#c084fc';
+  if (type === 'communication' || type === 'thought' || type === 'sleep' || type === 'mating') return '#f59e0b';
   return '#8abda0';
 }
 
@@ -34,6 +38,10 @@ function evIcon(type: string) {
   if (type?.includes('discovery'))  return '◆';
   if (type?.includes('disaster'))   return '⚠';
   if (type?.includes('belief'))     return '☽';
+  if (type?.includes('cultural') || type?.includes('culture') || type === 'norm_emerged') return '◈';
+  if (type === 'communication' || type === 'thought') return '◎';
+  if (type === 'sleep')    return '◐';
+  if (type === 'mating')   return '♦';
   return '·';
 }
 
@@ -54,6 +62,10 @@ function matchesCategory(ev: any, id: string) {
       return type === 'disaster' || type === 'epidemic' || type === 'epidemic_outbreak' || type.includes('disaster');
     case 'belief':
       return type === 'belief' || type === 'ritual' || type.includes('belief');
+    case 'culture':
+      return type === 'culture' || type.includes('cultural') || type === 'norm_emerged' || type === 'norm_violation';
+    case 'activity':
+      return type === 'communication' || type === 'thought' || type === 'sleep' || type === 'mating' || type === 'activity';
     default:
       return false;
   }
