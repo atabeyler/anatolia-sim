@@ -21,25 +21,24 @@ function evColor(type: string) {
   if (type?.includes('birth'))      return '#7aff9a';
   if (type?.includes('death'))      return '#e08080';
   if (type?.includes('technology')) return '#7dd3fc';
-  if (type?.includes('language') || type?.includes('word')) return '#a0b4ff';
+  if (type?.includes('language') || type?.includes('word') || type === 'communication') return '#a0b4ff';
   if (type?.includes('discovery'))  return '#d4a838';
   if (type?.includes('disaster'))   return '#f97316';
   if (type?.includes('belief'))     return '#a855f7';
   if (type?.includes('cultural') || type === 'norm_emerged' || type === 'norm_violation') return '#c084fc';
-  if (type === 'communication' || type === 'thought' || type === 'sleep' || type === 'mating') return '#f59e0b';
-  return '#8abda0';
+  if (type === 'communication' || type === 'thought' || type === 'sleep' || type === 'mating') return '#f59e0b';  return '#8abda0';
 }
 
 function evIcon(type: string) {
   if (type?.includes('birth'))      return '+';
   if (type?.includes('death'))      return '†';
   if (type?.includes('technology')) return '⚙';
-  if (type?.includes('language') || type?.includes('word')) return '🔤';
+  if (type?.includes('language') || type?.includes('word') || type === 'communication') return '🔤';
   if (type?.includes('discovery'))  return '◆';
   if (type?.includes('disaster'))   return '⚠';
   if (type?.includes('belief'))     return '☽';
   if (type?.includes('cultural') || type?.includes('culture') || type === 'norm_emerged') return '◈';
-  if (type === 'communication' || type === 'thought') return '◎';
+  if (type === 'thought') return '◎';
   if (type === 'sleep')    return '◐';
   if (type === 'mating')   return '♦';
   return '·';
@@ -55,7 +54,7 @@ function matchesCategory(ev: any, id: string) {
     case 'technology':
       return type === 'technology';
     case 'language':
-      return type === 'language' || type === 'word' || type.includes('language');
+      return type === 'language' || type === 'word' || type === 'communication' || type.includes('language');
     case 'discovery':
       return type === 'discovery' || type.includes('discovery');
     case 'disaster':
