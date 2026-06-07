@@ -12,7 +12,7 @@ No individual other than the two founders is ever directly programmed. Every beh
 
 The simulation tests whether emergent complexity — language stages, consciousness, cultural norms, religion, law, art, astronomy — can arise from a minimal genetic seed without any scripted shortcuts for non-founder individuals.
 
-Founders carry precisely tuned alleles across 42 gene loci (FOXP2, BDNF, NRXN1, OXTR, …). Every child inherits through Mendelian recombination with ~35 mutations per generation. Phenotypes — intelligence, curiosity, aggression, language capacity, consciousness potential — flow entirely from the genome.
+Founders carry precisely tuned alleles across 32 gene loci (FOXP2, BDNF, NRXN1, OXTR, …). Every child inherits through Mendelian recombination with ~2 mutations per gamete (~4 per child). Phenotypes — intelligence, curiosity, aggression, language capacity, consciousness potential — flow entirely from the genome.
 
 ---
 
@@ -23,13 +23,13 @@ The simulation runs 17 concurrent engines per tick (1 tick = 1 simulation day):
 | Engine | Purpose |
 |---|---|
 | **Biology** | Aging, mortality, reproduction, life stages |
-| **Genome** | 42-locus Mendelian inheritance, stress-scaled mutation |
+| **Genome** | 32-locus Mendelian inheritance, stress-scaled mutation |
 | **Epigenetics** | Heritable methylation (BDNF, HPA axis, OXTR, immune priming) |
 | **Microbiome** | Gut diversity, infection spread, soil health coupling |
 | **Language** | FOXP2 expression growth, 7-stage emergence, organic vocabulary |
 | **Consciousness** | Genetics × language × social context, gated by potential |
 | **Psychology** | Wellbeing, stress, theory of mind (0–3), grief, attachment |
-| **Technology** | Cumulative discovery, 38 techs across 5 tiers |
+| **Technology** | Cumulative discovery, 24 techs across 5 tiers (0–4) |
 | **Belief** | Proto-beliefs → animism → polytheism → monotheism |
 | **Culture** | Meme spread scaled by group consciousness |
 | **Art** | 12 art forms, consciousness micro-boost |
@@ -50,7 +50,7 @@ Language capacity is not hardcoded. Each individual's `foxp2_expression` starts 
 ### Emergent Consciousness
 `mind.consciousness` accumulates daily from:
 ```
-Δ = consciousness_potential × 0.0001 + (lang_stage/6) × 0.00005 + social_bonus − stress_penalty
+Δ = consciousness_potential × 0.0001 + (lang_stage/6) × 0.00005 + social_bonus + (ToM/3) × 0.00003 − stress_penalty
 ```
 Hard ceiling: `consciousness_potential × 1.2` — individuals with low genetic potential cannot reach full consciousness regardless of environment.
 

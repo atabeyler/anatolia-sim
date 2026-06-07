@@ -73,7 +73,9 @@ export function spreadInfection(infected,susceptible,pathId,simDay){
 export function updateGutMicrobiome(individual,worldState){
   if(!individual.microbiome)individual.microbiome={diversity:0.5,composition:{}};
   const dd=worldState.food_abundance*0.5+(individual.inventory?.dried_food?0.1:0)+(individual.inventory?.food>3?0.2:0);
-  individual.microbiome.diversity=individual.microbiome.diversity*0.95+dd*0.05;
+  // Individuals with stronger immune genes (IMMUNE_01/02) maintain higher microbiome diversity
+  const immuneBoost=(individual.phenotype?.immune_strength??0.5)*0.15;
+  individual.microbiome.diversity=Math.min(1,individual.microbiome.diversity*0.95+Math.min(1,dd+immuneBoost)*0.05);
   // Store microbiome immunity boost separately from genetic immune_strength phenotype
   if(!individual.health)individual.health={};
   individual.health.microbiome_immunity=Math.min(individual.microbiome.diversity*0.3,0.3);
