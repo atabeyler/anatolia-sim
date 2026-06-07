@@ -26,7 +26,6 @@ function StarField() {
       hue: 200 + Math.random() * 60,
     }));
 
-    // Occasional shooting stars
     const shooting: any[] = [];
     function spawnShoot() {
       shooting.push({ x: Math.random() * c.width, y: Math.random() * c.height * 0.5, vx: 8 + Math.random() * 12, vy: 3 + Math.random() * 5, len: 80 + Math.random() * 120, alpha: 1 });
@@ -37,8 +36,6 @@ function StarField() {
     let frame: number;
     function draw() {
       ctx.clearRect(0, 0, c.width, c.height);
-
-      // Shooting stars
       for (let i = shooting.length - 1; i >= 0; i--) {
         const s = shooting[i];
         s.x += s.vx; s.y += s.vy; s.alpha -= 0.015;
@@ -46,36 +43,24 @@ function StarField() {
         const grad = ctx.createLinearGradient(s.x - s.vx * 4, s.y - s.vy * 4, s.x, s.y);
         grad.addColorStop(0, `rgba(120,160,255,0)`);
         grad.addColorStop(1, `rgba(180,210,255,${s.alpha})`);
-        ctx.beginPath();
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 1.5;
-        ctx.moveTo(s.x - s.vx * 6, s.y - s.vy * 6);
-        ctx.lineTo(s.x, s.y);
-        ctx.stroke();
+        ctx.beginPath(); ctx.strokeStyle = grad; ctx.lineWidth = 1.5;
+        ctx.moveTo(s.x - s.vx * 6, s.y - s.vy * 6); ctx.lineTo(s.x, s.y); ctx.stroke();
       }
-
-      // Stars
       stars.forEach(s => {
         s.x = (s.x + s.vx + c.width) % c.width;
         s.y = (s.y + s.vy + c.height) % c.height;
         s.phase += s.speed;
         const opacity = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(s.phase));
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(${s.hue}, 80%, 80%, ${opacity})`;
-        ctx.fill();
-        // glow on bright stars
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${s.hue}, 80%, 80%, ${opacity})`; ctx.fill();
         if (s.r > 1) {
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, s.r * 3, 0, Math.PI * 2);
+          ctx.beginPath(); ctx.arc(s.x, s.y, s.r * 3, 0, Math.PI * 2);
           const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 3);
           g.addColorStop(0, `hsla(${s.hue}, 90%, 90%, ${opacity * 0.3})`);
           g.addColorStop(1, 'transparent');
-          ctx.fillStyle = g;
-          ctx.fill();
+          ctx.fillStyle = g; ctx.fill();
         }
       });
-
       frame = requestAnimationFrame(draw);
     }
     draw();
@@ -110,18 +95,14 @@ function HexGrid() {
 function LogoRings() {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-      {/* Pulse rings */}
       {[0, 600, 1200].map(delay => (
         <div key={delay} className="absolute rounded-full border border-sim-accent/30"
           style={{ width: 120, height: 120, animation: `ring-expand 3s ease-out ${delay}ms infinite` }} />
       ))}
-      {/* Rotating dashed ring */}
       <div className="absolute rounded-full ring-rotate"
         style={{ width: 110, height: 110, border: '1px dashed rgba(79,110,247,0.25)' }} />
-      {/* Rotating solid ring with tick marks */}
       <svg className="absolute ring-rotate-rev" width="140" height="140" viewBox="0 0 140 140">
         <circle cx="70" cy="70" r="65" fill="none" stroke="rgba(79,110,247,0.15)" strokeWidth="1" strokeDasharray="3 8" />
-        {/* Tick marks */}
         {Array.from({ length: 12 }, (_, i) => {
           const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
           const r1 = 60, r2 = 65;
@@ -131,7 +112,6 @@ function LogoRings() {
             stroke="rgba(79,110,247,0.5)" strokeWidth="1.5" />;
         })}
       </svg>
-      {/* Radar sweep arc */}
       <svg className="absolute radar-sweep opacity-30" width="96" height="96" viewBox="0 0 96 96">
         <defs>
           <linearGradient id="sweep" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -156,13 +136,9 @@ function HudInput({ label, type, value, onChange, placeholder, maxLength }: any)
       </div>
       <div className={`relative transition-all duration-200 ${focused ? 'drop-shadow-[0_0_8px_rgba(79,110,247,0.4)]' : ''}`}>
         <input
-          type={type}
-          value={value}
-          onChange={onChange}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder={placeholder}
-          maxLength={maxLength}
+          type={type} value={value} onChange={onChange}
+          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+          placeholder={placeholder} maxLength={maxLength}
           className={`w-full bg-sim-bg/80 px-3 py-2 text-sim-text font-share-tech tracking-wide placeholder-sim-muted/50 focus:outline-none transition-all border ${focused ? 'border-sim-accent/70 bg-sim-surface/80' : 'border-sim-border'}`}
           style={{ fontSize: 16, clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))' }}
         />
@@ -179,60 +155,126 @@ function HudInput({ label, type, value, onChange, placeholder, maxLength }: any)
   );
 }
 
-/* ── Matrix DNA Rain ──────────────────────────────────────── */
-function MatrixRain({ onDone }: { onDone: () => void }) {
+/* ── Scramble text — DNA chars resolve into final text ────── */
+const SCRAMBLE_CHARS = 'ATCGATCGatcg0123456789ΔΣΨΩΦΛΞ'.split('');
+
+function ScrambleText({ text, active, delay = 0 }: { text: string; active: boolean; delay?: number }) {
+  const [displayed, setDisplayed] = useState<string[]>(() =>
+    text.split('').map(c => (c === ' ' || c === '-' || c === '…') ? c : SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)])
+  );
+
+  useEffect(() => {
+    if (!active) return;
+    let iv: ReturnType<typeof setInterval>;
+    const t = setTimeout(() => {
+      let frame = 0;
+      iv = setInterval(() => {
+        frame++;
+        setDisplayed(text.split('').map((c, i) => {
+          if (c === ' ' || c === '-' || c === '…') return c;
+          if (i < frame) return c;
+          return SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+        }));
+        if (frame >= text.length) clearInterval(iv);
+      }, 75);
+    }, delay);
+    return () => { clearTimeout(t); clearInterval(iv!); };
+  }, [active, text, delay]);
+
+  return <>{displayed.join('')}</>;
+}
+
+/* ── Matrix DNA Rain v2 — background layer + intro overlay ── */
+type Phase = 'full' | 'fade' | 'bg';
+
+function MatrixRain({ phase }: { phase: Phase }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const [opacity, setOpacity] = useState(1);
+  const phaseRef = useRef(phase);
+  useEffect(() => { phaseRef.current = phase; }, [phase]);
 
   useEffect(() => {
     const c = ref.current!;
     const ctx = c.getContext('2d')!;
     const resize = () => { c.width = window.innerWidth; c.height = window.innerHeight; };
     resize();
+    window.addEventListener('resize', resize);
 
-    const chars = 'ATCGATCGatcg0123456789ACDEFGHIKLMNPQRSTVWYХΔΣΨΩ①②③④⑤アイウエオカキクケコ'.split('');
+    const chars = 'ATCGATCGatcg0123456789ACDEFGHIKLMNPQRSTVWYХΔΣΨΩ①②③アイウエオ'.split('');
     const fs = 13;
-    const cols = Math.floor(c.width / fs);
-    const drops = Array.from({ length: cols }, () => Math.floor(Math.random() * -50));
+    const drops = Array.from({ length: Math.floor(window.innerWidth / fs) }, () => Math.floor(Math.random() * -50));
+    let speed = 1.0;
+    let tick = 0;
 
     let frame: number;
     function draw() {
-      ctx.fillStyle = 'rgba(0,0,0,0.06)';
+      const p = phaseRef.current;
+      const targetSpeed = p === 'full' ? 1.0 : p === 'fade' ? 0.45 : 0.14;
+      speed += (targetSpeed - speed) * 0.035;
+
+      tick++;
+      if (tick % Math.max(1, Math.round(1 / speed)) !== 0) {
+        frame = requestAnimationFrame(draw);
+        return;
+      }
+
+      ctx.fillStyle = 'rgba(0,0,0,0.065)';
       ctx.fillRect(0, 0, c.width, c.height);
-      drops.forEach((y, x) => {
-        const bright = Math.random() > 0.92;
-        ctx.fillStyle = bright ? '#ffffff' : `rgba(0,${180 + Math.floor(Math.random()*75)},${80 + Math.floor(Math.random()*60)},${0.6 + Math.random()*0.4})`;
+
+      const colCount = Math.floor(c.width / fs);
+      for (let x = 0; x < colCount; x++) {
+        if (drops[x] === undefined) drops[x] = Math.floor(Math.random() * -50);
+        const y = drops[x];
+        const bright = Math.random() > 0.93 && p !== 'bg';
+        const g = 150 + Math.floor(Math.random() * 80);
+        const b = 50 + Math.floor(Math.random() * 60);
+        const a = p === 'bg' ? 0.28 + Math.random() * 0.14 : 0.65 + Math.random() * 0.35;
+        ctx.fillStyle = bright ? `rgba(210,255,210,${a})` : `rgba(0,${g},${b},${a})`;
         ctx.font = `${fs}px monospace`;
         ctx.fillText(chars[Math.floor(Math.random() * chars.length)], x * fs, y * fs);
-        if (y * fs > c.height && Math.random() > 0.97) drops[x] = 0;
+        if (y * fs > c.height && Math.random() > 0.975) drops[x] = 0;
         drops[x]++;
-      });
+      }
+
       frame = requestAnimationFrame(draw);
     }
     draw();
-
-    const fadeT = setTimeout(() => setOpacity(0), 2600);
-    const doneT = setTimeout(() => { cancelAnimationFrame(frame); onDone(); }, 3600);
-    return () => { cancelAnimationFrame(frame); clearTimeout(fadeT); clearTimeout(doneT); };
+    return () => { cancelAnimationFrame(frame); window.removeEventListener('resize', resize); };
   }, []);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: '#000', opacity, transition: 'opacity 1s ease', pointerEvents: 'none' }}>
-      <canvas ref={ref} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-        <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(18px,5vw,34px)', color: '#00e887', letterSpacing: '0.3em', fontWeight: 900, textShadow: '0 0 24px #00e887, 0 0 48px rgba(0,232,135,0.4)' }}>
-          ANATOLİA-SİM
-        </span>
-        <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 13, color: '#4ecb71', letterSpacing: '0.35em', textShadow: '0 0 10px #4ecb71' }}>
-          GENOM MATRİSİ YÜKLENİYOR…
-        </span>
-        <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-          {['A','T','C','G'].map((b, i) => (
-            <span key={b} style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, color: ['#4f6ef7','#e05a5a','#d4a838','#00e887'][i], letterSpacing: '0.1em', animation: `pulse ${0.8 + i*0.2}s infinite` }}>{b}</span>
-          ))}
-        </div>
+    <>
+      {/* Matrix canvas — always at z2, behind all UI */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 2, pointerEvents: 'none',
+        opacity: phase === 'bg' ? 0.42 : 1,
+        transition: 'opacity 3s ease',
+      }}>
+        <canvas ref={ref} style={{ display: 'block', width: '100%', height: '100%' }} />
       </div>
-    </div>
+
+      {/* Intro black overlay — z200, fades during 'fade', removed in 'bg' */}
+      {phase !== 'bg' && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 200, background: '#000',
+          opacity: phase === 'full' ? 1 : 0,
+          transition: phase === 'full' ? 'none' : 'opacity 2.4s ease',
+          pointerEvents: 'none',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10,
+        }}>
+          <span style={{ fontFamily: 'Orbitron, monospace', fontSize: 'clamp(18px,5vw,32px)', color: '#00e887', letterSpacing: '0.3em', fontWeight: 900, textShadow: '0 0 24px #00e887, 0 0 48px rgba(0,232,135,0.4)' }}>
+            ANATOLİA-SİM
+          </span>
+          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 13, color: '#4ecb71', letterSpacing: '0.28em', textShadow: '0 0 10px #4ecb71' }}>
+            GENOM MATRİSİ YÜKLENİYOR…
+          </span>
+          <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+            {['A', 'T', 'C', 'G'].map((b, i) => (
+              <span key={b} style={{ fontFamily: 'Orbitron, monospace', fontSize: 11, color: ['#4f6ef7', '#e05a5a', '#d4a838', '#00e887'][i], letterSpacing: '0.1em', animation: `pulse ${0.8 + i * 0.2}s infinite` }}>{b}</span>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -259,14 +301,19 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const [booted, setBooted] = useState(false);
-  const [showMatrix, setShowMatrix] = useState(true);
+  const [phase, setPhase] = useState<Phase>('full');
+  const [scrambling, setScrambling] = useState(false);
   const [pendingCode, setPendingCode] = useState('');
   const [coords, setCoords] = useState<{ lat: string; lon: string } | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const f = (k: string) => (e: any) => setForm(p => ({ ...p, [k]: e.target.value }));
 
-  useEffect(() => { const t = setTimeout(() => setBooted(true), 400); return () => clearTimeout(t); }, []);
+  // Phase timeline: full (0–1.5s) → fade + scramble (1.5s) → bg (3.9s)
+  useEffect(() => {
+    const t1 = setTimeout(() => { setPhase('fade'); setScrambling(true); }, 1500);
+    const t2 = setTimeout(() => setPhase('bg'), 3900);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -275,7 +322,7 @@ export default function LoginPage() {
         lat: `${Math.abs(pos.coords.latitude).toFixed(4)}°${pos.coords.latitude >= 0 ? 'N' : 'S'}`,
         lon: `${Math.abs(pos.coords.longitude).toFixed(4)}°${pos.coords.longitude >= 0 ? 'E' : 'W'}`,
       }),
-      () => {} // permission denied → keep default
+      () => {}
     );
   }, []);
 
@@ -302,7 +349,6 @@ export default function LoginPage() {
     document.body.classList.add('login-page-active');
     return () => document.body.classList.remove('login-page-active');
   }, []);
-
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -334,10 +380,11 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden overflow-y-auto lg:overflow-hidden flex flex-col items-center justify-center bg-[#030310] scanlines">
-      {/* Matrix rain — first-load only */}
-      {showMatrix && <MatrixRain onDone={() => setShowMatrix(false)} />}
 
-      {/* MENÜ button — top right */}
+      {/* Matrix (canvas at z2 + intro overlay at z200) */}
+      <MatrixRain phase={phase} />
+
+      {/* MENÜ button */}
       <button
         onClick={() => setMenuOpen(true)}
         className="fixed z-30"
@@ -353,27 +400,28 @@ export default function LoginPage() {
         onMenuPageChange={setMenuPage}
       />
 
-      {/* Backgrounds */}
+      {/* Backgrounds (behind matrix canvas at z2, but matrix canvas has black bg so they're invisible during intro) */}
       <StarField />
       <HexGrid />
       <ScanBar />
 
       {/* Ambient glow blobs */}
       <div className="fixed w-96 h-96 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(79,110,247,0.08) 0%, transparent 70%)', top: '20%', left: '30%', filter: 'blur(40px)' }} />
+        style={{ background: 'radial-gradient(circle, rgba(79,110,247,0.08) 0%, transparent 70%)', top: '20%', left: '30%', filter: 'blur(40px)', zIndex: 3 }} />
       <div className="fixed w-64 h-64 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%)', bottom: '20%', right: '25%', filter: 'blur(30px)' }} />
+        style={{ background: 'radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%)', bottom: '20%', right: '25%', filter: 'blur(30px)', zIndex: 3 }} />
 
-
-
-      {/* System status top-left — 2-col grid on mobile to save vertical space */}
+      {/* System status top-left */}
       <div
         className="fixed top-3 left-3 z-20"
         style={{
-          display: showMatrix ? 'none' : 'flex',
+          display: phase === 'full' ? 'none' : 'flex',
           flexDirection: 'column',
           gap: 8,
           maxWidth: 'calc(100vw - 24px)',
+          opacity: phase === 'fade' ? 0 : 1,
+          transition: 'opacity 1.5s ease',
+          transitionDelay: '1s',
         }}
       >
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, auto)', columnGap: 12, rowGap: 2 }}>
@@ -389,15 +437,7 @@ export default function LoginPage() {
             </div>
           ))}
         </div>
-
-        <div
-          className="font-share-tech tracking-widest"
-          style={{
-            fontSize: 'clamp(11px, 1.05vw, 14px)',
-            color: '#c0c8e8',
-            maxWidth: 'min(calc(100vw - 24px), 420px)',
-          }}
-        >
+        <div className="font-share-tech tracking-widest" style={{ fontSize: 'clamp(11px, 1.05vw, 14px)', color: '#c0c8e8', maxWidth: 'min(calc(100vw - 24px), 420px)' }}>
           <div style={{ whiteSpace: 'normal', overflowWrap: 'anywhere', lineHeight: 1.25 }}>
             LAT: {coords?.lat ?? '39.9334°N'} · LON: {coords?.lon ?? '32.8597°E'}
           </div>
@@ -407,149 +447,173 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Main content */}
-      {booted && (
-        <div className="z-10 flex flex-col items-center warp-in w-full px-4 py-8">
-          {/* Logo area with rings */}
-          <div className="relative w-28 h-28 flex items-center justify-center mb-4">
-            <LogoRings />
-            {/* Central icon */}
-            <div className="relative z-10 w-14 h-14 flex items-center justify-center neon-breathe"
-              style={{ background: 'rgba(79,110,247,0.12)', border: '1px solid rgba(79,110,247,0.4)', clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(79,110,247,0.9)" strokeWidth="1.5">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-                <path d="M2 12h20" />
-              </svg>
-            </div>
+      {/* Main content — always in DOM, fades in as intro overlay dissolves */}
+      <div
+        className="z-10 flex flex-col items-center w-full px-4 py-8"
+        style={{
+          opacity: phase === 'full' ? 0 : 1,
+          transition: 'opacity 2s ease',
+          transitionDelay: phase === 'full' ? '0s' : '0.5s',
+        }}
+      >
+        {/* Logo area with rings */}
+        <div className="relative w-28 h-28 flex items-center justify-center mb-4">
+          <LogoRings />
+          <div className="relative z-10 w-14 h-14 flex items-center justify-center neon-breathe"
+            style={{ background: 'rgba(79,110,247,0.12)', border: '1px solid rgba(79,110,247,0.4)', clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(79,110,247,0.9)" strokeWidth="1.5">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+              <path d="M2 12h20" />
+            </svg>
           </div>
-
-          {/* Title */}
-          <div className="text-center mb-2">
-            <h1
-              className="glitch-text font-orbitron text-2xl sm:text-3xl font-bold tracking-[0.2em] text-white flicker"
-              data-text="ANATOLİA-SİM"
-              style={{ textShadow: '0 0 20px rgba(79,110,247,0.6), 0 0 40px rgba(79,110,247,0.3)' }}
-            >
-              ANATOLİA-SİM
-            </h1>
-            <p className="font-share-tech tracking-[0.4em] text-sim-accent mt-1 text-in"
-              style={{ animationDelay: '200ms', fontSize: 18 }}>
-              {lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}
-            </p>
-          </div>
-
-          {/* Separator line */}
-          <div className="flex items-center gap-3 my-3 w-[460px] max-w-full">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent to-sim-accent/40" />
-            <div className="w-1.5 h-1.5 rotate-45 bg-sim-accent/60" />
-            <div className="flex-1 h-px bg-gradient-to-l from-transparent to-sim-accent/40" />
-          </div>
-
-          {/* Form panel */}
-          <div
-            className="w-[460px] max-w-full hud-panel relative boot-in"
-            style={{ animationDelay: '300ms', padding: 'clamp(16px, 3vw, 22px) clamp(16px, 3.5vw, 28px)' }}
-          >
-            <span className="hud-corner-tr" />
-            <span className="hud-corner-bl" />
-
-            {/* Header label */}
-            <div className="absolute -top-px left-6 right-6 flex items-center justify-center">
-              <div className="bg-[#030310] px-3 flex items-center gap-2">
-                <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
-                <span className="font-share-tech text-sim-accent tracking-[0.1em] sm:tracking-[0.3em]" style={{ fontSize: 'clamp(12px, 3.8vw, 18px)' }}>
-                  {mode === 'login' ? (lang === 'tr' ? 'KİMLİK DOĞRULAMA' : 'IDENTITY VERIFICATION') : (lang === 'tr' ? 'HESAP OLUŞTURMA' : 'ACCOUNT CREATION')}
-                </span>
-                <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
-              </div>
-            </div>
-
-            {/* Mode toggle */}
-            <div className="flex gap-1 mb-3 mt-2">
-              {(['login', 'register'] as const).map(m => (
-                <button key={m} type="button" onClick={() => setMode(m)}
-                  style={{ fontSize: 'clamp(14px, 1.4vw, 16px)' }}
-                  className={`flex-1 py-2.5 font-share-tech tracking-widest uppercase transition-all border ${
-                    mode === m
-                      ? 'bg-sim-accent/20 border-sim-accent/60 text-sim-accent shadow-neon-sm'
-                      : 'border-sim-border/50 text-sim-muted hover:border-sim-accent/30 hover:text-sim-text'
-                  }`}>
-                  {m === 'login' ? (lang === 'en' ? 'SIGN IN' : 'GİRİŞ') : (lang === 'en' ? 'SIGN UP' : 'KAYIT')}
-                </button>
-              ))}
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              {mode === 'register' ? (<>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <HudInput label={lang === 'en' ? 'First Name' : 'Ad'} type="text"
-                    value={form.first_name} onChange={f('first_name')} placeholder="AD" />
-                  <HudInput label={lang === 'en' ? 'Last Name' : 'Soyad'} type="text"
-                    value={form.last_name} onChange={f('last_name')} placeholder="SOYAD" />
-                </div>
-                <HudInput label={lang === 'en' ? 'USER CODE' : 'KULLANICI KODU'} type="text" maxLength={20}
-                  value={form.reg_user_code}
-                  onChange={(e: any) => setForm(p => ({ ...p, reg_user_code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') }))}
-                  placeholder="ANSYZ0001" />
-                <p className="font-share-tech tracking-wide -mt-1 mb-1.5" style={{ fontSize: 12, color: '#6a8a9a' }}>
-                  {lang === 'en' ? '4-20 chars · letters & numbers only' : '4-20 karakter · harf ve rakam'}
-                </p>
-                <HudInput label="TC KİMLİK NO" type="text" maxLength={11}
-                  value={form.tc_no} onChange={f('tc_no')} placeholder="00000000000" />
-                <HudInput label="E-POSTA" type="email"
-                  value={form.email} onChange={f('email')} placeholder="user@domain.com" />
-                <HudInput label={lang === 'en' ? 'Password' : 'ŞİFRE'} type="password"
-                  value={form.password} onChange={f('password')} placeholder="••••••••" />
-                <p className="font-share-tech tracking-wide mb-2" style={{ fontSize: 12, color: '#6a8a9a' }}>
-                  {lang === 'en'
-                    ? 'Min 8 chars · upper · lower · number · symbol'
-                    : 'Min 8 karakter · büyük · küçük · rakam · sembol'}
-                </p>
-              </>) : (<>
-                <HudInput label={lang === 'en' ? 'User Code' : 'KULLANICI KODU'} type="text"
-                  value={form.user_code} onChange={f('user_code')} placeholder="••••••••" />
-                <HudInput label={lang === 'en' ? 'Password' : 'ŞİFRE'} type="password"
-                  value={form.password} onChange={f('password')} placeholder="••••••••" />
-              </>)}
-
-              {error && (
-                <div className="mb-3 px-3 py-2 border-l-2 border-sim-red bg-sim-red/10 font-share-tech text-sim-red tracking-wide" style={{ fontSize: 'clamp(13px, 1.15vw, 14px)' }}>
-                  ⚠ {error}
-                </div>
-              )}
-              {success && (
-                <div className="mb-3 px-3 py-2 border-l-2 border-sim-green bg-sim-green/10 font-share-tech text-sim-green tracking-wide" style={{ fontSize: 'clamp(13px, 1.15vw, 14px)' }}>
-                  ✓ {success}
-                </div>
-              )}
-
-              <button type="submit" disabled={loading}
-                className="w-full py-3.5 font-orbitron font-semibold tracking-[0.2em] text-white transition-all disabled:opacity-40 neon-breathe relative overflow-hidden"
-                style={{
-                  fontSize: 'clamp(15px, 1.5vw, 18px)',
-                  background: loading ? 'rgba(79,110,247,0.3)' : 'linear-gradient(135deg, rgba(79,110,247,0.35) 0%, rgba(79,110,247,0.2) 100%)',
-                  border: '1px solid rgba(79,110,247,0.6)',
-                  clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))',
-                }}>
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-                    </svg>
-                    {lang === 'en' ? 'PROCESSING...' : 'İŞLENİYOR...'}
-                  </span>
-                ) : (
-                  mode === 'login' ? (lang === 'en' ? 'INITIATE' : 'GİRİŞ') : (lang === 'en' ? 'SUBMIT REQUEST' : 'TALEP GÖNDER')
-                )}
-              </button>
-            </form>
-          </div>
-
-          {/* Footer */}
-          <FooterBar mode="inline" className="text-in mt-6 mb-2 px-4" style={{ animationDelay: '600ms' }} />
         </div>
-      )}
+
+        {/* Title — crystallizes from DNA chars */}
+        <div className="text-center mb-2">
+          <h1
+            className="font-orbitron text-2xl sm:text-3xl font-bold tracking-[0.2em] flicker"
+            style={{
+              color: scrambling ? '#ffffff' : '#00e887',
+              textShadow: scrambling
+                ? '0 0 20px rgba(79,110,247,0.6), 0 0 40px rgba(79,110,247,0.3)'
+                : '0 0 20px rgba(0,232,135,0.8), 0 0 40px rgba(0,232,135,0.4)',
+              transition: 'color 1s ease, text-shadow 1s ease',
+              transitionDelay: '0.9s',
+            }}
+          >
+            <ScrambleText text="ANATOLİA-SİM" active={scrambling} />
+          </h1>
+          <p
+            className="font-share-tech tracking-[0.4em] mt-1"
+            style={{
+              fontSize: 18,
+              color: '#4f6ef7',
+              opacity: scrambling ? 1 : 0,
+              transition: 'opacity 1s ease',
+              transitionDelay: '0.8s',
+            }}
+          >
+            <ScrambleText
+              text={lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}
+              active={scrambling}
+              delay={900}
+            />
+          </p>
+        </div>
+
+        {/* Separator line */}
+        <div className="flex items-center gap-3 my-3 w-[460px] max-w-full">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent to-sim-accent/40" />
+          <div className="w-1.5 h-1.5 rotate-45 bg-sim-accent/60" />
+          <div className="flex-1 h-px bg-gradient-to-l from-transparent to-sim-accent/40" />
+        </div>
+
+        {/* Form panel */}
+        <div
+          className="w-[460px] max-w-full hud-panel relative"
+          style={{
+            padding: 'clamp(16px, 3vw, 22px) clamp(16px, 3.5vw, 28px)',
+            opacity: phase === 'bg' ? 1 : 0,
+            transform: phase === 'bg' ? 'translateY(0)' : 'translateY(12px)',
+            transition: 'opacity 1.2s ease, transform 1.2s ease',
+          }}
+        >
+          <span className="hud-corner-tr" />
+          <span className="hud-corner-bl" />
+
+          <div className="absolute -top-px left-6 right-6 flex items-center justify-center">
+            <div className="bg-[#030310] px-3 flex items-center gap-2">
+              <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
+              <span className="font-share-tech text-sim-accent tracking-[0.1em] sm:tracking-[0.3em]" style={{ fontSize: 'clamp(12px, 3.8vw, 18px)' }}>
+                {mode === 'login' ? (lang === 'tr' ? 'KİMLİK DOĞRULAMA' : 'IDENTITY VERIFICATION') : (lang === 'tr' ? 'HESAP OLUŞTURMA' : 'ACCOUNT CREATION')}
+              </span>
+              <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
+            </div>
+          </div>
+
+          <div className="flex gap-1 mb-3 mt-2">
+            {(['login', 'register'] as const).map(m => (
+              <button key={m} type="button" onClick={() => setMode(m)}
+                style={{ fontSize: 'clamp(14px, 1.4vw, 16px)' }}
+                className={`flex-1 py-2.5 font-share-tech tracking-widest uppercase transition-all border ${
+                  mode === m
+                    ? 'bg-sim-accent/20 border-sim-accent/60 text-sim-accent shadow-neon-sm'
+                    : 'border-sim-border/50 text-sim-muted hover:border-sim-accent/30 hover:text-sim-text'
+                }`}>
+                {m === 'login' ? (lang === 'en' ? 'SIGN IN' : 'GİRİŞ') : (lang === 'en' ? 'SIGN UP' : 'KAYIT')}
+              </button>
+            ))}
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            {mode === 'register' ? (<>
+              <div className="grid grid-cols-2 gap-1.5">
+                <HudInput label={lang === 'en' ? 'First Name' : 'Ad'} type="text"
+                  value={form.first_name} onChange={f('first_name')} placeholder="AD" />
+                <HudInput label={lang === 'en' ? 'Last Name' : 'Soyad'} type="text"
+                  value={form.last_name} onChange={f('last_name')} placeholder="SOYAD" />
+              </div>
+              <HudInput label={lang === 'en' ? 'USER CODE' : 'KULLANICI KODU'} type="text" maxLength={20}
+                value={form.reg_user_code}
+                onChange={(e: any) => setForm(p => ({ ...p, reg_user_code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') }))}
+                placeholder="ANSYZ0001" />
+              <p className="font-share-tech tracking-wide -mt-1 mb-1.5" style={{ fontSize: 12, color: '#6a8a9a' }}>
+                {lang === 'en' ? '4-20 chars · letters & numbers only' : '4-20 karakter · harf ve rakam'}
+              </p>
+              <HudInput label="TC KİMLİK NO" type="text" maxLength={11}
+                value={form.tc_no} onChange={f('tc_no')} placeholder="00000000000" />
+              <HudInput label="E-POSTA" type="email"
+                value={form.email} onChange={f('email')} placeholder="user@domain.com" />
+              <HudInput label={lang === 'en' ? 'Password' : 'ŞİFRE'} type="password"
+                value={form.password} onChange={f('password')} placeholder="••••••••" />
+              <p className="font-share-tech tracking-wide mb-2" style={{ fontSize: 12, color: '#6a8a9a' }}>
+                {lang === 'en'
+                  ? 'Min 8 chars · upper · lower · number · symbol'
+                  : 'Min 8 karakter · büyük · küçük · rakam · sembol'}
+              </p>
+            </>) : (<>
+              <HudInput label={lang === 'en' ? 'User Code' : 'KULLANICI KODU'} type="text"
+                value={form.user_code} onChange={f('user_code')} placeholder="••••••••" />
+              <HudInput label={lang === 'en' ? 'Password' : 'ŞİFRE'} type="password"
+                value={form.password} onChange={f('password')} placeholder="••••••••" />
+            </>)}
+
+            {error && (
+              <div className="mb-3 px-3 py-2 border-l-2 border-sim-red bg-sim-red/10 font-share-tech text-sim-red tracking-wide" style={{ fontSize: 'clamp(13px, 1.15vw, 14px)' }}>
+                ⚠ {error}
+              </div>
+            )}
+            {success && (
+              <div className="mb-3 px-3 py-2 border-l-2 border-sim-green bg-sim-green/10 font-share-tech text-sim-green tracking-wide" style={{ fontSize: 'clamp(13px, 1.15vw, 14px)' }}>
+                ✓ {success}
+              </div>
+            )}
+
+            <button type="submit" disabled={loading}
+              className="w-full py-3.5 font-orbitron font-semibold tracking-[0.2em] text-white transition-all disabled:opacity-40 neon-breathe relative overflow-hidden"
+              style={{
+                fontSize: 'clamp(15px, 1.5vw, 18px)',
+                background: loading ? 'rgba(79,110,247,0.3)' : 'linear-gradient(135deg, rgba(79,110,247,0.35) 0%, rgba(79,110,247,0.2) 100%)',
+                border: '1px solid rgba(79,110,247,0.6)',
+                clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))',
+              }}>
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                  </svg>
+                  {lang === 'en' ? 'PROCESSING...' : 'İŞLENİYOR...'}
+                </span>
+              ) : (
+                mode === 'login' ? (lang === 'en' ? 'INITIATE' : 'GİRİŞ') : (lang === 'en' ? 'SUBMIT REQUEST' : 'TALEP GÖNDER')
+              )}
+            </button>
+          </form>
+        </div>
+
+        <FooterBar mode="inline" className="mt-6 mb-2 px-4" />
+      </div>
     </div>
   );
 }
