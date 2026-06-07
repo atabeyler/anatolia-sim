@@ -543,6 +543,14 @@ export class SimulationEngine {
   processSocialNarrative(alive, day) {
     const events = [];
     const pName = ind => ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
+    const CONCEPT_TR = {
+      danger:'tehlike', food:'yiyecek', water:'su', fire:'ateş',
+      here:'burada', there:'orada', me:'ben', you:'sen', us:'biz', them:'onlar',
+      good:'iyi', bad:'kötü', hunt:'av', eat:'yemek', sleep:'uyku',
+      die:'ölüm', born:'doğum', run:'koş', sun:'güneş', moon:'ay',
+      rain:'yağmur', dark:'karanlık', light:'ışık', god:'tanrı', spirit:'ruh',
+      sky:'gökyüzü', earth:'toprak', time:'zaman',
+    };
 
     // --- Communication: individuals with language.stage >= 1 signal nearby group members ---
     // ~3% of alive fire per tick to keep volume manageable
@@ -571,13 +579,21 @@ export class SimulationEngine {
       else if (stress > 0.7 && vocab['danger']) concept = 'danger';
 
       const word = vocab[concept] ?? null;
-      const method = (ind.language?.stage ?? 0) >= 2 ? 'ses' : 'jest';
+      const isSound = (ind.language?.stage ?? 0) >= 2;
       const name = pName(ind);
       const targetName = pName(target);
+      const conceptTr = CONCEPT_TR[concept] ?? concept;
 
-      const desc = word
-        ? `${name}, ${targetName}'a "${word}" ${method}ini yaptı (anlam: ${concept})`
-        : `${name}, ${targetName}'a ${method}le iletişim kurdu`;
+      let desc;
+      if (word) {
+        desc = isSound
+          ? `${name}, ${targetName}'a "${word}" dedi — ${conceptTr}`
+          : `${name}, ${targetName}'a "${word}" jesti yaptı — ${conceptTr}`;
+      } else {
+        desc = isSound
+          ? `${name}, ${targetName}'a ses çıkardı`
+          : `${name}, ${targetName}'a işaret etti`;
+      }
 
       events.push({ type: 'communication', description: desc, importance: 1,
         data: { sender_id: ind.id, receiver_id: target.id, concept, word } });
