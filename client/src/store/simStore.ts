@@ -34,6 +34,7 @@ interface SimStats {
   social_order?: number;
   astronomy_knowledge?: number;
   weather?: string;
+  total_techs?: number;
 }
 
 interface SimEvent {
