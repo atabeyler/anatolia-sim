@@ -6,7 +6,7 @@ import { updateWorldState, computeResourcePressure } from './environment/environ
 import { buildPhonology } from './language/nameEngine.js';
 import { updateLanguageStage, learnFromTeacher, updateFoxp2Expression, tryAcquireWordFromEnvironment, generateProtoWord, CORE_CONCEPTS } from './language/languageEngine.js';
 import { tryDiscoverTech } from './technology/technologyEngine.js';
-import { getAge } from './biology/individual.js';
+import { getAge, LIFE_STAGE } from './biology/individual.js';
 import { processGroupDynamics, assignGroupRoles } from './social/socialEngine.js';
 import { gatherResources, consumeResources, produceGoods, attemptTrade, computeEconomicStats, initializeInventory } from './economy/economyEngine.js';
 import { tryFormBelief, updateBeliefSpread, checkRitualEmergence } from './belief/beliefEngine.js';
@@ -124,7 +124,10 @@ export class SimulationEngine {
     for (const ind of alive) {
       ind.age = day - ind.birth_day;
       const ay = ind.age / 365;
-      ind.life_stage = ay < 2 ? 'INFANT' : ay < 12 ? 'CHILD' : ay < 18 ? 'ADOLESCENT' : ay < 45 ? 'ADULT' : 'ELDER';
+      ind.life_stage = ay < LIFE_STAGE.CHILD.minAge ? 'INFANT'
+        : ay < LIFE_STAGE.ADOLESCENT.minAge ? 'CHILD'
+        : ay < LIFE_STAGE.ADULT.minAge ? 'ADOLESCENT'
+        : ay < LIFE_STAGE.ELDER.minAge ? 'ADULT' : 'ELDER';
     }
 
     // 1. Update world environment
@@ -247,17 +250,19 @@ export class SimulationEngine {
       updateMentalState(ind, tickEvents, this.worldState, day);
     }
 
-    // 5b. Consciousness update — emerges from genetics × language × social context
+    // 5b. Consciousness update — emerges from genetics × language × social context × theory of mind
     for (const ind of alive) {
       if (!ind.mind) continue;
       const potential = ind.phenotype?.consciousness_potential ?? 0;
       const langBonus = (ind.language?.stage ?? 0) / 6 * 0.00005;
       const socialBonus = ind.group_id ? 0.00002 : 0;
       const stressPenalty = (ind.psychology?.stress_level ?? 0.3) * 0.00003;
+      // Theory of Mind (0–3) accelerates consciousness accumulation as self-model deepens
+      const tomBonus = (ind.psychology?.theory_of_mind ?? 0) / 3 * 0.00003;
       // Genetic ceiling: consciousness cannot exceed potential × 1.2 (20% headroom for cultural effects)
       const geneticCap = Math.min(1, potential * 1.2);
       ind.mind.consciousness = Math.min(geneticCap, Math.max(0,
-        (ind.mind.consciousness ?? 0) + potential * 0.0001 + langBonus + socialBonus - stressPenalty
+        (ind.mind.consciousness ?? 0) + potential * 0.0001 + langBonus + socialBonus + tomBonus - stressPenalty
       ));
     }
 
@@ -360,15 +365,8 @@ export class SimulationEngine {
     for (const ind of alive) {
       const langResult = updateLanguageStage(ind, alive.length, genCount, ind.group_id ?? 'global');
       if (langResult?.upgraded) {
-        // Bootstrap: seed 5 CORE_CONCEPTS when first reaching stage 2+ so lexical emergence starts
-        if (langResult.newStage >= 2) {
-          ind.language.vocabulary = ind.language.vocabulary ?? {};
-          for (const concept of CORE_CONCEPTS.slice(0, 5)) {
-            if (!ind.language.vocabulary[concept]) {
-              ind.language.vocabulary[concept] = generateProtoWord(concept, ind.group_id ?? 'global');
-            }
-          }
-        }
+        // Vocabulary grows organically via tryAcquireWordFromEnvironment (step 12d below).
+        // No scripted word injection here — words emerge from genetics + foxp2 expression only.
         const name = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
         const stageName = langResult.stageName ?? ind.language?.stage_name ?? 'language';
         tickEvents.push({
@@ -906,26 +904,17 @@ export class SimulationEngine {
         learnFromTeacher(ind, parent);
       }
 
-      // Observational learning: children near high-care parents develop stronger parental bonding.
-      // This is the "non-founder" transmission pathway — purely genetic inheritance + developmental
-      // plasticity, no scripted drive. The phenotypic boost here stays with the individual for life
-      // and shapes how they treat THEIR children (who are then kept close via the co-movement pass).
-      if (ageYears >= 2 && ageYears < 15 && dist < 1.5 && ind.phenotype) {
+      // Epigenetic priming: proximity to a high-care parent gently demethylates OXTR,
+      // which is heritable for 2 generations via inheritEpigenome. This is the correct
+      // Cardinal-Rule-compliant pathway — the effect propagates through inheritance, not
+      // direct phenotype mutation.
+      if (ageYears >= 2 && ageYears < 15 && dist < 1.5 && ind.epigenome?.OXTR_METHYL) {
         const parentCare = parent.phenotype?.parental_care ?? 0.5;
         if (parentCare > 0.55) {
-          const currentCare = ind.phenotype.parental_care ?? 0.5;
-          const gap = parentCare - currentCare;
-          // Only pulls upward toward the parent's level — can't exceed 92% (some variation preserved)
-          if (gap > 0) {
-            ind.phenotype.parental_care = Math.min(0.92, currentCare + gap * 0.00008);
-          }
-          // Prime OXTR epigenetic mark (heritable for 2 generations via inheritEpigenome)
-          if (ind.epigenome?.OXTR_METHYL) {
-            ind.epigenome.OXTR_METHYL.methylation = Math.max(
-              0.22,
-              ind.epigenome.OXTR_METHYL.methylation - 0.000015
-            );
-          }
+          ind.epigenome.OXTR_METHYL.methylation = Math.max(
+            0.22,
+            ind.epigenome.OXTR_METHYL.methylation - 0.000015
+          );
         }
       }
 

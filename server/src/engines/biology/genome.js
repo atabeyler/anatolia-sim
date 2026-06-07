@@ -96,7 +96,8 @@ export function createGamete(genome, stressMultiplier = 1.0) {
 }
 
 function applyMutation(value, locusId, stressMultiplier = 1.0) {
-  const mutationProb = 35 / LOCI_KEYS.length * stressMultiplier;
+  // ~2 mutations per gamete on average; stress can double/triple this rate
+  const mutationProb = 2 / LOCI_KEYS.length * stressMultiplier;
   if (Math.random() < mutationProb) {
     const effect = (Math.random() - 0.5) * 0.1;
     return Math.max(0, Math.min(1, value + effect));
@@ -110,15 +111,16 @@ export function combineGametes(gamete1, gamete2, childSex) {
     const meta = LOCI[locusId];
     const a1 = gamete1[locusId] ?? randomAllele();
     const a2 = gamete2[locusId] ?? randomAllele();
-    // X-linked loci: males are hemizygous — only one functional allele from mother's X.
+    // Convention: gamete1 = paternal, gamete2 = maternal.
+    // X-linked loci: males are hemizygous — only one functional X allele, inherited from mother (gamete2).
     const isXLinked = meta.type === 'x_linked';
     const isMale = childSex === 'male';
     genome[locusId] = {
       locusId,
       chromosome: meta.chr,
-      allele1: { value: a1, origin: 'paternal' },
-      allele2: { value: isXLinked && isMale ? a1 : a2, origin: isXLinked && isMale ? 'hemizygous' : 'maternal' },
-      expressionType: meta.type,
+      allele1: { value: isMale && isXLinked ? a2 : a1, origin: isMale && isXLinked ? 'maternal' : 'paternal' },
+      allele2: { value: isMale && isXLinked ? a2 : a2, origin: isMale && isXLinked ? 'hemizygous' : 'maternal' },
+      expressionType: isMale && isXLinked ? 'hemizygous' : meta.type,
       trait: meta.trait,
     };
   }
@@ -131,6 +133,8 @@ export function computePhenotype(genome) {
     if (!locus) return 0.5;
     const { allele1, allele2, expressionType } = locus;
     if (expressionType === 'dominant') return Math.max(allele1.value, allele2.value);
+    // Hemizygous: males with X-linked genes express the single maternal allele directly
+    if (expressionType === 'hemizygous') return allele1.value;
     return (allele1.value + allele2.value) / 2;
   };
 
