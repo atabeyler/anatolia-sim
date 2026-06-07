@@ -391,22 +391,22 @@ const CLIP = 'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(
 const inputBase: React.CSSProperties = {
   outline:'none', fontFamily:'Share Tech Mono,monospace',
   background:'rgba(7,7,26,0.9)', border:'1px solid rgba(79,110,247,0.25)',
-  padding:'9px 12px', fontSize:14, color:'#e0e0f0', clipPath:CLIP, width:'100%',
+  padding:'6px 10px', fontSize:13, color:'#e0e0f0', clipPath:CLIP, width:'100%',
 };
 const btnBase: React.CSSProperties = {
-  fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', fontSize:16,
-  clipPath:CLIP, cursor:'pointer', padding:'9px 20px',
+  fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', fontSize:13,
+  clipPath:CLIP, cursor:'pointer', padding:'7px 16px',
 };
 const btnNext  = { ...btnBase, background:'rgba(79,110,247,0.25)', border:'1px solid rgba(79,110,247,0.5)',  color:'#e0e0f0' };
 const btnBack  = { ...btnBase, background:'rgba(22,22,58,0.5)',    border:'1px solid rgba(79,110,247,0.2)',  color:'#e0e0f0' };
 const btnExit  = { ...btnBase, background:'rgba(150,30,30,0.15)',  border:'1px solid rgba(200,34,34,0.3)',   color:'#e0e0f0', padding:'9px 14px' };
-const btnStart = { ...btnBase, fontSize:14, background:'rgba(78,203,113,0.2)', border:'1px solid rgba(78,203,113,0.5)', color:'#4ecb71', padding:'9px 28px' };
+const btnStart = { ...btnBase, fontSize:13, background:'rgba(78,203,113,0.2)', border:'1px solid rgba(78,203,113,0.5)', color:'#4ecb71', padding:'7px 20px' };
 
 /* ── sub-components ──────────────────────────────────────────────────────── */
 function Lbl({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize:14, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace',
-      letterSpacing:'0.12em', marginBottom:6 }}>
+    <div style={{ fontSize:12, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace',
+      letterSpacing:'0.12em', marginBottom:4 }}>
       {children}
     </div>
   );
@@ -414,7 +414,7 @@ function Lbl({ children }: { children: React.ReactNode }) {
 
 function HudInput({ label, type='text', value, onChange, min, max, step }: any) {
   return (
-    <div style={{ marginBottom:16 }}>
+    <div style={{ marginBottom:10 }}>
       <Lbl>{label}</Lbl>
       <input type={type} value={value} onChange={onChange} min={min} max={max} step={step}
         style={inputBase}
@@ -465,18 +465,18 @@ function SliderBar({ value, color, onChange }: { value: number; color: string; o
 
 function ColorPicker({ label, opts, value, onChange, lang }: any) {
   return (
-    <div style={{ marginBottom:20 }}>
+    <div style={{ marginBottom:10 }}>
       <Lbl>{label}</Lbl>
-      <div style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
+      <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
         {opts.map((o: any) => (
           <div key={o.v} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5, cursor:'pointer' }}
             onClick={() => onChange(o.v)}>
             <div style={{
-              width:38, height:38, background:o.c, clipPath:CLIP,
+              width:30, height:30, background:o.c, clipPath:CLIP,
               border: value===o.v ? '2px solid #4f9ef7' : '2px solid rgba(79,158,247,0.15)',
               boxShadow: value===o.v ? '0 0 10px #4f9ef780' : 'none', transition:'all 0.15s',
             }} />
-            <span style={{ fontSize:14, color: value===o.v ? '#4f9ef7' : '#e0e0f0',
+            <span style={{ fontSize:11, color: value===o.v ? '#4f9ef7' : '#e0e0f0',
               fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.04em', whiteSpace:'nowrap' }}>
               {lang==='tr' ? o.tr : o.en}
             </span>
@@ -701,7 +701,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
     /* Physical */
     if (meta.type === 'physical') return (
       <>
-        <div style={{ marginBottom:24 }}>
+        <div style={{ marginBottom:14 }}>
           <Lbl>{t('BOY', 'HEIGHT')}</Lbl>
           <div style={{ display:'flex', alignItems:'center', gap:16 }}>
             <NumInput value={toCm(fd.height)} unit="cm" min={145} max={200} color="#06b6d4"
@@ -747,9 +747,9 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
       return (
         <div>
           {/* 1 — big percentage */}
-          <div style={{ textAlign:'center', marginBottom:14 }}>
-            <div style={{ fontSize:52, color: trait.c, fontFamily:'Orbitron,monospace',
-              fontWeight:900, lineHeight:1, textShadow:`0 0 24px ${trait.c}70` }}>
+          <div style={{ textAlign:'center', marginBottom:8 }}>
+            <div style={{ fontSize:38, color: trait.c, fontFamily:'Orbitron,monospace',
+              fontWeight:900, lineHeight:1, textShadow:`0 0 18px ${trait.c}70` }}>
               {pct}
             </div>
           </div>
@@ -763,10 +763,10 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           </div>
 
           {/* 3 — simulation impact chips */}
-          <div style={{ display:'flex', gap:7, flexWrap:'wrap', marginTop:18 }}>
+          <div style={{ display:'flex', gap:5, flexWrap:'wrap', marginTop:10 }}>
             {tm.fx.map(fx => (
               <div key={fx[0]} style={{
-                padding:'3px 10px', fontSize:14, fontFamily:'Share Tech Mono,monospace',
+                padding:'2px 8px', fontSize:11, fontFamily:'Share Tech Mono,monospace',
                 color: trait.c, border:`1px solid ${trait.c}45`,
                 background:`${trait.c}12`, clipPath:CLIP, letterSpacing:'0.07em',
               }}>
@@ -776,20 +776,20 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           </div>
 
           {/* 4a — dynamic description */}
-          <div style={{ marginTop:14, fontSize:14, color:'#e0e0f0',
-            fontFamily:'Share Tech Mono,monospace', lineHeight:1.65, letterSpacing:'0.03em' }}>
+          <div style={{ marginTop:8, fontSize:12, color:'#e0e0f0',
+            fontFamily:'Share Tech Mono,monospace', lineHeight:1.5, letterSpacing:'0.03em' }}>
             {tm.d[tier][isTr ? 0 : 1]}
           </div>
 
           {/* 4b — historical reference card */}
-          <div style={{ marginTop:12, padding:'10px 14px',
+          <div style={{ marginTop:8, padding:'7px 10px',
             background:'rgba(8,8,26,0.85)', border:`1px solid ${trait.c}28`, clipPath:CLIP }}>
-            <div style={{ fontSize:14, color: trait.c, fontFamily:'Share Tech Mono,monospace',
-              letterSpacing:'0.12em', marginBottom:6 }}>
+            <div style={{ fontSize:11, color: trait.c, fontFamily:'Share Tech Mono,monospace',
+              letterSpacing:'0.10em', marginBottom:4 }}>
               ◈ {isTr ? tm.r[tier][0] : tm.r[tier][1]}
             </div>
-            <div style={{ fontSize:14, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
-              lineHeight:1.55, letterSpacing:'0.03em' }}>
+            <div style={{ fontSize:11, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
+              lineHeight:1.45, letterSpacing:'0.03em' }}>
               {isTr ? tm.r[tier][2] : tm.r[tier][3]}
             </div>
           </div>
@@ -833,7 +833,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
   /* ── render ──────────────────────────────────────────────────────────── */
   const subtitle = stepSubtitle();
   return (
-    <div style={{ width:'min(580px, 92vw)', height:'min(86vh, 860px)', margin:'0 auto', background:'rgba(4,4,15,0.97)',
+    <div style={{ width:'min(540px, 95vw)', height:'min(88vh, 640px)', margin:'0 auto', background:'rgba(4,4,15,0.97)',
       border:'1px solid rgba(79,110,247,0.4)', animation:'boot-in 0.3s ease-out both', display:'flex', flexDirection:'column', overflow:'hidden' }}>
 
       {/* Progress */}
@@ -843,23 +843,23 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
       </div>
 
       {/* Header */}
-      <div style={{ padding:'12px 20px', borderBottom:'1px solid rgba(79,110,247,0.2)',
+      <div style={{ padding:'8px 14px', borderBottom:'1px solid rgba(79,110,247,0.2)',
         display:'flex', alignItems:'center', justifyContent:'space-between' }}>
         <div>
           {founderLabel && (
-            <div style={{ fontSize:14, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace',
-              letterSpacing:'0.2em', marginBottom:3 }}>
+            <div style={{ fontSize:11, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace',
+              letterSpacing:'0.2em', marginBottom:2 }}>
               {founderLabel}
             </div>
           )}
           {subtitle && (
-            <div style={{ fontSize:14, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
-              letterSpacing:'0.15em', marginBottom:2 }}>
+            <div style={{ fontSize:11, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
+              letterSpacing:'0.15em', marginBottom:1 }}>
               {subtitle}
             </div>
           )}
           <div style={{
-            fontSize: traitColor ? 24 : 14,
+            fontSize: traitColor ? 18 : 13,
             color: traitColor ?? '#e0e0f0',
             fontFamily: traitColor ? 'Orbitron,monospace' : 'Share Tech Mono,monospace',
             letterSpacing:'0.15em', fontWeight:700,
@@ -874,7 +874,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
       </div>
 
       {/* Content */}
-      <div style={{ padding:'22px 24px', flex:1, overflowY:'auto' }}>
+      <div style={{ padding:'12px 16px', flex:1, overflowY:'auto' }}>
         {renderContent()}
       </div>
 
@@ -928,7 +928,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
       )}
 
       {/* Navigation */}
-      <div style={{ padding:'10px 12px 14px', borderTop:'1px solid rgba(79,110,247,0.15)',
+      <div style={{ padding:'6px 10px 8px', borderTop:'1px solid rgba(79,110,247,0.15)',
         display:'flex', gap:6 }}>
         <button onClick={onExit}
           style={{ ...btnExit, flex:1, textAlign:'center', padding:'9px 4px', minWidth:0 }}>
