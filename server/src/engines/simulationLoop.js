@@ -487,8 +487,8 @@ export class SimulationEngine {
     }
 
     // 19b. Social narrative events (communication, activity, sleep)
-    const socialEvents = this.processSocialNarrative(alive, day);
-    for (const ev of socialEvents) {
+    const narrativeEvents = this.processSocialNarrative(alive, day);
+    for (const ev of narrativeEvents) {
       this.logEvent(day, ev.type, ev.description, ev.data ?? {}, ev.importance ?? 1);
     }
 
