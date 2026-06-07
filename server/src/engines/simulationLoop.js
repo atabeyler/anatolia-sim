@@ -486,6 +486,12 @@ export class SimulationEngine {
       if (ev.importance !== 'low') this.logEvent(day, 'astronomy', ev.description, ev, ev.importance === 'high' ? 4 : 2);
     }
 
+    // 19b. Social narrative events (communication, activity, sleep)
+    const socialEvents = this.processSocialNarrative(alive, day);
+    for (const ev of socialEvents) {
+      this.logEvent(day, ev.type, ev.description, ev.data ?? {}, ev.importance ?? 1);
+    }
+
     // 20. Update human environmental impact
     this.worldState.human_impact = Math.min(1, alive.filter(i => !i.is_dead).length / 1000);
 
@@ -524,6 +530,97 @@ export class SimulationEngine {
       console.error(`[SimulationEngine] tick() error on day ${this.currentDay}:`, err);
       this.currentDay++;
     }
+  }
+
+  // Generate narrative social events: communication, inner activity, sleep
+  processSocialNarrative(alive, day) {
+    const events = [];
+    const pName = ind => ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
+
+    // --- Communication: individuals with language.stage >= 1 signal nearby group members ---
+    // ~3% of alive fire per tick to keep volume manageable
+    for (const ind of alive) {
+      if (Math.random() > 0.03) continue;
+      if ((ind.language?.stage ?? 0) < 1) continue;
+
+      const groupMembers = alive.filter(o =>
+        o.id !== ind.id &&
+        o.group_id === ind.group_id &&
+        Math.hypot((o.x ?? 0) - (ind.x ?? 0), (o.y ?? 0) - (ind.y ?? 0)) < 2
+      );
+      if (groupMembers.length === 0) continue;
+
+      const target = groupMembers[Math.floor(Math.random() * groupMembers.length)];
+      const vocab = ind.language?.vocabulary ?? {};
+      const concepts = Object.keys(vocab);
+
+      // Pick concept based on need
+      let concept = concepts[Math.floor(Math.random() * concepts.length)] ?? 'food';
+      const satiation = ind.satiation ?? 0.5;
+      const hydration = ind.hydration ?? 0.5;
+      const stress = ind.psychology?.stress_level ?? 0;
+      if (satiation < 0.3 && vocab['food']) concept = 'food';
+      else if (hydration < 0.3 && vocab['water']) concept = 'water';
+      else if (stress > 0.7 && vocab['danger']) concept = 'danger';
+
+      const word = vocab[concept] ?? null;
+      const method = (ind.language?.stage ?? 0) >= 2 ? 'ses' : 'jest';
+      const name = pName(ind);
+      const targetName = pName(target);
+
+      const desc = word
+        ? `${name}, ${targetName}'a "${word}" ${method}ini yaptı (anlam: ${concept})`
+        : `${name}, ${targetName}'a ${method}le iletişim kurdu`;
+
+      events.push({ type: 'communication', description: desc, importance: 1,
+        data: { sender_id: ind.id, receiver_id: target.id, concept, word } });
+    }
+
+    // --- Inner activity: periodic narrative (~2% of alive per tick) ---
+    for (const ind of alive) {
+      if (Math.random() > 0.02) continue;
+
+      const name = pName(ind);
+      const ageYears = Math.floor((ind.age ?? 0) / 365);
+      const mentalState = ind.psychology?.mental_state ?? 'calm';
+      const satiation = ind.satiation ?? 0.5;
+      const hydration = ind.hydration ?? 0.5;
+      const pregnant = ind.health?.pregnancy;
+
+      let activity;
+      if (satiation < 0.25)  activity = 'yiyecek arıyor';
+      else if (hydration < 0.25) activity = 'su kaynağı arıyor';
+      else if (pregnant)     activity = 'doğuma hazırlanıyor';
+      else if (mentalState === 'grieving') activity = 'yas tutuyor';
+      else if (mentalState === 'excited')  activity = 'dinç ve aktif';
+      else if ((ind.mating_urge ?? 0) > 0.8) activity = 'eş arıyor';
+      else {
+        const dir = (ind._dx ?? 0) > 0.001 ? 'doğuya' : (ind._dx ?? 0) < -0.001 ? 'batıya' : 'çevresinde';
+        activity = `${dir} doğru ilerliyor`;
+      }
+
+      events.push({ type: 'activity', importance: 1,
+        description: `${name} (${ageYears} yaş, ${mentalState}): ${activity}`,
+        data: { individual_id: ind.id } });
+    }
+
+    // --- Sleep: log when individual goes to rest (energy exhaustion) ---
+    for (const ind of alive) {
+      const satiation = ind.satiation ?? 0.5;
+      const wellbeing = ind.psychology?.wellbeing ?? 0.5;
+      const tiredNow = satiation < 0.1 || (wellbeing < 0.15 && satiation < 0.25);
+      if (tiredNow && !ind._was_sleeping) {
+        ind._was_sleeping = true;
+        const name = pName(ind);
+        events.push({ type: 'sleep', importance: 1,
+          description: `${name} tükendi ve uyudu (enerji: %${Math.round(satiation * 100)})`,
+          data: { individual_id: ind.id, satiation, wellbeing } });
+      } else if (!tiredNow) {
+        ind._was_sleeping = false;
+      }
+    }
+
+    return events;
   }
 
   moveIndividual(ind) {
@@ -919,7 +1016,7 @@ export class SimulationEngine {
       weather: this.worldState.current_weather ?? 'clear',
       weather_intensity: Math.round((this.worldState.weather_intensity ?? 0.5) * 100) / 100,
       births: this.totalBirths,
-      deaths: this.totalDeaths,
+      deaths: [...this.population.values()].filter(i => i.is_dead).length,
       word_count: new Set(alive.flatMap(i => Object.keys(i.language?.vocabulary ?? {}))).size,
       max_language_stage: Math.max(0, ...alive.map(i => i.language?.stage ?? 0)),
       avg_consciousness: Math.round(alive.reduce((s, i) => s + (i.mind?.consciousness ?? 0), 0) / Math.max(1, alive.length) * 1000) / 1000,
@@ -937,7 +1034,7 @@ export class SimulationEngine {
       happiness_index: Math.round(psychStats.happiness_index * 100) / 100,
       sick_rate: Math.round(healthStats.sick_rate * 100) / 100,
       epigenetics: (() => {
-        const loci = ['HPA_AXIS', 'BDNF_PROMOTER', 'MAOA_REGULATION', 'LEPTIN_RESIST', 'OXTR_METHYL', 'IMMUNE_PRIMING'];
+        const loci = ['HPA_AXIS', 'BDNF_PROMOTER', 'MAOA_REGULATION', 'LEPTIN_RESIST', 'INSULIN_SENS', 'AVP_REGULATION', 'OXTR_METHYL', 'IMMUNE_PRIMING'];
         const result = {};
         for (const id of loci) {
           const vals = alive.map(i => i.epigenome?.[id]?.methylation ?? 0.5);

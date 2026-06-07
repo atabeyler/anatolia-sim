@@ -537,6 +537,9 @@ export default function PopulationPanel() {
                   {isFounder && (
                     <span className="font-share-tech px-1 py-0" style={{ fontSize: 12, color: '#d4a838', border: '1px solid rgba(212,168,56,0.4)' }}>KURUCU</span>
                   )}
+                  {!isMale && ind.health?.pregnancy && (
+                    <span title={lang === 'tr' ? 'Hamile' : 'Pregnant'} style={{ fontSize: 13, lineHeight: 1 }}>◆</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-1 mt-0.5">
                   <span className="font-share-tech" style={{ fontSize: 12, color: stage.color }}>{stage.label}</span>

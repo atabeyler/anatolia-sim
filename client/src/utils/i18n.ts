@@ -374,7 +374,18 @@ export function translateEventDescription(desc: string, lang: LangCode, event?: 
     .replace(/^Architecture event: (.+)$/, (_: string, v: string) => `Mimari olay: ${v.replace(/_/g, ' ')}`)
     .replace(/^Law event: (.+)$/,          (_: string, v: string) => `Hukuk olayı: ${v.replace(/_/g, ' ')}`)
     .replace(/^Microbiome event: (.+)$/,   (_: string, v: string) => `Mikrobiyom olayı: ${v.replace(/_/g, ' ')}`)
-    .replace(/^Epigenetics event: (.+)$/,  (_: string, v: string) => `Epigenetik olay: ${v.replace(/_/g, ' ')}`);
+    .replace(/^Epigenetics event: (.+)$/,  (_: string, v: string) => `Epigenetik olay: ${v.replace(/_/g, ' ')}`)
+    // Cultural diffusion (already has TR description from server)
+    // Communication events
+    .replace(/^(.+) jest ile (.+)'a iletişim kurdu$/, (_: string, a: string, b: string) => `${a}, ${b}'a jest yaptı`)
+    // Norm events
+    .replace(/^Norm emerged: (.+)$/, (_: string, v: string) => `Norm oluştu: ${v.replace(/_/g, ' ')}`)
+    .replace(/^Norm violated: (.+)$/, (_: string, v: string) => `Norm ihlal edildi: ${v.replace(/_/g, ' ')}`)
+    // Thought / activity
+    .replace(/^(.+) is (searching for food|looking for water|resting)$/, (_: string, name: string, action: string) => {
+      const map: Record<string, string> = { 'searching for food': 'yiyecek arıyor', 'looking for water': 'su arıyor', 'resting': 'dinleniyor' };
+      return `${name} ${map[action] ?? action}`;
+    });
 }
 
 export function translateEventType(type: string, lang: LangCode): string {
@@ -399,6 +410,14 @@ export function translateEventType(type: string, lang: LangCode): string {
     trade:        { tr: 'ticaret',    en: 'trade' },
     celestial:    { tr: 'göksel',     en: 'celestial' },
     social:       { tr: 'sosyal',     en: 'social' },
+    norm:         { tr: 'norm',       en: 'norm' },
+    weather:      { tr: 'hava',       en: 'weather' },
+    communication:{ tr: 'iletişim',   en: 'communication' },
+    thought:      { tr: 'düşünce',    en: 'thought' },
+    sleep:        { tr: 'uyku',       en: 'sleep' },
+    activity:     { tr: 'etkinlik',   en: 'activity' },
+    mating:       { tr: 'çiftleşme',  en: 'mating' },
+    conflict:     { tr: 'çatışma',    en: 'conflict' },
   };
 
   for (const [needle, values] of Object.entries(labels)) {
