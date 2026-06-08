@@ -15,14 +15,10 @@ function makeSpriteTexture(): THREE.CanvasTexture {
   canvas.height = size;
   const ctx = canvas.getContext('2d')!;
   const half = size / 2;
-  // soft glow halo
-  const glow = ctx.createRadialGradient(half, half, 0, half, half, half);
-  glow.addColorStop(0,   'rgba(255,255,255,1)');
-  glow.addColorStop(0.4, 'rgba(255,255,255,0.9)');
-  glow.addColorStop(0.7, 'rgba(255,255,255,0.4)');
-  glow.addColorStop(1,   'rgba(255,255,255,0)');
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, size, size);
+  ctx.beginPath();
+  ctx.arc(half, half, half * 0.55, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,1)';
+  ctx.fill();
   return new THREE.CanvasTexture(canvas);
 }
 
@@ -357,13 +353,13 @@ function PopulationDots({
   return (
     <>
       <points geometry={founderGeo} onClick={handleClick}>
-        <pointsMaterial map={spriteTex} size={0.16} color="#ffe566" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.3} />
+        <pointsMaterial map={spriteTex} size={0.12} color="#ffd700" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.5} />
       </points>
       <points geometry={maleGeo} onClick={handleClick}>
-        <pointsMaterial map={spriteTex} size={0.10} color="#a0ccff" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.3} />
+        <pointsMaterial map={spriteTex} size={0.07} color="#70aaff" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.5} />
       </points>
       <points geometry={femaleGeo} onClick={handleClick}>
-        <pointsMaterial map={spriteTex} size={0.10} color="#ffb8d8" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.3} />
+        <pointsMaterial map={spriteTex} size={0.07} color="#ff9abf" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.5} />
       </points>
     </>
   );
