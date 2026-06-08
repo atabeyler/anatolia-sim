@@ -59,18 +59,21 @@ export function computeDiscoveryProbability(individual, techId, discoveredTechs,
 function checkEnvTrigger(trigger, ws) {
   if (!trigger || trigger === 'any') return true;
   const checks = {
-    fauna_present: () => ws.fauna?.prey_density > 0.2,
-    water_nearby: () => ws.water_abundance > 0.3,
-    cold: () => ws.temperature < 10,
-    cold_or_rain: () => ws.temperature < 15 || ws.season === 'spring',
-    seasonal_plants: () => ws.food_abundance > 0.4 && ws.season !== 'winter',
+    fauna_present:    () => ws.fauna?.prey_density > 0.2,
+    water_nearby:     () => ws.water_abundance > 0.3,
+    cold:             () => ws.temperature < 10,
+    cold_or_rain:     () => ws.temperature < 15 || ws.season === 'spring',
+    seasonal_plants:  () => ws.food_abundance > 0.4 && ws.season !== 'winter',
     herdable_animals: () => ws.fauna?.prey_density > 0.4,
-    clay_nearby: () => ['coastal','temperate_forest','grassland'].includes(ws.biome),
-    plant_fibers: () => ws.flora?.density > 0.4,
-    copper_ore: () => ['mountain','mediterranean'].includes(ws.biome),
-    iron_ore: () => ws.biome !== 'desert',
-    river_nearby: () => ws.water_abundance > 0.5,
+    clay_nearby:      () => ['coastal','temperate_forest','grassland'].includes(ws.biome),
+    plant_fibers:     () => ws.flora?.density > 0.4,
+    copper_ore:       () => ['mountain','mediterranean'].includes(ws.biome),
+    iron_ore:         () => ws.biome !== 'desert',
+    river_nearby:     () => ws.water_abundance > 0.5,
     coastal_or_river: () => ws.water_abundance > 0.4,
+    water_need:       () => (ws.water_abundance ?? 0.5) < 0.4,
+    trade_need:       () => (ws.alive_count ?? 0) >= 15,
+    stone_available:  () => !['desert','tundra','tropical_rainforest'].includes(ws.biome),
   };
   return checks[trigger]?.() ?? true;
 }

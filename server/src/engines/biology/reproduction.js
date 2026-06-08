@@ -3,7 +3,7 @@ import { generateName } from '../language/nameEngine.js';
 
 const PREGNANCY_MIN = 266;
 const PREGNANCY_MAX = 280;
-const MATING_RADIUS  = 5; // degrees (~500 km) — same as social interaction radius
+const MATING_RADIUS  = 2; // degrees (~220 km) — matches SOCIAL_INTERACTION_RADIUS
 
 export function checkReproduction(population, currentDay, simulationId, communityLangStage = 0, phonology = null) {
   const newborns = [];
@@ -59,7 +59,12 @@ function conceptionProbability(female, male, currentDay) {
   else if (age < 20)  ageFactor = 0.7;
   else if (age > 40)  ageFactor = 0.2;
   else if (age > 35)  ageFactor = 0.6;
-  const mhcBonus = Math.abs((female.genome?.IMMUNE_01?.allele1?.value ?? 0.5) - (male.genome?.IMMUNE_01?.allele1?.value ?? 0.5)) * 0.2;
+  // MHC diversity: average across both alleles of both immune loci
+  const fI1 = ((female.genome?.IMMUNE_01?.allele1?.value ?? 0.5) + (female.genome?.IMMUNE_01?.allele2?.value ?? 0.5)) / 2;
+  const fI2 = ((female.genome?.IMMUNE_02?.allele1?.value ?? 0.5) + (female.genome?.IMMUNE_02?.allele2?.value ?? 0.5)) / 2;
+  const mI1 = ((male.genome?.IMMUNE_01?.allele1?.value ?? 0.5) + (male.genome?.IMMUNE_01?.allele2?.value ?? 0.5)) / 2;
+  const mI2 = ((male.genome?.IMMUNE_02?.allele1?.value ?? 0.5) + (male.genome?.IMMUNE_02?.allele2?.value ?? 0.5)) / 2;
+  const mhcBonus = ((Math.abs(fI1 - mI1) + Math.abs(fI2 - mI2)) / 2) * 0.2;
   const inbreedPenalty = Math.max(female.inbreeding_coeff ?? 0, male.inbreeding_coeff ?? 0);
   const p = ((female.phenotype?.fertility ?? 0.5) * ageFactor + mhcBonus - inbreedPenalty * 0.5) * 0.07;
   return Math.max(0, Math.min(0.30, p));

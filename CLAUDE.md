@@ -21,10 +21,10 @@ This rule must never be violated. Before adding any logic that sets a property o
 
 | File | Purpose |
 |---|---|
-| `engines/biology/genome.js` | 42-locus Mendelian inheritance, stress-scaled mutation |
+| `engines/biology/genome.js` | 32-locus Mendelian inheritance, stress-scaled mutation |
 | `engines/biology/individual.js` | createFounder(), createChild() |
-| `engines/language/languageEngine.js` | FOXP2 expression, 7-stage emergence |
-| `engines/consciousness` | Embedded in simulationLoop step 5b |
+| `engines/language/languageEngine.js` | FOXP2 expression, 7-stage emergence (stages 0–6) |
+| `engines/consciousness/consciousnessEngine.js` | updateConsciousness() — sole entry point for consciousness changes |
 | `engines/belief/beliefEngine.js` | Proto-beliefs → archetypes |
 | `engines/technology/technologyEngine.js` | Cumulative techProgress Map |
 | `engines/culture/cultureEngine.js` | Consciousness-scaled meme spread |
@@ -45,8 +45,17 @@ This rule must never be violated. Before adding any logic that sets a property o
 
 ## Consciousness Formula
 
+Implemented exclusively in `engines/consciousness/consciousnessEngine.js`.
+Cardinal rule: **no other code may directly set `ind.mind.consciousness`.**
+
 ```
-Δ = consciousness_potential × 0.0001 + (lang_stage/6) × 0.00005 + social_bonus(0.00002) − stress_penalty
+baseRate      = max(potential × 0.001, 0.00015)
+langBonus     = (lang_stage / 6) × 0.0005
+socialBonus   = 0.0002  (if ind is in a group, else 0)
+tomBonus      = (theory_of_mind / 3) × 0.0003
+stressPenalty = stress_level × 0.0003
+
+Δ = baseRate + langBonus + socialBonus + tomBonus − stressPenalty
 ceiling = min(1, consciousness_potential × 1.2)
 ```
 
@@ -61,6 +70,15 @@ ceiling = min(1, consciousness_potential × 1.2)
 ```
 QoL = consciousness×0.3 + (lang_stage/6)×0.2 + health_score×0.3 + wellbeing×0.2
 ```
+
+## Epigenetic Updates — Cardinal Rule Clarification
+
+`updateEpigenome()` modifies methylation levels on non-founder individuals in response to
+stress, nutrition, and isolation. This is **permitted** under the cardinal rule because:
+methylation responses are pre-programmed by the genome (the gene encodes the sensitivity
+to environmental signals). The environment triggers a genetically-encoded mechanism —
+it does not inject external behavior. Code touching epigenome outside of
+`epigeneticsEngine.js` still requires review.
 
 ## God Mode Restriction
 

@@ -21,8 +21,10 @@ import { initializeEpigenome, inheritEpigenome, updateEpigenome } from './epigen
 import { processAstronomyTick, getAstronomyBonus } from './astronomy/astronomyEngine.js';
 import { isOnLand } from '../utils/landMask.js';
 import { computeSocialOrder } from './law/lawEngine.js';
+import { updateConsciousness } from './consciousness/consciousnessEngine.js';
 
-const SOCIAL_INTERACTION_RADIUS = 5;  // degrees (~500 km) — was 50 (causes O(n²) explosion)
+// 2 degrees ≈ 220 km — more realistic for prehistoric band territory; was 5 (~500 km)
+const SOCIAL_INTERACTION_RADIUS = 2;
 const CHECKPOINT_INTERVAL = 365;
 
 export class SimulationEngine {
@@ -90,9 +92,6 @@ export class SimulationEngine {
     this.running = true;
     let ticksSinceBroadcast = 0;
     while (this.running) {
-      const alive = [...this.population.values()].filter(i => !i.is_dead);
-      if (alive.length === 0) { this.running = false; break; }
-
       // Throttle broadcast frequency at high speeds to keep all panels in sync
       const spd = this.speedMultiplier;
       const broadcastEvery = spd <= 20 ? 1 : spd <= 50 ? 2 : spd <= 100 ? 5 : 10;
@@ -126,6 +125,7 @@ export class SimulationEngine {
       ind.age = day - (ind.birth_day ?? 0);
     }
     const alive = [...this.population.values()].filter(i => !i.is_dead);
+    if (alive.length === 0) { this.running = false; return; }
     await new Promise(resolve => setImmediate(resolve));
     const tickEvents = [];
 
@@ -308,19 +308,9 @@ export class SimulationEngine {
       updateMentalState(ind, tickEvents, this.worldState, day);
     }
 
-    // 5b. Consciousness update — emerges from genetics × language × social context × theory of mind
+    // 5b. Consciousness update — see engines/consciousness/consciousnessEngine.js
     for (const ind of alive) {
-      if (!ind.mind) continue;
-      const potential = ind.phenotype?.consciousness_potential ?? 0;
-      const baseRate = Math.max(potential * 0.001, 0.00015);
-      const langBonus = (ind.language?.stage ?? 0) / 6 * 0.0005;
-      const socialBonus = ind.group_id ? 0.0002 : 0;
-      const stressPenalty = (ind.psychology?.stress_level ?? 0.3) * 0.0003;
-      const tomBonus = (ind.psychology?.theory_of_mind ?? 0) / 3 * 0.0003;
-      const geneticCap = Math.min(1, potential * 1.2);
-      ind.mind.consciousness = Math.min(geneticCap, Math.max(0,
-        (ind.mind.consciousness ?? 0) + baseRate + langBonus + socialBonus + tomBonus - stressPenalty
-      ));
+      updateConsciousness(ind);
     }
 
     // 6. Social groups
@@ -636,7 +626,7 @@ export class SimulationEngine {
       // Pick concept based on need
       let concept = concepts[Math.floor(Math.random() * concepts.length)] ?? 'food';
       const satiation = ind.satiation ?? 0.5;
-      const hydration = ind.hydration ?? 0.5;
+      const hydration = ind.health?.hydration ?? 0.5;
       const stress = ind.psychology?.stress_level ?? 0;
       if (satiation < 0.3 && vocab['food']) concept = 'food';
       else if (hydration < 0.3 && vocab['water']) concept = 'water';
@@ -671,7 +661,7 @@ export class SimulationEngine {
       const ageYears = Math.floor((ind.age ?? 0) / 365);
       const mentalState = ind.psychology?.mental_state ?? 'calm';
       const satiation = ind.satiation ?? 0.5;
-      const hydration = ind.hydration ?? 0.5;
+      const hydration = ind.health?.hydration ?? 0.5;
       const pregnant = ind.health?.pregnancy;
 
       let activity;

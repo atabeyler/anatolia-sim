@@ -28,7 +28,10 @@ export function computeDailyDeathRisk(individual, currentDay, environment) {
   else if (age < 75) baseRisk = 0.00023;
   else               baseRisk = 0.00061;
 
-  // Small-group care: when population is tiny, each individual receives much more attention
+  // Extinction guard: tiny bands receive high individual attention (infant care, food sharing).
+  // Biologically, isolated individuals face greater predator/starvation risk — but without
+  // this floor the simulation nearly always goes extinct in the first 50 days, making the
+  // hypothesis untestable. Min multiplier 0.30 at population=1, linearly rising to 1.0 at 15.
   const aliveCount = environment?.alive_count ?? 100;
   if (aliveCount < 15) baseRisk *= Math.max(0.3, aliveCount / 15);
 
