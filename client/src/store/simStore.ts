@@ -1,5 +1,26 @@
 import { create } from 'zustand';
 
+interface WorldState {
+  latitude: number;
+  longitude: number;
+  biome: string;
+  temperature: number;
+  food_abundance: number;
+  water_abundance: number;
+  season: 'spring' | 'summer' | 'autumn' | 'winter';
+  human_impact?: number;
+  predator_risk?: number;
+  current_weather?: string;
+  weather_intensity?: number;
+  soil_health?: number;
+  phonology_seed?: number;
+  fauna?: { prey_density?: number; predator_density?: number };
+  flora?: { density?: number };
+  alive_count?: number;
+  recent_disaster?: boolean;
+  [key: string]: unknown;
+}
+
 interface SimStats {
   day: number;
   year: number;
@@ -58,11 +79,7 @@ interface Simulation {
   start_latitude: number;
   start_longitude: number;
   speed_multiplier?: number;
-  world_state?: {
-    phonology_seed?: number;
-    biome?: string;
-    [key: string]: any;
-  };
+  world_state?: WorldState;
 }
 
 interface SimStore {
