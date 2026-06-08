@@ -368,6 +368,10 @@ export class SimulationEngine {
     // Pass live count so mortality engine can apply small-group protection
     this.worldState.alive_count = alive.length;
     for (const ind of alive) {
+      // Guard: skip anyone already killed earlier this tick (microbiome, conflict, disaster).
+      // Without this, rollDeath runs on a stale alive[] and can double-count deaths
+      // or overwrite a specific cause (e.g. 'disease_wound_infection') with a generic one.
+      if (ind.is_dead) continue;
       const cause = rollDeath(ind, day, this.worldState);
       if (cause) {
         ind.is_dead = true;

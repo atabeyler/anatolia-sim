@@ -44,7 +44,8 @@ export function computeDailyDeathRisk(individual, currentDay, environment) {
   if ((health?.hp ?? 1) < 0.2)                baseRisk *= 3;
   if ((health?.calories ?? 1) < 0.1)          baseRisk *= 5;
   if ((health?.hydration ?? 1) < 0.1)         baseRisk *= 10;
-  if (health?.disease)                         baseRisk += health.disease.daily_mortality_risk ?? 0;
+  // NOTE: active infections are in ind.infections[] (microbiomeEngine), NOT health.disease.
+  // Microbiome engine handles its own per-tick mortality — do not double-add here.
   baseRisk *= (1 - (phenotype?.immune_strength ?? 0.5) * 0.3);
   if (environment) {
     baseRisk += (environment.predator_risk  ?? 0) * 0.0002;
@@ -66,7 +67,7 @@ function determineCause(individual, currentDay, environment) {
   if (individual._inWater)                                          return DEATH_CAUSES.DROWNING;
   if ((health?.hydration ?? 1) < 0.1)                              return DEATH_CAUSES.DEHYDRATION;
   if ((health?.calories  ?? 1) < 0.05)                             return DEATH_CAUSES.STARVATION;
-  if (health?.disease)                                              return DEATH_CAUSES.INFECTION;
+  if (individual.infections?.length > 0)                            return DEATH_CAUSES.INFECTION;
   if (age >= (individual.phenotype?.max_lifespan ?? 90) - 5)       return DEATH_CAUSES.OLD_AGE;
   if ((environment?.predator_risk ?? 0) > 0.5 && Math.random() < 0.3) return DEATH_CAUSES.PREDATOR;
   // Cause reflects the actual risk profile, not random label lottery
