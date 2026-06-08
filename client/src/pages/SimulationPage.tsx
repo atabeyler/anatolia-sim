@@ -254,7 +254,8 @@ export default function SimulationPage() {
   }, [simId, accessToken]);
 
   async function toggleSim() {
-    if (!currentSim || !accessToken) return;
+    if (!currentSim) { alert('Simülasyon yüklenmedi, sayfayı yenileyin.'); return; }
+    if (!accessToken) { alert('Oturum süresi dolmuş, çıkış yapıp tekrar giriş yapın.'); return; }
     if (actionBusy) return;
     setActionBusy(true);
     const action = currentSim.status === 'running' ? 'pause' : 'start';
@@ -262,8 +263,9 @@ export default function SimulationPage() {
     try {
       setCurrentSim({ ...currentSim, status: action === 'start' ? 'running' : 'paused' });
       await axios.post(`/api/simulations/${currentSim.id}/${action}`, {}, { headers: { Authorization: `Bearer ${accessToken}` } });
-    } catch {
+    } catch (err: any) {
       setCurrentSim(previous);
+      alert(`Hata: ${err?.response?.data?.error ?? err?.message ?? 'Bilinmeyen hata'}`);
     } finally {
       setActionBusy(false);
     }
