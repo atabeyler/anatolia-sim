@@ -443,6 +443,9 @@ router.post('/:id/restore/:checkpointId', authenticate, requireSimulationOwner, 
 router.post('/:id/terminate', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     simulationManager.pause(req.params.id);
+    // Yield so any in-progress tick can finish before we delete
+    await new Promise(resolve => setImmediate(resolve));
+    simulationManager.removeEngine(req.params.id);
     await query('DELETE FROM simulation_events WHERE simulation_id = $1', [req.params.id]);
     await query('DELETE FROM checkpoints WHERE simulation_id = $1', [req.params.id]);
     await query('DELETE FROM individuals WHERE simulation_id = $1', [req.params.id]);

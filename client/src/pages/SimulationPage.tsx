@@ -167,6 +167,7 @@ export default function SimulationPage() {
   const [menuPage, setMenuPage] = useState<'language' | 'guide' | 'about' | 'mission' | 'contact' | null>(null);
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
   const [actionBusy, setActionBusy] = useState(false);
+  const [speedBusy, setSpeedBusy] = useState(false);
 
   // Responsive breakpoint
   useEffect(() => {
@@ -270,12 +271,16 @@ export default function SimulationPage() {
 
   async function changeSpeed(s: number) {
     if (!Number.isInteger(s) || s < 1 || s > 1000 || !currentSim || !accessToken) return;
+    if (speedBusy) return;
+    setSpeedBusy(true);
     const previous = speedMultiplier;
     setSpeed(s);
     try {
       await axios.post(`/api/simulations/${simId}/speed`, { speed_multiplier: s }, { headers: { Authorization: `Bearer ${accessToken}` } });
     } catch {
       setSpeed(previous);
+    } finally {
+      setSpeedBusy(false);
     }
   }
 
@@ -375,16 +380,18 @@ export default function SimulationPage() {
 
           <button
             onClick={toggleSim}
+            disabled={actionBusy}
             style={{
               display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
               padding: isMobile ? '5px 12px' : '5px 16px',
               fontSize: 14,
               fontFamily: 'Orbitron, monospace', fontWeight: 700, letterSpacing: '0.1em',
-              background: isRunning ? 'rgba(212,56,56,0.18)' : 'rgba(0,232,135,0.18)',
-              border: `1px solid ${isRunning ? '#c03030' : '#00e887'}`,
-              color: isRunning ? '#e05a5a' : '#00e887',
+              background: actionBusy ? 'rgba(120,120,120,0.18)' : isRunning ? 'rgba(212,56,56,0.18)' : 'rgba(0,232,135,0.18)',
+              border: `1px solid ${actionBusy ? '#555' : isRunning ? '#c03030' : '#00e887'}`,
+              color: actionBusy ? '#666' : isRunning ? '#e05a5a' : '#00e887',
               boxShadow: isRunning ? '0 0 10px rgba(200,50,50,0.3)' : '0 0 10px rgba(0,232,135,0.25)',
-              cursor: 'pointer',
+              cursor: actionBusy ? 'not-allowed' : 'pointer',
+              opacity: actionBusy ? 0.6 : 1,
             }}>
             {isRunning ? <Pause size={11} /> : <Play size={11} />}
             {isRunning ? (lang === 'tr' ? 'DURDUR' : 'PAUSE') : (lang === 'tr' ? 'BAŞLAT' : 'START')}
@@ -439,13 +446,15 @@ export default function SimulationPage() {
             {!isMobile && <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em', flexShrink: 0 }}>{uiText.speed}</span>}
             {SPEEDS.map(s => (
               <button key={s} onClick={() => changeSpeed(s)}
+                disabled={speedBusy}
                 style={{
                   padding: isMobile ? '2px 5px' : '2px 6px', fontSize: 14,
-                  fontFamily: 'Orbitron, monospace', cursor: 'pointer',
+                  fontFamily: 'Orbitron, monospace', cursor: speedBusy ? 'not-allowed' : 'pointer',
                   background: speedMultiplier === s ? 'rgba(0,232,135,0.2)' : 'transparent',
                   border: `1px solid ${speedMultiplier === s ? '#00e887' : 'rgba(160,200,176,0.3)'}`,
                   color: speedMultiplier === s ? '#00e887' : '#8abda0',
                   flexShrink: 0,
+                  opacity: speedBusy ? 0.5 : 1,
                 }}>
                 {s}×
               </button>

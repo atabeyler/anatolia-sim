@@ -82,6 +82,7 @@ class SimulationManager {
 
   pause(simId) { this.engines.get(simId)?.pause(); }
   getEngine(simId) { return this.engines.get(simId); }
+  removeEngine(simId) { this.engines.get(simId)?.pause(); this.engines.delete(simId); this.wsClients.delete(simId); }
   setSpeed(simId, speed) { const engine = this.engines.get(simId); if (engine) engine.speedMultiplier = speed; }
 
   async persistState(simId, engine = this.engines.get(simId)) {
