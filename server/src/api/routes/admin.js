@@ -252,4 +252,52 @@ router.post('/seed-admin', async (req, res) => {
   }
 });
 
+// Emergency disk cleanup — deletes old events/checkpoints/dead individuals to free space
+// curl -X POST /api/admin/cleanup -H "x-seed-token: $ADMIN_SEED_TOKEN"
+router.post('/cleanup', async (req, res) => {
+  const seedToken = process.env.ADMIN_SEED_TOKEN;
+  if (!seedToken || req.headers['x-seed-token'] !== seedToken) {
+    return res.status(403).json({ error: 'Geçersiz token.' });
+  }
+  try {
+    const results = {};
+
+    // Keep only last 500 events per simulation
+    const evRes = await query(`
+      DELETE FROM simulation_events
+      WHERE id IN (
+        SELECT id FROM (
+          SELECT id, ROW_NUMBER() OVER (PARTITION BY simulation_id ORDER BY sim_day DESC) AS rn
+          FROM simulation_events
+        ) t WHERE rn > 500
+      )
+    `);
+    results.events_deleted = evRes.rowCount;
+
+    // Delete all checkpoints (they're big JSON blobs)
+    const cpRes = await query('DELETE FROM checkpoints');
+    results.checkpoints_deleted = cpRes.rowCount;
+
+    // Delete dead individuals older than 1000 days from the newest living individual per sim
+    const indRes = await query(`
+      DELETE FROM individuals
+      WHERE alive = false
+      AND id IN (
+        SELECT i.id FROM individuals i
+        JOIN simulations s ON s.id = i.simulation_id
+        WHERE i.alive = false AND i.death_day < (s.current_day - 1000)
+      )
+    `);
+    results.dead_individuals_deleted = indRes.rowCount;
+
+    // VACUUM to actually reclaim disk space
+    await query('VACUUM');
+
+    res.json({ success: true, ...results });
+  } catch (err) {
+    console.error('cleanup error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
