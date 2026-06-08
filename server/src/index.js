@@ -106,6 +106,9 @@ wss.on('connection', async (ws, req) => {
     const { rows } = await query('SELECT id FROM simulations WHERE id = $1 AND user_id = $2', [simId, user.id]);
     if (!rows[0]) return ws.close(1008, 'Simulation not found');
     simulationManager.registerWs(simId, ws);
+    // Tell the client the actual engine state so it can auto-recover after a server restart.
+    const eng = simulationManager.getEngine(simId);
+    try { ws.send(JSON.stringify({ type: 'status', engine_running: eng?.running === true })); } catch {}
   } catch {
     ws.close(1008, 'Invalid token');
   }

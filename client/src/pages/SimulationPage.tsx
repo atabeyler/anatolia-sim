@@ -156,7 +156,7 @@ export default function SimulationPage() {
   const navigate = useNavigate();
   const { user, accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, speedMultiplier, setSpeed, resetLiveState, setEvents } = useSimStore();
   const [individuals, setIndividuals] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'harita' | 'durum'>('harita');
   const [realTime, setRealTime] = useState('');
   const [sidebarExpanded, setSidebarExpanded] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 640);
@@ -238,10 +238,10 @@ export default function SimulationPage() {
     resetLiveState();
     setIndividuals([]);
     const headers = { Authorization: `Bearer ${accessToken}` };
-    axios.get(`/api/simulations/${simId}`, { headers }).then(r => {
-      setCurrentSim(r.data);
-      setSpeed(r.data.speed_multiplier ?? 1);
-    });
+    axios.get(`/api/simulations/${simId}`, { headers })
+      .then(r => { setCurrentSim(r.data); setSpeed(r.data.speed_multiplier ?? 1); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
     // Load recent historical events from DB so the event log isn't empty
     axios.get(`/api/simulations/${simId}/events?limit=100`, { headers })
       .then(r => setEvents(r.data)) // DB returns newest-first; store keeps same order
@@ -382,21 +382,21 @@ export default function SimulationPage() {
 
           <button
             onClick={toggleSim}
-            disabled={actionBusy}
+            disabled={loading || actionBusy}
             style={{
               display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0,
               padding: isMobile ? '5px 12px' : '5px 16px',
               fontSize: 14,
               fontFamily: 'Orbitron, monospace', fontWeight: 700, letterSpacing: '0.1em',
-              background: actionBusy ? 'rgba(120,120,120,0.18)' : isRunning ? 'rgba(212,56,56,0.18)' : 'rgba(0,232,135,0.18)',
-              border: `1px solid ${actionBusy ? '#555' : isRunning ? '#c03030' : '#00e887'}`,
-              color: actionBusy ? '#666' : isRunning ? '#e05a5a' : '#00e887',
+              background: (loading || actionBusy) ? 'rgba(120,120,120,0.18)' : isRunning ? 'rgba(212,56,56,0.18)' : 'rgba(0,232,135,0.18)',
+              border: `1px solid ${(loading || actionBusy) ? '#555' : isRunning ? '#c03030' : '#00e887'}`,
+              color: (loading || actionBusy) ? '#666' : isRunning ? '#e05a5a' : '#00e887',
               boxShadow: isRunning ? '0 0 10px rgba(200,50,50,0.3)' : '0 0 10px rgba(0,232,135,0.25)',
-              cursor: actionBusy ? 'not-allowed' : 'pointer',
-              opacity: actionBusy ? 0.6 : 1,
+              cursor: (loading || actionBusy) ? 'not-allowed' : 'pointer',
+              opacity: (loading || actionBusy) ? 0.6 : 1,
             }}>
-            {isRunning ? <Pause size={11} /> : <Play size={11} />}
-            {isRunning ? (lang === 'tr' ? 'DURDUR' : 'PAUSE') : (lang === 'tr' ? 'BAŞLAT' : 'START')}
+            {loading ? null : isRunning ? <Pause size={11} /> : <Play size={11} />}
+            {loading ? (lang === 'tr' ? '...' : '...') : isRunning ? (lang === 'tr' ? 'DURDUR' : 'PAUSE') : (lang === 'tr' ? 'BAŞLAT' : 'START')}
           </button>
 
           {isRunning && (
