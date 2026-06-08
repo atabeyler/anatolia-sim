@@ -6,7 +6,7 @@ import { computeInbreedingCoefficient } from './biology/genome.js';
 import { updateWorldState, computeResourcePressure } from './environment/environmentEngine.js';
 import { buildPhonology } from './language/nameEngine.js';
 import { updateLanguageStage, learnFromTeacher, updateFoxp2Expression, tryAcquireWordFromEnvironment, generateProtoWord, CORE_CONCEPTS } from './language/languageEngine.js';
-import { tryDiscoverTech, TECH_TREE } from './technology/technologyEngine.js';
+import { tryDiscoverTech, TECH_TREE, learnTechFromObservation } from './technology/technologyEngine.js';
 import { getAge, LIFE_STAGE } from './biology/individual.js';
 import { processGroupDynamics, assignGroupRoles } from './social/socialEngine.js';
 import { gatherResources, consumeResources, produceGoods, attemptTrade, computeEconomicStats, initializeInventory } from './economy/economyEngine.js';
@@ -474,6 +474,15 @@ export class SimulationEngine {
         tickEvents.push({ ...tech, type: 'discovery', individual_id: tech.discoverer_id });
         this.logEvent(day, 'technology', `Technology discovered: ${tech.tech_id}`, tech, 4);
       }
+    }
+
+    // 13b. Technology observational learning — nearby individuals learn from each other
+    for (const ind of alive) {
+      if ((ind.phenotype?.fluid_intelligence ?? 0) < 0.2) continue;
+      const nearby = alive.filter(o => o.id !== ind.id &&
+        Math.hypot((o.x ?? 0) - (ind.x ?? 0), (o.y ?? 0) - (ind.y ?? 0)) < SOCIAL_INTERACTION_RADIUS
+      );
+      learnTechFromObservation(ind, nearby, this.discoveredTechs);
     }
 
     // 14. Belief formation & spread
