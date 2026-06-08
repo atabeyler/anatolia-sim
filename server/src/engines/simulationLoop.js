@@ -114,6 +114,7 @@ export class SimulationEngine {
   resume() { this.start(); }
 
   async tick() {
+    if (!this.running) return;
     try {
     this._todayBirths = 0;
     this._todayDeaths = 0;
@@ -123,6 +124,7 @@ export class SimulationEngine {
       ind.age = day - (ind.birth_day ?? 0);
     }
     const alive = [...this.population.values()].filter(i => !i.is_dead);
+    await new Promise(resolve => setImmediate(resolve));
     const tickEvents = [];
 
     // 0. Set age & life_stage on every individual (required by all engines)
@@ -370,6 +372,8 @@ export class SimulationEngine {
     }
 
     // 10. Death checks
+    if (!this.running) return;
+    await new Promise(resolve => setImmediate(resolve));
     // Pass live count so mortality engine can apply small-group protection
     this.worldState.alive_count = alive.length;
     for (const ind of alive) {
@@ -496,6 +500,8 @@ export class SimulationEngine {
     }
 
     // 15. Culture
+    if (!this.running) return;
+    await new Promise(resolve => setImmediate(resolve));
     const cultureEvents = processCultureTick(alive, this.groups, this.discoveredTechs, day);
     for (const ev of cultureEvents) {
       if (ev.importance !== 'low') this.logEvent(day, 'culture', ev.description ?? ev.meme_id, ev, 2);
