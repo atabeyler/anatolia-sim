@@ -36,8 +36,9 @@ export default function AnalysisPanel() {
     try {
       const { data } = await axios.post(`/api/analysis/${currentSim.id}`, { message: msg }, { headers: { Authorization: `Bearer ${accessToken}` } });
       setMessages(m => [...m, { role: 'assistant', content: data.response }]);
-    } catch {
-      setMessages(m => [...m, { role: 'assistant', content: lang === 'en' ? 'Analysis failed. Is the simulation running?' : 'Analiz başarısız.' }]);
+    } catch (err: any) {
+      const detail = err?.response?.data?.error ?? err?.message ?? '';
+      setMessages(m => [...m, { role: 'assistant', content: `Analiz başarısız: ${detail}` }]);
     }
     setLoading(false);
   }

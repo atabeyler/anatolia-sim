@@ -1,5 +1,5 @@
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
-const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
+const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite';
 
 function extractText(data) {
   const parts = data?.candidates?.[0]?.content?.parts;
