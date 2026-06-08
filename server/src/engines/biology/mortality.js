@@ -47,6 +47,11 @@ export function computeDailyDeathRisk(individual, currentDay, environment) {
   // NOTE: active infections are in ind.infections[] (microbiomeEngine), NOT health.disease.
   // Microbiome engine handles its own per-tick mortality — do not double-add here.
   baseRisk *= (1 - (phenotype?.immune_strength ?? 0.5) * 0.3);
+  // Drowning risk — reduced by accumulated water experience (observational learning)
+  if (individual._inWater) {
+    const waterSkill = Math.min(0.9, (individual._waterExperience ?? 0) * 0.9);
+    baseRisk += 0.05 * (1 - waterSkill);
+  }
   if (environment) {
     baseRisk += (environment.predator_risk  ?? 0) * 0.0002;
     baseRisk += (environment.disease_pressure ?? 0) * 0.0003;

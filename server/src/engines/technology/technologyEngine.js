@@ -40,6 +40,8 @@ export function tryDiscoverTech(individual, discoveredTechs, worldState, simDay,
     if (next >= 1.0) {
       discoveries.push({ tech_id: techId, discoverer_id: individual.id, discovery_day: simDay, x: individual.x, y: individual.y });
       discoveredTechs.add(techId);
+      if (!individual.known_techs) individual.known_techs = new Set();
+      individual.known_techs.add(techId);
       if (techProgress) techProgress.delete(techId);
     }
   }
@@ -76,4 +78,23 @@ function checkEnvTrigger(trigger, ws) {
     stone_available:  () => !['desert','tundra','tropical_rainforest'].includes(ws.biome),
   };
   return checks[trigger]?.() ?? true;
+}
+
+// Observational technology learning: an individual learns a tech by observing
+// a nearby peer who personally knows it (cardinal rule: only via observation).
+export function learnTechFromObservation(individual, nearby, discoveredTechs) {
+  if (!nearby || nearby.length === 0) return;
+  if (!individual.known_techs) individual.known_techs = new Set();
+  for (const other of nearby) {
+    if (!other.known_techs || other.id === individual.id) continue;
+    for (const techId of other.known_techs) {
+      if (individual.known_techs.has(techId)) continue;
+      const tech = TECH_TREE[techId];
+      if (!tech) continue;
+      if ((individual.phenotype?.fluid_intelligence ?? 0) < tech.iq_min) continue;
+      // Observational rate: curiosity × IQ, difficulty-scaled; slower than discovery
+      const rate = ((individual.phenotype?.curiosity ?? 0.5) * (individual.phenotype?.fluid_intelligence ?? 0.5)) / (tech.difficulty * 2000);
+      if (Math.random() < rate) individual.known_techs.add(techId);
+    }
+  }
 }

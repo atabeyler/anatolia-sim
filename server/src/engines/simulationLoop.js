@@ -738,16 +738,12 @@ export class SimulationEngine {
     ind._moveAngle = ((ind._moveAngle + (Math.random() - 0.5) * 0.25) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
 
     if (ind.is_founder) {
-      // ── Kurucular: sabit yuva çıpası ──────────────────────────────────────
-      speed *= 0.08;
-      const homeX = ind.home_x ?? (this.worldState.longitude ?? 0);
-      const homeY = ind.home_y ?? (this.worldState.latitude  ?? 0);
-      const hdx   = homeX - (ind.x ?? 0);
-      const hdy   = homeY - (ind.y ?? 0);
-      if (Math.hypot(hdx, hdy) > 0.005) {
-        ind._moveAngle = this._lerpAngle(ind._moveAngle, Math.atan2(hdy, hdx), 0.97);
-      }
-    } else {
+      // Kurucular sabit — home koordinatına kilitleniyor, drift yok
+      ind.x = ind.home_x ?? ind.x;
+      ind.y = ind.home_y ?? ind.y;
+      return;
+    }
+    {
       // ── Bant uyumu: centroide çekim ──────────────────────────────────────
       const cx      = this._bandCentroid?.x ?? (this.worldState.longitude ?? 0);
       const cy      = this._bandCentroid?.y ?? (this.worldState.latitude  ?? 0);

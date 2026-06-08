@@ -179,7 +179,9 @@ export function updateWorldState(worldState, simulationDay) {
 
   const biome = BIOMES[worldState.biome];
   const [tMin, tMax] = biome.temp_range;
-  worldState.temperature = (tMin + tMax) / 2 + (tMax - tMin) / 2 * Math.sin((dayOfYear - 80) / 365 * 2 * Math.PI);
+  const tMid = (tMin + tMax) / 2;
+  const tAmp = Math.min(15, (tMax - tMin) / 3);
+  worldState.temperature = Math.round(tMid + tAmp * Math.sin((dayOfYear - 80) / 365 * 2 * Math.PI));
 
   const foodBase = biome.food_base;
   const seasonMultiplier = { summer: 1.3, winter: 0.4, spring: 0.9, autumn: 1.1 }[worldState.season] ?? 1;
