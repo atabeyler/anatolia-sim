@@ -88,7 +88,6 @@ export class SimulationEngine {
   async start() {
     if (this.running) return;
     this.running = true;
-    let fastBatch = 0;
     let ticksSinceBroadcast = 0;
     while (this.running) {
       const alive = [...this.population.values()].filter(i => !i.is_dead);
@@ -101,16 +100,12 @@ export class SimulationEngine {
       ticksSinceBroadcast++;
 
       await this.tick();
+
+      // Always yield to the event loop so pause/speed changes take effect immediately
       if (spd < 100) {
-        fastBatch = 0;
         await sleep(1000 / spd);
       } else {
-        // At max speed: yield to event loop every 10 ticks so WebSocket/DB can breathe
-        fastBatch++;
-        if (fastBatch >= 10) {
-          fastBatch = 0;
-          await new Promise(resolve => setImmediate(resolve));
-        }
+        await new Promise(resolve => setImmediate(resolve));
       }
     }
   }
