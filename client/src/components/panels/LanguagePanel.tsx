@@ -264,9 +264,9 @@ export default function LanguagePanel() {
     const t = String(e.event_type ?? '');
     return t === 'language' || t === 'word' || t === 'communication' || t.includes('language');
   });
-  const worldState = currentSim?.world_state ?? {};
-  const phonologySeed = Number(worldState.phonology_seed ?? 0);
-  const biome = String(worldState.biome ?? 'mediterranean');
+  const worldState = currentSim?.world_state;
+  const phonologySeed = Number(worldState?.phonology_seed ?? 0);
+  const biome = String(worldState?.biome ?? 'mediterranean');
   const phonology = buildPhonology(phonologySeed, biome);
   const surfaceForms = buildSurfaceForms(phonology, currentStage);
   const nextStage = currentStage < LANGUAGE_STAGES.length - 1 ? LANGUAGE_STAGES[currentStage + 1] : null;
