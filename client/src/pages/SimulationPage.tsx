@@ -237,7 +237,10 @@ export default function SimulationPage() {
     resetLiveState();
     setIndividuals([]);
     const headers = { Authorization: `Bearer ${accessToken}` };
-    axios.get(`/api/simulations/${simId}`, { headers }).then(r => setCurrentSim(r.data));
+    axios.get(`/api/simulations/${simId}`, { headers }).then(r => {
+      setCurrentSim(r.data);
+      setSpeed(r.data.speed_multiplier ?? 1);
+    });
     // Load recent historical events from DB so the event log isn't empty
     axios.get(`/api/simulations/${simId}/events?limit=100`, { headers })
       .then(r => setEvents(r.data)) // DB returns newest-first; store keeps same order

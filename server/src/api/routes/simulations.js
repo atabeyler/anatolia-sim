@@ -201,12 +201,14 @@ router.post('/:id/start', authenticate, requireSimulationOwner, async (req, res)
 });
 
 router.post('/:id/pause', authenticate, requireSimulationOwner, async (req, res) => {
-  simulationManager.pause(req.params.id);
-  const engine = simulationManager.getEngine(req.params.id);
-  await simulationManager.persistState(req.params.id, engine);
-  if (engine) await simulationManager.persistPopulation(req.params.id, engine);
-  await query("UPDATE simulations SET status = 'paused' WHERE id = $1", [req.params.id]);
-  res.json({ message: 'Simulation paused' });
+  try {
+    simulationManager.pause(req.params.id);
+    const engine = simulationManager.getEngine(req.params.id);
+    await simulationManager.persistState(req.params.id, engine);
+    if (engine) await simulationManager.persistPopulation(req.params.id, engine);
+    await query("UPDATE simulations SET status = 'paused' WHERE id = $1", [req.params.id]);
+    res.json({ message: 'Simulation paused' });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to pause simulation' }); }
 });
 
 router.post('/:id/complete', authenticate, requireSimulationOwner, async (req, res) => {
