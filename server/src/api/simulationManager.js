@@ -51,11 +51,13 @@ class SimulationManager {
       this._checkpointLocks.set(simulation.id, true);
       try {
         await withRetry(() => query(
-          `INSERT INTO checkpoints (simulation_id, sim_day, sim_year, population_count, population_snapshot, world_state, cultural_state, tech_state, stats)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+          `INSERT INTO checkpoints (simulation_id, sim_day, sim_year, population_count, population_snapshot, world_state, cultural_state, tech_state, stats, belief_state, art_state, groups)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
           [simulation.id, cp.sim_day, cp.sim_year, cp.population_count,
            JSON.stringify(cp.population_snapshot), JSON.stringify(cp.world_state),
-           JSON.stringify(cp.cultural_state), JSON.stringify(cp.tech_state), JSON.stringify(cp.stats)]
+           JSON.stringify(cp.cultural_state), JSON.stringify(cp.tech_state), JSON.stringify(cp.stats),
+           JSON.stringify(cp.belief_state ?? []), JSON.stringify(cp.art_state ?? []),
+           JSON.stringify(cp.groups ?? [])]
         ));
         await withRetry(() => this.persistState(simulation.id, engine));
         await withRetry(() => this.persistPopulation(simulation.id, engine));
@@ -105,7 +107,7 @@ class SimulationManager {
       let p = 1;
 
       for (const ind of chunk) {
-        placeholders.push(`($${p},$${p+1},$${p+2},$${p+3},$${p+4},$${p+5},$${p+6},$${p+7},$${p+8},$${p+9},$${p+10},$${p+11},$${p+12},$${p+13},$${p+14},$${p+15},$${p+16},$${p+17},$${p+18},$${p+19},$${p+20})`);
+        placeholders.push(`($${p},$${p+1},$${p+2},$${p+3},$${p+4},$${p+5},$${p+6},$${p+7},$${p+8},$${p+9},$${p+10},$${p+11},$${p+12},$${p+13},$${p+14},$${p+15},$${p+16},$${p+17},$${p+18},$${p+19},$${p+20},$${p+21},$${p+22},$${p+23},$${p+24},$${p+25},$${p+26},$${p+27},$${p+28})`);
         params.push(
           ind.id, simId, ind.birth_day, ind.death_day, !ind.is_dead, ind.sex,
           ind.x, ind.y,
@@ -113,7 +115,7 @@ class SimulationManager {
           JSON.stringify(ind.phenotype),
           JSON.stringify(ind.epigenome ?? {}),
           JSON.stringify(ind.health),
-          JSON.stringify(ind.mind),
+          JSON.stringify(ind.mind ?? {}),
           JSON.stringify(ind.social),
           JSON.stringify(ind.skills ?? []),
           JSON.stringify(ind.beliefs instanceof Set ? [...ind.beliefs] : (Array.isArray(ind.beliefs) ? ind.beliefs : [])),
@@ -121,23 +123,34 @@ class SimulationManager {
           JSON.stringify(ind.memory ?? {}),
           ind.parent_1_id ?? null,
           ind.parent_2_id ?? null,
-          ind.death_cause ?? null
+          ind.death_cause ?? null,
+          ind.is_founder ?? false,
+          ind.is_dead ?? false,
+          ind.home_x ?? null,
+          ind.home_y ?? null,
+          ind.group_id ?? null,
+          ind.inbreeding_coeff ?? 0,
+          JSON.stringify(ind.psychology ?? {}),
+          JSON.stringify(ind.inventory ?? {})
         );
-        p += 21;
+        p += 29;
       }
 
       await query(
         `INSERT INTO individuals
-           (id,simulation_id,birth_day,death_day,alive,sex,x,y,genome,phenotype,epigenome,health,mind,social,skills,beliefs,language,memory,parent_1_id,parent_2_id,death_cause)
+           (id,simulation_id,birth_day,death_day,alive,sex,x,y,genome,phenotype,epigenome,health,mind,social,skills,beliefs,language,memory,parent_1_id,parent_2_id,death_cause,is_founder,is_dead,home_x,home_y,group_id,inbreeding_coeff,psychology,inventory)
          VALUES ${placeholders.join(',')}
          ON CONFLICT (id) DO UPDATE SET
-           death_day=EXCLUDED.death_day, alive=EXCLUDED.alive,
+           death_day=EXCLUDED.death_day, alive=EXCLUDED.alive, is_dead=EXCLUDED.is_dead,
            x=EXCLUDED.x, y=EXCLUDED.y,
            phenotype=EXCLUDED.phenotype, epigenome=EXCLUDED.epigenome,
            health=EXCLUDED.health, mind=EXCLUDED.mind, social=EXCLUDED.social,
            skills=EXCLUDED.skills, beliefs=EXCLUDED.beliefs,
            language=EXCLUDED.language, memory=EXCLUDED.memory,
-           death_cause=EXCLUDED.death_cause`,
+           death_cause=EXCLUDED.death_cause,
+           is_founder=EXCLUDED.is_founder, home_x=EXCLUDED.home_x, home_y=EXCLUDED.home_y,
+           group_id=EXCLUDED.group_id, inbreeding_coeff=EXCLUDED.inbreeding_coeff,
+           psychology=EXCLUDED.psychology, inventory=EXCLUDED.inventory`,
         params
       );
     }
@@ -159,38 +172,35 @@ class SimulationManager {
 
 function parseIndividual(row) {
   const isDead = row.is_dead ?? row.alive === false;
-  // Founders always have birth_day < 0 (born before simulation day 0).
-  // is_founder / home_x / home_y are never DB columns, so reconstruct here.
-  const isFounder = (row.birth_day ?? 0) < 0;
+  // is_founder=false may be the ALTER TABLE default for pre-migration rows; check birth_day too
+  const isFounder = row.is_founder === true || (row.birth_day ?? 0) < 0;
   const social = row.social ?? {};
   const mind = row.mind ?? {};
-  // Volatile fields saved by Time Machine restore are stashed in mind._volatile
   const volatile = mind._volatile ?? {};
   const parsed = {
     ...row,
     is_dead: isDead,
     alive: !isDead,
     is_founder: isFounder,
-    home_x: isFounder ? (row.x ?? 0) : undefined,
-    home_y: isFounder ? (row.y ?? 0) : undefined,
-    // group_id is set directly on the individual by processGroupDynamics;
-    // it is also mirrored into social.group_id so it survives persistence.
-    group_id: social.group_id ?? undefined,
+    home_x: row.home_x ?? (isFounder ? (row.x ?? 0) : undefined),
+    home_y: row.home_y ?? (isFounder ? (row.y ?? 0) : undefined),
+    group_id: row.group_id ?? social.group_id ?? undefined,
     epigenome: row.epigenome ?? {},
     skills: row.skills ?? [],
     beliefs: Array.isArray(row.beliefs) ? row.beliefs : [],
     memory: row.memory ?? { social: [], events: [], knowledge: [] },
+    inbreeding_coeff: row.inbreeding_coeff ?? 0,
   };
-  // Restore volatile in-memory fields if present from a Time Machine restore
   if (volatile.satiation !== undefined) parsed.satiation = volatile.satiation;
   if (volatile.mating_urge !== undefined) parsed.mating_urge = volatile.mating_urge;
-  if (volatile.inbreeding_coeff !== undefined) parsed.inbreeding_coeff = volatile.inbreeding_coeff;
   if (volatile.age !== undefined) parsed.age = volatile.age;
   if (volatile._waterFear !== undefined) parsed._waterFear = volatile._waterFear;
   if (volatile._fears !== undefined) parsed._fears = volatile._fears;
   if (volatile._waterExperience !== undefined) parsed._waterExperience = volatile._waterExperience;
-  if (volatile.inventory) parsed.inventory = volatile.inventory;
-  if (volatile.psychology) parsed.psychology = volatile.psychology;
+  if (row.psychology && Object.keys(row.psychology).length > 0) parsed.psychology = row.psychology;
+  else if (volatile.psychology) parsed.psychology = volatile.psychology;
+  if (row.inventory && Object.keys(row.inventory).length > 0) parsed.inventory = row.inventory;
+  else if (volatile.inventory) parsed.inventory = volatile.inventory;
   return parsed;
 }
 

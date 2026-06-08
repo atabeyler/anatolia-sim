@@ -312,15 +312,14 @@ export class SimulationEngine {
     for (const ind of alive) {
       if (!ind.mind) continue;
       const potential = ind.phenotype?.consciousness_potential ?? 0;
-      const langBonus = (ind.language?.stage ?? 0) / 6 * 0.00005;
-      const socialBonus = ind.group_id ? 0.00002 : 0;
-      const stressPenalty = (ind.psychology?.stress_level ?? 0.3) * 0.00003;
-      // Theory of Mind (0–3) accelerates consciousness accumulation as self-model deepens
-      const tomBonus = (ind.psychology?.theory_of_mind ?? 0) / 3 * 0.00003;
-      // Genetic ceiling: consciousness cannot exceed potential × 1.2 (20% headroom for cultural effects)
+      const baseRate = Math.max(potential * 0.001, 0.00015);
+      const langBonus = (ind.language?.stage ?? 0) / 6 * 0.0005;
+      const socialBonus = ind.group_id ? 0.0002 : 0;
+      const stressPenalty = (ind.psychology?.stress_level ?? 0.3) * 0.0003;
+      const tomBonus = (ind.psychology?.theory_of_mind ?? 0) / 3 * 0.0003;
       const geneticCap = Math.min(1, potential * 1.2);
       ind.mind.consciousness = Math.min(geneticCap, Math.max(0,
-        (ind.mind.consciousness ?? 0) + potential * 0.0001 + langBonus + socialBonus + tomBonus - stressPenalty
+        (ind.mind.consciousness ?? 0) + baseRate + langBonus + socialBonus + tomBonus - stressPenalty
       ));
     }
 
@@ -742,7 +741,7 @@ export class SimulationEngine {
     if (survivalStress > 0.15) speed *= (1 + survivalStress * 0.9);
 
     if (ind._moveAngle === undefined) ind._moveAngle = Math.random() * Math.PI * 2;
-    ind._moveAngle += (Math.random() - 0.5) * 0.25;
+    ind._moveAngle = ((ind._moveAngle + (Math.random() - 0.5) * 0.25) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
 
     if (ind.is_founder) {
       // ── Kurucular: sabit yuva çıpası ──────────────────────────────────────

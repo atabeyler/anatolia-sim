@@ -205,6 +205,21 @@ CREATE TABLE IF NOT EXISTS publications (
 ALTER TABLE individuals ADD COLUMN IF NOT EXISTS name VARCHAR(100);
 ALTER TABLE individuals ADD COLUMN IF NOT EXISTS death_cause VARCHAR(50);
 
+-- Founder state, group membership, and volatile fields persist across DB reload
+ALTER TABLE individuals ADD COLUMN IF NOT EXISTS is_founder BOOLEAN DEFAULT false;
+ALTER TABLE individuals ADD COLUMN IF NOT EXISTS is_dead BOOLEAN DEFAULT false;
+ALTER TABLE individuals ADD COLUMN IF NOT EXISTS home_x DOUBLE PRECISION;
+ALTER TABLE individuals ADD COLUMN IF NOT EXISTS home_y DOUBLE PRECISION;
+ALTER TABLE individuals ADD COLUMN IF NOT EXISTS group_id VARCHAR(100);
+ALTER TABLE individuals ADD COLUMN IF NOT EXISTS inbreeding_coeff DOUBLE PRECISION DEFAULT 0;
+ALTER TABLE individuals ADD COLUMN IF NOT EXISTS psychology JSONB DEFAULT '{}';
+ALTER TABLE individuals ADD COLUMN IF NOT EXISTS inventory JSONB DEFAULT '{}';
+
+-- Checkpoint extended state columns
+ALTER TABLE checkpoints ADD COLUMN IF NOT EXISTS belief_state JSONB DEFAULT '[]';
+ALTER TABLE checkpoints ADD COLUMN IF NOT EXISTS art_state JSONB DEFAULT '[]';
+ALTER TABLE checkpoints ADD COLUMN IF NOT EXISTS groups JSONB DEFAULT '[]';
+
 CREATE INDEX IF NOT EXISTS idx_individuals_simulation ON individuals(simulation_id);
 CREATE INDEX IF NOT EXISTS idx_individuals_alive ON individuals(simulation_id, alive);
 CREATE INDEX IF NOT EXISTS idx_checkpoints_simulation ON checkpoints(simulation_id, sim_day);
