@@ -101,10 +101,12 @@ export class SimulationEngine {
 
       await this.tick();
 
-      // Always yield to the event loop so pause/speed changes take effect immediately
+      // Always yield to the event loop so pause/speed changes take effect immediately.
       if (spd < 100) {
         await sleep(1000 / spd);
       } else {
+        // At max speed we still yield every tick so HTTP actions (speed/pause/terminate)
+        // can be processed promptly instead of waiting behind a long burst.
         await new Promise(resolve => setImmediate(resolve));
       }
     }

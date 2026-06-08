@@ -299,12 +299,17 @@ export default function TopBar() {
         : `Permanently terminate simulation "${currentSim.name}"?`
     );
     if (!confirmed) return;
+    const previous = currentSim;
+    setCurrentSim({ ...currentSim, status: 'completed' });
     try {
       await axios.post(`/api/simulations/${currentSim.id}/terminate`, {}, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      setCurrentSim({ ...currentSim, status: 'completed' });
-    } catch {}
+    } catch (err: any) {
+      setCurrentSim(previous);
+      setSimError(err.response?.data?.error ?? 'Simülasyon sonlandırılamadı');
+      setTimeout(() => setSimError(''), 3000);
+    }
   }
 
   useEffect(() => {
@@ -318,13 +323,15 @@ export default function TopBar() {
     if (simLoading) return;
     setSimLoading(true);
     setSimError('');
+    const previous = currentSim;
     try {
       const action = currentSim.status === 'running' ? 'pause' : 'start';
+      setCurrentSim({ ...currentSim, status: action === 'start' ? 'running' : 'paused' });
       await axios.post(`/api/simulations/${currentSim.id}/${action}`, {}, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      setCurrentSim({ ...currentSim, status: action === 'start' ? 'running' : 'paused' });
     } catch (err: any) {
+      setCurrentSim(previous);
       setSimError(err.response?.data?.error ?? 'Hata');
       setTimeout(() => setSimError(''), 3000);
     } finally {

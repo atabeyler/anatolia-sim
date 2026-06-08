@@ -254,9 +254,12 @@ export default function SimulationPage() {
     if (actionBusy) return;
     setActionBusy(true);
     const action = currentSim.status === 'running' ? 'pause' : 'start';
+    const previous = currentSim;
     try {
-      await axios.post(`/api/simulations/${currentSim.id}/${action}`, {}, { headers: { Authorization: `Bearer ${accessToken}` } });
       setCurrentSim({ ...currentSim, status: action === 'start' ? 'running' : 'paused' });
+      await axios.post(`/api/simulations/${currentSim.id}/${action}`, {}, { headers: { Authorization: `Bearer ${accessToken}` } });
+    } catch {
+      setCurrentSim(previous);
     } finally {
       setActionBusy(false);
     }
@@ -281,9 +284,14 @@ export default function SimulationPage() {
   async function terminateSim() {
     if (!currentSim || !accessToken) return;
     if (!confirm(lang === 'tr' ? 'Simülasyonu sonlandır?' : 'Terminate simulation?')) return;
-    await axios.post(`/api/simulations/${currentSim.id}/terminate`, {}, { headers: { Authorization: `Bearer ${accessToken}` } });
+    const previous = currentSim;
     setCurrentSim({ ...currentSim, status: 'completed' });
-    navigate('/');
+    try {
+      await axios.post(`/api/simulations/${currentSim.id}/terminate`, {}, { headers: { Authorization: `Bearer ${accessToken}` } });
+      navigate('/');
+    } catch {
+      setCurrentSim(previous);
+    }
   }
 
   const isRunning = currentSim?.status === 'running';
