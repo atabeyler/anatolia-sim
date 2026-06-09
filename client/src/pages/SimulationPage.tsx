@@ -634,7 +634,7 @@ export default function SimulationPage() {
                     textOverflow: 'ellipsis',
                     boxSizing: 'border-box',
                   }}>
-                  <span style={{ fontSize: 14, flexShrink: 0, lineHeight: 1 }}>{mod.icon}</span>
+                  <span style={{ fontSize: 16, flexShrink: 0, lineHeight: 1 }}>{mod.icon}</span>
                   {sidebarExpanded && (
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {lang === 'tr' ? mod.label : mod.labelEn}
@@ -649,7 +649,7 @@ export default function SimulationPage() {
           {/* Collapsed population indicator */}
           {!sidebarExpanded && (
             <div style={{ padding: '6px 0', borderTop: '1px solid #4a1a1a', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-              <Users size={10} color="#00e887" />
+              <Users size={12} color="#00e887" />
               <span style={{ fontSize: 14, color: '#00e887', fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
                 {stats?.population !== undefined ? (stats.population > 999 ? `${Math.floor(stats.population / 1000)}k` : stats.population) : '—'}
               </span>
