@@ -26,7 +26,7 @@ function SettingsOverlay({
   onClose: () => void;
   onSpeedChange: (speed: number) => void;
 }) {
-  const { lang, toggleLang, speedMultiplier } = useSimStore();
+  const { lang, setLang, speedMultiplier } = useSimStore();
   const [customSpeed, setCustomSpeed] = useState('');
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -52,8 +52,8 @@ function SettingsOverlay({
         <div>
           <div className="font-share-tech text-sim-muted tracking-widest mb-1.5" style={{ fontSize: 8 }}>DİL / LANGUAGE</div>
           <div className="flex gap-1">
-            {(['en', 'tr'] as const).map(l => (
-              <button key={l} onClick={() => lang !== l && toggleLang()}
+            {(['tr', 'en', 'de', 'fr', 'ar'] as const).map(l => (
+              <button key={l} onClick={() => lang !== l && setLang(l)}
                 className="flex-1 font-share-tech tracking-widest transition-all"
                 style={{
                   padding: '4px 0', fontSize: 10,
@@ -255,7 +255,7 @@ function MenuOverlay({ onClose, onTerminate }: { onClose: () => void; onTerminat
 }
 
 export default function TopBar() {
-  const { currentSim, stats, lang, toggleLang, speedMultiplier, setSpeed, accessToken, setCurrentSim } = useSimStore();
+  const { currentSim, stats, lang, setLang, speedMultiplier, setSpeed, accessToken, setCurrentSim } = useSimStore();
   const [simLoading, setSimLoading] = useState(false);
   const [simError, setSimError] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -477,10 +477,10 @@ export default function TopBar() {
 
       {/* Actions */}
       <div className="flex items-center gap-0.5 flex-shrink-0 ml-1 relative">
-        {/* TR / EN — her ikisi görünür */}
+        {/* Language shortcuts */}
         <div className="flex items-center flex-shrink-0" style={{ border: '1px solid rgba(79,110,247,0.3)', overflow: 'hidden' }}>
-          {(['en', 'tr'] as const).map((l, i) => (
-            <button key={l} onClick={() => lang !== l && toggleLang()}
+          {(['tr', 'en', 'de', 'fr', 'ar'] as const).map((l, i) => (
+            <button key={l} onClick={() => lang !== l && setLang(l)}
               className="font-share-tech tracking-widest transition-all duration-150"
               style={{
                 padding: '4px 8px', fontSize: 14,

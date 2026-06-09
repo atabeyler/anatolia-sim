@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+const LANG_ORDER: Array<'tr' | 'en' | 'de' | 'fr' | 'ar'> = ['tr', 'en', 'de', 'fr', 'ar'];
+
 interface WorldState {
   latitude: number;
   longitude: number;
@@ -161,7 +163,11 @@ export const useSimStore = create<SimStore>((set) => ({
   setActivePanel: (panel) => set(s => ({ activePanel: s.activePanel === panel ? null : panel })),
   lang: 'tr',
   setLang: (l) => set({ lang: l }),
-  toggleLang: () => set(s => ({ lang: s.lang === 'tr' ? 'en' : 'tr' })),
+  toggleLang: () => set(s => {
+    const currentIndex = LANG_ORDER.indexOf(s.lang);
+    const nextLang = LANG_ORDER[(currentIndex + 1) % LANG_ORDER.length] ?? 'en';
+    return { lang: nextLang };
+  }),
   theme: 'dark',
   toggleTheme: () => set(s => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
   speedMultiplier: 1,
