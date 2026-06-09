@@ -6,7 +6,7 @@ services:
     plan: free
     autoDeployTrigger: commit
     buildCommand: cd client && npm install --include=dev && npm run build && cd ../server && npm install --include=dev
-    startCommand: cd server && node src/cleanup.js; npm start
+    startCommand: cd server && npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV

@@ -117,24 +117,27 @@ wss.on('connection', async (ws, req) => {
 
 async function main() {
   const delays = [2000, 4000, 8000, 16000];
+  let migrated = false;
   for (let attempt = 0; attempt <= delays.length; attempt++) {
     try {
       await migrate();
-      server.listen(PORT, () => {
-        console.log(`✅ ANATOLİA-SİM Server running on port ${PORT}`);
-        console.log(`✅ WebSocket server ready`);
-      });
-      return;
+      migrated = true;
+      break;
     } catch (err) {
       if (attempt < delays.length) {
         console.error(`DB connect failed (attempt ${attempt + 1}), retrying in ${delays[attempt] / 1000}s:`, err.message);
         await new Promise(r => setTimeout(r, delays[attempt]));
       } else {
-        console.error('Failed to start server after all retries:', err);
-        process.exit(1);
+        console.error('Failed to migrate database after all retries. Starting server in degraded mode:', err.message);
       }
     }
   }
+
+  server.listen(PORT, () => {
+    console.log(`✅ ANATOLİA-SİM Server running on port ${PORT}`);
+    console.log(`✅ WebSocket server ready`);
+    console.log(migrated ? '✅ Database migrated successfully' : '⚠️ Database unavailable; running in degraded mode');
+  });
 }
 
 main();
