@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, type CSSProperties } from 'react';
 import FooterBar from '../components/layout/FooterBar';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -32,6 +32,7 @@ import StatsPanel from '../components/panels/StatsPanel';
 import PopulationPyramidPanel from '../components/panels/PopulationPyramidPanel';
 import ReportPanel from '../components/panels/ReportPanel';
 import EventsPanel from '../components/panels/EventsPanel';
+import ButtonLibrary from '../components/layout/ButtonLibrary';
 import { translateEventDescription, translateSeason, type LangCode } from '../utils/i18n';
 
 const SPEEDS = [1, 5, 20, 100];
@@ -787,7 +788,7 @@ export default function SimulationPage() {
 
                 {/* Button showcase */}
                 {showButtonShowcase && (
-                  <ButtonShowcase lang={lang} onClose={() => setShowButtonShowcase(false)} />
+                  <ButtonLibrary lang={lang} onClose={() => setShowButtonShowcase(false)} />
                 )}
                 {!showButtonShowcase && (
                   <button

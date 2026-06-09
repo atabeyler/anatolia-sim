@@ -119,6 +119,84 @@ html { height: 100%; }
 @keyframes radar-sweep     { from { transform: rotate(0deg); }   to { transform: rotate(360deg); } }
 @keyframes spin-slow       { from { transform: rotate(0deg); }   to { transform: rotate(360deg); } }
 
+@keyframes button-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes button-breathe {
+  0%, 100% { box-shadow: 0 0 0 rgba(0,0,0,0); }
+  50% { box-shadow: 0 0 20px rgba(79,110,247,0.24); }
+}
+
+@keyframes button-shimmer {
+  0% { transform: translateX(-65%) rotate(16deg); opacity: 0; }
+  20% { opacity: 0.45; }
+  50% { opacity: 0.2; }
+  100% { transform: translateX(65%) rotate(16deg); opacity: 0; }
+}
+
+@keyframes button-wave {
+  0% { transform: scale(0.92); opacity: 0.25; }
+  50% { transform: scale(1.02); opacity: 0.55; }
+  100% { transform: scale(0.92); opacity: 0.25; }
+}
+
+@keyframes button-flicker {
+  0%, 19%, 21%, 23%, 80%, 100% { opacity: 1; }
+  20%, 22%, 60% { opacity: 0.84; }
+  61% { opacity: 0.68; }
+}
+
+.button-model {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 160ms ease, filter 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+.button-model:hover {
+  transform: translateY(-2px) scale(1.01);
+  filter: saturate(1.08) brightness(1.05);
+}
+.button-model::before {
+  content: '';
+  position: absolute;
+  inset: -35% -45%;
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    rgba(255,255,255,0.18) 42%,
+    rgba(255,255,255,0.02) 48%,
+    transparent 58%
+  );
+  pointer-events: none;
+  z-index: 0;
+  animation: button-shimmer 4.8s linear infinite;
+  opacity: 0.35;
+}
+.button-model::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(255,255,255,0.08);
+  pointer-events: none;
+  z-index: 0;
+}
+.button-model > * {
+  position: relative;
+  z-index: 1;
+}
+.button-model--float { animation: button-float 4.2s ease-in-out infinite; }
+.button-model--pulse { animation: button-breathe 2.2s ease-in-out infinite; }
+.button-model--flicker { animation: button-flicker 3.8s linear infinite; }
+.button-model--wave::after { animation: button-wave 2.8s ease-in-out infinite; }
+.button-model--scan::before {
+  opacity: 0.28;
+  background: linear-gradient(90deg, transparent 0%, rgba(125,211,252,0.18) 50%, transparent 100%);
+  animation-duration: 3.4s;
+}
+
 @keyframes glitch-main {
   0%, 88%, 100% { transform: translate(0); filter: none; }
   89% { transform: translate(-3px, 1px);  filter: drop-shadow(-3px 0 2px #0ff) drop-shadow(3px 0 2px #f00); }
