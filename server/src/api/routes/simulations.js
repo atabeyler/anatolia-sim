@@ -104,6 +104,9 @@ function serializeIndividual(ind, currentDay) {
   const age = Math.max(0, (currentDay - (ind.birth_day ?? 0)) / 365);
   const heightFactor = ind.phenotype?.height_factor ?? 0.5;
   const metabolism   = ind.phenotype?.metabolism   ?? 0.5;
+  const beliefs = ind.beliefs instanceof Set
+    ? [...ind.beliefs]
+    : (Array.isArray(ind.beliefs) ? ind.beliefs : []);
   const { h: heightCm, w: weightKg } = agePhysique(age, ind.sex ?? 'male', heightFactor, metabolism);
   return {
     id: ind.id,
@@ -128,7 +131,7 @@ function serializeIndividual(ind, currentDay) {
     psychology: ind.psychology ?? null,
     social: ind.social,
     skills: ind.skills,
-    beliefs: ind.beliefs,
+    beliefs,
     language: ind.language,
     microbiome: ind.microbiome ?? null,
     inventory: ind.inventory ?? null,
@@ -169,11 +172,15 @@ router.post('/', authenticate, async (req, res) => {
     if (!f2.social) f2.social = {};
     f1.social.has_mate = true;  f1.social.mate_id = f2.id;
     f2.social.has_mate = true;  f2.social.mate_id = f1.id;
-    const { rows } = await query(`INSERT INTO simulations (user_id, name, status, start_latitude, start_longitude, founder_1, founder_2, world_state) VALUES ($1,$2,'paused',$3,$4,$5,$6,$7) RETURNING *`, [req.user.id, name, parseFloat(latitude), parseFloat(longitude), JSON.stringify(f1), JSON.stringify(f2), JSON.stringify(worldState)]);
+    const f1Beliefs = f1.beliefs instanceof Set ? [...f1.beliefs] : [];
+    const f2Beliefs = f2.beliefs instanceof Set ? [...f2.beliefs] : [];
+    const f1Db = { ...f1, beliefs: f1Beliefs };
+    const f2Db = { ...f2, beliefs: f2Beliefs };
+    const { rows } = await query(`INSERT INTO simulations (user_id, name, status, start_latitude, start_longitude, founder_1, founder_2, world_state) VALUES ($1,$2,'paused',$3,$4,$5,$6,$7) RETURNING *`, [req.user.id, name, parseFloat(latitude), parseFloat(longitude), JSON.stringify(f1Db), JSON.stringify(f2Db), JSON.stringify(worldState)]);
     const sim = rows[0];
     await query(`INSERT INTO individuals (id,simulation_id,birth_day,sex,x,y,genome,phenotype,health,mind,social,skills,beliefs,language,memory,is_founder,home_x,home_y,inbreeding_coeff,psychology,inventory) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21),($22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42)`,
-      [f1.id,sim.id,f1.birth_day,f1.sex,f1.x,f1.y,JSON.stringify(f1.genome),JSON.stringify(f1.phenotype),JSON.stringify(f1.health),JSON.stringify(f1.mind),JSON.stringify(f1.social),JSON.stringify(f1.skills),JSON.stringify(f1.beliefs),JSON.stringify(f1.language),JSON.stringify(f1.memory),true,f1.x,f1.y,0,'{}','{}',
-       f2.id,sim.id,f2.birth_day,f2.sex,f2.x,f2.y,JSON.stringify(f2.genome),JSON.stringify(f2.phenotype),JSON.stringify(f2.health),JSON.stringify(f2.mind),JSON.stringify(f2.social),JSON.stringify(f2.skills),JSON.stringify(f2.beliefs),JSON.stringify(f2.language),JSON.stringify(f2.memory),true,f2.x,f2.y,0,'{}','{}']);
+      [f1.id,sim.id,f1.birth_day,f1.sex,f1.x,f1.y,JSON.stringify(f1.genome),JSON.stringify(f1.phenotype),JSON.stringify(f1.health),JSON.stringify(f1.mind),JSON.stringify(f1.social),JSON.stringify(f1.skills),JSON.stringify(f1Beliefs),JSON.stringify(f1.language),JSON.stringify(f1.memory),true,f1.x,f1.y,0,'{}','{}',
+       f2.id,sim.id,f2.birth_day,f2.sex,f2.x,f2.y,JSON.stringify(f2.genome),JSON.stringify(f2.phenotype),JSON.stringify(f2.health),JSON.stringify(f2.mind),JSON.stringify(f2.social),JSON.stringify(f2.skills),JSON.stringify(f2Beliefs),JSON.stringify(f2.language),JSON.stringify(f2.memory),true,f2.x,f2.y,0,'{}','{}']);
     res.status(201).json(sim);
   } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to create simulation' }); }
 });
@@ -327,11 +334,13 @@ router.post('/:id/checkpoint', authenticate, requireSimulationOwner, async (req,
     }));
     const stats = engine.computeStats(engine.currentDay, alive);
     const { rows } = await query(
-      `INSERT INTO checkpoints (simulation_id, sim_day, sim_year, population_count, population_snapshot, world_state, cultural_state, tech_state, stats)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id, sim_day, sim_year, population_count, created_at`,
+      `INSERT INTO checkpoints (simulation_id, sim_day, sim_year, population_count, population_snapshot, world_state, cultural_state, tech_state, stats, belief_state, art_state, groups)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id, sim_day, sim_year, population_count, created_at`,
       [req.params.id, engine.currentDay, stats.year, alive.length,
        JSON.stringify(snapshot), JSON.stringify(engine.worldState),
-       JSON.stringify({}), JSON.stringify({ technologies: [...engine.discoveredTechs] }), JSON.stringify(stats)]
+       JSON.stringify(engine.getCulturalState(alive)), JSON.stringify([...engine.discoveredTechs]), JSON.stringify(stats),
+       JSON.stringify([...engine.discoveredBeliefs]), JSON.stringify([...engine.discoveredArts]),
+       JSON.stringify(engine.groups.map(g => ({ ...g, culture: g.culture ? [...g.culture] : [], norms: g.norms ? [...g.norms] : [] })))]
     );
     res.json(rows[0]);
   } catch (err) { console.error(err); res.status(500).json({ error: 'Checkpoint creation failed' }); }
@@ -342,6 +351,14 @@ router.post('/:id/restore/:checkpointId', authenticate, requireSimulationOwner, 
     const { rows: cpRows } = await query('SELECT * FROM checkpoints WHERE id = $1 AND simulation_id = $2', [req.params.checkpointId, req.params.id]);
     if (!cpRows[0]) return res.status(404).json({ error: 'Checkpoint not found' });
     const cp = cpRows[0];
+    const checkpointTechs = Array.isArray(cp.tech_state)
+      ? cp.tech_state
+      : Array.isArray(cp.tech_state?.technologies)
+        ? cp.tech_state.technologies
+        : [];
+    const checkpointBeliefs = Array.isArray(cp.belief_state) ? cp.belief_state : [];
+    const checkpointArts = Array.isArray(cp.art_state) ? cp.art_state : [];
+    const checkpointGroups = Array.isArray(cp.groups) ? cp.groups : [];
     // Pause running engine
     simulationManager.pause(req.params.id);
     await query("UPDATE simulations SET status='paused', current_day=$1, current_year=$2, world_state=$3 WHERE id=$4",
@@ -389,7 +406,7 @@ router.post('/:id/restore/:checkpointId', authenticate, requireSimulationOwner, 
             JSON.stringify(ind.epigenome ?? {}), JSON.stringify(ind.health ?? {}),
             JSON.stringify(mindObj), JSON.stringify(socialObj),
             JSON.stringify(ind.skills ?? []),
-            JSON.stringify(Array.isArray(ind.beliefs) ? ind.beliefs : []),
+            JSON.stringify(Array.isArray(ind.beliefs) ? ind.beliefs : (ind.beliefs instanceof Set ? [...ind.beliefs] : [])),
             JSON.stringify(langObj), JSON.stringify(ind.memory ?? {}),
             ind.parent_1_id ?? null, ind.parent_2_id ?? null, ind.death_cause ?? null,
           ]
@@ -401,12 +418,15 @@ router.post('/:id/restore/:checkpointId', authenticate, requireSimulationOwner, 
       if (liveEngine) {
         liveEngine.currentDay = cp.sim_day;
         liveEngine.worldState = cp.world_state ?? liveEngine.worldState;
+        liveEngine.discoveredTechs = new Set(checkpointTechs);
+        liveEngine.discoveredBeliefs = new Set(checkpointBeliefs);
+        liveEngine.discoveredArts = new Set(checkpointArts);
         liveEngine.population.clear();
-        liveEngine.groups = [];
+        const groupMap = new Map();
         for (const ind of snapshot) {
           const restored = { ...ind };
           restored.is_dead = ind.is_dead ?? false;
-          restored.beliefs = new Set(Array.isArray(ind.beliefs) ? ind.beliefs : []);
+          restored.beliefs = new Set(Array.isArray(ind.beliefs) ? ind.beliefs : (ind.beliefs instanceof Set ? [...ind.beliefs] : []));
           // Restore volatile fields
           if (ind.satiation !== undefined) restored.satiation = ind.satiation;
           if (ind.mating_urge !== undefined) restored.mating_urge = ind.mating_urge;
@@ -418,19 +438,26 @@ router.post('/:id/restore/:checkpointId', authenticate, requireSimulationOwner, 
           if (ind.inventory) restored.inventory = ind.inventory;
           if (ind.psychology) restored.psychology = ind.psychology;
           liveEngine.population.set(restored.id, restored);
-        }
-        // Rebuild groups
-        const groupMap = new Map();
-        for (const ind of liveEngine.population.values()) {
-          if (ind.group_id && !ind.is_dead) {
-            if (!groupMap.has(ind.group_id)) {
-              groupMap.set(ind.group_id, {
-                id: ind.group_id, name: null, founder_id: null, leader_id: null,
-                member_ids: [], territory: { x: ind.x ?? 0, y: ind.y ?? 0, radius: 0.3 },
-                alliances: [], rival_ids: [], internal_tension: 0, prestige: 0.1, founded_day: 0,
+          if (restored.group_id && !restored.is_dead) {
+            if (!groupMap.has(restored.group_id)) {
+              const savedGroup = checkpointGroups.find(g => g.id === restored.group_id) ?? {};
+              groupMap.set(restored.group_id, {
+                id: restored.group_id,
+                name: savedGroup.name ?? null,
+                founder_id: savedGroup.founder_id ?? null,
+                leader_id: savedGroup.leader_id ?? null,
+                member_ids: [],
+                territory: savedGroup.territory ?? { x: restored.x ?? 0, y: restored.y ?? 0, radius: 0.3 },
+                alliances: savedGroup.alliances ?? [],
+                rival_ids: savedGroup.rival_ids ?? [],
+                internal_tension: savedGroup.internal_tension ?? 0,
+                prestige: savedGroup.prestige ?? 0.1,
+                founded_day: savedGroup.founded_day ?? 0,
+                culture: new Set(Array.isArray(savedGroup.culture) ? savedGroup.culture : []),
+                norms: new Set(Array.isArray(savedGroup.norms) ? savedGroup.norms : []),
               });
             }
-            groupMap.get(ind.group_id).member_ids.push(ind.id);
+            groupMap.get(restored.group_id).member_ids.push(restored.id);
           }
         }
         liveEngine.groups = [...groupMap.values()];
@@ -485,6 +512,7 @@ router.get('/:id/report', authenticate, requireSimulationOwner, async (req, res)
       const alive = [...engine.population.values()].filter(i => !i.is_dead);
       return engine.computeStats(engine.currentDay, alive);
     })() : null;
+    const latestCheckpointStats = checkpointsRes.rows[0]?.stats ?? null;
 
     res.json({
       simulation: {
@@ -493,7 +521,7 @@ router.get('/:id/report', authenticate, requireSimulationOwner, async (req, res)
         current_year: sim.current_year, current_day: sim.current_day,
         created_at: sim.created_at,
       },
-      stats: liveStats ?? sim.world_state,
+      stats: liveStats ?? latestCheckpointStats ?? sim.world_state,
       events: eventsRes.rows,
       checkpoints: checkpointsRes.rows.map(c => ({ sim_day: c.sim_day, sim_year: c.sim_year, population_count: c.population_count })),
       technologies: techRes.rows.map(r => r.data?.name).filter(Boolean),
