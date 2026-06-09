@@ -32,7 +32,6 @@ import StatsPanel from '../components/panels/StatsPanel';
 import PopulationPyramidPanel from '../components/panels/PopulationPyramidPanel';
 import ReportPanel from '../components/panels/ReportPanel';
 import EventsPanel from '../components/panels/EventsPanel';
-import ButtonLibrary from '../components/layout/ButtonLibrary';
 import { translateEventDescription, translateSeason, type LangCode } from '../utils/i18n';
 
 const SPEEDS = [1, 5, 20, 100];
@@ -259,8 +258,6 @@ export default function SimulationPage() {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
   const [actionBusy, setActionBusy] = useState(false);
   const [speedBusy, setSpeedBusy] = useState(false);
-  const [showButtonShowcase, setShowButtonShowcase] = useState(true);
-
   // Responsive breakpoint
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth < 640);
@@ -786,30 +783,6 @@ export default function SimulationPage() {
                   eventColor={eventColor}
                 />
 
-                {/* Button showcase */}
-                {showButtonShowcase && (
-                  <ButtonLibrary lang={lang} onClose={() => setShowButtonShowcase(false)} />
-                )}
-                {!showButtonShowcase && (
-                  <button
-                    onClick={() => setShowButtonShowcase(true)}
-                    style={{
-                      position: 'absolute',
-                      top: 78,
-                      right: 8,
-                      zIndex: 60,
-                      padding: '8px 10px',
-                      border: '1px solid rgba(79,110,247,0.35)',
-                      background: 'rgba(2,6,16,0.92)',
-                      color: '#a0b4ff',
-                      cursor: 'pointer',
-                      fontFamily: 'Share Tech Mono, monospace',
-                      letterSpacing: '0.08em',
-                    }}
-                  >
-                    {lang === 'tr' ? 'BUTONLAR' : 'BUTTONS'}
-                  </button>
-                )}
               </>
             )}
 
