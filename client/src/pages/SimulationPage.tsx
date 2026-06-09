@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, type CSSProperties } from 'react';
 import FooterBar from '../components/layout/FooterBar';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Play, Pause, FolderOpen, ChevronLeft, ChevronRight, Users, Globe, Zap, Shield, Flame, Heart, Trash2, Sparkles, BookOpen, CircleSlash2 } from 'lucide-react';
+import { Play, Pause, FolderOpen, ChevronLeft, ChevronRight, Users, Globe } from 'lucide-react';
 import { useSimStore } from '../store/simStore';
 import { useSimWebSocket } from '../hooks/useSimWebSocket';
 import SimMenuOverlay from '../components/layout/SimMenuOverlay';
@@ -32,133 +32,43 @@ import StatsPanel from '../components/panels/StatsPanel';
 import PopulationPyramidPanel from '../components/panels/PopulationPyramidPanel';
 import ReportPanel from '../components/panels/ReportPanel';
 import EventsPanel from '../components/panels/EventsPanel';
-import ButtonLibrary from '../components/layout/ButtonLibrary';
 import { translateEventDescription, translateSeason, type LangCode } from '../utils/i18n';
 
 const SPEEDS = [1, 5, 20, 100];
 
 const MODULES = [
-  { id: 'population',   label: 'NÜFUS',      labelEn: 'POPUL.',   icon: '👥' },
-  { id: 'olaylar',      label: 'OLAYLAR',    labelEn: 'EVENTS',   icon: '📋', special: true },
-  { id: 'language',     label: 'DİL',        labelEn: 'LANG.',    icon: '🔤' },
-  { id: 'timemachine',  label: 'GEÇMİŞ',     labelEn: 'HISTORY',  icon: '⏳' },
-  { id: 'analysis',     label: 'ANALİZ',     labelEn: 'ANALYS.',  icon: '📊' },
-  { id: 'pyramid',      label: 'PİRAMİT',    labelEn: 'PYRAMID',  icon: '📐' },
-  { id: 'report',       label: 'RAPOR',      labelEn: 'REPORT',   icon: '📄' },
-  { id: 'biology',      label: 'MUTASYON',   labelEn: 'MUTAT.',   icon: '🧬' },
-  { id: 'god',          label: 'TANRI',      labelEn: 'GOD',      icon: '✦',  accent: '#f97316' },
-  { id: 'psychology',   label: 'AKIL',       labelEn: 'MIND',     icon: '🧠' },
-  { id: 'environment',  label: 'ÇEVRE',      labelEn: 'ENV.',     icon: '🌿' },
-  { id: 'technology',   label: 'TEKNOLOJİ',  labelEn: 'TECH',     icon: '⚙' },
-  { id: 'belief',       label: 'İNANÇ',      labelEn: 'BELIEF',   icon: '☽' },
-  { id: 'social',       label: 'SOSYAL',     labelEn: 'SOCIAL',   icon: '🤝' },
-  { id: 'economy',      label: 'EKONOMİ',    labelEn: 'ECON.',    icon: '💰' },
-  { id: 'culture',      label: 'KÜLTÜR',     labelEn: 'CULT.',    icon: '🎭' },
-  { id: 'art',          label: 'SANAT',      labelEn: 'ART',      icon: '🎨' },
-  { id: 'astronomy',    label: 'ASTRONOMİ',  labelEn: 'ASTRO.',   icon: '🌙' },
-  { id: 'hypothesis',   label: 'HİPOTEZ',    labelEn: 'HYPOTH.',  icon: '💡' },
-  { id: 'epigenetics',  label: 'EPİGEN.',    labelEn: 'EPIGEN.',  icon: '🔬' },
-  { id: 'architecture', label: 'MİMARİ',     labelEn: 'ARCH.',    icon: '🏛️' },
-  { id: 'law',          label: 'HUKUK',      labelEn: 'LAW',      icon: '⚖️' },
-  { id: 'microbiome',   label: 'MİKROBİYOM', labelEn: 'MICROB.',  icon: '🦠' },
+  { id: 'population',   label: 'NÃƒÅ“FUS',      labelEn: 'POPUL.',   icon: 'ÄŸÅ¸â€˜Â¥' },
+  { id: 'olaylar',      label: 'OLAYLAR',    labelEn: 'EVENTS',   icon: 'ÄŸÅ¸â€œâ€¹', special: true },
+  { id: 'language',     label: 'DÃ„Â°L',        labelEn: 'LANG.',    icon: 'ÄŸÅ¸â€Â¤' },
+  { id: 'timemachine',  label: 'GEÃƒâ€¡MÃ„Â°Ã…Â',     labelEn: 'HISTORY',  icon: 'Ã¢ÂÂ³' },
+  { id: 'analysis',     label: 'ANALÃ„Â°Z',     labelEn: 'ANALYS.',  icon: 'ÄŸÅ¸â€œÅ ' },
+  { id: 'pyramid',      label: 'PÃ„Â°RAMÃ„Â°T',    labelEn: 'PYRAMID',  icon: 'ÄŸÅ¸â€œÂ' },
+  { id: 'report',       label: 'RAPOR',      labelEn: 'REPORT',   icon: 'ÄŸÅ¸â€œâ€' },
+  { id: 'biology',      label: 'MUTASYON',   labelEn: 'MUTAT.',   icon: 'ÄŸÅ¸Â§Â¬' },
+  { id: 'god',          label: 'TANRI',      labelEn: 'GOD',      icon: 'Ã¢Å“Â¦',  accent: '#f97316' },
+  { id: 'psychology',   label: 'AKIL',       labelEn: 'MIND',     icon: 'ÄŸÅ¸Â§Â ' },
+  { id: 'environment',  label: 'Ãƒâ€¡EVRE',      labelEn: 'ENV.',     icon: 'ÄŸÅ¸Å’Â¿' },
+  { id: 'technology',   label: 'TEKNOLOJÃ„Â°',  labelEn: 'TECH',     icon: 'Ã¢Å¡â„¢' },
+  { id: 'belief',       label: 'Ã„Â°NANÃƒâ€¡',      labelEn: 'BELIEF',   icon: 'Ã¢ËœÂ½' },
+  { id: 'social',       label: 'SOSYAL',     labelEn: 'SOCIAL',   icon: 'ÄŸÅ¸Â¤Â' },
+  { id: 'economy',      label: 'EKONOMÃ„Â°',    labelEn: 'ECON.',    icon: 'ÄŸÅ¸â€™Â°' },
+  { id: 'culture',      label: 'KÃƒÅ“LTÃƒÅ“R',     labelEn: 'CULT.',    icon: 'ÄŸÅ¸ÂÂ­' },
+  { id: 'art',          label: 'SANAT',      labelEn: 'ART',      icon: 'ÄŸÅ¸ÂÂ¨' },
+  { id: 'astronomy',    label: 'ASTRONOMÃ„Â°',  labelEn: 'ASTRO.',   icon: 'ÄŸÅ¸Å’â„¢' },
+  { id: 'hypothesis',   label: 'HÃ„Â°POTEZ',    labelEn: 'HYPOTH.',  icon: 'ÄŸÅ¸â€™Â¡' },
+  { id: 'epigenetics',  label: 'EPÃ„Â°GEN.',    labelEn: 'EPIGEN.',  icon: 'ÄŸÅ¸â€Â¬' },
+  { id: 'architecture', label: 'MÃ„Â°MARÃ„Â°',     labelEn: 'ARCH.',    icon: 'ÄŸÅ¸Ââ€ºÃ¯Â¸Â' },
+  { id: 'law',          label: 'HUKUK',      labelEn: 'LAW',      icon: 'Ã¢Å¡â€“Ã¯Â¸Â' },
+  { id: 'microbiome',   label: 'MÃ„Â°KROBÃ„Â°YOM', labelEn: 'MICROB.',  icon: 'ÄŸÅ¸Â¦Â ' },
 ];
 
 const TABS = [
-  { id: 'harita',  label: 'HARİTA',  labelEn: 'MAP' },
+  { id: 'harita',  label: 'HARÃ„Â°TA',  labelEn: 'MAP' },
   { id: 'durum',   label: 'DURUM',   labelEn: 'STATUS' },
 ];
 
 const IMPORTANT_TYPES = ['birth', 'death', 'language', 'belief', 'technology', 'word', 'discovery'];
 
-const SHOWCASE_BUTTONS = [
-  { label: 'BAŞLAT', labelEn: 'START', icon: Play, tone: '#00e887', bg: 'rgba(0,232,135,0.12)', border: 'rgba(0,232,135,0.55)' },
-  { label: 'DURDUR', labelEn: 'PAUSE', icon: Pause, tone: '#e05a5a', bg: 'rgba(224,90,90,0.12)', border: 'rgba(224,90,90,0.55)' },
-  { label: 'HIZLANDIR', labelEn: 'BOOST', icon: Zap, tone: '#d4a838', bg: 'rgba(212,168,56,0.12)', border: 'rgba(212,168,56,0.55)' },
-  { label: 'KORUMA', labelEn: 'SHIELD', icon: Shield, tone: '#4f6ef7', bg: 'rgba(79,110,247,0.12)', border: 'rgba(79,110,247,0.55)' },
-  { label: 'YANGIN', labelEn: 'FIRE', icon: Flame, tone: '#f97316', bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.55)' },
-  { label: 'SEVGİ', labelEn: 'BOND', icon: Heart, tone: '#ff8ab0', bg: 'rgba(255,138,176,0.12)', border: 'rgba(255,138,176,0.55)' },
-  { label: 'YENİLE', labelEn: 'RESET', icon: Sparkles, tone: '#7dd3fc', bg: 'rgba(125,211,252,0.12)', border: 'rgba(125,211,252,0.55)' },
-  { label: 'KILAVUZ', labelEn: 'GUIDE', icon: BookOpen, tone: '#a0b4ff', bg: 'rgba(160,180,255,0.12)', border: 'rgba(160,180,255,0.55)' },
-  { label: 'SİL', labelEn: 'DELETE', icon: Trash2, tone: '#ff6b6b', bg: 'rgba(255,107,107,0.12)', border: 'rgba(255,107,107,0.55)' },
-  { label: 'DEVRE DIŞI', labelEn: 'OFF', icon: CircleSlash2, tone: '#8abda0', bg: 'rgba(138,189,160,0.12)', border: 'rgba(138,189,160,0.4)' },
-] as const;
-
-function ButtonShowcase({ lang, onClose }: { lang: string; onClose: () => void }) {
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        top: 78,
-        right: 8,
-        zIndex: 60,
-        width: 290,
-        maxWidth: 'calc(100vw - 16px)',
-        background: 'rgba(2,6,16,0.96)',
-        border: '1px solid rgba(79,110,247,0.35)',
-        boxShadow: '0 18px 60px rgba(0,0,0,0.55)',
-        backdropFilter: 'blur(14px)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', borderBottom: '1px solid rgba(79,110,247,0.2)' }}>
-        <div>
-          <div style={{ fontSize: 11, color: '#a0b4ff', letterSpacing: '0.18em' }}>BUTTON SAMPLE</div>
-          <div style={{ fontSize: 14, color: '#e0e0f0', letterSpacing: '0.08em' }}>{lang === 'tr' ? 'Örnek Butonlar' : 'Button Showcase'}</div>
-        </div>
-        <button onClick={onClose} style={{ color: '#a0c8b0', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>✕</button>
-      </div>
-
-      <div style={{ padding: 10 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {SHOWCASE_BUTTONS.map((btn) => {
-            const Icon = btn.icon;
-            return (
-              <button
-                key={btn.label}
-                type="button"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 7,
-                  minHeight: 40,
-                  padding: '8px 10px',
-                  borderRadius: 10,
-                  border: `1px solid ${btn.border}`,
-                  background: btn.bg,
-                  color: btn.tone,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  boxShadow: `inset 0 0 0 1px rgba(255,255,255,0.02)`,
-                }}
-              >
-                <Icon size={14} />
-                <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-                  <span style={{ fontSize: 12, letterSpacing: '0.08em', fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
-                    {lang === 'tr' ? btn.label : btn.labelEn}
-                  </span>
-                  <span style={{ fontSize: 10, color: 'rgba(220,230,255,0.72)', letterSpacing: '0.04em' }}>
-                    {btn.border.includes('255,107,107') ? 'critical' : btn.border.includes('0,232,135') ? 'primary' : btn.border.includes('249,115,22') ? 'alert' : 'utility'}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
-          <button style={{ flex: 1, padding: '8px 10px', borderRadius: 999, border: '1px solid rgba(0,232,135,0.45)', background: 'rgba(0,232,135,0.08)', color: '#00e887', cursor: 'pointer', letterSpacing: '0.08em' }}>
-            {lang === 'tr' ? 'PİL' : 'PILL'}
-          </button>
-          <button style={{ flex: 1, padding: '8px 10px', borderRadius: 999, border: '1px solid rgba(160,180,255,0.45)', background: 'rgba(160,180,255,0.08)', color: '#a0b4ff', cursor: 'pointer', letterSpacing: '0.08em' }}>
-            {lang === 'tr' ? 'İKİLİ' : 'SEGMENT'}
-          </button>
-          <button style={{ flex: 1, padding: '8px 10px', borderRadius: 999, border: '1px dashed rgba(212,168,56,0.45)', background: 'rgba(212,168,56,0.08)', color: '#d4a838', cursor: 'pointer', letterSpacing: '0.08em' }}>
-            {lang === 'tr' ? 'ÖNEMLİ' : 'PRIMARY'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
   events: any[]; lang: string; fmtEvent: (ev: any) => string; eventColor: (ev: any, i: number) => string;
@@ -206,7 +116,7 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
       userSelect: 'none', cursor: dragging ? 'grabbing' : 'default',
       boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
     }}>
-      {/* Drag handle — mouse + touch */}
+      {/* Drag handle Ã¢â‚¬â€ mouse + touch */}
       <div
         onMouseDown={e => { startDrag(e.clientX, e.clientY); e.preventDefault(); }}
         onTouchStart={e => { startDrag(e.touches[0].clientX, e.touches[0].clientY); }}
@@ -220,7 +130,7 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
           {lang === 'tr' ? 'CANLI' : 'LIVE'}
         </span>
       </div>
-      {/* Events — 3 rows max */}
+      {/* Events Ã¢â‚¬â€ 3 rows max */}
       <div style={{ padding: '2px 6px' }}>
         {filtered.length === 0 ? (
           <div style={{ fontSize: 14, color: '#a0c8b0', padding: '4px 0', fontFamily: 'Share Tech Mono, monospace', fontStyle: 'italic' }}>
@@ -259,7 +169,6 @@ export default function SimulationPage() {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
   const [actionBusy, setActionBusy] = useState(false);
   const [speedBusy, setSpeedBusy] = useState(false);
-  const [showButtonShowcase, setShowButtonShowcase] = useState(true);
 
   // Responsive breakpoint
   useEffect(() => {
@@ -300,7 +209,7 @@ export default function SimulationPage() {
         case 'terminate_simulation': {
           const { currentSim: sim, accessToken: tok, lang: l, setCurrentSim: setSim } = useSimStore.getState();
           if (!sim || !tok) return;
-          if (!confirm(l === 'tr' ? 'Simülasyonu sonlandır?' : 'Terminate simulation?')) return;
+          if (!confirm(l === 'tr' ? 'SimÃƒÂ¼lasyonu sonlandÃ„Â±r?' : 'Terminate simulation?')) return;
           axios.post(`/api/simulations/${sim.id}/terminate`, {}, { headers: { Authorization: `Bearer ${tok}` } })
             .then(() => { setSim({ ...sim, status: 'completed' }); navigate('/'); })
             .catch(() => {});
@@ -346,8 +255,8 @@ export default function SimulationPage() {
   }, [simId, accessToken]);
 
   async function toggleSim() {
-    if (!currentSim) { alert('Simülasyon yüklenmedi, sayfayı yenileyin.'); return; }
-    if (!accessToken) { alert('Oturum süresi dolmuş, çıkış yapıp tekrar giriş yapın.'); return; }
+    if (!currentSim) { alert('SimÃƒÂ¼lasyon yÃƒÂ¼klenmedi, sayfayÃ„Â± yenileyin.'); return; }
+    if (!accessToken) { alert('Oturum sÃƒÂ¼resi dolmuÃ…Å¸, ÃƒÂ§Ã„Â±kÃ„Â±Ã…Å¸ yapÃ„Â±p tekrar giriÃ…Å¸ yapÃ„Â±n.'); return; }
     if (actionBusy) return;
     setActionBusy(true);
     const action = currentSim.status === 'running' ? 'pause' : 'start';
@@ -385,7 +294,7 @@ export default function SimulationPage() {
 
   async function terminateSim() {
     if (!currentSim || !accessToken) return;
-    if (!confirm(lang === 'tr' ? 'Simülasyonu sonlandır?' : 'Terminate simulation?')) return;
+    if (!confirm(lang === 'tr' ? 'SimÃƒÂ¼lasyonu sonlandÃ„Â±r?' : 'Terminate simulation?')) return;
     const previous = currentSim;
     setCurrentSim({ ...currentSim, status: 'completed' });
     try {
@@ -407,7 +316,7 @@ export default function SimulationPage() {
 
   function fmtEvent(ev: any) {
     const prefix = `Y${String(ev.sim_year).padStart(4, '0')} G${String(ev.sim_day % 365).padStart(3, '0')}`;
-    const icon = ev.event_type?.includes('birth') ? '+' : ev.event_type?.includes('death') ? '†' : ev.event_type?.includes('discovery') ? '◆' : ev.event_type?.includes('disaster') ? '⚠' : '·';
+    const icon = ev.event_type?.includes('birth') ? '+' : ev.event_type?.includes('death') ? 'Ã¢â‚¬Â ' : ev.event_type?.includes('discovery') ? 'Ã¢â€”â€ ' : ev.event_type?.includes('disaster') ? 'Ã¢Å¡Â ' : 'Ã‚Â·';
     const rawDesc = ev.description ?? ev.event_type;
     const desc = translateEventDescription(rawDesc, lang as LangCode, ev);
     return `${prefix} ${icon} ${desc}`;
@@ -434,10 +343,10 @@ export default function SimulationPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', overflow: 'hidden', background: '#000', color: '#fff', fontFamily: 'Share Tech Mono, monospace' }}>
 
-      {/* ═══ HEADER (3 rows) ═══ */}
+      {/* Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â HEADER (3 rows) Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â */}
       <div style={{ flexShrink: 0, background: 'rgba(0,0,0,0.97)', borderBottom: '1px solid #4a1a1a' }}>
 
-        {/* Row 1: Logo | SIM time | [ARIA desktop] | [clock desktop] | BAŞLAT/DURDUR */}
+        {/* Row 1: Logo | SIM time | [ARIA desktop] | [clock desktop] | BAÃ…ÂLAT/DURDUR */}
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 8, padding: isMobile ? '4px 8px' : '5px 10px', borderBottom: '1px solid #4a1a1a' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
               <div style={{ position: 'relative', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -446,17 +355,17 @@ export default function SimulationPage() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1, gap: 2 }}>
                 <span style={{ fontSize: isMobile ? 12 : 14, fontFamily: 'Orbitron, monospace', fontWeight: 900, color: '#e0e0f0', letterSpacing: isMobile ? '0.12em' : '0.2em', textShadow: '0 0 10px rgba(79,158,247,0.35)' }}>
-                  ANATOLİA-SİM
+                  ANATOLÃ„Â°A-SÃ„Â°M
                 </span>
                 <span style={{ fontSize: isMobile ? 10 : 11, fontFamily: 'Share Tech Mono, monospace', fontWeight: 700, color: '#cc2222', letterSpacing: isMobile ? '0.16em' : '0.22em', textAlign: 'center', width: '100%' }}>
-                  {lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}
+                  {lang === 'tr' ? 'MEDENÃ„Â°YET' : 'CIVILIZATION'}
                 </span>
               </div>
             </div>
 
           <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: isMobile ? 3 : 6 }}>
             <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em' }}>
-              {lang === 'tr' ? 'SİM ZAMANI' : 'SIM TIME'}
+              {lang === 'tr' ? 'SÃ„Â°M ZAMANI' : 'SIM TIME'}
             </span>
             <span style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.04em', fontFamily: 'Orbitron, monospace' }}>
               Y{String(simYear).padStart(4, '0')} G{String(simDay % 365).padStart(3, '0')}
@@ -488,7 +397,7 @@ export default function SimulationPage() {
               opacity: (loading || actionBusy) ? 0.6 : 1,
             }}>
             {loading ? null : isRunning ? <Pause size={11} /> : <Play size={11} />}
-            {loading ? (lang === 'tr' ? '...' : '...') : isRunning ? (lang === 'tr' ? 'DURDUR' : 'PAUSE') : (lang === 'tr' ? 'BAŞLAT' : 'START')}
+            {loading ? (lang === 'tr' ? '...' : '...') : isRunning ? (lang === 'tr' ? 'DURDUR' : 'PAUSE') : (lang === 'tr' ? 'BAÃ…ÂLAT' : 'START')}
           </button>
 
           {isRunning && (
@@ -496,103 +405,72 @@ export default function SimulationPage() {
           )}
         </div>
 
-        {/* Row 2: Stats | HIZ | SONLANDIR | ÇIKIŞ | MENÜ */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 0, padding: '0 10px', borderBottom: '1px solid #4a1a1a', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', alignItems: 'center', overflowX: isMobile ? 'auto' : 'visible', flex: 1, scrollbarWidth: 'none' }}>
-              {[
-                { key: 'pop',  label: lang === 'tr' ? 'NÜFUS'  : 'POP',   value: stats?.population ?? '—',   color: '#00e887' },
-                { key: 'bir',  label: lang === 'tr' ? 'DOĞUM'  : 'BIRTH', value: births,                      color: '#4ecb71' },
-                { key: 'dth',  label: lang === 'tr' ? 'ÖLÜM'   : 'DEATH', value: deaths,                      color: '#e05a5a' },
-                { key: 'yr',   label: lang === 'tr' ? 'YIL'    : 'YEAR',  value: stats?.year ?? '—',          color: '#7dd3fc' },
-                { key: 'tech', label: lang === 'tr' ? 'TEKNOLOJİ' : 'TECH',    value: stats?.technologies ?? '—',  color: '#d4a838' },
-                { key: 'sea',  label: lang === 'tr' ? 'MEVSİM' : 'SEASON',value: seasonLabel,                 color: '#a0b4ff' },
-                { key: 'temp', label: lang === 'tr' ? 'SICAKLIK' : 'TEMP', value: stats?.temperature !== undefined ? `${stats.temperature}°` : '—', color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
-                { key: 'wthr', label: lang === 'tr' ? 'HAVA' : 'WEATHER', value: (() => { const icons: Record<string,string> = { clear: '☀️', rain: '🌧', heavy_rain: '⛈', snow: '❄️', blizzard: '🌨', storm: '🌩', heat_wave: '🔥', drought: '🏜' }; return icons[(stats as any)?.weather] ?? '☀️'; })(), color: '#e0d080' },
-              ].map(({ key, label, value, color }) => (
-              <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '2px 7px' : '2px 10px', borderRight: '1px solid #4a1a1a', flexShrink: 0, minWidth: isMobile ? 42 : 52 }}>
-                <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{label}</span>
-                <span style={{ fontSize: 14, color, fontFamily: 'Orbitron, monospace', fontWeight: 700, lineHeight: 1.2 }}>{value}</span>
+        {/* Row 2: Compact metrics + controls */}
+        <div style={{ display: 'flex', alignItems: 'stretch', gap: 10, padding: '8px 10px', borderBottom: '1px solid #4a1a1a', overflow: 'hidden', background: 'linear-gradient(180deg, rgba(4,4,18,0.85), rgba(2,2,10,0.96))' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(5, minmax(0, 1fr))', gap: 6, flex: 1, minWidth: 0 }}>
+            {[
+              { key: 'pop', label: lang === 'tr' ? 'NÃœFUS' : 'POP', value: stats?.population ?? 'â€”', color: '#00e887' },
+              { key: 'life', label: lang === 'tr' ? 'DOÄUM / Ã–LÃœM' : 'BIRTH / DEATH', value: `${births} / ${deaths}`, color: '#c0ccff' },
+              { key: 'year', label: lang === 'tr' ? 'YIL' : 'YEAR', value: stats?.year ?? 'â€”', color: '#7dd3fc' },
+              { key: 'tech', label: lang === 'tr' ? 'TEKNOLOJÄ°' : 'TECH', value: stats?.technologies ?? 'â€”', color: '#d4a838' },
+              {
+                key: 'env',
+                label: lang === 'tr' ? 'MEVSÄ°M / SICAKLIK' : 'SEASON / TEMP',
+                value: `${seasonLabel} Â· ${stats?.temperature !== undefined ? `${stats.temperature}Â°` : 'â€”'} Â· ${(() => { const icons: Record<string, string> = { clear: 'â˜€ï¸', rain: 'ğŸŒ§', heavy_rain: 'â›ˆ', snow: 'â„ï¸', blizzard: 'ğŸŒ¨', storm: 'ğŸŒ©', heat_wave: 'ğŸ”¥', drought: 'ğŸœ' }; return icons[(stats as any)?.weather] ?? 'â˜€ï¸'; })()}`,
+                color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#a0b4ff') : '#a0b4ff',
+              },
+            ].map(({ key, label, value, color }) => (
+              <div key={key} style={{ minWidth: 0, padding: '7px 10px', border: '1px solid rgba(74,26,26,0.95)', background: 'rgba(6,6,20,0.72)', clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))' }}>
+                <div style={{ fontSize: 9, color: '#7b8fb2', letterSpacing: '0.16em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
+                <div style={{ marginTop: 2, fontSize: isMobile ? 13 : 14, color, fontFamily: 'Orbitron, monospace', fontWeight: 700, letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</div>
               </div>
             ))}
           </div>
 
-          {/* HIZ + controls — right of stats */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 3 : 4, flexShrink: 0, paddingLeft: isMobile ? 6 : 8, borderLeft: '1px solid #4a1a1a' }}>
-            {user && (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-end',
-                justifyContent: 'center',
-                gap: 1,
-                padding: '2px 8px',
-                marginRight: 2,
-                border: '1px solid rgba(160,200,176,0.24)',
-                background: 'rgba(10,10,30,0.45)',
-                clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))',
-              }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, paddingLeft: 10, borderLeft: '1px solid rgba(74,26,26,0.9)' }}>
+            {user && !isMobile && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 1, padding: '2px 8px', border: '1px solid rgba(160,200,176,0.22)', background: 'rgba(10,10,30,0.42)', clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}>
                 <span style={{ fontSize: 8, color: '#a0c8b0', letterSpacing: '0.18em' }}>{uiText.user}</span>
-                <span style={{ fontSize: 12, color: '#e0e0f0', letterSpacing: '0.08em', fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
-                  {user.username.toUpperCase()}
-                </span>
+                <span style={{ fontSize: 11, color: '#e0e0f0', letterSpacing: '0.08em', fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>{user.username.toUpperCase()}</span>
               </div>
             )}
-            {!isMobile && <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em', flexShrink: 0 }}>{uiText.speed}</span>}
-            {SPEEDS.map(s => (
-              <button key={s} onClick={() => changeSpeed(s)}
-                disabled={speedBusy}
-                style={{
-                  padding: isMobile ? '2px 5px' : '2px 6px', fontSize: 14,
-                  fontFamily: 'Orbitron, monospace', cursor: speedBusy ? 'not-allowed' : 'pointer',
-                  background: speedMultiplier === s ? 'rgba(0,232,135,0.2)' : 'transparent',
-                  border: `1px solid ${speedMultiplier === s ? '#00e887' : 'rgba(160,200,176,0.3)'}`,
-                  color: speedMultiplier === s ? '#00e887' : '#8abda0',
-                  flexShrink: 0,
-                  opacity: speedBusy ? 0.5 : 1,
-                }}>
-                {s}×
-              </button>
-            ))}
-            {!isMobile && (<>
-              <input
-                type="number" min={1} max={1000}
-                value={customSpeed}
-                onChange={e => setCustomSpeed(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') applyCustomSpeed(); }}
-                placeholder={`${speedMultiplier}×`}
-                style={{ fontSize: 13, padding: '2px 5px', width: 48, background: 'transparent', border: '1px solid rgba(160,200,176,0.3)', color: '#a0c8b0', fontFamily: 'Share Tech Mono, monospace', outline: 'none', flexShrink: 0 }}
-              />
-              <button
-                onClick={applyCustomSpeed}
-                style={{ padding: '2px 7px', fontSize: 13, border: '1px solid rgba(0,232,135,0.4)', color: '#00e887', background: 'rgba(0,232,135,0.08)', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0, letterSpacing: '0.05em' }}>
-                {uiText.set}
-              </button>
-            </>)}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 10, color: '#7b8fb2', letterSpacing: '0.16em', marginRight: 2 }}>{uiText.speed}</span>
+              {SPEEDS.map(s => (
+                <button key={s} onClick={() => changeSpeed(s)} disabled={speedBusy}
+                  style={{ minWidth: 32, padding: '4px 6px', fontSize: 11, fontFamily: 'Orbitron, monospace', cursor: speedBusy ? 'not-allowed' : 'pointer', background: speedMultiplier === s ? 'rgba(0,232,135,0.18)' : 'rgba(10,10,30,0.68)', border: `1px solid ${speedMultiplier === s ? '#00e887' : 'rgba(160,200,176,0.24)'}`, color: speedMultiplier === s ? '#00e887' : '#8abda0', flexShrink: 0, opacity: speedBusy ? 0.55 : 1, boxShadow: speedMultiplier === s ? '0 0 12px rgba(0,232,135,0.12)' : 'none' }}>
+                  {s}Ã—
+                </button>
+              ))}
+              {!isMobile && (
+                <>
+                  <input type="number" min={1} max={1000} value={customSpeed} onChange={e => setCustomSpeed(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') applyCustomSpeed(); }} placeholder={`${speedMultiplier}Ã—`} style={{ fontSize: 11, padding: '4px 6px', width: 54, background: 'rgba(10,10,30,0.68)', border: '1px solid rgba(160,200,176,0.24)', color: '#a0c8b0', fontFamily: 'Share Tech Mono, monospace', outline: 'none', flexShrink: 0 }} />
+                  <button onClick={applyCustomSpeed} style={{ padding: '4px 8px', fontSize: 11, border: '1px solid rgba(0,232,135,0.35)', color: '#00e887', background: 'rgba(0,232,135,0.08)', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0, letterSpacing: '0.05em' }}>
+                    {uiText.set}
+                  </button>
+                </>
+              )}
+            </div>
+
             {!isMobile && (
-              <button onClick={terminateSim}
-                style={{ padding: '2px 6px', fontSize: 14, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.05em', cursor: 'pointer', flexShrink: 0 }}>
-                {lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
-              </button>
-            )}
-            {!isMobile && (
-              <button onClick={() => navigate('/')}
-                style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 6px', border: '1px solid rgba(160,200,176,0.35)', color: '#a0c8b0', background: 'transparent', fontSize: 14, letterSpacing: '0.05em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
+              <button onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '4px 8px', border: '1px solid rgba(160,200,176,0.28)', color: '#a0c8b0', background: 'rgba(10,10,30,0.55)', fontSize: 11, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
                 <FolderOpen size={9} />
-                {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
+                {lang === 'tr' ? 'Ã‡IKIÅ' : 'EXIT'}
               </button>
             )}
-            <button onClick={() => setMenuOpen(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid rgba(160,200,176,0.35)', color: '#a0c8b0', background: 'transparent', fontSize: 14, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
-              ☰ {!isMobile && (lang === 'tr' ? 'MENÜ' : 'MENU')}
+
+            <button onClick={() => setMenuOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', border: '1px solid rgba(160,200,176,0.32)', color: '#a0c8b0', background: 'rgba(10,10,30,0.65)', fontSize: 11, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
+              â˜° {!isMobile && (lang === 'tr' ? 'MENÃœ' : 'MENU')}
             </button>
           </div>
         </div>
       </div>
 
-      {/* ═══ BODY: SIDEBAR + MAIN ═══ */}
+      {/* Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â BODY: SIDEBAR + MAIN Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â */}
       <div style={{ display: 'flex', flexDirection: 'row', flex: 1, overflow: 'hidden' }}>
 
-        {/* ── LEFT SIDEBAR ── */}
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬ LEFT SIDEBAR Ã¢â€â‚¬Ã¢â€â‚¬ */}
         <div style={{
           width: sidebarW,
           flexShrink: 0,
@@ -654,7 +532,7 @@ export default function SimulationPage() {
             <div style={{ padding: '6px 0', borderTop: '1px solid #4a1a1a', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
               <Users size={10} color="#00e887" />
               <span style={{ fontSize: 14, color: '#00e887', fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
-                {stats?.population !== undefined ? (stats.population > 999 ? `${Math.floor(stats.population / 1000)}k` : stats.population) : '—'}
+                {stats?.population !== undefined ? (stats.population > 999 ? `${Math.floor(stats.population / 1000)}k` : stats.population) : 'Ã¢â‚¬â€'}
               </span>
             </div>
           )}
@@ -683,7 +561,7 @@ export default function SimulationPage() {
           </button>
         </div>
 
-        {/* ── MAIN CONTENT ── */}
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬ MAIN CONTENT Ã¢â€â‚¬Ã¢â€â‚¬ */}
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
 
           {/* Tab bar */}
@@ -732,7 +610,7 @@ export default function SimulationPage() {
                 {currentSim && (
                   <div style={{ position: 'absolute', bottom: 8, left: 8, zIndex: 10, background: 'rgba(0,0,0,0.7)', border: '1px solid #4a1a1a', padding: '3px 8px' }}>
                     <span style={{ fontSize: 14, color: '#a0c8b0', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.05em' }}>
-                      {lang === 'tr' ? 'BAŞLANGIÇ' : 'ORIGIN'}: {currentSim.start_latitude?.toFixed(3)}°{(currentSim.start_latitude ?? 0) >= 0 ? 'K' : 'G'}  {currentSim.start_longitude?.toFixed(3)}°{(currentSim.start_longitude ?? 0) >= 0 ? 'D' : 'B'}
+                      {lang === 'tr' ? 'BAÃ…ÂLANGIÃƒâ€¡' : 'ORIGIN'}: {currentSim.start_latitude?.toFixed(3)}Ã‚Â°{(currentSim.start_latitude ?? 0) >= 0 ? 'K' : 'G'}  {currentSim.start_longitude?.toFixed(3)}Ã‚Â°{(currentSim.start_longitude ?? 0) >= 0 ? 'D' : 'B'}
                     </span>
                   </div>
                 )}
@@ -744,31 +622,31 @@ export default function SimulationPage() {
                       {lang === 'tr' ? '// KONUM' : '// COORDS'}
                     </div>
                     <div style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.06em' }}>
-                      {Math.abs(globeCoord.lat).toFixed(3)}°{globeCoord.lat >= 0 ? (lang === 'tr' ? 'K' : 'N') : (lang === 'tr' ? 'G' : 'S')}
+                      {Math.abs(globeCoord.lat).toFixed(3)}Ã‚Â°{globeCoord.lat >= 0 ? (lang === 'tr' ? 'K' : 'N') : (lang === 'tr' ? 'G' : 'S')}
                       {'  '}
-                      {Math.abs(globeCoord.lon).toFixed(3)}°{globeCoord.lon >= 0 ? (lang === 'tr' ? 'D' : 'E') : (lang === 'tr' ? 'B' : 'W')}
+                      {Math.abs(globeCoord.lon).toFixed(3)}Ã‚Â°{globeCoord.lon >= 0 ? (lang === 'tr' ? 'D' : 'E') : (lang === 'tr' ? 'B' : 'W')}
                     </div>
-                    <button onClick={() => setGlobeCoord(null)} style={{ marginTop: 3, fontSize: 14, color: '#a0c8b0', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}>✕</button>
+                    <button onClick={() => setGlobeCoord(null)} style={{ marginTop: 3, fontSize: 14, color: '#a0c8b0', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}>Ã¢Å“â€¢</button>
                   </div>
                 )}
 
                 {/* Selected individual overlay */}
                 {selectedInd && (
                   <div style={{ position: 'absolute', top: 80, right: 8, zIndex: 50, background: 'rgba(0,5,2,0.97)', border: '1px solid #00e887', padding: 12, minWidth: 160, fontFamily: 'Share Tech Mono, monospace' }}>
-                    <div style={{ fontSize: 14, color: '#a0c8b0', marginBottom: 4 }}>// {lang === 'tr' ? 'BİREY' : 'INDIVIDUAL'}</div>
+                    <div style={{ fontSize: 14, color: '#a0c8b0', marginBottom: 4 }}>// {lang === 'tr' ? 'BÃ„Â°REY' : 'INDIVIDUAL'}</div>
                     <div style={{ fontSize: 14, color: '#00e887', marginBottom: 2 }}>
-                      {selectedInd.name ?? `${selectedInd.sex === 'male' ? '♂' : '♀'}-${selectedInd.id?.slice(-4).toUpperCase()}`}
+                      {selectedInd.name ?? `${selectedInd.sex === 'male' ? 'Ã¢â„¢â€š' : 'Ã¢â„¢â‚¬'}-${selectedInd.id?.slice(-4).toUpperCase()}`}
                     </div>
                     {!selectedInd.name && (
                       <div style={{ fontSize: 14, color: '#8abda0', marginBottom: 4, fontStyle: 'italic' }}>
-                        {lang === 'tr' ? '// dil henüz gelişmedi' : '// pre-linguistic era'}
+                        {lang === 'tr' ? '// dil henÃƒÂ¼z geliÃ…Å¸medi' : '// pre-linguistic era'}
                       </div>
                     )}
-                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Cinsiyet' : 'Sex'}: <span style={{ color: '#fff' }}>{selectedInd.sex === 'male' ? (lang === 'tr' ? 'Erkek' : 'Male') : (lang === 'tr' ? 'Kadın' : 'Female')}</span></div>
-                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Yaş' : 'Age'}: <span style={{ color: '#fff' }}>{selectedInd.age_years ?? '—'}</span></div>
-                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Boy' : 'Height'}: <span style={{ color: '#a0e887' }}>{selectedInd.height_cm ?? selectedInd.phenotype?.height_cm ?? '—'} cm</span></div>
-                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Kilo' : 'Weight'}: <span style={{ color: '#a0e887' }}>{selectedInd.weight_kg ?? '—'} kg</span></div>
-                    <div style={{ fontSize: 14, color: '#6090a0' }}>HP: <span style={{ color: selectedInd.health?.hp > 0.6 ? '#4ecb71' : '#e05a5a' }}>{selectedInd.health?.hp !== undefined ? (selectedInd.health.hp * 100).toFixed(0) + '%' : '—'}</span></div>
+                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Cinsiyet' : 'Sex'}: <span style={{ color: '#fff' }}>{selectedInd.sex === 'male' ? (lang === 'tr' ? 'Erkek' : 'Male') : (lang === 'tr' ? 'KadÃ„Â±n' : 'Female')}</span></div>
+                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'YaÃ…Å¸' : 'Age'}: <span style={{ color: '#fff' }}>{selectedInd.age_years ?? 'Ã¢â‚¬â€'}</span></div>
+                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Boy' : 'Height'}: <span style={{ color: '#a0e887' }}>{selectedInd.height_cm ?? selectedInd.phenotype?.height_cm ?? 'Ã¢â‚¬â€'} cm</span></div>
+                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Kilo' : 'Weight'}: <span style={{ color: '#a0e887' }}>{selectedInd.weight_kg ?? 'Ã¢â‚¬â€'} kg</span></div>
+                    <div style={{ fontSize: 14, color: '#6090a0' }}>HP: <span style={{ color: selectedInd.health?.hp > 0.6 ? '#4ecb71' : '#e05a5a' }}>{selectedInd.health?.hp !== undefined ? (selectedInd.health.hp * 100).toFixed(0) + '%' : 'Ã¢â‚¬â€'}</span></div>
                     <button onClick={() => setSelectedInd(null)} style={{ marginTop: 8, fontSize: 14, color: '#a0c8b0', border: '1px solid #4a1a1a', padding: '2px 8px', background: 'transparent', width: '100%', cursor: 'pointer' }}>
                       {lang === 'tr' ? 'KAPAT' : 'CLOSE'}
                     </button>
@@ -786,30 +664,6 @@ export default function SimulationPage() {
                   eventColor={eventColor}
                 />
 
-                {/* Button showcase */}
-                {showButtonShowcase && (
-                  <ButtonLibrary lang={lang} onClose={() => setShowButtonShowcase(false)} />
-                )}
-                {!showButtonShowcase && (
-                  <button
-                    onClick={() => setShowButtonShowcase(true)}
-                    style={{
-                      position: 'absolute',
-                      top: 78,
-                      right: 8,
-                      zIndex: 60,
-                      padding: '8px 10px',
-                      border: '1px solid rgba(79,110,247,0.35)',
-                      background: 'rgba(2,6,16,0.92)',
-                      color: '#a0b4ff',
-                      cursor: 'pointer',
-                      fontFamily: 'Share Tech Mono, monospace',
-                      letterSpacing: '0.08em',
-                    }}
-                  >
-                    {lang === 'tr' ? 'BUTONLAR' : 'BUTTONS'}
-                  </button>
-                )}
               </>
             )}
 
@@ -818,19 +672,19 @@ export default function SimulationPage() {
               <div style={{ height: '100%', overflowY: 'auto', padding: 12, background: '#000' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {[
-                    { l: lang === 'tr' ? 'NÜFUS'      : 'POP.',      v: stats?.population ?? '—',                                                                 c: '#00e887' },
-                    { l: lang === 'tr' ? 'YIL'        : 'YEAR',      v: stats?.year ?? '—',                                                                        c: '#7dd3fc' },
-                    { l: lang === 'tr' ? 'GÜN'        : 'DAY',       v: stats?.day ?? '—',                                                                         c: '#a0b4ff' },
-                    { l: lang === 'tr' ? 'DOĞUM'      : 'BIRTHS',    v: births,                                                                                     c: '#4ecb71' },
-                    { l: lang === 'tr' ? 'ÖLÜM'       : 'DEATHS',    v: deaths,                                                                                     c: '#e05a5a' },
-                    { l: lang === 'tr' ? 'KELİME'     : 'WORDS',     v: wordCount,                                                                                  c: '#7dd3fc' },
-                    { l: lang === 'tr' ? 'ZEKA ORT.'  : 'AVG IQ',    v: stats?.avg_intelligence !== undefined ? (stats.avg_intelligence * 100).toFixed(0) + '%' : '—', c: '#d4a838' },
-                    { l: lang === 'tr' ? 'MUTLULUK'   : 'HAPPINESS', v: stats?.happiness_index !== undefined ? (stats.happiness_index * 100).toFixed(0) + '%' : '—',   c: '#ff8ab0' },
-                    { l: lang === 'tr' ? 'HASTALIK'   : 'DISEASE',   v: stats?.sick_rate !== undefined ? (stats.sick_rate * 100).toFixed(0) + '%' : '—',               c: '#f97316' },
-                    { l: lang === 'tr' ? 'TEKNOLOJİ'  : 'TECH',      v: stats?.technologies ?? '—',                                                                c: '#4ecb71' },
-                    { l: lang === 'tr' ? 'İNANÇ'      : 'BELIEFS',   v: stats?.beliefs ?? '—',                                                                    c: '#a855f7' },
-                    { l: lang === 'tr' ? 'SICAKLIK'   : 'TEMP',      v: stats?.temperature !== undefined ? `${stats.temperature}°` : '—',                          c: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
-                    { l: lang === 'tr' ? 'GRUPLAR'    : 'GROUPS',    v: stats?.groups ?? '—',                                                                      c: '#d4a838' },
+                    { l: lang === 'tr' ? 'NÃƒÅ“FUS'      : 'POP.',      v: stats?.population ?? 'Ã¢â‚¬â€',                                                                 c: '#00e887' },
+                    { l: lang === 'tr' ? 'YIL'        : 'YEAR',      v: stats?.year ?? 'Ã¢â‚¬â€',                                                                        c: '#7dd3fc' },
+                    { l: lang === 'tr' ? 'GÃƒÅ“N'        : 'DAY',       v: stats?.day ?? 'Ã¢â‚¬â€',                                                                         c: '#a0b4ff' },
+                    { l: lang === 'tr' ? 'DOÃ„ÂUM'      : 'BIRTHS',    v: births,                                                                                     c: '#4ecb71' },
+                    { l: lang === 'tr' ? 'Ãƒâ€“LÃƒÅ“M'       : 'DEATHS',    v: deaths,                                                                                     c: '#e05a5a' },
+                    { l: lang === 'tr' ? 'KELÃ„Â°ME'     : 'WORDS',     v: wordCount,                                                                                  c: '#7dd3fc' },
+                    { l: lang === 'tr' ? 'ZEKA ORT.'  : 'AVG IQ',    v: stats?.avg_intelligence !== undefined ? (stats.avg_intelligence * 100).toFixed(0) + '%' : 'Ã¢â‚¬â€', c: '#d4a838' },
+                    { l: lang === 'tr' ? 'MUTLULUK'   : 'HAPPINESS', v: stats?.happiness_index !== undefined ? (stats.happiness_index * 100).toFixed(0) + '%' : 'Ã¢â‚¬â€',   c: '#ff8ab0' },
+                    { l: lang === 'tr' ? 'HASTALIK'   : 'DISEASE',   v: stats?.sick_rate !== undefined ? (stats.sick_rate * 100).toFixed(0) + '%' : 'Ã¢â‚¬â€',               c: '#f97316' },
+                    { l: lang === 'tr' ? 'TEKNOLOJÃ„Â°'  : 'TECH',      v: stats?.technologies ?? 'Ã¢â‚¬â€',                                                                c: '#4ecb71' },
+                    { l: lang === 'tr' ? 'Ã„Â°NANÃƒâ€¡'      : 'BELIEFS',   v: stats?.beliefs ?? 'Ã¢â‚¬â€',                                                                    c: '#a855f7' },
+                    { l: lang === 'tr' ? 'SICAKLIK'   : 'TEMP',      v: stats?.temperature !== undefined ? `${stats.temperature}Ã‚Â°` : 'Ã¢â‚¬â€',                          c: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
+                    { l: lang === 'tr' ? 'GRUPLAR'    : 'GROUPS',    v: stats?.groups ?? 'Ã¢â‚¬â€',                                                                      c: '#d4a838' },
                   ].map(({ l, v, c }) => (
                     <div key={l} style={{ background: 'rgba(0,20,10,0.6)', border: '1px solid #4a1a1a', padding: '8px 12px' }}>
                       <div style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em' }}>{l}</div>
@@ -845,10 +699,10 @@ export default function SimulationPage() {
         </div>
       </div>
 
-      {/* ── FOOTER ── */}
+      {/* Ã¢â€â‚¬Ã¢â€â‚¬ FOOTER Ã¢â€â‚¬Ã¢â€â‚¬ */}
       <FooterBar mode="flow" />
 
-      {/* ═══ MENU OVERLAY ═══ */}
+      {/* Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â MENU OVERLAY Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â */}
       <SimMenuOverlay
         isOpen={menuOpen}
         onClose={() => { setMenuOpen(false); setMenuPage(null); }}
@@ -858,7 +712,7 @@ export default function SimulationPage() {
           <div style={{ padding: '8px 14px', borderTop: '1px solid #4a1a1a', display: 'flex', gap: 8 }}>
             <button onClick={() => { setMenuOpen(false); navigate('/'); }}
               style={{ flex: 1, padding: '7px 0', fontSize: 14, border: '1px solid #4a1a1a', color: '#a0c8b0', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
-              ← {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
+              Ã¢â€ Â {lang === 'tr' ? 'Ãƒâ€¡IKIÃ…Â' : 'EXIT'}
             </button>
             <button onClick={() => { setMenuOpen(false); terminateSim(); }}
               style={{ flex: 1, padding: '7px 0', fontSize: 14, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
@@ -868,7 +722,7 @@ export default function SimulationPage() {
         ) : undefined}
       />
 
-      {/* ═══ OVERLAY PANELS ═══ */}
+      {/* Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â OVERLAY PANELS Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â */}
       <EventsPanel />
       <PopulationPanel />
       <BiologyPanel />
