@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import FooterBar from '../components/layout/FooterBar';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Play, Pause, FolderOpen, ChevronLeft, ChevronRight, Users, Globe } from 'lucide-react';
+import { Play, Pause, FolderOpen, ChevronLeft, ChevronRight, Users, Globe, Zap, Shield, Flame, Heart, Trash2, Sparkles, BookOpen, CircleSlash2 } from 'lucide-react';
 import { useSimStore } from '../store/simStore';
 import { useSimWebSocket } from '../hooks/useSimWebSocket';
 import SimMenuOverlay from '../components/layout/SimMenuOverlay';
@@ -68,6 +68,96 @@ const TABS = [
 ];
 
 const IMPORTANT_TYPES = ['birth', 'death', 'language', 'belief', 'technology', 'word', 'discovery'];
+
+const SHOWCASE_BUTTONS = [
+  { label: 'BAŞLAT', labelEn: 'START', icon: Play, tone: '#00e887', bg: 'rgba(0,232,135,0.12)', border: 'rgba(0,232,135,0.55)' },
+  { label: 'DURDUR', labelEn: 'PAUSE', icon: Pause, tone: '#e05a5a', bg: 'rgba(224,90,90,0.12)', border: 'rgba(224,90,90,0.55)' },
+  { label: 'HIZLANDIR', labelEn: 'BOOST', icon: Zap, tone: '#d4a838', bg: 'rgba(212,168,56,0.12)', border: 'rgba(212,168,56,0.55)' },
+  { label: 'KORUMA', labelEn: 'SHIELD', icon: Shield, tone: '#4f6ef7', bg: 'rgba(79,110,247,0.12)', border: 'rgba(79,110,247,0.55)' },
+  { label: 'YANGIN', labelEn: 'FIRE', icon: Flame, tone: '#f97316', bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.55)' },
+  { label: 'SEVGİ', labelEn: 'BOND', icon: Heart, tone: '#ff8ab0', bg: 'rgba(255,138,176,0.12)', border: 'rgba(255,138,176,0.55)' },
+  { label: 'YENİLE', labelEn: 'RESET', icon: Sparkles, tone: '#7dd3fc', bg: 'rgba(125,211,252,0.12)', border: 'rgba(125,211,252,0.55)' },
+  { label: 'KILAVUZ', labelEn: 'GUIDE', icon: BookOpen, tone: '#a0b4ff', bg: 'rgba(160,180,255,0.12)', border: 'rgba(160,180,255,0.55)' },
+  { label: 'SİL', labelEn: 'DELETE', icon: Trash2, tone: '#ff6b6b', bg: 'rgba(255,107,107,0.12)', border: 'rgba(255,107,107,0.55)' },
+  { label: 'DEVRE DIŞI', labelEn: 'OFF', icon: CircleSlash2, tone: '#8abda0', bg: 'rgba(138,189,160,0.12)', border: 'rgba(138,189,160,0.4)' },
+] as const;
+
+function ButtonShowcase({ lang, onClose }: { lang: string; onClose: () => void }) {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 78,
+        right: 8,
+        zIndex: 60,
+        width: 290,
+        maxWidth: 'calc(100vw - 16px)',
+        background: 'rgba(2,6,16,0.96)',
+        border: '1px solid rgba(79,110,247,0.35)',
+        boxShadow: '0 18px 60px rgba(0,0,0,0.55)',
+        backdropFilter: 'blur(14px)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', borderBottom: '1px solid rgba(79,110,247,0.2)' }}>
+        <div>
+          <div style={{ fontSize: 11, color: '#a0b4ff', letterSpacing: '0.18em' }}>BUTTON SAMPLE</div>
+          <div style={{ fontSize: 14, color: '#e0e0f0', letterSpacing: '0.08em' }}>{lang === 'tr' ? 'Örnek Butonlar' : 'Button Showcase'}</div>
+        </div>
+        <button onClick={onClose} style={{ color: '#a0c8b0', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>✕</button>
+      </div>
+
+      <div style={{ padding: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {SHOWCASE_BUTTONS.map((btn) => {
+            const Icon = btn.icon;
+            return (
+              <button
+                key={btn.label}
+                type="button"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  minHeight: 40,
+                  padding: '8px 10px',
+                  borderRadius: 10,
+                  border: `1px solid ${btn.border}`,
+                  background: btn.bg,
+                  color: btn.tone,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  boxShadow: `inset 0 0 0 1px rgba(255,255,255,0.02)`,
+                }}
+              >
+                <Icon size={14} />
+                <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+                  <span style={{ fontSize: 12, letterSpacing: '0.08em', fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
+                    {lang === 'tr' ? btn.label : btn.labelEn}
+                  </span>
+                  <span style={{ fontSize: 10, color: 'rgba(220,230,255,0.72)', letterSpacing: '0.04em' }}>
+                    {btn.border.includes('255,107,107') ? 'critical' : btn.border.includes('0,232,135') ? 'primary' : btn.border.includes('249,115,22') ? 'alert' : 'utility'}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+          <button style={{ flex: 1, padding: '8px 10px', borderRadius: 999, border: '1px solid rgba(0,232,135,0.45)', background: 'rgba(0,232,135,0.08)', color: '#00e887', cursor: 'pointer', letterSpacing: '0.08em' }}>
+            {lang === 'tr' ? 'PİL' : 'PILL'}
+          </button>
+          <button style={{ flex: 1, padding: '8px 10px', borderRadius: 999, border: '1px solid rgba(160,180,255,0.45)', background: 'rgba(160,180,255,0.08)', color: '#a0b4ff', cursor: 'pointer', letterSpacing: '0.08em' }}>
+            {lang === 'tr' ? 'İKİLİ' : 'SEGMENT'}
+          </button>
+          <button style={{ flex: 1, padding: '8px 10px', borderRadius: 999, border: '1px dashed rgba(212,168,56,0.45)', background: 'rgba(212,168,56,0.08)', color: '#d4a838', cursor: 'pointer', letterSpacing: '0.08em' }}>
+            {lang === 'tr' ? 'ÖNEMLİ' : 'PRIMARY'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
   events: any[]; lang: string; fmtEvent: (ev: any) => string; eventColor: (ev: any, i: number) => string;
@@ -168,6 +258,7 @@ export default function SimulationPage() {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
   const [actionBusy, setActionBusy] = useState(false);
   const [speedBusy, setSpeedBusy] = useState(false);
+  const [showButtonShowcase, setShowButtonShowcase] = useState(true);
 
   // Responsive breakpoint
   useEffect(() => {
@@ -693,6 +784,31 @@ export default function SimulationPage() {
                   fmtEvent={fmtEvent}
                   eventColor={eventColor}
                 />
+
+                {/* Button showcase */}
+                {showButtonShowcase && (
+                  <ButtonShowcase lang={lang} onClose={() => setShowButtonShowcase(false)} />
+                )}
+                {!showButtonShowcase && (
+                  <button
+                    onClick={() => setShowButtonShowcase(true)}
+                    style={{
+                      position: 'absolute',
+                      top: 78,
+                      right: 8,
+                      zIndex: 60,
+                      padding: '8px 10px',
+                      border: '1px solid rgba(79,110,247,0.35)',
+                      background: 'rgba(2,6,16,0.92)',
+                      color: '#a0b4ff',
+                      cursor: 'pointer',
+                      fontFamily: 'Share Tech Mono, monospace',
+                      letterSpacing: '0.08em',
+                    }}
+                  >
+                    {lang === 'tr' ? 'BUTONLAR' : 'BUTTONS'}
+                  </button>
+                )}
               </>
             )}
 
