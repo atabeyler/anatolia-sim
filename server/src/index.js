@@ -121,17 +121,15 @@ async function seedAdminIfNeeded() {
   const email = process.env.ADMIN_EMAIL ?? '';
   if (!code || !pass) return;
   try {
-    const { rows } = await query("SELECT id FROM users WHERE role='admin' AND is_approved=true LIMIT 1");
-    if (rows.length > 0) return;
     const bcrypt = (await import('bcrypt')).default;
     const hash = await bcrypt.hash(pass, 12);
     await query(
       `INSERT INTO users (user_code, username, first_name, last_name, email, password_hash, role, is_approved)
        VALUES ($1,$1,'Admin','Yönetici',$2,$3,'admin',true)
-       ON CONFLICT (user_code) DO UPDATE SET role='admin', is_approved=true, password_hash=$3`,
+       ON CONFLICT (user_code) DO UPDATE SET role='admin', is_approved=true, password_hash=$3, username=$1`,
       [code, email, hash]
     );
-    console.log(`✅ Admin kullanıcı oluşturuldu: ${code}`);
+    console.log(`✅ Admin hazır: ${code}`);
   } catch (err) {
     console.error('⚠️ Admin seed hatası:', err.message);
   }
