@@ -78,7 +78,7 @@ router.post('/login', async (req, res) => {
     const payload = { id: user.id, username: user.user_code, email: user.email, role: user.role };
     const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15m' });
     const refreshToken = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '30d' });
-    const isProd = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
+    const isProd = process.env.NODE_ENV === 'production' || !!process.env.RENDER || !!process.env.RAILWAY_ENVIRONMENT;
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: isProd,

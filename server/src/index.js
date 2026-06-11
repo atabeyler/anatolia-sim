@@ -116,9 +116,9 @@ wss.on('connection', async (ws, req) => {
 });
 
 async function seedAdminIfNeeded() {
-  const code = process.env.ADMIN_USER_CODE;
+  const code = (process.env.ADMIN_USER_CODE ?? '').toUpperCase().trim();
   const pass = process.env.ADMIN_PASSWORD;
-  const email = process.env.ADMIN_EMAIL;
+  const email = process.env.ADMIN_EMAIL ?? '';
   if (!code || !pass) return;
   try {
     const { rows } = await query("SELECT id FROM users WHERE role='admin' AND is_approved=true LIMIT 1");
@@ -129,9 +129,9 @@ async function seedAdminIfNeeded() {
       `INSERT INTO users (user_code, username, first_name, last_name, email, password_hash, role, is_approved)
        VALUES ($1,$1,'Admin','Yönetici',$2,$3,'admin',true)
        ON CONFLICT (user_code) DO UPDATE SET role='admin', is_approved=true, password_hash=$3`,
-      [code, email ?? '', hash]
+      [code, email, hash]
     );
-    console.log('✅ Admin kullanıcı otomatik oluşturuldu.');
+    console.log(`✅ Admin kullanıcı oluşturuldu: ${code}`);
   } catch (err) {
     console.error('⚠️ Admin seed hatası:', err.message);
   }
