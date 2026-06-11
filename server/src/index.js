@@ -115,6 +115,28 @@ wss.on('connection', async (ws, req) => {
   ws.on('error', console.error);
 });
 
+async function seedAdminIfNeeded() {
+  const code = process.env.ADMIN_USER_CODE;
+  const pass = process.env.ADMIN_PASSWORD;
+  const email = process.env.ADMIN_EMAIL;
+  if (!code || !pass) return;
+  try {
+    const { rows } = await query("SELECT id FROM users WHERE role='admin' AND is_approved=true LIMIT 1");
+    if (rows.length > 0) return;
+    const bcrypt = (await import('bcrypt')).default;
+    const hash = await bcrypt.hash(pass, 12);
+    await query(
+      `INSERT INTO users (user_code, username, first_name, last_name, email, password_hash, role, is_approved)
+       VALUES ($1,$1,'Admin','Yönetici',$2,$3,'admin',true)
+       ON CONFLICT (user_code) DO UPDATE SET role='admin', is_approved=true, password_hash=$3`,
+      [code, email ?? '', hash]
+    );
+    console.log('✅ Admin kullanıcı otomatik oluşturuldu.');
+  } catch (err) {
+    console.error('⚠️ Admin seed hatası:', err.message);
+  }
+}
+
 async function main() {
   const delays = [2000, 4000, 8000, 16000];
   let migrated = false;
@@ -132,6 +154,8 @@ async function main() {
       }
     }
   }
+
+  if (migrated) await seedAdminIfNeeded();
 
   server.listen(PORT, () => {
     console.log(`✅ ANATOLİA-SİM Server running on port ${PORT}`);
