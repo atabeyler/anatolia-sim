@@ -1,0 +1,137 @@
+// Economy Engine
+export const RESOURCE_TYPES = [
+  'food', 'water', 'stone', 'wood', 'clay', 'flint',
+  'hide', 'bone', 'copper_ore', 'iron_ore', 'salt', 'obsidian'
+];
+
+export const GOODS_TYPES = [
+  'stone_tool', 'spear', 'bow', 'pottery', 'clothing', 'rope',
+  'dried_food', 'copper_tool', 'iron_tool', 'woven_cloth', 'ceramic_vessel'
+];
+
+export function initializeInventory() {
+  return { food: 30, water: 15, stone: 2, wood: 3 };
+}
+
+export function gatherResources(individual, worldState, discoveredTechs) {
+  const delta = {};
+  const p = individual.phenotype;
+  const e = Math.max(0.3, (p.conscientiousness + p.physical_strength) / 2);
+  const fb = worldState.food_abundance * e;
+  // Innate survival foraging — 4× higher than original (was fb*0.5, now fb*2)
+  delta.food = fb * 2;
+  if (discoveredTechs.has('foraging')) delta.food = (delta.food ?? 0) + fb * 2;
+  if (discoveredTechs.has('hunting_spear') || discoveredTechs.has('bow_arrow')) {
+    delta.food = (delta.food ?? 0) + (worldState.fauna?.prey_density ?? 0.3) * 2 * e;
+  }
+  if (discoveredTechs.has('fishing') && worldState.water_abundance > 0.3) {
+    delta.food = (delta.food ?? 0) + 1.2 * e;
+  }
+  if (discoveredTechs.has('plant_cultivation')) {
+    delta.food = (delta.food ?? 0) +
+      2.5 * e * (1 + (worldState.farming_bonus ?? 0)) * (0.8 + (worldState.soil_health ?? 0.5) * 0.4);
+  }
+  if (discoveredTechs.has('animal_herding')) {
+    delta.food = (delta.food ?? 0) + 2.0 * e;
+  }
+  delta.water = worldState.water_abundance * 1.5;
+  if (discoveredTechs.has('stone_tools')) delta.stone = Math.random() * 0.3;
+  delta.wood = (worldState.flora?.density ?? 0.5) * 0.3;
+  if (['coastal', 'temperate_forest', 'grassland'].includes(worldState.biome)) delta.clay = 0.2;
+  if (['mountain', 'mediterranean'].includes(worldState.biome)) {
+    delta.copper_ore = 0.1;
+    if (discoveredTechs.has('metallurgy_copper')) delta.copper_ore += 0.2;
+  }
+  if (worldState.biome !== 'desert' && discoveredTechs.has('metallurgy_iron')) delta.iron_ore = 0.15;
+  return delta;
+}
+
+export function consumeResources(individual) {
+  const inv = individual.inventory ?? initializeInventory();
+  const fn = 0.4 + Math.min((individual.phenotype.physical_strength ?? 0.5) * 0.1, 0.1);
+  const wn = 0.25;
+  const fa = Math.min(inv.food ?? 0, fn);
+  const wa = Math.min(inv.water ?? 0, wn);
+  inv.food = Math.max((inv.food ?? 0) - fn, 0);
+  inv.water = Math.max((inv.water ?? 0) - wn, 0);
+  return { satiation: (fa / fn + wa / wn) / 2, inv };
+}
+
+export function produceGoods(individual, discoveredTechs) {
+  const inv = individual.inventory ?? {};
+  const produced = {};
+  const cs = (individual.phenotype.conscientiousness + individual.phenotype.fluid_intelligence) / 2;
+  if (discoveredTechs.has('stone_tools') && (inv.stone ?? 0) >= 1 && Math.random() < cs * 0.1) {
+    produced.stone_tool = (produced.stone_tool ?? 0) + 1;
+    inv.stone = (inv.stone ?? 0) - 1;
+  }
+  if (discoveredTechs.has('pottery') && (inv.clay ?? 0) >= 2 && Math.random() < cs * 0.08) {
+    produced.ceramic_vessel = (produced.ceramic_vessel ?? 0) + 1;
+    inv.clay = (inv.clay ?? 0) - 2;
+  }
+  if (discoveredTechs.has('weaving') && (inv.wood ?? 0) >= 1 && Math.random() < cs * 0.07) {
+    produced.woven_cloth = (produced.woven_cloth ?? 0) + 1;
+    inv.wood = (inv.wood ?? 0) - 1;
+  }
+  if (discoveredTechs.has('food_preservation') && (inv.food ?? 0) >= 3 && Math.random() < 0.05) {
+    produced.dried_food = (produced.dried_food ?? 0) + 2;
+    inv.food = (inv.food ?? 0) - 1.5;
+  }
+  return { produced, inv };
+}
+
+export function attemptTrade(indA, indB, simDay) {
+  if (!indA.inventory || !indB.inventory) return null;
+  const tw = ((indA.phenotype.altruism ?? 0.5) + (indB.phenotype.altruism ?? 0.5)) / 2;
+  if (Math.random() > tw * 0.4) return null;
+  // Inter-group trade requires trust (reputation); rivals rarely trade
+  if (indA.group_id && indB.group_id && indA.group_id !== indB.group_id) {
+    const trust = ((indA.social?.reputation ?? 0) + (indB.social?.reputation ?? 0)) / 2;
+    if (Math.random() > trust * 0.5 + 0.15) return null;
+  }
+  const aN = Object.entries(indA.inventory).filter(([, q]) => q < 1).map(([r]) => r);
+  const bN = Object.entries(indB.inventory).filter(([, q]) => q < 1).map(([r]) => r);
+  const aS = Object.entries(indA.inventory).filter(([, q]) => q > 3).map(([r]) => r);
+  const bS = Object.entries(indB.inventory).filter(([, q]) => q > 3).map(([r]) => r);
+  const cA = aS.find(r => bN.includes(r));
+  const cB = bS.find(r => aN.includes(r));
+  if (!cA && !cB) return null;
+  const qty = 0.5 + Math.random() * 0.5;
+  if (cA) {
+    indA.inventory[cA] = Math.max((indA.inventory[cA] ?? 0) - qty, 0);
+    indB.inventory[cA] = (indB.inventory[cA] ?? 0) + qty * 0.9;
+  }
+  if (cB) {
+    indB.inventory[cB] = Math.max((indB.inventory[cB] ?? 0) - qty, 0);
+    indA.inventory[cB] = (indA.inventory[cB] ?? 0) + qty * 0.9;
+  }
+  if (!indA.social) indA.social = {};
+  if (!indB.social) indB.social = {};
+  indA.social.reputation = Math.min((indA.social.reputation ?? 0) + 0.01, 1);
+  indB.social.reputation = Math.min((indB.social.reputation ?? 0) + 0.01, 1);
+  return {
+    type: 'trade',
+    individual_a: indA.id,
+    individual_b: indB.id,
+    a_gave: cA,
+    b_gave: cB,
+    day: simDay
+  };
+}
+
+export function computeEconomicStats(population) {
+  const inv = population
+    .filter(i => i.inventory)
+    .map(i => Object.values(i.inventory).reduce((s, v) => s + v, 0));
+  if (inv.length === 0) return { mean_wealth: 0, gini: 0 };
+  if (inv.length < 2) return { mean_wealth: inv[0] ?? 0, gini: 0 };
+  const mean = inv.reduce((a, b) => a + b, 0) / inv.length;
+  const sorted = [...inv].sort((a, b) => a - b);
+  const n = sorted.length;
+  let gn = 0;
+  for (let i = 0; i < n; i++) gn += (2 * (i + 1) - n - 1) * sorted[i];
+  return {
+    mean_wealth: mean,
+    gini: mean > 0 ? Math.max(0, gn / (n * n * mean)) : 0
+  };
+}
