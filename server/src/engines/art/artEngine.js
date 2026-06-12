@@ -144,7 +144,7 @@ export function applyArtEffects(individual, group, discoveredArts) {
   if (!individual.psychology) individual.psychology = { wellbeing: 0.5, stress_level: 0.3 };
   if (individual.psychology.wellbeing == null) individual.psychology.wellbeing = 0.5;
   individual.psychology.wellbeing = Math.min(
-    individual.psychology.wellbeing + discoveredArts.size * 0.005,
+    individual.psychology.wellbeing + discoveredArts.size * 0.00005,
     1.0
   );
   if (group && discoveredArts.size > 3) {

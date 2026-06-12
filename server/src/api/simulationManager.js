@@ -117,7 +117,7 @@ class SimulationManager {
           JSON.stringify(ind.phenotype),
           JSON.stringify(ind.epigenome ?? {}),
           JSON.stringify(ind.health),
-          JSON.stringify({ ...(ind.mind ?? {}), _volatile: { satiation: ind.satiation ?? null, mating_urge: ind.mating_urge ?? null, age: ind.age ?? null, _waterFear: ind._waterFear ?? null, _fears: ind._fears ?? null, _waterExperience: ind._waterExperience ?? null } }),
+          JSON.stringify({ ...(ind.mind ?? {}), _volatile: { satiation: ind.satiation ?? null, mating_urge: ind.mating_urge ?? null, age: ind.age ?? null, _waterFear: ind._waterFear ?? null, _fears: ind._fears ?? null, _waterExperience: ind._waterExperience ?? null, known_techs: ind.known_techs instanceof Set ? [...ind.known_techs] : (Array.isArray(ind.known_techs) ? ind.known_techs : []) } }),
           JSON.stringify(ind.social),
           JSON.stringify(ind.skills ?? []),
           JSON.stringify(ind.beliefs instanceof Set ? [...ind.beliefs] : (Array.isArray(ind.beliefs) ? ind.beliefs : [])),
@@ -199,6 +199,7 @@ function parseIndividual(row) {
   if (volatile._waterFear !== undefined) parsed._waterFear = volatile._waterFear;
   if (volatile._fears !== undefined) parsed._fears = volatile._fears;
   if (volatile._waterExperience !== undefined) parsed._waterExperience = volatile._waterExperience;
+  if (volatile.known_techs !== undefined) parsed.known_techs = new Set(volatile.known_techs);
   if (row.psychology && Object.keys(row.psychology).length > 0) parsed.psychology = row.psychology;
   else if (volatile.psychology) parsed.psychology = volatile.psychology;
   if (row.inventory && Object.keys(row.inventory).length > 0) parsed.inventory = row.inventory;

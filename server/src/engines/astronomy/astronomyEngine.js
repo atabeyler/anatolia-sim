@@ -63,14 +63,17 @@ const KDESC = {
 export function processAstronomyTick(population, observations, astronomyKnowledge, discoveredTechs, simDay) {
   const events = [];
   for (const [eid, ev] of Object.entries(CEV)) {
-    if (ev.rare && Math.random() > 0.001) continue;
-    if (
-      !ev.rare &&
-      simDay % Math.round(ev.period_days) < 1 &&
-      Math.random() < ev.observability &&
-      !observations.has(eid)
-    ) {
+    if (ev.rare) {
+      if (Math.random() > 0.001) continue;
       observations.add(eid);
+      events.push({ type: 'celestial_observation', event_id: eid, day: simDay, importance: 'high', description: CDESC[eid] ?? eid });
+      continue;
+    }
+    if (
+      simDay % Math.round(ev.period_days) < 1 &&
+      Math.random() < ev.observability
+    ) {
+      observations.add(eid); // idempotent — Set handles first-occurrence tracking for knowledge unlocks
       events.push({
         type: 'celestial_observation',
         event_id: eid,

@@ -145,8 +145,7 @@ export function processArchitectureTick(settlement, population, discoveredTechs,
   }
   const p = getBuildPriority(settlement, groupSize, worldState);
   if (p) {
-    const ft = p.requires_tech[0];
-    if (!ft || discoveredTechs.has(ft)) {
+    if (p.requires_tech.every(ft => discoveredTechs.has(ft))) {
       const st = STRUCTURE_TYPES[p.id];
       if (st && settlement.labor_pool >= st.labor_days && hasMat(settlement, st.materials)) {
         consumeMat(settlement, st.materials);

@@ -167,6 +167,7 @@ function procViolation(group, members, simDay) {
     punishment = 'exile';
     group.member_ids = group.member_ids.filter(id => id !== v.id);
     v.group_id = null;
+    if (v.social) v.social.group_id = null;
   } else if (group.norms.has('leader_arbitration')) {
     punishment = 'fine';
     if (v.inventory?.food > 2) v.inventory.food -= 1;
