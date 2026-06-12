@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, type CSSProperties } from 'react';
 import FooterBar from '../components/layout/FooterBar';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Play, Pause, FolderOpen, ChevronLeft, ChevronRight, Users, Globe, Zap, Shield, Flame, Heart, Trash2, Sparkles, BookOpen, CircleSlash2 } from 'lucide-react';
+import { Play, Pause, LogOut, ChevronLeft, ChevronRight, Users, Globe, Zap, Shield, Flame, Heart, Trash2, Sparkles, BookOpen, CircleSlash2 } from 'lucide-react';
 import { useSimStore } from '../store/simStore';
 import { useSimWebSocket } from '../hooks/useSimWebSocket';
 import SimMenuOverlay from '../components/layout/SimMenuOverlay';
@@ -834,13 +834,14 @@ export default function SimulationPage() {
                   borderTop: 'none', borderRight: 'none', borderBottom: '1px solid #4a1a1a',
                   color: '#8abda0', cursor: 'pointer', whiteSpace: 'nowrap', boxSizing: 'border-box',
                 }}>
-                <FolderOpen size={16} style={{ flexShrink: 0 }} />
+                <LogOut size={16} style={{ flexShrink: 0 }} />
                 {rightPanelExpanded && <span>{lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}</span>}
               </button>
 
               {/* Speed label */}
               {rightPanelExpanded && (
-                <div style={{ padding: '4px 0', textAlign: 'center', borderBottom: '1px solid #4a1a1a' }}>
+                <div style={{ padding: '4px 0', textAlign: 'center', borderBottom: '1px solid #4a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                  <Zap size={12} color="#a0c8b0" />
                   <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.18em', fontFamily: 'Share Tech Mono, monospace' }}>{uiText.speed}</span>
                 </div>
               )}
