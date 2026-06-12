@@ -95,6 +95,8 @@ export class SimulationEngine {
       ind.beliefs = new Set(Array.isArray(ind.beliefs) ? ind.beliefs : []);
       // known_techs must be a Set in-memory; restore from persisted array
       ind.known_techs = new Set(Array.isArray(ind.known_techs) ? ind.known_techs : []);
+      // Prevent re-logging deaths that already happened before this restart
+      if (ind.is_dead) ind._death_logged = true;
       this.population.set(ind.id, ind);
       // Reconstruct groups from persisted social.group_id
       if (ind.group_id && !ind.is_dead) {
