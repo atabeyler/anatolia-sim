@@ -432,7 +432,7 @@ export default function SimulationPage() {
   };
 
   const sidebarW = sidebarExpanded ? 180 : 44;
-  const rightPanelW = rightPanelExpanded ? 88 : 36;
+  const rightPanelW = rightPanelExpanded ? 120 : 36;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', overflow: 'hidden', background: '#000', color: '#fff', fontFamily: 'Share Tech Mono, monospace' }}>
@@ -775,10 +775,10 @@ export default function SimulationPage() {
                   display: 'flex', alignItems: 'center', justifyContent: rightPanelExpanded ? 'flex-start' : 'center',
                   gap: rightPanelExpanded ? 7 : 0,
                   width: '100%', padding: rightPanelExpanded ? '6px 12px' : '7px 0',
-                  fontSize: 12, fontFamily: 'Share Tech Mono, monospace',
+                  fontSize: 14, fontFamily: 'Share Tech Mono, monospace',
                   background: 'transparent', borderLeft: '2px solid transparent',
                   borderTop: 'none', borderRight: 'none', borderBottom: '1px solid #4a1a1a',
-                  color: '#a0c8b0', cursor: 'pointer', whiteSpace: 'nowrap', boxSizing: 'border-box',
+                  color: '#8abda0', cursor: 'pointer', whiteSpace: 'nowrap', boxSizing: 'border-box',
                 }}>
                 <span style={{ fontSize: 16, flexShrink: 0 }}>☰</span>
                 {rightPanelExpanded && <span>{lang === 'tr' ? 'MENÜ' : 'MENU'}</span>}
@@ -812,7 +812,7 @@ export default function SimulationPage() {
                   display: 'flex', alignItems: 'center', justifyContent: rightPanelExpanded ? 'flex-start' : 'center',
                   gap: rightPanelExpanded ? 7 : 0,
                   width: '100%', padding: rightPanelExpanded ? '6px 12px' : '7px 0',
-                  fontSize: 12, fontFamily: 'Share Tech Mono, monospace',
+                  fontSize: 14, fontFamily: 'Share Tech Mono, monospace',
                   background: 'transparent', borderLeft: '2px solid transparent',
                   borderTop: 'none', borderRight: 'none', borderBottom: '1px solid #4a1a1a',
                   color: '#c05050', cursor: 'pointer', whiteSpace: 'nowrap', boxSizing: 'border-box',
@@ -829,10 +829,10 @@ export default function SimulationPage() {
                   display: 'flex', alignItems: 'center', justifyContent: rightPanelExpanded ? 'flex-start' : 'center',
                   gap: rightPanelExpanded ? 7 : 0,
                   width: '100%', padding: rightPanelExpanded ? '6px 12px' : '7px 0',
-                  fontSize: 12, fontFamily: 'Share Tech Mono, monospace',
+                  fontSize: 14, fontFamily: 'Share Tech Mono, monospace',
                   background: 'transparent', borderLeft: '2px solid transparent',
                   borderTop: 'none', borderRight: 'none', borderBottom: '1px solid #4a1a1a',
-                  color: '#a0c8b0', cursor: 'pointer', whiteSpace: 'nowrap', boxSizing: 'border-box',
+                  color: '#8abda0', cursor: 'pointer', whiteSpace: 'nowrap', boxSizing: 'border-box',
                 }}>
                 <FolderOpen size={16} style={{ flexShrink: 0 }} />
                 {rightPanelExpanded && <span>{lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}</span>}
