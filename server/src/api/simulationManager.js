@@ -218,6 +218,8 @@ function parseIndividual(row) {
   if (volatile._fears !== undefined) parsed._fears = volatile._fears;
   if (volatile._waterExperience !== undefined) parsed._waterExperience = volatile._waterExperience;
   if (volatile.known_techs !== undefined) parsed.known_techs = new Set(volatile.known_techs);
+  else if (isFounder) parsed.known_techs = new Set(['swimming']); // kurucu garantisi
+  if (isFounder && parsed.known_techs) parsed.known_techs.add('swimming'); // eski kayıtlar için
   if (volatile._experience !== undefined) parsed._experience = volatile._experience;
   if (row.psychology && Object.keys(row.psychology).length > 0) parsed.psychology = row.psychology;
   else if (volatile.psychology) parsed.psychology = volatile.psychology;

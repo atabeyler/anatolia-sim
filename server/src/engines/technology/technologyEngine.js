@@ -7,6 +7,7 @@ export const TECH_TREE = {
   water_container: { tier: 1, requires: ['stone_tools'],   difficulty: 1.0, iq_min: 0.3,  env_trigger: 'water_need' },
   animal_trap:     { tier: 1, requires: ['stone_tools'],   difficulty: 1.3, iq_min: 0.4,  env_trigger: 'fauna_present' },
   clothing_basic:  { tier: 1, requires: [],                difficulty: 1.1, iq_min: 0.3,  env_trigger: 'cold' },
+  swimming:        { tier: 1, requires: [],                      difficulty: 1.0, iq_min: 0.25, env_trigger: 'water_nearby' },
   fishing:         { tier: 2, requires: ['stone_tools'],         difficulty: 1.4, iq_min: 0.4,  env_trigger: 'water_nearby' },
   plant_cultivation:{ tier: 2, requires: ['foraging'],           difficulty: 2.0, iq_min: 0.5,  env_trigger: 'seasonal_plants' },
   animal_herding:  { tier: 2, requires: ['animal_trap'],         difficulty: 2.5, iq_min: 0.55, env_trigger: 'herdable_animals' },

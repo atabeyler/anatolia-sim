@@ -904,23 +904,14 @@ export class SimulationEngine {
     const nextX = Math.max(-180, Math.min(180, prevX + Math.cos(ind._moveAngle) * step));
     const nextY = Math.max(-85,  Math.min(85,  prevY + Math.sin(ind._moveAngle) * step));
 
-    const nextInWater = !isOnLand(nextY, nextX);
-    if (nextInWater && !ind._inWater) {
-      // Fiziksel dünya kısıtı: karadan suya yürünemez, konum geri alınır.
-      ind.x = prevX;
-      ind.y = prevY;
-      ind._inWater = false;
-      if (ind._lastLandX === undefined) { ind._lastLandX = prevX; ind._lastLandY = prevY; }
-    } else {
-      ind.x = nextX;
-      ind.y = nextY;
-      const nowInWater = nextInWater;
-      if (!nowInWater) {
-        ind._lastLandX = ind.x;
-        ind._lastLandY = ind.y;
-      }
-      ind._inWater = nowInWater;
+    ind.x = nextX;
+    ind.y = nextY;
+    const nowInWater = !isOnLand(nextY, nextX);
+    if (!nowInWater) {
+      ind._lastLandX = ind.x;
+      ind._lastLandY = ind.y;
     }
+    ind._inWater = nowInWater;
 
     // ── Kurucular: sert konum sınırı ──────────────────────────────────────────
     if (ind.is_founder && ind.home_x !== undefined) {
@@ -991,14 +982,12 @@ export class SimulationEngine {
       }
     }
 
-    // Drowning: being in water drains HP. Rate is reduced by accumulated water
-    // experience (_waterExperience) gained through survival and observation —
-    // no swimming gene, purely behavioural memory.
-    if (individual._inWater) {
+    // Drowning: being in water drains HP. Founders and individuals who know
+    // 'swimming' are immune. Others reduce damage via accumulated _waterExperience.
+    if (individual._inWater && !individual.is_founder && !individual.known_techs?.has('swimming')) {
       const ageYears  = (individual.age ?? 0) / 365;
       const ageFactor = ageYears < 5 ? 2.0 : ageYears > 60 ? 1.5 : 1.0;
       const skill     = Math.min(1, individual._waterExperience ?? 0);
-      // Fully experienced swimmer still takes 15% of base damage — water is never safe
       const drownRate = 0.020 * (1 - skill * 0.85) * ageFactor;
       health.hp = Math.max(0, health.hp - drownRate);
       health.calories  = Math.max(0, (health.calories  ?? 0.5) - 0.004 * (1 - skill * 0.5));

@@ -181,6 +181,11 @@ router.post('/', authenticate, async (req, res) => {
     // Mark as founders: immune to random death/disease until age 60, anchored to home
     f1.is_founder = true; f1.home_x = f1.x; f1.home_y = f1.y;
     f2.is_founder = true; f2.home_x = f2.x; f2.home_y = f2.y;
+    // Kurucular yüzmeyi bilir — diğerleri gözlemsel öğrenmeyle edinir
+    if (!f1.known_techs) f1.known_techs = new Set();
+    if (!f2.known_techs) f2.known_techs = new Set();
+    f1.known_techs.add('swimming');
+    f2.known_techs.add('swimming');
     // Pre-mate founders so they stay together and parent children from day 1
     if (!f1.social) f1.social = {};
     if (!f2.social) f2.social = {};
