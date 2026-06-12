@@ -16,7 +16,7 @@ const LOCI = {
 export function initializeEpigenome(individual) {
   individual.epigenome = {};
   for (const [id] of Object.entries(LOCI)) {
-    individual.epigenome[id] = { methylation: 0.5, last_modified: 0 };
+    individual.epigenome[id] = { methylation: 0.5, last_modified: null };
   }
 }
 
@@ -41,7 +41,7 @@ export function updateEpigenome(individual, env, simDay) {
   if (!individual.epigenome) initializeEpigenome(individual);
   for (const [id] of Object.entries(LOCI)) {
     if (!individual.epigenome[id]) {
-      individual.epigenome[id] = { methylation: 0.5, last_modified: 0 };
+      individual.epigenome[id] = { methylation: 0.5, last_modified: null };
     }
   }
   const stress = individual.psychology?.stress_level ?? 0.3;
@@ -75,9 +75,9 @@ function mod(individual, id, delta, simDay) {
   if (!locus) return;
   if (!individual.epigenome) initializeEpigenome(individual);
   if (!individual.epigenome[id]) {
-    individual.epigenome[id] = { methylation: 0.5, last_modified: 0 };
+    individual.epigenome[id] = { methylation: 0.5, last_modified: null };
   }
-  if (!locus.reversible && individual.epigenome[id].last_modified > 0) return;
+  if (!locus.reversible && individual.epigenome[id].last_modified !== null) return;
   individual.epigenome[id].methylation = Math.min(
     Math.max((individual.epigenome[id].methylation ?? 0.5) + delta, 0),
     1

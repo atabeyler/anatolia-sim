@@ -93,6 +93,8 @@ export class SimulationEngine {
       if (!ind.epigenome) initializeEpigenome(ind);
       // Beliefs must be a Set in-memory; DB stores as array (Set doesn't JSON-serialize)
       ind.beliefs = new Set(Array.isArray(ind.beliefs) ? ind.beliefs : []);
+      // known_techs must be a Set in-memory; restore from persisted array
+      ind.known_techs = new Set(Array.isArray(ind.known_techs) ? ind.known_techs : []);
       this.population.set(ind.id, ind);
       // Reconstruct groups from persisted social.group_id
       if (ind.group_id && !ind.is_dead) {
@@ -370,9 +372,20 @@ export class SimulationEngine {
     for (const nb of newborns) {
       nb.inventory = initializeInventory();
       nb.beliefs = new Set(); // must be Set in-memory
+      nb.known_techs = new Set();
       initializePsychology(nb);
       const p1 = this.population.get(nb.parent_1_id);
       const p2 = this.population.get(nb.parent_2_id);
+      // Yenidoğan ebeveynin grubunu miras alır — yoksa izolasyon stresi ve bilinç cezası oluşur
+      const parentGroupId = p1?.group_id ?? p2?.group_id ?? null;
+      if (parentGroupId) {
+        nb.group_id = parentGroupId;
+        if (nb.social) nb.social.group_id = parentGroupId;
+        const parentGroup = this.groups.find(g => g.id === parentGroupId);
+        if (parentGroup && !parentGroup.member_ids.includes(nb.id)) {
+          parentGroup.member_ids.push(nb.id);
+        }
+      }
       this.population.set(nb.id, nb);
       nb.inbreeding_coeff = computeInbreedingCoefficient(nb, this.population);
       this._todayBirths++;
@@ -1152,7 +1165,8 @@ export class SimulationEngine {
       for (const ind of alive) {
         if (ind.is_dead) continue;
         if (!ind._fears) ind._fears = {};
-        ind._fears.disaster = Math.min(1, (ind._fears.disaster ?? 0) + 0.5);
+        // Yumuşatılmış birikme: mevcut korkuyu azaltarak üstüne ekler, 1.0'a kilitlenmez
+        ind._fears.disaster = Math.min(1, (ind._fears.disaster ?? 0) * 0.6 + 0.5);
         // Sel/deprem tipi afetler ek su/yer korkusu yaratır
         if (type === 'flood') {
           ind._waterFear = Math.min(1, (ind._waterFear ?? 0) + 0.3);
@@ -1377,6 +1391,7 @@ function compactIndividual(ind) {
     social,
     skills: ind.skills ?? [],
     beliefs: ind.beliefs instanceof Set ? [...ind.beliefs] : (Array.isArray(ind.beliefs) ? ind.beliefs : []),
+    known_techs: ind.known_techs instanceof Set ? [...ind.known_techs] : (Array.isArray(ind.known_techs) ? ind.known_techs : []),
     language: ind.language ?? {},
     memory: ind.memory ?? {},
     parent_1_id: ind.parent_1_id,

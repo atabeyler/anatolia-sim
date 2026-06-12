@@ -11,8 +11,8 @@ const LANGUAGE_STAGES = [
 export function updateLanguageStage(individual, groupSize, generationCount, groupId = 'default') {
   // Stage check uses expressed foxp2, not genetic ceiling.
   // Expression grows through social interaction (see updateFoxp2Expression).
-  const foxp2 = individual.language?.foxp2_expression ?? individual.phenotype.language_capacity * 0.15;
-  const currentStage = individual.language.stage;
+  const foxp2 = individual.language?.foxp2_expression ?? (individual.phenotype?.language_capacity ?? 0.5) * 0.15;
+  const currentStage = individual.language?.stage ?? 0;
   for (let i = LANGUAGE_STAGES.length - 1; i >= 0; i--) {
     const s = LANGUAGE_STAGES[i];
     if (foxp2 >= s.foxp2_min && groupSize >= s.group_min && generationCount >= s.gen_min) {

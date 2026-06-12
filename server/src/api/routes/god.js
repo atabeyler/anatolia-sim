@@ -25,10 +25,11 @@ router.post('/:simId/intervene', authenticate, requireSimulationOwner, async (re
     switch (type) {
       case 'earthquake': {
         const { magnitude = 7, lat = 0, lon = 0, radius = 250 } = params;
+        const radiusDeg = radius / 111; // km → derece (1° ≈ 111 km)
         for (const ind of alive) {
           const dist = Math.hypot(ind.x - lon, ind.y - lat);
-          if (dist < radius) {
-            const risk = (magnitude - 4) / 5 * (1 - dist / radius);
+          if (dist < radiusDeg) {
+            const risk = (magnitude - 4) / 5 * (1 - dist / radiusDeg);
             if (Math.random() < risk) { markDead(ind, engine.currentDay, 'earthquake'); deaths++; }
             else { if (!ind.health) ind.health = { hp: 1.0, calories: 1.0, hydration: 1.0, disease: null, injuries: [] }; ind.health.hp = Math.max(0.1, (ind.health.hp ?? 1) - risk * 0.5); }
             affected++;
@@ -38,8 +39,9 @@ router.post('/:simId/intervene', authenticate, requireSimulationOwner, async (re
       }
       case 'flood': {
         const { severity = 0.7, lat = 0, lon = 0, radius = 250 } = params;
+        const floodRadiusDeg = radius / 111;
         for (const ind of alive) {
-          if (Math.hypot(ind.x - lon, ind.y - lat) < radius) {
+          if (Math.hypot(ind.x - lon, ind.y - lat) < floodRadiusDeg) {
             if (Math.random() < severity * 0.15) { markDead(ind, engine.currentDay, 'flood'); deaths++; }
             affected++;
           }
@@ -84,10 +86,11 @@ router.post('/:simId/intervene', authenticate, requireSimulationOwner, async (re
       }
       case 'volcano': {
         const { power = 7, lat = 0, lon = 0, radius = 200 } = params;
+        const volcanoRadiusDeg = radius / 111;
         for (const ind of alive) {
           const dist = Math.hypot(ind.x - lon, ind.y - lat);
-          if (dist < radius) {
-            const risk = (power / 10) * Math.exp(-dist / (radius * 0.4));
+          if (dist < volcanoRadiusDeg) {
+            const risk = (power / 10) * Math.exp(-dist / (volcanoRadiusDeg * 0.4));
             if (Math.random() < risk * 0.5) { markDead(ind, engine.currentDay, 'volcano'); deaths++; }
             else { if (!ind.health) ind.health = { hp: 1.0, calories: 1.0, hydration: 1.0, disease: null, injuries: [] }; ind.health.hp = Math.max(0.1, (ind.health.hp ?? 1) - risk * 0.4); }
             affected++;
@@ -99,11 +102,11 @@ router.post('/:simId/intervene', authenticate, requireSimulationOwner, async (re
       }
       case 'meteor': {
         const { size = 3, lat = 0, lon = 0 } = params;
-        const radius = size * 40;
+        const meteorRadiusDeg = (size * 40) / 111;
         for (const ind of alive) {
           const dist = Math.hypot(ind.x - lon, ind.y - lat);
-          if (dist < radius) {
-            const killProb = Math.exp(-dist / (radius * 0.3)) * 0.95;
+          if (dist < meteorRadiusDeg) {
+            const killProb = Math.exp(-dist / (meteorRadiusDeg * 0.3)) * 0.95;
             if (Math.random() < killProb) { markDead(ind, engine.currentDay, 'meteor'); deaths++; }
             affected++;
           }

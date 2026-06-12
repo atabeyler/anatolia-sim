@@ -48,7 +48,7 @@ export function updateMentalState(individual, events, worldState, simDay) {
       ps.wellbeing = Math.min(ps.wellbeing + 0.15, 1.0);
     } else if (ev.type === 'death_of_kin') {
       ps.stress_level = Math.min(ps.stress_level + 0.4, 1.0);
-      const empathyCapacity = ((p.oxytocin_sensitivity ?? 0.5) + (p.serotonin_transport ?? 0.5)) / 2;
+      const empathyCapacity = ((p.oxytocin_sensitivity ?? 0.5) + (p.serotonin ?? 0.5)) / 2;
       if (Math.random() < empathyCapacity) ps.mental_state = 'grieving';
       if (ps.trauma_events.length >= 50) ps.trauma_events.shift();
       ps.trauma_events.push({ type: 'kin_death', day: simDay });
@@ -74,8 +74,8 @@ export function updateMentalState(individual, events, worldState, simDay) {
   const _ls2 = individual.language?.stage ?? 0;
   const _c2 = individual.mind?.consciousness ?? 0;
   if (_tom < 1 && _ls2 >= 1 && _qi > 0.3 && Math.random() < 0.003) ps.theory_of_mind = 1;
-  else if (_tom < 2 && _ls2 >= 2 && _c2 > 0.02 && _qi > 0.4 && Math.random() < 0.001) ps.theory_of_mind = 2;
-  else if (_tom < 3 && _ls2 >= 3 && _c2 > 0.1 && _qi > 0.55 && Math.random() < 0.0004) ps.theory_of_mind = 3;
+  if (_tom < 2 && _ls2 >= 2 && _c2 > 0.02 && _qi > 0.4 && Math.random() < 0.001) ps.theory_of_mind = 2;
+  if (_tom < 3 && _ls2 >= 3 && _c2 > 0.1 && _qi > 0.55 && Math.random() < 0.0004) ps.theory_of_mind = 3;
   ps.life_satisfaction = (ps.wellbeing + (1 - ps.stress_level)) / 2;
 }
 

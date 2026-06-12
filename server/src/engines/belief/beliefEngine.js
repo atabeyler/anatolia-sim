@@ -58,6 +58,8 @@ export function tryFormBelief(individual, existingBeliefs, discoveredTechs, worl
   eligible.sort((a, b) => a[1].stage - b[1].stage);
   const [beliefId, arch] = eligible[0];
   existingBeliefs.add(beliefId);
+  if (!(individual.beliefs instanceof Set)) individual.beliefs = new Set();
+  individual.beliefs.add(beliefId);
   const descs = {
     animism: 'Spirits inhabit all living things and natural features',
     ancestor_cult: 'The spirits of ancestors guide and protect the living',
