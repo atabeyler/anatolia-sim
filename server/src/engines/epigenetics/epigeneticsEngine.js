@@ -61,6 +61,12 @@ export function updateEpigenome(individual, env, simDay) {
   } else if (nutrition > 0.7) {
     mod(individual, 'BDNF_PROMOTER', -0.003, simDay);
   }
+  // INSULIN_SENS: chronic undernutrition promotes insulin resistance; adequate nutrition reverses it
+  mod(individual, 'INSULIN_SENS', nutrition < 0.3 ? 0.01 : -0.005, simDay);
+  // AVP_REGULATION: dehydration or social isolation raises vasopressin methylation
+  const hydration = individual.health?.hydration ?? 0.8;
+  const isolated = !individual.group_id;
+  mod(individual, 'AVP_REGULATION', (hydration < 0.3 || isolated) ? 0.01 : -0.005, simDay);
   applyFX(individual);
 }
 
