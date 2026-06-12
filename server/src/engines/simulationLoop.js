@@ -1086,6 +1086,7 @@ export class SimulationEngine {
           ind.alive = false;
           ind.death_day = day;
           ind.death_cause = type;
+          ind._death_logged = true;
           deaths++;
           this._todayDeaths++;
           this.totalDeaths++;
