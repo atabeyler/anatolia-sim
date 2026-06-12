@@ -67,7 +67,7 @@ export function processGroupDynamics(population, groups, simDay) {
     const members = group.member_ids.map(id => popMap.get(id)).filter(Boolean);
     if (members.length < 2) continue;
     const currentLeader = members.find(m => m.id === group.leader_id);
-    const challenger = findChallenger(members, currentLeader);
+    const challenger = findChallenger(members, currentLeader, group);
     if (challenger && currentLeader) {
       const result = resolveLeadershipContest(currentLeader, challenger, simDay);
       if (result.new_leader_id !== group.leader_id) {
@@ -139,12 +139,12 @@ function canJoinGroup(ind, group) {
   return Math.random() > ((ind.phenotype?.xenophobia ?? 0.5) + 0.5) / 2 * 0.8;
 }
 
-function findChallenger(members, leader) {
+function findChallenger(members, leader, group) {
   if (!leader) return null;
   return members.find(m => {
     if (m.id === leader.id) return false;
     return (
-      computeSocialStatus(m, { founded_day: 0 }) - computeSocialStatus(leader, { founded_day: 0 }) > 0.2 &&
+      computeSocialStatus(m, group) - computeSocialStatus(leader, group) > 0.2 &&
       Math.random() < 0.05
     );
   });
