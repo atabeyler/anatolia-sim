@@ -47,18 +47,31 @@ const TOAST_DURATION = 5000;
 export default function MilestoneToast() {
   const { stats, events, lang, addMoment, currentSim } = useSimStore();
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const simKey = `milestones_${currentSim?.id ?? 'none'}`;
-  const fired = useRef<Set<string>>((() => {
-    try { return new Set(JSON.parse(sessionStorage.getItem(simKey) ?? '[]')); } catch { return new Set(); }
-  })());
-  // Skip events already in store at mount — those are historical DB records, not new ticks
-  const prevEventCount = useRef(events.length);
+  const fired = useRef<Set<string>>(new Set());
+  const prevEventCount = useRef(-1); // -1 = initial load not yet seen
+  const simIdRef = useRef<string | null>(null);
+
+  // When simId becomes available, load persisted fired-set and mark current events as historical.
+  // This runs after the async DB fetch settles, preventing historical events from triggering toasts.
+  useEffect(() => {
+    if (!currentSim?.id) return;
+    if (simIdRef.current === currentSim.id) return; // already initialized for this sim
+    simIdRef.current = currentSim.id;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(`milestones_${currentSim.id}`) ?? '[]');
+      fired.current = new Set(saved);
+    } catch { fired.current = new Set(); }
+    // Stamp current event count so historical events are skipped
+    prevEventCount.current = events.length;
+  }, [currentSim?.id, events.length]);
 
   function push(t: Omit<Toast, 'id'>, momentTitle?: string) {
     const id = Math.random().toString(36).slice(2);
     setToasts(prev => [...prev.slice(-2), { ...t, id }]);
     setTimeout(() => setToasts(prev => prev.filter(x => x.id !== id)), TOAST_DURATION);
-    try { sessionStorage.setItem(simKey, JSON.stringify([...fired.current])); } catch {}
+    if (simIdRef.current) {
+      try { sessionStorage.setItem(`milestones_${simIdRef.current}`, JSON.stringify([...fired.current])); } catch {}
+    }
     if (stats) {
       addMoment({
         day: stats.day,
@@ -75,7 +88,7 @@ export default function MilestoneToast() {
 
   // Population milestones
   useEffect(() => {
-    if (!stats) return;
+    if (!stats || !simIdRef.current) return;
     for (const n of POP_MILESTONES) {
       const key = `pop_${n}`;
       if (!fired.current.has(key) && stats.population >= n) {
@@ -87,7 +100,7 @@ export default function MilestoneToast() {
 
   // First death
   useEffect(() => {
-    if (!stats || fired.current.has('first_death')) return;
+    if (!stats || !simIdRef.current || fired.current.has('first_death')) return;
     if ((stats.deaths ?? 0) > 0) {
       fired.current.add('first_death');
       push({ icon: '†', color: '#e05a5a', message: tr('İlk ölüm gerçekleşti', 'First death occurred') });
@@ -96,7 +109,7 @@ export default function MilestoneToast() {
 
   // First discovery beyond defaults (foraging + stone_tools = 2)
   useEffect(() => {
-    if (!stats || fired.current.has('first_tech')) return;
+    if (!stats || !simIdRef.current || fired.current.has('first_tech')) return;
     if ((stats.technologies ?? 0) > 2) {
       fired.current.add('first_tech');
       push({ icon: '⚙', color: '#4ecb71', message: tr('İlk teknoloji keşfedildi!', 'First technology discovered!') });
@@ -105,6 +118,8 @@ export default function MilestoneToast() {
 
   // New events: disasters, significant language stages, births, deaths
   useEffect(() => {
+    // -1 means simId not yet loaded; skip until initialized
+    if (prevEventCount.current === -1) return;
     const newCount = events.length;
     if (newCount <= prevEventCount.current) { prevEventCount.current = newCount; return; }
     const newEvents = events.slice(0, newCount - prevEventCount.current);
