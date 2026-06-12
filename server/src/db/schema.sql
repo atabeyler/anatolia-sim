@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS individuals (
   mind JSONB DEFAULT '{}',
   social JSONB DEFAULT '{}',
   skills JSONB DEFAULT '[]',
-  beliefs JSONB DEFAULT '{}',
+  beliefs JSONB DEFAULT '[]',
   language JSONB DEFAULT '{}',
   memory JSONB DEFAULT '{}',
   parent_1_id UUID REFERENCES individuals(id),
