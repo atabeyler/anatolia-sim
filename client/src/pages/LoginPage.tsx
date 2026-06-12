@@ -383,7 +383,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden overflow-y-auto flex flex-col items-center justify-center bg-[#030310] scanlines">
+    <div className="relative min-h-screen overflow-x-hidden overflow-y-auto flex flex-col items-center bg-[#030310] scanlines">
 
       {/* Matrix (canvas at z2 + intro overlay at z200) */}
       <MatrixRain phase={phase} />
@@ -470,7 +470,7 @@ export default function LoginPage() {
 
       {/* Main content — always in DOM, fades in as intro overlay dissolves */}
       <div
-        className="z-10 flex flex-col items-center w-full px-4 py-8"
+        className="z-10 flex flex-col items-center w-full px-4 py-8 my-auto"
         style={{
           opacity: phase === 'full' ? 0 : 1,
           transition: 'opacity 2s ease',
