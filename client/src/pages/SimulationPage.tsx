@@ -796,7 +796,7 @@ export default function SimulationPage() {
                 }}>
                   {rightPanelExpanded
                     ? <>
-                        <span style={{ fontSize: 8, color: '#a0c8b0', letterSpacing: '0.18em', fontFamily: 'Share Tech Mono, monospace' }}>{uiText.user}</span>
+                        <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.18em', fontFamily: 'Share Tech Mono, monospace' }}>{uiText.user}</span>
                         <span style={{ fontSize: 11, color: '#e0e0f0', fontFamily: 'Orbitron, monospace', fontWeight: 700, letterSpacing: '0.06em', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{user.username.toUpperCase()}</span>
                       </>
                     : <span style={{ fontSize: 10, color: '#e0e0f0', fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>{user.username.slice(0, 2).toUpperCase()}</span>
@@ -841,7 +841,7 @@ export default function SimulationPage() {
               {/* Speed label */}
               {rightPanelExpanded && (
                 <div style={{ padding: '4px 0', textAlign: 'center', borderBottom: '1px solid #4a1a1a' }}>
-                  <span style={{ fontSize: 10, color: '#a0c8b0', letterSpacing: '0.18em', fontFamily: 'Share Tech Mono, monospace' }}>{uiText.speed}</span>
+                  <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.18em', fontFamily: 'Share Tech Mono, monospace' }}>{uiText.speed}</span>
                 </div>
               )}
 

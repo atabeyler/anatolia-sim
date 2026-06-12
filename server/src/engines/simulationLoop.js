@@ -358,6 +358,8 @@ export class SimulationEngine {
       // Log death event for newborns lost to birth complications
       if (nb.is_dead) {
         nb._death_logged = true;
+        this._todayDeaths++;
+        this.totalDeaths++;
         this.logEvent(day, 'death', `${nbLabel} died: birth_complications`, { individual_id: nb.id, cause: 'birth_complications', name: nbLabel }, 1);
       }
     }
@@ -403,6 +405,8 @@ export class SimulationEngine {
       if (ind.is_dead && !ind._death_logged) {
         ind._death_logged = true;
         ind.death_day = ind.death_day ?? day;
+        this._todayDeaths++;
+        this.totalDeaths++;
         const deadName2 = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
         this.logEvent(day, 'death', `${deadName2} died: ${ind.death_cause ?? ind.cause_of_death ?? 'unknown'}`, { individual_id: ind.id, cause: ind.death_cause ?? ind.cause_of_death ?? 'unknown', name: deadName2 }, 1);
       }
