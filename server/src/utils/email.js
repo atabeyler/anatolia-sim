@@ -12,8 +12,7 @@ function escapeHtml(value) {
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'info@boldkimya.com.tr';
 export const APP_URL = process.env.APP_URL
   ?? process.env.RENDER_EXTERNAL_URL
-  ?? (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null)
-  ?? 'https://anatolia-sim.onrender.com';
+  ?? 'http://localhost:3001';
 const FROM_NAME = 'ANATOLİA-SİM';
 
 async function sendViaResend(to, subject, text, html) {
