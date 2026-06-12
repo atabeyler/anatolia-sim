@@ -100,9 +100,9 @@ router.post('/refresh', async (req, res) => {
     const token = req.cookies?.refresh_token;
     if (!token) return res.status(401).json({ error: 'Oturum süresi doldu.' });
     const payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-    const { rows } = await query('SELECT id, user_code, email, role, first_name, last_name, is_banned FROM users WHERE id = $1', [payload.id]);
+    const { rows } = await query('SELECT id, user_code, email, role, first_name, last_name, is_banned, is_approved FROM users WHERE id = $1', [payload.id]);
     const user = rows[0];
-    if (!user || user.is_banned) return res.status(401).json({ error: 'Geçersiz oturum.' });
+    if (!user || user.is_banned || !user.is_approved) return res.status(401).json({ error: 'Geçersiz oturum.' });
     const accessToken = jwt.sign(
       { id: user.id, username: user.user_code, email: user.email, role: user.role },
       process.env.JWT_SECRET, { expiresIn: '15m' }
