@@ -326,6 +326,18 @@ export default function SimulationPage() {
     return () => clearInterval(id);
   }, []);
 
+  // Auto-reload when a new server version is deployed
+  useEffect(() => {
+    let currentVersion: string | null = null;
+    const check = () => fetch('/api/health').then(r => r.json()).then(d => {
+      if (!currentVersion) { currentVersion = d.version; return; }
+      if (d.version !== currentVersion) window.location.reload();
+    }).catch(() => {});
+    check();
+    const id = setInterval(check, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   useEffect(() => {
     if (!simId || !accessToken) return;
     // Clear previous sim's live data, then load this sim's persisted history
