@@ -1204,7 +1204,7 @@ export class SimulationEngine {
       weather: this.worldState.current_weather ?? 'clear',
       weather_intensity: Math.round((this.worldState.weather_intensity ?? 0.5) * 100) / 100,
       births: this.totalBirths,
-      deaths: [...this.population.values()].filter(i => i.is_dead).length,
+      deaths: this.totalDeaths,
       word_count: new Set(alive.flatMap(i => Object.keys(i.language?.vocabulary ?? {}))).size,
       max_language_stage: Math.max(0, ...alive.map(i => i.language?.stage ?? 0)),
       avg_consciousness: Math.round(alive.reduce((s, i) => s + (i.mind?.consciousness ?? 0), 0) / Math.max(1, alive.length) * 1000) / 1000,
