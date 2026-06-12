@@ -76,8 +76,9 @@ export function tryFormBelief(individual, existingBeliefs, discoveredTechs, worl
   };
 }
 
-export function updateBeliefSpread(population, existingBeliefs, groups) {
+export function updateBeliefSpread(population, existingBeliefs, groups, simDay) {
   if (existingBeliefs.size === 0) return [];
+  const events = [];
   const holdersByBelief = new Map();
   for (const belief of existingBeliefs) {
     holdersByBelief.set(belief, population.filter(p => p.beliefs instanceof Set && p.beliefs.has(belief)));
@@ -98,10 +99,18 @@ export function updateBeliefSpread(population, existingBeliefs, groups) {
         ind.beliefs.add(belief);
         const group = groups.find(g => g.member_ids?.includes(ind.id));
         if (group) group.internal_tension = Math.max(0, (group.internal_tension ?? 0.5) - 0.05);
+        events.push({
+          type: 'belief_spread',
+          belief_id: belief,
+          individual_id: ind.id,
+          group_id: group?.id ?? null,
+          day: simDay,
+          importance: 'low',
+        });
       }
     }
   }
-  return [];
+  return events;
 }
 
 export function checkRitualEmergence(group, population, existingBeliefs, simDay) {
