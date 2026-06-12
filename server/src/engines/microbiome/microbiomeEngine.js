@@ -49,6 +49,7 @@ export function processMicrobiomeTick(population,worldState,simDay){
 function triggerOB(pathId,path,population,simDay){
   const s=population.filter(i=>!i.is_dead&&!i.infections?.some(inf=>inf.pathogen_id===pathId)&&!(i.immunities?.[pathId]>simDay));
   if(s.length===0)return{affected:0};
+  for(let i=s.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[s[i],s[j]]=[s[j],s[i]];}
   const infected=s.slice(0,1+Math.floor(Math.random()*2));
   for(const ind of infected){
     if(!ind.infections)ind.infections=[];
