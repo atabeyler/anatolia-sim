@@ -899,16 +899,30 @@ export class SimulationEngine {
     }
 
     const step = speed * (0.5 + Math.random() * 0.8);
-    ind.x = Math.max(-180, Math.min(180, (ind.x ?? 0) + Math.cos(ind._moveAngle) * step));
-    ind.y = Math.max(-85,  Math.min(85,  (ind.y ?? 0) + Math.sin(ind._moveAngle) * step));
+    const prevX = ind.x ?? 0;
+    const prevY = ind.y ?? 0;
+    const nextX = Math.max(-180, Math.min(180, prevX + Math.cos(ind._moveAngle) * step));
+    const nextY = Math.max(-85,  Math.min(85,  prevY + Math.sin(ind._moveAngle) * step));
 
-    // Track water state; remember last land position for panic-return logic
-    const nowInWater = !isOnLand(ind.y, ind.x);
-    if (!nowInWater) {
-      ind._lastLandX = ind.x;
-      ind._lastLandY = ind.y;
+    const nextInWater = !isOnLand(nextY, nextX);
+    if (nextInWater && !ind._inWater) {
+      // Hard rollback: don't step into water from land. Flip angle away from water.
+      ind._moveAngle = (ind._moveAngle + Math.PI + (Math.random() - 0.5) * 0.8) % (Math.PI * 2);
+      ind.x = prevX;
+      ind.y = prevY;
+      ind._inWater = false;
+      if (ind._lastLandX === undefined) { ind._lastLandX = prevX; ind._lastLandY = prevY; }
+    } else {
+      ind.x = nextX;
+      ind.y = nextY;
+      // Track water state; remember last land position for panic-return logic
+      const nowInWater = nextInWater;
+      if (!nowInWater) {
+        ind._lastLandX = ind.x;
+        ind._lastLandY = ind.y;
+      }
+      ind._inWater = nowInWater;
     }
-    ind._inWater = nowInWater;
 
     // ── Kurucular: sert konum sınırı ──────────────────────────────────────────
     if (ind.is_founder && ind.home_x !== undefined) {

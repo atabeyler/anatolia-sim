@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { createGenome, createGamete, combineGametes, computePhenotype } from './genome.js';
 import { generateName } from '../language/nameEngine.js';
 import { inheritEpigenome, initializeEpigenome } from '../epigenetics/epigeneticsEngine.js';
+import { isOnLand } from '../../utils/landMask.js';
 
 export const LIFE_STAGE = {
   INFANT:     { name: 'infant',     minAge: 0,  maxAge: 2   },
@@ -95,8 +96,14 @@ export function createChild(parent1, parent2, birthDay, simulationId, communityL
   const child = {
     id: uuidv4(), simulation_id: simulationId,
     birth_day: birthDay, death_day: null, alive: true, sex,
-    x: parent1.x + (Math.random() - 0.5) * 0.04,
-    y: parent1.y + (Math.random() - 0.5) * 0.04,
+    ...(() => {
+      for (let i = 0; i < 8; i++) {
+        const cx = parent1.x + (Math.random() - 0.5) * 0.04;
+        const cy = parent1.y + (Math.random() - 0.5) * 0.04;
+        if (isOnLand(cy, cx)) return { x: cx, y: cy };
+      }
+      return { x: parent1.x, y: parent1.y }; // fallback to parent's position
+    })(),
     _waterFear: inheritedWaterFear,
     genome, phenotype,
     epigenome: {},
