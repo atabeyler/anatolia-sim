@@ -756,10 +756,17 @@ export class SimulationEngine {
     ind._moveAngle = ((ind._moveAngle + (Math.random() - 0.5) * 0.25) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
 
     if (ind.is_founder) {
-      // Kurucular sabit — home koordinatına kilitleniyor, drift yok
-      ind.x = ind.home_x ?? ind.x;
-      ind.y = ind.home_y ?? ind.y;
-      return;
+      // Kurucular hafif hareket edebilir — home'a çekim kuvvetiyle kısıtlıdır.
+      // Sert sınır aşağıdaki blokta uygulanır (max 0.04° drift).
+      const hx = ind.home_x ?? ind.x;
+      const hy = ind.home_y ?? ind.y;
+      const hdx = hx - (ind.x ?? 0);
+      const hdy = hy - (ind.y ?? 0);
+      const hdist = Math.hypot(hdx, hdy);
+      if (hdist > 0.015) {
+        const pull = Math.min(0.7, (hdist - 0.015) / 0.04);
+        ind._moveAngle = this._lerpAngle(ind._moveAngle, Math.atan2(hdy, hdx), pull);
+      }
     }
     {
       // ── Bant uyumu: centroide çekim ──────────────────────────────────────
