@@ -29,6 +29,32 @@ import { accumulateExperience, checkTechEmergence } from './agent/activityEngine
 const SOCIAL_INTERACTION_RADIUS = 2;
 const CHECKPOINT_INTERVAL = 90;
 
+// Spatial grid for O(n) neighbour lookups instead of O(n²) full scans.
+// Cell size equals the interaction radius so a 3×3 neighbourhood covers all
+// pairs within R (diagonal reach = √2×R > R, no false negatives possible).
+function buildSpatialGrid(individuals, cellSize = SOCIAL_INTERACTION_RADIUS) {
+  const grid = new Map();
+  for (const ind of individuals) {
+    const key = `${Math.floor((ind.x ?? 0) / cellSize)},${Math.floor((ind.y ?? 0) / cellSize)}`;
+    if (!grid.has(key)) grid.set(key, []);
+    grid.get(key).push(ind);
+  }
+  return grid;
+}
+
+function getNeighbours(ind, grid, cellSize = SOCIAL_INTERACTION_RADIUS) {
+  const cx = Math.floor((ind.x ?? 0) / cellSize);
+  const cy = Math.floor((ind.y ?? 0) / cellSize);
+  const result = [];
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dy = -1; dy <= 1; dy++) {
+      const bucket = grid.get(`${cx + dx},${cy + dy}`);
+      if (bucket) result.push(...bucket);
+    }
+  }
+  return result.filter(o => o.id !== ind.id);
+}
+
 export class SimulationEngine {
   constructor(simulation) {
     this.simId = simulation.id;
@@ -130,6 +156,8 @@ export class SimulationEngine {
     if (alive.length === 0) { this.running = false; return; }
     await new Promise(resolve => setImmediate(resolve));
     const tickEvents = [];
+    // Built once per tick; used by tech observation, language learning, and social interactions.
+    const spatialGrid = buildSpatialGrid(alive);
 
     // 0. Each individual selects their action for this tick based on their own needs.
     for (const ind of alive) {
@@ -334,7 +362,7 @@ export class SimulationEngine {
     }
 
     // 7. Social interactions, mating, bonding, disease spread
-    this.processSocialInteractions(alive, day, tickEvents);
+    this.processSocialInteractions(alive, day, tickEvents, spatialGrid);
 
     // 8. Reproduction — pass community lang stage + phonology for era-appropriate naming
     const communityLangStage = alive.length ? Math.max(...alive.map(i => i.language?.stage ?? 0)) : 0;
@@ -456,7 +484,7 @@ export class SimulationEngine {
         );
       }
     }
-    this.processLanguageLearning(alive);
+    this.processLanguageLearning(alive, spatialGrid);
 
     // 12b. Social learning: children near parents learn faster
     this.processFamilyLearning(alive, day, tickEvents);
@@ -492,7 +520,7 @@ export class SimulationEngine {
     // 13b. Technology observational learning — nearby individuals learn from each other
     for (const ind of alive) {
       if ((ind.phenotype?.fluid_intelligence ?? 0) < 0.2) continue;
-      const nearby = alive.filter(o => o.id !== ind.id &&
+      const nearby = getNeighbours(ind, spatialGrid).filter(o =>
         Math.hypot((o.x ?? 0) - (ind.x ?? 0), (o.y ?? 0) - (ind.y ?? 0)) < SOCIAL_INTERACTION_RADIUS
       );
       learnTechFromObservation(ind, nearby, this.discoveredTechs);
@@ -984,18 +1012,21 @@ export class SimulationEngine {
     ind.mating_urge = Math.min(1, (ind.mating_urge ?? 0) + rate);
   }
 
-  processSocialInteractions(alive, day, tickEvents) {
-    // Cap total pairs per tick to prevent O(n²) explosion at large populations
+  processSocialInteractions(alive, day, tickEvents, grid) {
     const MAX_PAIRS = 300;
     let pairs = 0;
-    outer: for (let i = 0; i < alive.length; i++) {
-      const ind = alive[i];
-      for (let j = i + 1; j < alive.length; j++) {
-        if (pairs >= MAX_PAIRS) break outer;
-        const other = alive[j];
-        if (ind.is_dead || other.is_dead) continue;
+    const seen = new Set();
+    for (const ind of alive) {
+      if (pairs >= MAX_PAIRS) break;
+      if (ind.is_dead) continue;
+      for (const other of getNeighbours(ind, grid)) {
+        if (pairs >= MAX_PAIRS) break;
+        if (other.is_dead) continue;
+        const pairKey = ind.id < other.id ? `${ind.id}:${other.id}` : `${other.id}:${ind.id}`;
+        if (seen.has(pairKey)) continue;
         const dist = Math.hypot((ind.x ?? 0) - (other.x ?? 0), (ind.y ?? 0) - (other.y ?? 0));
         if (dist > SOCIAL_INTERACTION_RADIUS) continue;
+        seen.add(pairKey);
         pairs++;
 
         // Social bonding
@@ -1017,11 +1048,10 @@ export class SimulationEngine {
     }
   }
 
-  processLanguageLearning(alive) {
+  processLanguageLearning(alive, grid) {
     for (const ind of alive) {
       if (!ind.language || ind.language.stage < 2) continue;
-      const nearby = alive.filter(o =>
-        o.id !== ind.id &&
+      const nearby = getNeighbours(ind, grid).filter(o =>
         o.language?.stage > ind.language.stage &&
         Math.hypot((ind.x ?? 0) - (o.x ?? 0), (ind.y ?? 0) - (o.y ?? 0)) < SOCIAL_INTERACTION_RADIUS
       );
