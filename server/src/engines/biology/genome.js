@@ -190,13 +190,49 @@ export function computePhenotype(genome) {
   };
 }
 
+// Wright's path coefficient method: F = Σ_A (0.5)^(L1+L2+1) × (1+F_A)
+// where L1/L2 are path lengths from each parent to common ancestor A.
+// Verified values: full siblings→0.25, half siblings→0.125, first cousins→0.0625.
 export function computeInbreedingCoefficient(individual, population) {
   if (!individual.parent_1_id || !individual.parent_2_id) return 0;
   const parent1 = population.get(individual.parent_1_id);
   const parent2 = population.get(individual.parent_2_id);
   if (!parent1 || !parent2) return 0;
-  const gp1 = new Set([parent1.parent_1_id, parent1.parent_2_id].filter(Boolean));
-  const gp2 = new Set([parent2.parent_1_id, parent2.parent_2_id].filter(Boolean));
-  const shared = [...gp1].filter(id => gp2.has(id)).length;
-  return shared * 0.25;
+
+  const probs1 = _ancestorProbs(parent1, population, 10);
+  const probs2 = _ancestorProbs(parent2, population, 10);
+
+  let F = 0;
+  for (const [ancId, p1] of probs1) {
+    const p2 = probs2.get(ancId);
+    if (p2 === undefined) continue;
+    const FA = population.get(ancId)?.inbreeding_coeff ?? 0;
+    F += 0.5 * p1 * p2 * (1 + FA);
+  }
+  return Math.min(F, 1);
+}
+
+// Returns Map<ancestorId, sum of (0.5)^depth over all paths from startInd to that ancestor>.
+// visited key = "id:depth" prevents infinite loops in inbred pedigrees while
+// still allowing the same ancestor to be reached at different depths via distinct paths.
+function _ancestorProbs(startInd, population, maxDepth) {
+  const probs = new Map();
+  const stack = [{ ind: startInd, depth: 0 }];
+  const visited = new Set();
+  while (stack.length) {
+    const { ind, depth } = stack.pop();
+    if (depth >= maxDepth) continue;
+    for (const pid of [ind.parent_1_id, ind.parent_2_id]) {
+      if (!pid) continue;
+      const parent = population.get(pid);
+      if (!parent) continue;
+      probs.set(pid, (probs.get(pid) ?? 0) + Math.pow(0.5, depth + 1));
+      const key = `${pid}:${depth + 1}`;
+      if (!visited.has(key)) {
+        visited.add(key);
+        stack.push({ ind: parent, depth: depth + 1 });
+      }
+    }
+  }
+  return probs;
 }
