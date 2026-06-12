@@ -13,16 +13,28 @@ export const PATHOGEN_TYPES={
 
 export function processMicrobiomeTick(population,worldState,simDay){
   const events=[];
-  const density=population.filter(i=>!i.is_dead).length;
+  const alive=population.filter(i=>!i.is_dead);
+  const density=alive.length;
   // Grace period: no outbreaks before day 180 or below 8 people
   if(simDay<180||density<8)return events;
   for(const[pathId,path]of Object.entries(PATHOGEN_TYPES)){
     if(density<path.density_threshold)continue;
     if(path.biomes&&!path.biomes.includes(worldState.biome))continue;
     const sm=(worldState.season==='summer'&&path.transmission==='vector')?2.0:(worldState.season==='winter'&&path.transmission==='airborne')?1.5:1.0;
-    if(Math.random()<density*0.00008*sm){
-      const ob=triggerOB(pathId,path,population,simDay);
-      if(ob.affected>0)events.push(ob.event);
+    // Each susceptible individual independently rolls their own environmental exposure.
+    // Who gets sick is determined by their personal vulnerability, not by us selecting them.
+    let newCases=0;
+    for(const ind of alive){
+      if(ind.infections?.some(i=>i.pathogen_id===pathId))continue;
+      if(ind.immunities?.[pathId]>simDay)continue;
+      if(Math.random()<envExposureProb(ind,path,sm)){
+        if(!ind.infections)ind.infections=[];
+        ind.infections.push({pathogen_id:pathId,days_remaining:path.duration_days,infected_day:simDay});
+        newCases++;
+      }
+    }
+    if(newCases>0){
+      events.push({type:'epidemic_outbreak',pathogen_id:pathId,initial_cases:newCases,day:simDay,importance:path.base_mortality>0.2?'high':'medium',description:`A ${pathId.replace(/_/g,' ')} outbreak begins`});
     }
   }
   for(const ind of population){
@@ -46,16 +58,29 @@ export function processMicrobiomeTick(population,worldState,simDay){
   return events;
 }
 
-function triggerOB(pathId,path,population,simDay){
-  const s=population.filter(i=>!i.is_dead&&!i.infections?.some(inf=>inf.pathogen_id===pathId)&&!(i.immunities?.[pathId]>simDay));
-  if(s.length===0)return{affected:0};
-  for(let i=s.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[s[i],s[j]]=[s[j],s[i]];}
-  const infected=s.slice(0,1+Math.floor(Math.random()*2));
-  for(const ind of infected){
-    if(!ind.infections)ind.infections=[];
-    ind.infections.push({pathogen_id:pathId,days_remaining:path.duration_days,infected_day:simDay});
+// Per-individual environmental exposure probability, weighted by personal vulnerability
+// to each transmission route. No central selection — the environment finds its victims.
+function envExposureProb(ind,path,sm){
+  const base=0.00008*sm;
+  switch(path.transmission){
+    case 'water':
+      // Thirsty individuals drink more, risking contaminated sources
+      return base*(1+Math.max(0,1-(ind.health?.hydration??0.8))*2);
+    case 'fecal_oral':
+      // Group living increases fecal-oral contact
+      return base*(ind.group_id?1.5:0.6);
+    case 'airborne':
+      // Proximity to others drives airborne transmission
+      return base*(ind.group_id?2.0:0.4);
+    case 'vector':
+      // Uniform vector pressure within the biome
+      return base;
+    case 'contact':
+      // Weakened individuals more susceptible to wound/skin pathogens
+      return base*(1+Math.max(0,0.5-(ind.health?.hp??0.5))*3);
+    default:
+      return base;
   }
-  return{affected:infected.length,event:{type:'epidemic_outbreak',pathogen_id:pathId,initial_cases:infected.length,day:simDay,importance:path.base_mortality>0.2?'high':'medium',description:`A ${pathId.replace(/_/g,' ')} outbreak begins`}};
 }
 
 export function spreadInfection(infected,susceptible,pathId,simDay){
