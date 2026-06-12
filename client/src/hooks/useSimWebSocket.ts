@@ -16,9 +16,14 @@ export function useSimWebSocket(simId: string | null) {
     function connect() {
       if (unmounted.current) return;
       const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const url = `${proto}//${location.host}/ws?simId=${encodeURIComponent(simId!)}&token=${encodeURIComponent(accessToken!)}`;
+      const url = `${proto}//${location.host}/ws?simId=${encodeURIComponent(simId!)}`;
       const socket = new WebSocket(url);
       ws.current = socket;
+
+      // Send token in first message, never in URL (URL is logged by proxies/CDNs).
+      socket.onopen = () => {
+        socket.send(JSON.stringify({ type: 'auth', token: accessToken }));
+      };
 
       socket.onmessage = (e) => {
         try {

@@ -94,22 +94,31 @@ if (existsSync(clientDist)) {
 }
 
 const wss = new WebSocketServer({ server, path: '/ws' });
-wss.on('connection', async (ws, req) => {
-  try {
-    const params = new URL(req.url, 'http://localhost').searchParams;
-    const simId = params.get('simId');
-    const token = params.get('token');
-    if (!simId || !token) return ws.close(1008, 'Authentication required');
-    const user = verifyAccessToken(token);
-    const { rows } = await query('SELECT id FROM simulations WHERE id = $1 AND user_id = $2', [simId, user.id]);
-    if (!rows[0]) return ws.close(1008, 'Simulation not found');
-    simulationManager.registerWs(simId, ws);
-    // Tell the client the actual engine state so it can auto-recover after a server restart.
-    const eng = simulationManager.getEngine(simId);
-    try { ws.send(JSON.stringify({ type: 'status', engine_running: eng?.running === true })); } catch {}
-  } catch {
-    ws.close(1008, 'Invalid token');
-  }
+wss.on('connection', (ws, req) => {
+  const params = new URL(req.url, 'http://localhost').searchParams;
+  const simId = params.get('simId');
+  if (!simId) return ws.close(1008, 'simId required');
+
+  // Token must arrive in the first message, never in the URL (URL is logged by proxies/CDNs).
+  const authTimeout = setTimeout(() => ws.close(1008, 'Authentication timeout'), 5000);
+
+  ws.once('message', async (raw) => {
+    clearTimeout(authTimeout);
+    try {
+      const { type, token } = JSON.parse(raw);
+      if (type !== 'auth' || !token) return ws.close(1008, 'Authentication required');
+      const user = verifyAccessToken(token);
+      const { rows } = await query('SELECT id FROM simulations WHERE id = $1 AND user_id = $2', [simId, user.id]);
+      if (!rows[0]) return ws.close(1008, 'Simulation not found');
+      simulationManager.registerWs(simId, ws);
+      // Tell the client the actual engine state so it can auto-recover after a server restart.
+      const eng = simulationManager.getEngine(simId);
+      try { ws.send(JSON.stringify({ type: 'status', engine_running: eng?.running === true })); } catch {}
+    } catch {
+      ws.close(1008, 'Invalid token');
+    }
+  });
+
   ws.on('error', console.error);
 });
 
