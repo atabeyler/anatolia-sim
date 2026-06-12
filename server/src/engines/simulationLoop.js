@@ -138,7 +138,7 @@ export class SimulationEngine {
 
     // 0b. Set age & life_stage on every individual (required by all engines)
     for (const ind of alive) {
-      ind.age = day - ind.birth_day;
+      ind.age = day - (ind.birth_day ?? 0);
       const ay = ind.age / 365;
       ind.life_stage = ay < LIFE_STAGE.CHILD.minAge ? 'INFANT'
         : ay < LIFE_STAGE.ADOLESCENT.minAge ? 'CHILD'
