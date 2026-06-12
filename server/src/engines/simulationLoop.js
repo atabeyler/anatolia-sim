@@ -417,7 +417,18 @@ export class SimulationEngine {
         ind.death_cause = cause;
         this._todayDeaths++;
         this.totalDeaths++;
-        tickEvents.push({ type: 'death_of_kin', individual_id: ind.id, day });
+        // Grief event — her grup üyesine ve yakın akrabaya ayrı ayrı gönderilir
+        // (psychologyEngine sadece kendi individual_id'sine sahip event'leri işler)
+        for (const survivor of alive) {
+          if (survivor.is_dead || survivor.id === ind.id) continue;
+          const sameGroup = survivor.group_id && survivor.group_id === ind.group_id;
+          const isKin = survivor.parent_1_id === ind.id || survivor.parent_2_id === ind.id
+                     || ind.parent_1_id === survivor.id || ind.parent_2_id === survivor.id;
+          const dist = Math.hypot((survivor.x ?? 0) - (ind.x ?? 0), (survivor.y ?? 0) - (ind.y ?? 0));
+          if (sameGroup || isKin || dist < 2) {
+            tickEvents.push({ type: 'death_of_kin', individual_id: survivor.id, deceased_id: ind.id, day });
+          }
+        }
         const deadName = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
         this.logEvent(day, 'death', `${deadName} died: ${cause}`, { individual_id: ind.id, cause, name: deadName }, 1);
         ind._death_logged = true;
