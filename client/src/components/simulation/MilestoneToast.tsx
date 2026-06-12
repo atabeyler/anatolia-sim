@@ -45,15 +45,20 @@ const POP_MILESTONES = [10, 25, 50, 100, 250, 500, 1000];
 const TOAST_DURATION = 5000;
 
 export default function MilestoneToast() {
-  const { stats, events, lang, addMoment } = useSimStore();
+  const { stats, events, lang, addMoment, currentSim } = useSimStore();
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const fired = useRef(new Set<string>());
-  const prevEventCount = useRef(0);
+  const simKey = `milestones_${currentSim?.id ?? 'none'}`;
+  const fired = useRef<Set<string>>((() => {
+    try { return new Set(JSON.parse(sessionStorage.getItem(simKey) ?? '[]')); } catch { return new Set(); }
+  })());
+  // Skip events already in store at mount — those are historical DB records, not new ticks
+  const prevEventCount = useRef(events.length);
 
   function push(t: Omit<Toast, 'id'>, momentTitle?: string) {
     const id = Math.random().toString(36).slice(2);
     setToasts(prev => [...prev.slice(-2), { ...t, id }]);
     setTimeout(() => setToasts(prev => prev.filter(x => x.id !== id)), TOAST_DURATION);
+    try { sessionStorage.setItem(simKey, JSON.stringify([...fired.current])); } catch {}
     if (stats) {
       addMoment({
         day: stats.day,
