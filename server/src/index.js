@@ -118,26 +118,33 @@ wss.on('connection', async (ws, req) => {
 async function seedAdminIfNeeded() {
   const code = (process.env.ADMIN_USER_CODE ?? '').toUpperCase().trim();
   const pass = process.env.ADMIN_PASSWORD;
-  const email = process.env.ADMIN_EMAIL ?? `${code}@admin.local`;
+  const email = process.env.ADMIN_EMAIL ?? '';
   if (!code || !pass) return;
   try {
     const bcrypt = (await import('bcrypt')).default;
     const hash = await bcrypt.hash(pass, 12);
-    // Try UPDATE first
-    const upd = await query(
+    // Try UPDATE by user_code first
+    let upd = await query(
       `UPDATE users SET role='admin', is_approved=true, is_banned=false, password_hash=$2, username=$1
        WHERE user_code=$1`,
       [code, hash]
     );
-    if (upd.rowCount > 0) {
-      console.log(`✅ Admin güncellendi: ${code}`);
-      return;
+    if (upd.rowCount > 0) { console.log(`✅ Admin güncellendi: ${code}`); return; }
+    // Try UPDATE by email
+    if (email) {
+      upd = await query(
+        `UPDATE users SET role='admin', is_approved=true, is_banned=false, password_hash=$2, username=$1, user_code=$1
+         WHERE email=$3`,
+        [code, hash, email]
+      );
+      if (upd.rowCount > 0) { console.log(`✅ Admin (email) güncellendi: ${code}`); return; }
     }
-    // No existing row — INSERT
+    // Fresh INSERT
+    const adminEmail = email || `${code}@admin.local`;
     await query(
       `INSERT INTO users (user_code, username, first_name, last_name, email, password_hash, role, is_approved)
        VALUES ($1,$1,'Admin','Yönetici',$2,$3,'admin',true)`,
-      [code, email, hash]
+      [code, adminEmail, hash]
     );
     console.log(`✅ Admin oluşturuldu: ${code}`);
   } catch (err) {
