@@ -177,17 +177,21 @@ export default function BiologyPanel() {
       </Section>
 
       <Section title={t(lang, 'Life Stages', 'Yaşam Evreleri')}>
-        {['INFANT', 'CHILD', 'ADOLESCENT', 'ADULT', 'ELDER'].map(stage => (
-          <div key={stage} className="flex justify-between py-0.5 border-b border-sim-border/30">
-            <span className="text-sim-muted">
-              {lang === 'tr' ? (LIFE_STAGE_TR[stage.toLowerCase()] ?? stage.toLowerCase()) : stage.toLowerCase()}
-            </span>
-            <span className="text-sim-text">—</span>
-          </div>
-        ))}
-        <p className="text-sim-muted text-sm italic mt-2">
-          {t(lang, 'Breakdown requires live population data.', 'Dağılım için canlı nüfus verisi gerekir.')}
-        </p>
+        {(() => {
+          const counts: Record<string, number> = { infant: 0, child: 0, adolescent: 0, adult: 0, elder: 0 };
+          for (const ind of individuals) {
+            const stage = (ind.life_stage ?? '').toLowerCase();
+            if (stage in counts) counts[stage]++;
+          }
+          return ['infant', 'child', 'adolescent', 'adult', 'elder'].map(stage => (
+            <div key={stage} className="flex justify-between py-0.5 border-b border-sim-border/30">
+              <span className="text-sim-muted">
+                {lang === 'tr' ? (LIFE_STAGE_TR[stage] ?? stage) : stage}
+              </span>
+              <span className="text-sim-text font-mono">{counts[stage]}</span>
+            </div>
+          ));
+        })()}
       </Section>
     </DetailPanel>
   );

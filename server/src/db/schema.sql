@@ -214,6 +214,7 @@ ALTER TABLE individuals ADD COLUMN IF NOT EXISTS group_id VARCHAR(100);
 ALTER TABLE individuals ADD COLUMN IF NOT EXISTS inbreeding_coeff DOUBLE PRECISION DEFAULT 0;
 ALTER TABLE individuals ADD COLUMN IF NOT EXISTS psychology JSONB DEFAULT '{}';
 ALTER TABLE individuals ADD COLUMN IF NOT EXISTS inventory JSONB DEFAULT '{}';
+ALTER TABLE individuals ADD COLUMN IF NOT EXISTS known_techs JSONB DEFAULT '[]';
 
 -- Checkpoint extended state columns
 ALTER TABLE checkpoints ADD COLUMN IF NOT EXISTS belief_state JSONB DEFAULT '[]';

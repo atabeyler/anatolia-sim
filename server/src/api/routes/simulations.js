@@ -138,7 +138,16 @@ function serializeIndividual(ind, currentDay) {
     inbreeding_coeff: ind.inbreeding_coeff ?? 0,
     is_founder: ind.is_founder ?? false,
     group_role: ind.group_role ?? null,
+    life_stage: ind.life_stage ?? getLifeStage(age),
   };
+}
+
+function getLifeStage(age) {
+  if (age < 2)  return 'infant';
+  if (age < 12) return 'child';
+  if (age < 18) return 'adolescent';
+  if (age < 45) return 'adult';
+  return 'elder';
 }
 
 router.get('/', authenticate, async (req, res) => {

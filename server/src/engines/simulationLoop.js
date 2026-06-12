@@ -328,19 +328,19 @@ export class SimulationEngine {
       const wasInWater = ind._wasInWater ?? false;
       const nowOnLand  = !ind._inWater;
       if (wasInWater && nowOnLand) {
-        // Bu birey sudan çıktı — yakındaki çocuklar gözlem kazanır
-        for (const other of alive) {
+        // Bu birey sudan çıktı — yakındaki gençler gözlem kazanır (spatial grid ile O(n·k))
+        for (const other of getNeighbours(ind, spatialGrid)) {
           if (other.id === ind.id) continue;
           const otherAge = (other.age ?? 0) / 365;
-          if (otherAge > 20) continue; // gençler daha kolay öğrenir
+          if (otherAge > 20) continue;
           const dist = Math.hypot((other.x ?? 0) - (ind.x ?? 0), (other.y ?? 0) - (ind.y ?? 0));
-          if (dist > 1.5) continue; // görüş mesafesi ~150km
+          if (dist > 1.5) continue;
           const isChild = other.parent_1_id === ind.id || other.parent_2_id === ind.id;
-          const gain = isChild ? 0.003 : 0.0005; // ebeveynden öğrenme daha etkili
+          const gain = isChild ? 0.003 : 0.0005;
           other._waterExperience = Math.min(1, (other._waterExperience ?? 0) + gain);
         }
       }
-      ind._wasInWater = ind._inWater; // bir sonraki tick için geçmiş durumu sakla
+      ind._wasInWater = ind._inWater;
     }
 
     // 5. Psychology — mental state

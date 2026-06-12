@@ -213,7 +213,7 @@ export default function TechnologyPanel() {
           </h4>
           <div className="space-y-1">
             {tier.techs.map(techId => {
-              const isDiscovered = discoveredSet.has(techId) || totalTechs > tier.tier * 5;
+              const isDiscovered = discoveredSet.has(techId);
               const progress = techProgress[techId] ?? 0;
               return (
                 <div
