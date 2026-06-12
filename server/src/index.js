@@ -42,9 +42,7 @@ app.use(cors({
     // Allow server-to-server, health checks, and same-origin requests with no Origin header.
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    // Fail-open to avoid blocking app boot in production due to missing/alternate origin.
-    console.warn(`CORS allow (fallback) for origin: ${origin}`);
-    return callback(null, true);
+    callback(new Error(`CORS: origin '${origin}' not allowed`));
   },
   credentials: true,
 }));
