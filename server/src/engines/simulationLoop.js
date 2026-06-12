@@ -17,7 +17,7 @@ import { processArchitectureTick, createSettlement, checkSettlementOvercrowding 
 import { processLawTick } from './law/lawEngine.js';
 import { processMicrobiomeTick, spreadInfection, updateGutMicrobiome, computeHealthStats } from './microbiome/microbiomeEngine.js';
 import { initializePsychology, updateMentalState, processBonding, computePopulationPsychStats } from './psychology/psychologyEngine.js';
-import { initializeEpigenome, inheritEpigenome, updateEpigenome } from './epigenetics/epigeneticsEngine.js';
+import { initializeEpigenome, updateEpigenome } from './epigenetics/epigeneticsEngine.js';
 import { processAstronomyTick, getAstronomyBonus } from './astronomy/astronomyEngine.js';
 import { isOnLand } from '../utils/landMask.js';
 import { computeSocialOrder } from './law/lawEngine.js';
@@ -343,11 +343,8 @@ export class SimulationEngine {
       nb.inventory = initializeInventory();
       nb.beliefs = new Set(); // must be Set in-memory
       initializePsychology(nb);
-      initializeEpigenome(nb);
-      // Inherit epigenetics from parents
       const p1 = this.population.get(nb.parent_1_id);
       const p2 = this.population.get(nb.parent_2_id);
-      if (p1 && p2) inheritEpigenome(nb, p1, p2);
       this.population.set(nb.id, nb);
       nb.inbreeding_coeff = computeInbreedingCoefficient(nb, this.population);
       this._todayBirths++;
