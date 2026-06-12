@@ -906,8 +906,7 @@ export class SimulationEngine {
 
     const nextInWater = !isOnLand(nextY, nextX);
     if (nextInWater && !ind._inWater) {
-      // Hard rollback: don't step into water from land. Flip angle away from water.
-      ind._moveAngle = (ind._moveAngle + Math.PI + (Math.random() - 0.5) * 0.8) % (Math.PI * 2);
+      // Fiziksel dünya kısıtı: karadan suya yürünemez, konum geri alınır.
       ind.x = prevX;
       ind.y = prevY;
       ind._inWater = false;
@@ -915,7 +914,6 @@ export class SimulationEngine {
     } else {
       ind.x = nextX;
       ind.y = nextY;
-      // Track water state; remember last land position for panic-return logic
       const nowInWater = nextInWater;
       if (!nowInWater) {
         ind._lastLandX = ind.x;
