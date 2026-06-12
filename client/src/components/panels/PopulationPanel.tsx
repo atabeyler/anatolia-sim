@@ -232,7 +232,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
-      <div className="relative flex flex-col" style={{ width: 360, maxHeight: '88vh', background: 'rgba(4,4,18,0.98)', border: '1px solid rgba(79,110,247,0.4)', backdropFilter: 'blur(20px)', boxShadow: '0 16px 60px rgba(0,0,0,0.8)' }}>
+      <div className="relative flex flex-col" style={{ width: 420, maxHeight: '88vh', background: 'rgba(4,4,18,0.98)', border: '1px solid rgba(79,110,247,0.4)', backdropFilter: 'blur(20px)', boxShadow: '0 16px 60px rgba(0,0,0,0.8)' }}>
 
         {/* ── Header ── */}
         <div className="flex items-center gap-2 px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid rgba(79,110,247,0.2)' }}>
@@ -242,7 +242,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
               {isFounder && <span className="font-share-tech" style={{ fontSize: 11, color: '#d4a838', border: '1px solid rgba(212,168,56,0.4)', padding: '1px 5px' }}>★ {tr('KURUCU', 'FOUNDER')}</span>}
               {isDead && <span className="font-share-tech" style={{ fontSize: 11, color: '#a05050' }}>† {tr('HAYATINI KAYBETTİ', 'DECEASED')}</span>}
             </div>
-            <div className="flex items-center gap-1.5 mt-0.5">
+            <div className="flex items-center flex-wrap gap-1.5 mt-0.5">
               {!isDead && <><span className="font-share-tech" style={{ fontSize: 11, color: stage.color }}>{tr(stage.label, stage.label)}</span><span className="font-share-tech text-sim-muted" style={{ fontSize: 11 }}>·</span></>}
               <span className="font-share-tech text-sim-muted" style={{ fontSize: 11 }}>{age.toFixed(1)} {tr('yaş', 'yr')}</span>
               <span className="font-share-tech text-sim-muted" style={{ fontSize: 11 }}>·</span>
