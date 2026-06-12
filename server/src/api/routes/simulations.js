@@ -51,7 +51,7 @@ function buildFounderParams(params = {}, defaults = {}) {
     eye_color: params.eye_color ?? defaults.eye_color,
     hair_color: params.hair_color ?? defaults.hair_color,
     skin_tone: params.skin_tone ?? defaults.skin_tone,
-    skin_color: params.skin_color ?? defaults.skin_color,
+    skin_color: params.skin_color ?? params.skin_tone ?? defaults.skin_tone,
   };
 
   const eyeValue = { blue: 0.25, green: 0.42, hazel: 0.55, brown: 0.78 }[appearance.eye_color];
@@ -167,12 +167,17 @@ router.get('/', authenticate, async (req, res) => {
 router.post('/', authenticate, async (req, res) => {
   try {
     const { name, latitude, longitude, founder1_params, founder2_params } = req.body;
-    if (!name || latitude === undefined || longitude === undefined) return res.status(400).json({ error: 'name, latitude, longitude required' });
-    const worldState = createWorldState(parseFloat(latitude), parseFloat(longitude));
+    if (!name?.trim()) return res.status(400).json({ error: 'Simülasyon adı gerekli' });
+    const lat = parseFloat(latitude), lon = parseFloat(longitude);
+    if (isNaN(lat) || isNaN(lon)) return res.status(400).json({ error: 'Geçersiz koordinat' });
+    if (lat < -90 || lat > 90)    return res.status(400).json({ error: 'Enlem -90 ile 90 arasında olmalı' });
+    if (lon < -180 || lon > 180)  return res.status(400).json({ error: 'Boylam -180 ile 180 arasında olmalı' });
+    if (!founder1_params || !founder2_params) return res.status(400).json({ error: 'İki kurucu gerekli' });
+    const worldState = createWorldState(lat, lon);
     const f1Params = buildFounderParams(founder1_params, { name: 'Kurucu Erkek', ageYears: 22, eye_color: 'brown', hair_color: 'dark', skin_tone: 'olive' });
     const f2Params = buildFounderParams(founder2_params, { name: 'Kurucu Kadın', ageYears: 20, eye_color: 'brown', hair_color: 'brown', skin_tone: 'olive' });
-    const f1 = createFounder({ ...f1Params, sex: f1Params.sex ?? 'male',   x: parseFloat(longitude), y: parseFloat(latitude) });
-    const f2 = createFounder({ ...f2Params, sex: f2Params.sex ?? 'female', x: parseFloat(longitude) + 0.1, y: parseFloat(latitude) });
+    const f1 = createFounder({ ...f1Params, sex: f1Params.sex ?? 'male',   x: lon,       y: lat });
+    const f2 = createFounder({ ...f2Params, sex: f2Params.sex ?? 'female', x: lon + 0.1, y: lat });
     // Mark as founders: immune to random death/disease until age 60, anchored to home
     f1.is_founder = true; f1.home_x = f1.x; f1.home_y = f1.y;
     f2.is_founder = true; f2.home_x = f2.x; f2.home_y = f2.y;
