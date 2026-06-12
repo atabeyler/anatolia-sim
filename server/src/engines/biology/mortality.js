@@ -8,8 +8,8 @@ const DEATH_CAUSES = {
 };
 
 // Target annual mortality rates (prehistoric hunter-gatherer baseline):
-//   0-1 yr  → ~20%  → 0.00061/day  (reduced from 25% — founding pair provides intense infant care)
-//   1-5 yr  → ~6%   → 0.00017/day
+//   0-1 yr  → ~8%   → 0.00022/day  (reduced — founding pair provides intense infant care)
+//   1-5 yr  → ~3.7% → 0.00010/day
 //   5-15 yr → ~1%   → 0.000027/day
 //   15-45   → ~1%   → 0.000027/day
 //   45-60   → ~2.5% → 0.000069/day
