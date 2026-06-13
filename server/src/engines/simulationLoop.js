@@ -152,11 +152,11 @@ export class SimulationEngine {
     this._todayBirths = 0;
     this._todayDeaths = 0;
     const day = this.currentDay;
-    for (const ind of this.population.values()) {
-      ind.alive = !ind.is_dead;
+    const alive = [...this.population.values()].filter(i => !i.is_dead);
+    for (const ind of alive) {
+      ind.alive = true;
       ind.age = day - (ind.birth_day ?? 0);
     }
-    const alive = [...this.population.values()].filter(i => !i.is_dead);
     if (alive.length === 0) { this.running = false; return; }
     await new Promise(resolve => setImmediate(resolve));
     const tickEvents = [];
@@ -467,6 +467,35 @@ export class SimulationEngine {
         this.totalDeaths++;
         const deadName2 = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
         this.logEvent(day, 'death', `${deadName2} died: ${ind.death_cause ?? ind.cause_of_death ?? 'unknown'}`, { individual_id: ind.id, cause: ind.death_cause ?? ind.cause_of_death ?? 'unknown', name: deadName2 }, 1);
+      }
+    }
+
+    // 10b. Dead individual memory management
+    // Slim (strip bulky data) after 90 days — keeps only lineage fields for inbreeding calc.
+    // Purge entirely after 730 days (2 years) — no longer reachable via active lineage lookups.
+    for (const [id, ind] of this.population) {
+      if (!ind.is_dead) continue;
+      const daysDead = day - (ind.death_day ?? day);
+      if (daysDead > 730) {
+        this.population.delete(id);
+      } else if (daysDead > 90 && !ind._slimmed) {
+        ind._slimmed = true;
+        delete ind.phenotype; delete ind.health; delete ind.psychology; delete ind.skills;
+        delete ind.inventory; delete ind.memory; delete ind.infections; delete ind.immunities;
+        delete ind.microbiome; delete ind.language; delete ind.epigenome;
+        delete ind._behaviorCounts; delete ind._currentAction;
+        delete ind._fears; delete ind._waterFear; delete ind._waterExperience; delete ind._inWater;
+        delete ind.group_id;
+      }
+    }
+    // 10c. Relationship cleanup — remove dead-individual keys every 30 days
+    if (day % 30 === 0) {
+      for (const ind of alive) {
+        if (!ind.psychology?.relationships) continue;
+        for (const relId of Object.keys(ind.psychology.relationships)) {
+          const rel = this.population.get(relId);
+          if (!rel || rel.is_dead) delete ind.psychology.relationships[relId];
+        }
       }
     }
 
@@ -1233,8 +1262,11 @@ export class SimulationEngine {
   }
 
   estimateGenerations() {
-    const ages = [...this.population.values()].map(i => this.currentDay - (i.birth_day ?? 0));
-    const oldest = ages.length > 0 ? Math.max(...ages) : 0;
+    let oldest = 0;
+    for (const ind of this.population.values()) {
+      const age = this.currentDay - (ind.birth_day ?? 0);
+      if (age > oldest) oldest = age;
+    }
     return Math.floor(oldest / (25 * 365));
   }
 
