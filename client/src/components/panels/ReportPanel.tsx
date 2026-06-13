@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import axios from 'axios';
-import { Download, Printer, FileJson } from 'lucide-react';
+import { Download, FileJson, FileDown, Printer } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 function t(lang: string, en: string, tr: string) {
   return lang === 'en' ? en : tr;
@@ -11,7 +13,9 @@ function t(lang: string, en: string, tr: string) {
 export default function ReportPanel() {
   const { currentSim, accessToken, lang, stats, events } = useSimStore();
   const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [msg, setMsg] = useState('');
+  const reportRef = useRef<HTMLDivElement>(null);
 
   function flash(text: string) { setMsg(text); setTimeout(() => setMsg(''), 4000); }
 
@@ -40,66 +44,94 @@ export default function ReportPanel() {
     if (!stats || !currentSim) return;
     const recentEvents = events.slice(0, 30);
     const html = `<!DOCTYPE html>
-<html lang="${lang}">
-<head>
-  <meta charset="UTF-8">
-  <title>ANATOLİA-SİM — ${currentSim.name ?? currentSim.id}</title>
-  <style>
-    body { font-family: 'Courier New', monospace; background: #fff; color: #111; margin: 40px; font-size: 13px; }
-    h1 { font-size: 20px; border-bottom: 2px solid #111; padding-bottom: 8px; }
-    h2 { font-size: 15px; margin-top: 24px; border-bottom: 1px solid #999; padding-bottom: 4px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    td, th { border: 1px solid #ccc; padding: 4px 8px; text-align: left; }
-    th { background: #f0f0f0; font-weight: bold; }
-    .meta { color: #555; font-size: 12px; }
-    .event { margin: 3px 0; }
-    @media print { body { margin: 20px; } }
-  </style>
-</head>
-<body>
-  <h1>ANATOLİA-SİM ${t(lang, 'Civilization Report', 'Medeniyet Raporu')}</h1>
-  <p class="meta">
-    ${t(lang, 'Simulation', 'Simülasyon')}: <strong>${currentSim.name ?? currentSim.id}</strong> &nbsp;|&nbsp;
-    ${t(lang, 'Generated', 'Oluşturuldu')}: ${new Date().toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')} &nbsp;|&nbsp;
-    ${t(lang, 'Year', 'Yıl')} ${stats.year} · ${t(lang, 'Day', 'Gün')} ${stats.day}
-  </p>
-
-  <h2>${t(lang, 'Population Statistics', 'Nüfus İstatistikleri')}</h2>
-  <table>
-    <tr><th>${t(lang, 'Metric', 'Gösterge')}</th><th>${t(lang, 'Value', 'Değer')}</th></tr>
-    <tr><td>${t(lang, 'Population', 'Nüfus')}</td><td>${stats.population.toLocaleString()}</td></tr>
-    <tr><td>${t(lang, 'Average Age', 'Ortalama Yaş')}</td><td>${stats.avg_age} yr</td></tr>
-    <tr><td>${t(lang, 'Avg Intelligence', 'Ort. Zeka')}</td><td>${(stats.avg_intelligence * 100).toFixed(1)}%</td></tr>
-    <tr><td>${t(lang, 'Technologies', 'Teknolojiler')}</td><td>${stats.technologies}</td></tr>
-    <tr><td>${t(lang, 'Beliefs', 'İnançlar')}</td><td>${stats.beliefs}</td></tr>
-    <tr><td>${t(lang, 'Art Forms', 'Sanat Formları')}</td><td>${stats.art_forms}</td></tr>
-    <tr><td>${t(lang, 'Social Groups', 'Sosyal Gruplar')}</td><td>${stats.groups}</td></tr>
-    <tr><td>${t(lang, 'Gini Coefficient', 'Gini Katsayısı')}</td><td>${stats.gini}</td></tr>
-    <tr><td>${t(lang, 'Happiness Index', 'Mutluluk İndeksi')}</td><td>${((stats as any).happiness_index * 100).toFixed(0)}%</td></tr>
-    <tr><td>${t(lang, 'Sick Rate', 'Hastalık Oranı')}</td><td>${(stats.sick_rate * 100).toFixed(1)}%</td></tr>
-    <tr><td>${t(lang, 'Food Abundance', 'Besin Bolluğu')}</td><td>${(stats.food_abundance * 100).toFixed(0)}%</td></tr>
-    <tr><td>${t(lang, 'Water Abundance', 'Su Bolluğu')}</td><td>${((stats.water_abundance ?? 0) * 100).toFixed(0)}%</td></tr>
-    <tr><td>${t(lang, 'Season', 'Mevsim')}</td><td>${stats.season}</td></tr>
-    <tr><td>${t(lang, 'Temperature', 'Sıcaklık')}</td><td>${stats.temperature}°C</td></tr>
-    <tr><td>${t(lang, 'Language Stage', 'Dil Aşaması')}</td><td>${stats.max_language_stage}</td></tr>
-    <tr><td>${t(lang, 'Word Count', 'Kelime Sayısı')}</td><td>${stats.word_count}</td></tr>
-  </table>
-
-  <h2>${t(lang, 'Recent Events', 'Son Olaylar')}</h2>
-  ${recentEvents.map(ev => `<div class="event">Y${ev.sim_year} G${ev.sim_day} [${ev.event_type}] ${ev.description ?? ''}</div>`).join('')}
-
-  <p class="meta" style="margin-top:32px; border-top:1px solid #ccc; padding-top:8px;">
-    Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026 · RST Q-Nation 200120401018
-  </p>
-</body>
-</html>`;
-
+<html lang="${lang}"><head><meta charset="UTF-8"><title>ANATOLİA-SİM — ${currentSim.name ?? currentSim.id}</title>
+<style>body{font-family:'Courier New',monospace;background:#fff;color:#111;margin:40px;font-size:13px;}h1{font-size:20px;border-bottom:2px solid #111;padding-bottom:8px;}h2{font-size:15px;margin-top:24px;border-bottom:1px solid #999;padding-bottom:4px;}table{width:100%;border-collapse:collapse;margin-top:8px;}td,th{border:1px solid #ccc;padding:4px 8px;text-align:left;}th{background:#f0f0f0;font-weight:bold;}.meta{color:#555;font-size:12px;}.event{margin:3px 0;}@media print{body{margin:20px;}}</style>
+</head><body>
+<h1>ANATOLİA-SİM ${t(lang,'Civilization Report','Medeniyet Raporu')}</h1>
+<p class="meta">${t(lang,'Simulation','Simülasyon')}: <strong>${currentSim.name??currentSim.id}</strong> &nbsp;|&nbsp; ${t(lang,'Generated','Oluşturuldu')}: ${new Date().toLocaleString(lang==='tr'?'tr-TR':'en-US')} &nbsp;|&nbsp; ${t(lang,'Year','Yıl')} ${stats.year} · ${t(lang,'Day','Gün')} ${stats.day}</p>
+<h2>${t(lang,'Population Statistics','Nüfus İstatistikleri')}</h2>
+<table><tr><th>${t(lang,'Metric','Gösterge')}</th><th>${t(lang,'Value','Değer')}</th></tr>
+${[[t(lang,'Population','Nüfus'),stats.population.toLocaleString()],[t(lang,'Average Age','Ortalama Yaş'),`${stats.avg_age} yr`],[t(lang,'Avg Intelligence','Ort. Zeka'),`${(stats.avg_intelligence*100).toFixed(1)}%`],[t(lang,'Technologies','Teknolojiler'),stats.technologies],[t(lang,'Beliefs','İnançlar'),stats.beliefs],[t(lang,'Art Forms','Sanat Formları'),stats.art_forms],[t(lang,'Social Groups','Sosyal Gruplar'),stats.groups],[t(lang,'Gini Coefficient','Gini Katsayısı'),stats.gini],[t(lang,'Happiness Index','Mutluluk İndeksi'),`${((stats as any).happiness_index*100).toFixed(0)}%`],[t(lang,'Sick Rate','Hastalık Oranı'),`${(stats.sick_rate*100).toFixed(1)}%`],[t(lang,'Food Abundance','Besin Bolluğu'),`${(stats.food_abundance*100).toFixed(0)}%`],[t(lang,'Water Abundance','Su Bolluğu'),`${((stats.water_abundance??0)*100).toFixed(0)}%`],[t(lang,'Season','Mevsim'),stats.season],[t(lang,'Temperature','Sıcaklık'),`${stats.temperature}°C`],[t(lang,'Language Stage','Dil Aşaması'),stats.max_language_stage],[t(lang,'Word Count','Kelime Sayısı'),stats.word_count]].map(([l,v])=>`<tr><td>${l}</td><td>${v}</td></tr>`).join('')}
+</table>
+<h2>${t(lang,'Recent Events','Son Olaylar')}</h2>
+${recentEvents.map(ev=>`<div class="event">Y${ev.sim_year} G${ev.sim_day} [${ev.event_type}] ${ev.description??''}</div>`).join('')}
+<p class="meta" style="margin-top:32px;border-top:1px solid #ccc;padding-top:8px;">Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026 · RST Q-Nation 200120401018</p>
+</body></html>`;
     const w = window.open('', '_blank', 'width=800,height=900');
     if (!w) return;
     w.document.write(html);
     w.document.close();
     w.focus();
     setTimeout(() => w.print(), 300);
+  }
+
+  async function downloadPDF() {
+    if (!stats || !currentSim) return;
+    setPdfLoading(true);
+    try {
+      const recentEvents = events.slice(0, 30);
+      const container = document.createElement('div');
+      container.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff;color:#111;font-family:Courier New,monospace;font-size:13px;padding:40px;box-sizing:border-box;';
+      container.innerHTML = `
+        <h1 style="font-size:20px;border-bottom:2px solid #111;padding-bottom:8px;margin:0 0 8px 0;">ANATOLİA-SİM ${t(lang, 'Civilization Report', 'Medeniyet Raporu')}</h1>
+        <p style="color:#555;font-size:12px;margin:0 0 16px 0;">
+          ${t(lang, 'Simulation', 'Simülasyon')}: <strong>${currentSim.name ?? currentSim.id}</strong> &nbsp;|&nbsp;
+          ${t(lang, 'Generated', 'Oluşturuldu')}: ${new Date().toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')} &nbsp;|&nbsp;
+          ${t(lang, 'Year', 'Yıl')} ${stats.year} · ${t(lang, 'Day', 'Gün')} ${stats.day}
+        </p>
+        <h2 style="font-size:15px;border-bottom:1px solid #999;padding-bottom:4px;margin:0 0 8px 0;">${t(lang, 'Population Statistics', 'Nüfus İstatistikleri')}</h2>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+          <tr><th style="border:1px solid #ccc;padding:4px 8px;background:#f0f0f0;text-align:left;">${t(lang,'Metric','Gösterge')}</th><th style="border:1px solid #ccc;padding:4px 8px;background:#f0f0f0;text-align:left;">${t(lang,'Value','Değer')}</th></tr>
+          ${[
+            [t(lang,'Population','Nüfus'), stats.population.toLocaleString()],
+            [t(lang,'Average Age','Ortalama Yaş'), `${stats.avg_age} yr`],
+            [t(lang,'Avg Intelligence','Ort. Zeka'), `${(stats.avg_intelligence*100).toFixed(1)}%`],
+            [t(lang,'Technologies','Teknolojiler'), stats.technologies],
+            [t(lang,'Beliefs','İnançlar'), stats.beliefs],
+            [t(lang,'Art Forms','Sanat Formları'), stats.art_forms],
+            [t(lang,'Social Groups','Sosyal Gruplar'), stats.groups],
+            [t(lang,'Gini Coefficient','Gini Katsayısı'), stats.gini],
+            [t(lang,'Happiness Index','Mutluluk İndeksi'), `${((stats as any).happiness_index*100).toFixed(0)}%`],
+            [t(lang,'Sick Rate','Hastalık Oranı'), `${(stats.sick_rate*100).toFixed(1)}%`],
+            [t(lang,'Food Abundance','Besin Bolluğu'), `${(stats.food_abundance*100).toFixed(0)}%`],
+            [t(lang,'Water Abundance','Su Bolluğu'), `${((stats.water_abundance??0)*100).toFixed(0)}%`],
+            [t(lang,'Season','Mevsim'), stats.season],
+            [t(lang,'Temperature','Sıcaklık'), `${stats.temperature}°C`],
+            [t(lang,'Language Stage','Dil Aşaması'), stats.max_language_stage],
+            [t(lang,'Word Count','Kelime Sayısı'), stats.word_count],
+          ].map(([l,v]) => `<tr><td style="border:1px solid #ccc;padding:4px 8px;">${l}</td><td style="border:1px solid #ccc;padding:4px 8px;">${v}</td></tr>`).join('')}
+        </table>
+        <h2 style="font-size:15px;border-bottom:1px solid #999;padding-bottom:4px;margin:0 0 8px 0;">${t(lang,'Recent Events','Son Olaylar')}</h2>
+        ${recentEvents.map(ev => `<div style="margin:3px 0;font-size:12px;">Y${ev.sim_year} G${ev.sim_day} [${ev.event_type}] ${ev.description??''}</div>`).join('')}
+        <p style="margin-top:32px;border-top:1px solid #ccc;padding-top:8px;color:#555;font-size:11px;">
+          Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026 · RST Q-Nation 200120401018
+        </p>`;
+      document.body.appendChild(container);
+
+      const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#fff' });
+      document.body.removeChild(container);
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const imgW = pageW;
+      const imgH = (canvas.height * pageW) / canvas.width;
+
+      let posY = 0;
+      while (posY < imgH) {
+        if (posY > 0) pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, -posY, imgW, imgH);
+        posY += pageH;
+      }
+
+      const fname = `anatolia-sim-${currentSim.name ?? currentSim.id}-Y${stats.year}.pdf`;
+      pdf.save(fname);
+      flash(t(lang, '✓ PDF downloaded.', '✓ PDF indirildi.'));
+    } catch {
+      flash(t(lang, '✗ PDF generation failed.', '✗ PDF oluşturulamadı.'));
+    }
+    setPdfLoading(false);
   }
 
   return (
@@ -145,23 +177,33 @@ export default function ReportPanel() {
         {/* PDF */}
         <div className="bg-sim-surface rounded-lg p-3">
           <div className="flex items-center gap-2 mb-2">
-            <Printer size={16} className="text-orange-400" />
+            <FileDown size={16} className="text-orange-400" />
             <span className="text-sim-text text-sm font-semibold">PDF</span>
           </div>
           <p className="text-sim-muted text-sm mb-3">
             {t(lang,
-              'Opens a print-ready report in a new window. Use browser "Print → Save as PDF".',
-              'Yeni pencerede yazdırmaya hazır rapor açar. Tarayıcıdan "Yazdır → PDF olarak kaydet" kullanın.'
+              'Generates and downloads a formatted PDF report directly.',
+              'Biçimlendirilmiş PDF raporunu doğrudan oluşturur ve indirir.'
             )}
           </p>
-          <button
-            onClick={printReport}
-            disabled={!stats || !currentSim}
-            className="w-full flex items-center justify-center gap-2 py-2 rounded border border-orange-400/50 bg-orange-400/10 hover:bg-orange-400/25 text-orange-400 transition-colors text-sm font-share-tech disabled:opacity-50"
-          >
-            <Printer size={14} />
-            {t(lang, 'Print / Save as PDF', 'Yazdır / PDF Kaydet')}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={downloadPDF}
+              disabled={pdfLoading || !stats || !currentSim}
+              className="flex-1 flex items-center justify-center gap-2 py-2 rounded border border-orange-400/50 bg-orange-400/10 hover:bg-orange-400/25 text-orange-400 transition-colors text-sm font-share-tech disabled:opacity-50"
+            >
+              <FileDown size={14} className={pdfLoading ? 'animate-bounce' : ''} />
+              {pdfLoading ? t(lang, 'Generating…', 'Oluşturuluyor…') : t(lang, 'Download PDF', 'PDF İndir')}
+            </button>
+            <button
+              onClick={printReport}
+              disabled={!stats || !currentSim}
+              title={t(lang, 'Print', 'Yazdır')}
+              className="px-3 py-2 rounded border border-orange-400/30 bg-orange-400/5 hover:bg-orange-400/15 text-orange-400/70 transition-colors text-sm disabled:opacity-50"
+            >
+              <Printer size={14} />
+            </button>
+          </div>
         </div>
       </div>
 

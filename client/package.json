@@ -8,18 +8,20 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-three/drei": "^9.109.2",
+    "@react-three/fiber": "^8.17.3",
     "axios": "^1.7.2",
+    "clsx": "^2.1.1",
     "framer-motion": "^11.3.8",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^0.400.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.24.1",
-    "three": "^0.166.1",
-    "@react-three/fiber": "^8.17.3",
-    "@react-three/drei": "^9.109.2",
-    "zustand": "^4.5.4",
     "recharts": "^2.12.7",
-    "lucide-react": "^0.400.0",
-    "clsx": "^2.1.1"
+    "three": "^0.166.1",
+    "zustand": "^4.5.4"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
