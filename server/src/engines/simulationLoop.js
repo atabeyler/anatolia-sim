@@ -75,6 +75,7 @@ export class SimulationEngine {
     this._todayDeaths = 0;
     this.totalBirths = 0;
     this.totalDeaths = 0;
+    this._aliveIds = new Set();
 
     this.speedMultiplier = simulation.speed_multiplier ?? 1;
     this.onTick = null;
@@ -98,6 +99,7 @@ export class SimulationEngine {
       // Prevent re-logging deaths that already happened before this restart
       if (ind.is_dead) ind._death_logged = true;
       this.population.set(ind.id, ind);
+      if (!ind.is_dead) this._aliveIds.add(ind.id);
       // Reconstruct groups from persisted social.group_id
       if (ind.group_id && !ind.is_dead) {
         if (!groupMap.has(ind.group_id)) {
@@ -115,7 +117,7 @@ export class SimulationEngine {
     this.groups = [...groupMap.values()];
 
     // Restore counters from loaded state — otherwise resumed simulations show 0.
-    this.totalDeaths = [...this.population.values()].filter(i => i.is_dead).length;
+    this.totalDeaths = this.population.size - this._aliveIds.size;
     this.totalBirths = [...this.population.values()].filter(i => !i.is_founder).length;
   }
 
@@ -152,11 +154,11 @@ export class SimulationEngine {
     this._todayBirths = 0;
     this._todayDeaths = 0;
     const day = this.currentDay;
-    for (const ind of this.population.values()) {
-      ind.alive = !ind.is_dead;
+    const alive = [...this._aliveIds].map(id => this.population.get(id)).filter(Boolean);
+    for (const ind of alive) {
+      ind.alive = true;
       ind.age = day - (ind.birth_day ?? 0);
     }
-    const alive = [...this.population.values()].filter(i => !i.is_dead);
     if (alive.length === 0) { this.running = false; return; }
     await new Promise(resolve => setImmediate(resolve));
     const tickEvents = [];
@@ -393,6 +395,7 @@ export class SimulationEngine {
         }
       }
       this.population.set(nb.id, nb);
+      if (!nb.is_dead) this._aliveIds.add(nb.id);
       nb.inbreeding_coeff = computeInbreedingCoefficient(nb, this.population);
       this._todayBirths++;
       this.totalBirths++;
@@ -434,6 +437,7 @@ export class SimulationEngine {
         ind.alive = false;
         ind.death_day = day;
         ind.death_cause = cause;
+        this._aliveIds.delete(ind.id);
         this._todayDeaths++;
         this.totalDeaths++;
         // Grief event — her grup üyesine ve yakın akrabaya ayrı ayrı gönderilir
@@ -1160,6 +1164,7 @@ export class SimulationEngine {
           ind.death_day = day;
           ind.death_cause = type;
           ind._death_logged = true;
+          this._aliveIds.delete(ind.id);
           deaths++;
           this._todayDeaths++;
           this.totalDeaths++;
@@ -1233,8 +1238,11 @@ export class SimulationEngine {
   }
 
   estimateGenerations() {
-    const ages = [...this.population.values()].map(i => this.currentDay - (i.birth_day ?? 0));
-    const oldest = ages.length > 0 ? Math.max(...ages) : 0;
+    let oldest = 0;
+    for (const ind of this.population.values()) {
+      const age = this.currentDay - (ind.birth_day ?? 0);
+      if (age > oldest) oldest = age;
+    }
     return Math.floor(oldest / (25 * 365));
   }
 
