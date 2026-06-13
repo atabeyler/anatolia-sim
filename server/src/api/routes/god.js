@@ -117,7 +117,8 @@ router.post('/:simId/intervene', authenticate, requireSimulationOwner, async (re
       }
       case 'longevity': {
         const ind = engine.population.get(params.individual_id);
-        if (ind) {
+        if (ind && !ind.is_dead) {
+          if (!ind.is_founder) return res.status(400).json({ error: 'Longevity boost only applies to founders — Cardinal Rule: non-founder phenotypes may not be directly modified' });
           ind.phenotype.max_lifespan = Math.min(200, ind.phenotype.max_lifespan + (params.extra_years ?? 50));
           affected = 1;
         }

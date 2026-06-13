@@ -22,7 +22,9 @@ export const BELIEF_ARCHETYPES = {
     stage: 3,
     iq_min: 0.5,
     foxp2_min: 0.6,
-    requires_tech: ['writing_system']
+    // Historically polytheism precedes writing (Egypt ~3500 BCE, writing ~3100 BCE).
+    // Pottery is the earliest material correlate of symbolic thought (Cauvin 2000).
+    requires_tech: ['pottery']
   },
   monotheism: {
     stage: 4,

@@ -29,7 +29,7 @@ The simulation runs 17 concurrent engines per tick (1 tick = 1 simulation day):
 | **Language** | FOXP2 expression growth, 7-stage emergence, organic vocabulary |
 | **Consciousness** | Genetics × language × social context, gated by potential |
 | **Psychology** | Wellbeing, stress, theory of mind (0–3), grief, attachment |
-| **Technology** | Cumulative discovery, 24 techs across 5 tiers (0–4) |
+| **Technology** | Cumulative discovery, 25 techs across 5 tiers (0–4) |
 | **Belief** | Proto-beliefs → animism → polytheism → monotheism |
 | **Culture** | Meme spread scaled by group consciousness |
 | **Art** | 12 art forms, consciousness micro-boost |

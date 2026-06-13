@@ -29,7 +29,7 @@ This rule must never be violated. Before adding any logic that sets a property o
 | `engines/language/languageEngine.js` | FOXP2 expression, 7-stage emergence, vocabulary |
 | `engines/language/nameEngine.js` | Phonology-based name generation |
 | `engines/belief/beliefEngine.js` | 6 belief archetypes, ritual emergence |
-| `engines/technology/technologyEngine.js` | 26-tech tree, cumulative `techProgress` Map |
+| `engines/technology/technologyEngine.js` | 25-tech tree, cumulative `techProgress` Map |
 | `engines/culture/cultureEngine.js` | 18 memes, consciousness-scaled spread |
 | `engines/art/artEngine.js` | 12 art forms, wellbeing bonus |
 | `engines/law/lawEngine.js` | 13 norms, enforcement, exile |
@@ -193,7 +193,7 @@ Water drowning risk: +0.05/tick × (1 - waterExperience). Inbreeding coeff > 0.2
 ## Technology Tree (26 techs)
 
 **Tier 0:** `fire_making stone_tools foraging`
-**Tier 1:** `hunting_spear shelter_basic water_container animal_trap clothing_basic`
+**Tier 1:** `hunting_spear shelter_basic water_container animal_trap clothing_basic swimming`
 **Tier 2:** `fishing plant_cultivation animal_herding food_preservation bow_arrow`
 **Tier 3:** `pottery weaving metallurgy_copper writing_system calendar mathematics_basic`
 **Tier 4:** `architecture_stone wheel irrigation sailing metallurgy_iron`

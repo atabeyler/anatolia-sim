@@ -13,7 +13,7 @@
 // ── Technology emergence thresholds ───────────────────────────────────────────
 // ALL listed skills must simultaneously exceed their threshold.
 // Effective threshold = base / learningFactor(ind).
-const TECH_SKILLS = {
+export const TECH_SKILLS = {
   // Tier 0
   stone_tools:        { prereqs: [],                              skills: { stone_handling: 1500 } },
   foraging:           { prereqs: [],                              skills: { plant_gathering: 1200 } },
@@ -47,6 +47,10 @@ const TECH_SKILLS = {
   irrigation:         { prereqs: ['plant_cultivation', 'wheel'], skills: { farming_observation: 10000, water_carrying: 5000 } },
   sailing:            { prereqs: ['fishing', 'wheel'],           skills: { water_carrying: 10000, wood_friction: 10000 } },
   metallurgy_iron:    { prereqs: ['metallurgy_copper'],           skills: { metal_working: 10000 } },
+
+  // Swimming: accumulated water-carrying experience near water bodies eventually
+  // produces deliberate swimming technique. No language prerequisite — purely physical.
+  swimming:           { prereqs: [],                              skills: { water_carrying: 2000 } },
 };
 
 const IQ_MINIMUMS = {
@@ -58,6 +62,7 @@ const IQ_MINIMUMS = {
   metallurgy_copper: 0.6, writing_system: 0.7, calendar: 0.6,
   mathematics_basic: 0.65, architecture_stone: 0.65, wheel: 0.65,
   irrigation: 0.65, sailing: 0.65, metallurgy_iron: 0.7,
+  swimming: 0.2,
 };
 
 /**
