@@ -383,28 +383,40 @@ ${r.individuals?.length ? tbl(
           </div>
           <p className="text-sim-muted text-sm mb-3">
             {t(lang,
-              'Generates and downloads a formatted PDF report directly.',
-              'Biçimlendirilmiş PDF raporunu doğrudan oluşturur ve indirir.'
+              'Generates and downloads a .pdf file directly — no dialog needed.',
+              'Kapak + giriş + tüm bölümler dahil .pdf dosyası olarak indirir.'
             )}
           </p>
-          <div className="flex gap-2">
-            <button
-              onClick={downloadPDF}
-              disabled={pdfLoading || !stats || !currentSim}
-              className="flex-1 flex items-center justify-center gap-2 py-2 rounded border border-orange-400/50 bg-orange-400/10 hover:bg-orange-400/25 text-orange-400 transition-colors text-sm font-share-tech disabled:opacity-50"
-            >
-              <FileDown size={14} className={pdfLoading ? 'animate-bounce' : ''} />
-              {pdfLoading ? t(lang, 'Generating…', 'Oluşturuluyor…') : t(lang, 'Download PDF', 'PDF İndir')}
-            </button>
-            <button
-              onClick={printReport}
-              disabled={!stats || !currentSim}
-              title={t(lang, 'Print', 'Yazdır')}
-              className="px-3 py-2 rounded border border-orange-400/30 bg-orange-400/5 hover:bg-orange-400/15 text-orange-400/70 transition-colors text-sm disabled:opacity-50"
-            >
-              <Printer size={14} />
-            </button>
+          <button
+            onClick={downloadPDF}
+            disabled={pdfLoading || !currentSim}
+            className="w-full flex items-center justify-center gap-2 py-2 rounded border border-orange-400/50 bg-orange-400/10 hover:bg-orange-400/25 text-orange-400 transition-colors text-sm font-share-tech disabled:opacity-50"
+          >
+            <FileDown size={14} className={pdfLoading ? 'animate-bounce' : ''} />
+            {pdfLoading ? t(lang, 'Generating…', 'Oluşturuluyor…') : t(lang, 'Download PDF', 'PDF İndir')}
+          </button>
+        </div>
+
+        {/* Print */}
+        <div className="bg-sim-surface rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Printer size={16} className="text-sim-muted" />
+            <span className="text-sim-text text-sm font-semibold">{t(lang, 'Print', 'Yazdır')}</span>
           </div>
+          <p className="text-sim-muted text-sm mb-3">
+            {t(lang,
+              'Opens a print-ready page in a new tab. Use browser Print → Save as PDF.',
+              'Yeni sekmede yazdırmaya hazır sayfa açar. Tarayıcıdan Yazdır → PDF kaydet seçilebilir.'
+            )}
+          </p>
+          <button
+            onClick={printReport}
+            disabled={!stats || !currentSim}
+            className="w-full flex items-center justify-center gap-2 py-2 rounded border border-sim-border/50 bg-sim-border/10 hover:bg-sim-border/20 text-sim-muted transition-colors text-sm font-share-tech disabled:opacity-50"
+          >
+            <Printer size={14} />
+            {t(lang, 'Open Print View', 'Yazdırma Görünümünü Aç')}
+          </button>
         </div>
       </div>
 
