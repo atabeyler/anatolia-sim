@@ -66,46 +66,198 @@ ${recentEvents.map(ev=>`<div class="event">Y${ev.sim_year} G${ev.sim_day} [${ev.
   }
 
   async function downloadPDF() {
-    if (!stats || !currentSim) return;
+    if (!currentSim || !accessToken) return;
     setPdfLoading(true);
     try {
-      const recentEvents = events.slice(0, 30);
+      const { data: r } = await axios.get(`/api/simulations/${currentSim.id}/report`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      const S = r.current_stats ?? {};
+      const TR = lang === 'tr';
+      const now = new Date().toLocaleString(TR ? 'tr-TR' : 'en-US');
+      const th = (s: string) => `<th style="border:1px solid #bbb;padding:4px 6px;background:#f0f0f0;font-size:11px;text-align:left;">${s}</th>`;
+      const td = (s: unknown) => `<td style="border:1px solid #ddd;padding:3px 6px;font-size:11px;">${s != null ? String(s) : '—'}</td>`;
+      const tr2 = (...cells: unknown[]) => `<tr>${cells.map(td).join('')}</tr>`;
+      const sec = (title: string) => `<h2 style="font-size:14px;border-bottom:2px solid #333;padding-bottom:4px;margin:24px 0 8px 0;">${title}</h2>`;
+      const tbl = (headers: string[], rows: string) =>
+        `<table style="width:100%;border-collapse:collapse;margin-bottom:16px;"><tr>${headers.map(th).join('')}</tr>${rows}</table>`;
+      const pct = (v: number|null|undefined) => v != null ? `${Math.round(v*100)}%` : '—';
+      const coord = (v: number|null|undefined) => v != null ? v.toFixed(4) : '—';
+
+      // Population history rows (every 4th checkpoint to keep compact — annual)
+      const popHistory = (r.population_history ?? [])
+        .filter((_: unknown, i: number) => i % 4 === 0 || i === (r.population_history.length - 1));
+
+      const deathByCause = r.death_statistics?.by_cause ?? {};
+      const deathTotal = r.death_statistics?.total ?? 0;
+      const deathByAge = r.death_statistics?.by_age_group ?? {};
+
+      const html = `<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8">
+<title>ANATOLİA-SİM — ${currentSim.name ?? currentSim.id}</title>
+<style>
+  body{font-family:'Courier New',monospace;background:#fff;color:#111;margin:40px;font-size:12px;line-height:1.4;}
+  h1{font-size:22px;border-bottom:3px solid #111;padding-bottom:10px;margin:0 0 6px 0;}
+  .meta{color:#555;font-size:11px;margin-bottom:20px;}
+  @media print{body{margin:20px;}h2{page-break-before:auto;}}
+</style></head><body>
+
+<!-- KAPAK -->
+<h1>ANATOLİA-SİM ${TR ? 'Medeniyet Raporu' : 'Civilization Report'}</h1>
+<p class="meta">
+  <strong>${TR?'Simülasyon':'Simulation'}:</strong> ${r.simulation?.name ?? currentSim.id} &nbsp;|&nbsp;
+  <strong>${TR?'Oluşturuldu':'Generated'}:</strong> ${now}<br>
+  <strong>${TR?'Koordinatlar':'Coordinates'}:</strong> ${r.simulation?.start_latitude ?? '?'}°, ${r.simulation?.start_longitude ?? '?'}° &nbsp;|&nbsp;
+  <strong>Biome:</strong> ${r.simulation?.biome ?? '?'} &nbsp;|&nbsp;
+  <strong>${TR?'Toplam Süre':'Total Duration'}:</strong> ${TR?'Yıl':'Year'} ${r.simulation?.current_year ?? S.year ?? '?'} · ${TR?'Gün':'Day'} ${r.simulation?.current_day ?? S.day ?? '?'}
+</p>
+
+<!-- ANLIK DURUM -->
+${sec(TR?'Anlık Durum (Son Checkpoint)':'Current Snapshot')}
+${tbl(
+  [TR?'Gösterge':'Metric', TR?'Değer':'Value'],
+  [
+    tr2(TR?'Nüfus':'Population', S.population),
+    tr2(TR?'Ortalama Yaş':'Avg Age', S.avg_age ? `${S.avg_age} yr` : '—'),
+    tr2(TR?'Ortalama Zeka':'Avg Intelligence', pct(S.avg_intelligence)),
+    tr2(TR?'Teknoloji Sayısı':'Technologies', S.technologies),
+    tr2(TR?'İnanç Sayısı':'Beliefs', S.beliefs),
+    tr2(TR?'Sanat Formları':'Art Forms', S.art_forms),
+    tr2(TR?'Sosyal Gruplar':'Social Groups', S.groups),
+    tr2(TR?'Gini Katsayısı':'Gini Coefficient', S.gini),
+    tr2(TR?'Mutluluk İndeksi':'Happiness Index', pct(S.happiness_index)),
+    tr2(TR?'Hastalık Oranı':'Sick Rate', pct(S.sick_rate)),
+    tr2(TR?'Besin Bolluğu':'Food Abundance', pct(S.food_abundance)),
+    tr2(TR?'Su Bolluğu':'Water Abundance', pct(S.water_abundance)),
+    tr2(TR?'Mevsim':'Season', S.season),
+    tr2(TR?'Sıcaklık':'Temperature', S.temperature ? `${S.temperature}°C` : '—'),
+    tr2(TR?'Dil Aşaması':'Language Stage', S.max_language_stage),
+    tr2(TR?'Kelime Sayısı':'Word Count', S.word_count),
+    tr2(TR?'Toplam Doğum':'Total Births', S.births),
+    tr2(TR?'Toplam Ölüm':'Total Deaths', S.deaths),
+    tr2('QoL Index', S.qol_index),
+  ].join('')
+)}
+
+<!-- NÜFUS TARİHİ -->
+${sec(TR?'Nüfus Tarihi (Yıllık)':'Population History (Annual)')}
+${tbl(
+  [TR?'Yıl':'Year', TR?'Nüfus':'Pop', TR?'Ort.Yaş':'Avg Age', TR?'Mutluluk':'Happiness', 'Gini',
+   TR?'Besin':'Food', TR?'Su':'Water', TR?'Teknoloji':'Tech', TR?'İnanç':'Belief',
+   TR?'Konum (X,Y)':'Location (X,Y)', TR?'Hareket Sebebi':'Movement Reason', TR?'Hava':'Weather'],
+  popHistory.map((c: Record<string, unknown>) => tr2(
+    c.year, c.population, c.avg_age ? `${c.avg_age}yr` : '—',
+    pct(c.happiness_index as number|undefined), c.gini,
+    pct(c.food_abundance as number|undefined), pct(c.water_abundance as number|undefined),
+    c.technologies, c.beliefs,
+    (c.centroid_x != null || c.centroid_y != null) ? `${coord(c.centroid_x as number|undefined)},${coord(c.centroid_y as number|undefined)}` : '—',
+    c.dominant_drive ?? '—', c.weather ?? '—'
+  )).join('')
+)}
+
+<!-- TEKNOLOJİ ZAMAN ÇİZELGESİ -->
+${sec(TR?'Teknoloji Zaman Çizelgesi':'Technology Timeline')}
+${r.technology_timeline?.length ? tbl(
+  [TR?'Yıl':'Year', TR?'Teknoloji':'Technology', TR?'Keşif Sebebi':'Discovery Reason',
+   TR?'Besin':'Food', TR?'Su':'Water', TR?'Nüfus':'Pop', TR?'Mevsim':'Season', TR?'Hava':'Weather'],
+  (r.technology_timeline as Record<string, unknown>[]).map(e => tr2(
+    e.year, e.name,
+    e.trigger_reason ?? '—',
+    pct(e.food_abundance as number|undefined), pct(e.water_abundance as number|undefined),
+    e.population, e.season, e.weather
+  )).join('')
+) : '<p style="color:#888;font-size:11px;">—</p>'}
+
+<!-- İNANÇ & KÜLTÜR ZAMAN ÇİZELGESİ -->
+${sec(TR?'İnanç & Kültür Zaman Çizelgesi':'Belief & Culture Timeline')}
+${(r.belief_timeline?.length || r.art_timeline?.length) ? tbl(
+  [TR?'Yıl':'Year', TR?'Tür':'Type', TR?'İsim':'Name', TR?'Oluşum Sebebi':'Formation Reason',
+   TR?'Nüfus':'Pop', TR?'Mevsim':'Season', TR?'Hava':'Weather'],
+  [
+    ...(r.belief_timeline as Record<string, unknown>[] ?? []).map(e => tr2(
+      e.year, TR?'İnanç':'Belief', e.name,
+      e.trigger_reason ?? '—', e.population, e.season, e.weather
+    )),
+    ...(r.art_timeline as Record<string, unknown>[] ?? []).map(e => tr2(
+      e.year, e.type, e.name, '—', '—', '—', '—'
+    )),
+  ].join('')
+) : '<p style="color:#888;font-size:11px;">—</p>'}
+
+<!-- GÖÇ TARİHİ -->
+${sec(TR?'Göç Tarihi':'Migration History')}
+${r.migration_history?.length ? tbl(
+  [TR?'Yıl':'Year', TR?'Mesafe':'Distance', TR?'Göç Sebebi':'Migration Reason',
+   TR?'Önceki Konum':'From', TR?'Yeni Konum':'To',
+   TR?'Besin':'Food', TR?'Su':'Water', TR?'Mevsim':'Season', TR?'Hava':'Weather'],
+  (r.migration_history as Record<string, unknown>[]).map(e => {
+    const from = e.from as Record<string,number>|undefined;
+    const to = e.to as Record<string,number>|undefined;
+    return tr2(
+      e.year, e.distance_km ? `${e.distance_km} km` : '—', e.reason ?? '—',
+      from ? `${coord(from.x)},${coord(from.y)}` : '—',
+      to   ? `${coord(to.x)},${coord(to.y)}` : '—',
+      pct(e.food_abundance as number|undefined), pct(e.water_abundance as number|undefined),
+      e.season, e.weather
+    );
+  }).join('')
+) : `<p style="color:#888;font-size:11px;">${TR?'Kayıt yok — göç verisi yeni checkpoint\'lerden itibaren toplanacak.':'No records — migration data will accumulate from future checkpoints.'}</p>`}
+
+<!-- ÖLÜM İSTATİSTİKLERİ -->
+${sec(TR?'Ölüm İstatistikleri':'Death Statistics')}
+<div style="display:flex;gap:20px;">
+<div style="flex:1;">
+<strong style="font-size:11px;">${TR?'Nedene Göre':'By Cause'}</strong>
+${tbl(
+  [TR?'Sebep':'Cause', TR?'Sayı':'Count', '%'],
+  Object.entries(deathByCause).sort(([,a],[,b]) => (b as number)-(a as number))
+    .map(([cause, count]) => tr2(cause, count as number, deathTotal ? `${Math.round((count as number)/deathTotal*100)}%` : '—'))
+    .join('') || tr2(TR?'Veri yok':'No data','','')
+)}
+</div>
+<div style="flex:1;">
+<strong style="font-size:11px;">${TR?'Yaş Grubuna Göre':'By Age Group'}</strong>
+${tbl(
+  [TR?'Yaş Grubu':'Age Group', TR?'Sayı':'Count', '%'],
+  [
+    tr2('0–1 (bebek)', deathByAge.infant_0_1, deathTotal ? `${Math.round((deathByAge.infant_0_1??0)/deathTotal*100)}%` : '—'),
+    tr2('1–15 (çocuk)', deathByAge.child_1_15, deathTotal ? `${Math.round((deathByAge.child_1_15??0)/deathTotal*100)}%` : '—'),
+    tr2('15–30 (genç)', deathByAge.young_adult_15_30, deathTotal ? `${Math.round((deathByAge.young_adult_15_30??0)/deathTotal*100)}%` : '—'),
+    tr2('30–50 (yetişkin)', deathByAge.adult_30_50, deathTotal ? `${Math.round((deathByAge.adult_30_50??0)/deathTotal*100)}%` : '—'),
+    tr2('50+ (yaşlı)', deathByAge.elder_50plus, deathTotal ? `${Math.round((deathByAge.elder_50plus??0)/deathTotal*100)}%` : '—'),
+  ].join('')
+)}
+</div>
+</div>
+
+<!-- ÖNEMLİ OLAYLAR -->
+${sec(TR?'Önemli Olaylar (önem ≥ 3)':'Notable Events (importance ≥ 3)')}
+${r.notable_events?.length ? tbl(
+  [TR?'Yıl':'Year', TR?'Gün':'Day', TR?'Tür':'Type', TR?'Açıklama':'Description'],
+  (r.notable_events as Record<string, unknown>[]).map(e => tr2(e.sim_year, e.sim_day, e.event_type, e.description)).join('')
+) : '<p style="color:#888;font-size:11px;">—</p>'}
+
+<!-- BİREYLER -->
+${sec(TR?'Bireyler':'Individuals')}
+${r.individuals?.length ? tbl(
+  [TR?'İsim':'Name', TR?'Cin.':'Sex', TR?'Kurucu':'Fnd', TR?'Doğum Yılı':'Born', TR?'Ölüm Yılı':'Died',
+   TR?'Ölüm Yaşı':'Age@Death', TR?'Ölüm Sebebi':'Cause', TR?'Zeka':'IQ'],
+  (r.individuals as Record<string, unknown>[]).map(i => tr2(
+    i.name, i.sex === 'male' ? '♂' : '♀', i.is_founder ? '✓' : '',
+    i.birth_year, i.is_dead ? i.death_year : TR?'(yaşıyor)':'(alive)',
+    i.age_at_death ?? (i.is_dead ? '—' : ''), i.death_cause ?? (i.is_dead ? '—' : ''),
+    i.intelligence != null ? `${Math.round((i.intelligence as number)*100)}%` : '—'
+  )).join('')
+) : '<p style="color:#888;font-size:11px;">—</p>'}
+
+<p style="margin-top:32px;border-top:1px solid #ccc;padding-top:8px;color:#555;font-size:10px;">
+  Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026 · RST Q-Nation 200120401018
+</p>
+</body></html>`;
+
       const container = document.createElement('div');
-      container.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff;color:#111;font-family:Courier New,monospace;font-size:13px;padding:40px;box-sizing:border-box;';
-      container.innerHTML = `
-        <h1 style="font-size:20px;border-bottom:2px solid #111;padding-bottom:8px;margin:0 0 8px 0;">ANATOLİA-SİM ${t(lang, 'Civilization Report', 'Medeniyet Raporu')}</h1>
-        <p style="color:#555;font-size:12px;margin:0 0 16px 0;">
-          ${t(lang, 'Simulation', 'Simülasyon')}: <strong>${currentSim.name ?? currentSim.id}</strong> &nbsp;|&nbsp;
-          ${t(lang, 'Generated', 'Oluşturuldu')}: ${new Date().toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')} &nbsp;|&nbsp;
-          ${t(lang, 'Year', 'Yıl')} ${stats.year} · ${t(lang, 'Day', 'Gün')} ${stats.day}
-        </p>
-        <h2 style="font-size:15px;border-bottom:1px solid #999;padding-bottom:4px;margin:0 0 8px 0;">${t(lang, 'Population Statistics', 'Nüfus İstatistikleri')}</h2>
-        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
-          <tr><th style="border:1px solid #ccc;padding:4px 8px;background:#f0f0f0;text-align:left;">${t(lang,'Metric','Gösterge')}</th><th style="border:1px solid #ccc;padding:4px 8px;background:#f0f0f0;text-align:left;">${t(lang,'Value','Değer')}</th></tr>
-          ${[
-            [t(lang,'Population','Nüfus'), stats.population.toLocaleString()],
-            [t(lang,'Average Age','Ortalama Yaş'), `${stats.avg_age} yr`],
-            [t(lang,'Avg Intelligence','Ort. Zeka'), `${(stats.avg_intelligence*100).toFixed(1)}%`],
-            [t(lang,'Technologies','Teknolojiler'), stats.technologies],
-            [t(lang,'Beliefs','İnançlar'), stats.beliefs],
-            [t(lang,'Art Forms','Sanat Formları'), stats.art_forms],
-            [t(lang,'Social Groups','Sosyal Gruplar'), stats.groups],
-            [t(lang,'Gini Coefficient','Gini Katsayısı'), stats.gini],
-            [t(lang,'Happiness Index','Mutluluk İndeksi'), `${((stats as any).happiness_index*100).toFixed(0)}%`],
-            [t(lang,'Sick Rate','Hastalık Oranı'), `${(stats.sick_rate*100).toFixed(1)}%`],
-            [t(lang,'Food Abundance','Besin Bolluğu'), `${(stats.food_abundance*100).toFixed(0)}%`],
-            [t(lang,'Water Abundance','Su Bolluğu'), `${((stats.water_abundance??0)*100).toFixed(0)}%`],
-            [t(lang,'Season','Mevsim'), stats.season],
-            [t(lang,'Temperature','Sıcaklık'), `${stats.temperature}°C`],
-            [t(lang,'Language Stage','Dil Aşaması'), stats.max_language_stage],
-            [t(lang,'Word Count','Kelime Sayısı'), stats.word_count],
-          ].map(([l,v]) => `<tr><td style="border:1px solid #ccc;padding:4px 8px;">${l}</td><td style="border:1px solid #ccc;padding:4px 8px;">${v}</td></tr>`).join('')}
-        </table>
-        <h2 style="font-size:15px;border-bottom:1px solid #999;padding-bottom:4px;margin:0 0 8px 0;">${t(lang,'Recent Events','Son Olaylar')}</h2>
-        ${recentEvents.map(ev => `<div style="margin:3px 0;font-size:12px;">Y${ev.sim_year} G${ev.sim_day} [${ev.event_type}] ${ev.description??''}</div>`).join('')}
-        <p style="margin-top:32px;border-top:1px solid #ccc;padding-top:8px;color:#555;font-size:11px;">
-          Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026 · RST Q-Nation 200120401018
-        </p>`;
+      container.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff;';
+      container.innerHTML = html;
       document.body.appendChild(container);
 
       const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#fff' });
@@ -125,10 +277,11 @@ ${recentEvents.map(ev=>`<div class="event">Y${ev.sim_year} G${ev.sim_day} [${ev.
         posY += pageH;
       }
 
-      const fname = `anatolia-sim-${currentSim.name ?? currentSim.id}-Y${stats.year}.pdf`;
+      const fname = `anatolia-sim-${currentSim.name ?? currentSim.id}-Y${r.simulation?.current_year ?? S.year ?? 0}.pdf`;
       pdf.save(fname);
       flash(t(lang, '✓ PDF downloaded.', '✓ PDF indirildi.'));
-    } catch {
+    } catch (err) {
+      console.error(err);
       flash(t(lang, '✗ PDF generation failed.', '✗ PDF oluşturulamadı.'));
     }
     setPdfLoading(false);

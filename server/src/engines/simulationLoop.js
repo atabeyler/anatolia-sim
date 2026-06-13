@@ -76,6 +76,7 @@ export class SimulationEngine {
     this.totalBirths = 0;
     this.totalDeaths = 0;
     this._aliveIds = new Set();
+    this._prevCentroid = null;
 
     this.speedMultiplier = simulation.speed_multiplier ?? 1;
     this.onTick = null;
@@ -545,7 +546,22 @@ export class SimulationEngine {
       accumulateExperience(ind, this.worldState);
       const emerged = checkTechEmergence(ind, this.discoveredTechs);
       for (const techId of emerged) {
-        const ev = { tech_id: techId, discoverer_id: ind.id, discovery_day: day, x: ind.x, y: ind.y };
+        const techTrigger = this.worldState.food_abundance < 0.3 ? 'besin kıtlığı'
+          : this.worldState.water_abundance < 0.2 ? 'su kıtlığı'
+          : (this.worldState.current_weather === 'drought' || this.worldState.current_weather === 'blizzard') ? 'iklim baskısı'
+          : alive.length >= 20 ? 'nüfus büyümesi'
+          : 'organik keşif';
+        const ev = {
+          tech_id: techId, name: techId, discoverer_id: ind.id, discovery_day: day, x: ind.x, y: ind.y,
+          context: {
+            trigger_reason: techTrigger,
+            food_abundance: Math.round(this.worldState.food_abundance * 100) / 100,
+            water_abundance: Math.round((this.worldState.water_abundance ?? 0.7) * 100) / 100,
+            population: alive.length,
+            season: this.worldState.season,
+            weather: this.worldState.current_weather ?? 'clear',
+          },
+        };
         tickEvents.push({ ...ev, type: 'discovery', individual_id: ind.id });
         this.logEvent(day, 'technology', `Technology discovered: ${techId}`, ev, 4);
       }
@@ -564,8 +580,22 @@ export class SimulationEngine {
     for (const ind of alive) {
       const beliefEvent = tryFormBelief(ind, this.discoveredBeliefs, this.discoveredTechs, this.worldState, day);
       if (beliefEvent) {
-        tickEvents.push(beliefEvent);
-        this.logEvent(day, 'belief', beliefEvent.description, beliefEvent, beliefEvent.importance === 'high' ? 4 : 2);
+        const beliefTrigger = this.worldState.recent_disaster ? `doğal afet (${this.worldState.recent_disaster})`
+          : this.worldState.food_abundance < 0.25 ? 'aşırı besin kıtlığı'
+          : (this.worldState.current_weather === 'blizzard' || this.worldState.current_weather === 'drought') ? 'ekstrem hava olayı'
+          : 'sosyal-kültürel gelişim';
+        const enrichedBelief = {
+          ...beliefEvent,
+          context: {
+            trigger_reason: beliefTrigger,
+            food_abundance: Math.round(this.worldState.food_abundance * 100) / 100,
+            population: alive.length,
+            season: this.worldState.season,
+            weather: this.worldState.current_weather ?? 'clear',
+          },
+        };
+        tickEvents.push(enrichedBelief);
+        this.logEvent(day, 'belief', beliefEvent.description, enrichedBelief, beliefEvent.importance === 'high' ? 4 : 2);
       }
     }
     const spreadEvents = updateBeliefSpread(alive, this.discoveredBeliefs, this.groups, day);
@@ -668,6 +698,32 @@ export class SimulationEngine {
         })),
         stats,
       }).catch(err => console.error('[SimulationEngine] checkpoint error:', err));
+
+      // Migration detection — compare centroid every checkpoint
+      if (this._bandCentroid) {
+        const cx = this._bandCentroid.x;
+        const cy = this._bandCentroid.y;
+        if (this._prevCentroid) {
+          const dist = Math.hypot(cx - this._prevCentroid.x, cy - this._prevCentroid.y);
+          if (dist >= 0.05) {
+            const reason = stats.movement_context?.dominant_drive ?? 'bilinmiyor';
+            const distKm = Math.round(dist * 111);
+            this.logEvent(day, 'migration',
+              `Bant ${distKm} km yer değiştirdi — sebep: ${reason}`,
+              {
+                from: { x: Math.round(this._prevCentroid.x * 10000) / 10000, y: Math.round(this._prevCentroid.y * 10000) / 10000 },
+                to:   { x: Math.round(cx * 10000) / 10000, y: Math.round(cy * 10000) / 10000 },
+                distance_km: distKm,
+                reason,
+                food_abundance: this.worldState.food_abundance,
+                water_abundance: this.worldState.water_abundance,
+                season: this.worldState.season,
+                weather: this.worldState.current_weather ?? 'clear',
+              }, 3);
+          }
+        }
+        this._prevCentroid = { x: cx, y: cy };
+      }
     }
 
     // 23. Broadcast (throttled at high speeds)
@@ -1346,6 +1402,8 @@ export class SimulationEngine {
           note: 'Kurucular tasarım gereği sabit konumdadır — aile bandının çıpasıdır',
         }));
       })(),
+      centroid_x: Math.round((this._bandCentroid?.x ?? this.worldState.longitude ?? 0) * 10000) / 10000,
+      centroid_y: Math.round((this._bandCentroid?.y ?? this.worldState.latitude ?? 0) * 10000) / 10000,
       movement_context: (() => {
         if (!alive.length) return null;
         const avgUrge   = alive.reduce((s, i) => s + (i.mating_urge ?? 0), 0) / alive.length;

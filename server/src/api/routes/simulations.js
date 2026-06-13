@@ -519,32 +519,145 @@ router.get('/:id/report', authenticate, requireSimulationOwner, async (req, res)
     if (!simRows[0]) return res.status(404).json({ error: 'Simulation not found' });
     const sim = simRows[0];
 
-    const [eventsRes, checkpointsRes, techRes, beliefsRes] = await Promise.all([
-      query('SELECT sim_year, sim_day, event_type, description FROM simulation_events WHERE simulation_id=$1 ORDER BY sim_day DESC LIMIT 200', [req.params.id]),
-      query('SELECT sim_day, sim_year, population_count, stats FROM checkpoints WHERE simulation_id=$1 ORDER BY sim_day DESC', [req.params.id]),
-      query("SELECT data FROM simulation_events WHERE simulation_id=$1 AND event_type='discovery' ORDER BY sim_day", [req.params.id]),
-      query("SELECT data FROM simulation_events WHERE simulation_id=$1 AND event_type='belief' ORDER BY sim_day", [req.params.id]),
+    const [allEventsRes, checkpointsRes, individualsRes] = await Promise.all([
+      query('SELECT sim_year, sim_day, event_type, description, data, importance FROM simulation_events WHERE simulation_id=$1 ORDER BY sim_day ASC', [req.params.id]),
+      query('SELECT sim_day, sim_year, population_count, stats FROM checkpoints WHERE simulation_id=$1 ORDER BY sim_day ASC', [req.params.id]),
+      query('SELECT id, phenotype, sex, birth_day, death_day, death_cause, is_dead, is_founder FROM individuals WHERE simulation_id=$1 ORDER BY birth_day ASC', [req.params.id]),
     ]);
 
     const engine = simulationManager.getEngine(req.params.id);
-    const liveStats = engine ? (() => {
-      const alive = [...engine.population.values()].filter(i => !i.is_dead);
-      return engine.computeStats(engine.currentDay, alive);
-    })() : null;
-    const latestCheckpointStats = checkpointsRes.rows[0]?.stats ?? null;
+    const liveAlive = engine ? [...engine._aliveIds].map(id => engine.population.get(id)).filter(Boolean) : [];
+    const liveStats = engine ? engine.computeStats(engine.currentDay, liveAlive) : null;
+    const checkRows = checkpointsRes.rows;
+    const latestCheckpointStats = checkRows[checkRows.length - 1]?.stats ?? null;
+    const currentStats = liveStats ?? latestCheckpointStats ?? sim.world_state;
+
+    const allEvents = allEventsRes.rows;
+
+    // Technology timeline — discovery events with context
+    const techTimeline = allEvents
+      .filter(e => e.event_type === 'technology')
+      .map(e => ({
+        name: e.data?.tech_id ?? e.data?.name ?? '?',
+        year: e.sim_year, day: e.sim_day,
+        trigger_reason: e.data?.context?.trigger_reason ?? null,
+        food_abundance: e.data?.context?.food_abundance ?? null,
+        water_abundance: e.data?.context?.water_abundance ?? null,
+        population: e.data?.context?.population ?? null,
+        season: e.data?.context?.season ?? null,
+        weather: e.data?.context?.weather ?? null,
+      }));
+
+    // Belief timeline
+    const beliefTimeline = allEvents
+      .filter(e => e.event_type === 'belief')
+      .map(e => ({
+        name: e.data?.belief_type ?? e.data?.name ?? e.description ?? '?',
+        year: e.sim_year, day: e.sim_day,
+        trigger_reason: e.data?.context?.trigger_reason ?? null,
+        food_abundance: e.data?.context?.food_abundance ?? null,
+        population: e.data?.context?.population ?? null,
+        season: e.data?.context?.season ?? null,
+        weather: e.data?.context?.weather ?? null,
+      }));
+
+    // Art/culture timeline
+    const artTimeline = allEvents
+      .filter(e => e.event_type === 'art' || e.event_type === 'culture' || e.event_type === 'ritual')
+      .map(e => ({ name: e.data?.art_type ?? e.data?.meme_id ?? e.description ?? '?', year: e.sim_year, day: e.sim_day, type: e.event_type }));
+
+    // Migration history
+    const migrationHistory = allEvents
+      .filter(e => e.event_type === 'migration')
+      .map(e => ({
+        year: e.sim_year, day: e.sim_day, description: e.description,
+        from: e.data?.from, to: e.data?.to,
+        distance_km: e.data?.distance_km,
+        reason: e.data?.reason,
+        food_abundance: e.data?.food_abundance,
+        water_abundance: e.data?.water_abundance,
+        season: e.data?.season, weather: e.data?.weather,
+      }));
+
+    // Population history from checkpoints
+    const populationHistory = checkRows.map(c => ({
+      year: c.sim_year, day: c.sim_day,
+      population: c.population_count,
+      avg_age: c.stats?.avg_age,
+      happiness_index: c.stats?.happiness_index,
+      gini: c.stats?.gini,
+      food_abundance: c.stats?.food_abundance,
+      water_abundance: c.stats?.water_abundance,
+      technologies: c.stats?.technologies,
+      beliefs: c.stats?.beliefs,
+      centroid_x: c.stats?.centroid_x,
+      centroid_y: c.stats?.centroid_y,
+      dominant_drive: c.stats?.movement_context?.dominant_drive,
+      season: c.stats?.season,
+      weather: c.stats?.weather,
+      deaths_total: c.stats?.deaths,
+      births_total: c.stats?.births,
+      sick_rate: c.stats?.sick_rate,
+      word_count: c.stats?.word_count,
+      max_language_stage: c.stats?.max_language_stage,
+      avg_consciousness: c.stats?.avg_consciousness,
+      qol_index: c.stats?.qol_index,
+    }));
+
+    // Death statistics
+    const deathByAge = { infant_0_1: 0, child_1_15: 0, young_adult_15_30: 0, adult_30_50: 0, elder_50plus: 0 };
+    const deathByCause = {};
+    const individuals = individualsRes.rows.map(ind => {
+      const ph = typeof ind.phenotype === 'string' ? JSON.parse(ind.phenotype) : (ind.phenotype ?? {});
+      const ageAtDeath = ind.death_day != null && ind.birth_day != null
+        ? Math.round((ind.death_day - ind.birth_day) / 365 * 10) / 10 : null;
+      if (ageAtDeath != null) {
+        if (ageAtDeath < 1)  deathByAge.infant_0_1++;
+        else if (ageAtDeath < 15) deathByAge.child_1_15++;
+        else if (ageAtDeath < 30) deathByAge.young_adult_15_30++;
+        else if (ageAtDeath < 50) deathByAge.adult_30_50++;
+        else deathByAge.elder_50plus++;
+        const cause = ind.death_cause ?? 'unknown';
+        deathByCause[cause] = (deathByCause[cause] ?? 0) + 1;
+      }
+      return {
+        id: ind.id,
+        name: ph.name ?? `${ind.sex}-${ind.id.slice(-4)}`,
+        sex: ind.sex,
+        is_founder: ind.is_founder,
+        birth_year: ind.birth_day != null ? Math.floor(ind.birth_day / 365) : null,
+        death_year: ind.death_day != null ? Math.floor(ind.death_day / 365) : null,
+        age_at_death: ageAtDeath,
+        death_cause: ind.death_cause,
+        is_dead: ind.is_dead,
+        intelligence: ph.fluid_intelligence != null ? Math.round(ph.fluid_intelligence * 100) / 100 : null,
+      };
+    });
+
+    const notableEvents = allEvents.filter(e => (e.importance ?? 1) >= 3);
 
     res.json({
       simulation: {
         id: sim.id, name: sim.name, status: sim.status,
         start_latitude: sim.start_latitude, start_longitude: sim.start_longitude,
+        biome: sim.world_state?.biome,
         current_year: sim.current_year, current_day: sim.current_day,
         created_at: sim.created_at,
       },
-      stats: liveStats ?? latestCheckpointStats ?? sim.world_state,
-      events: eventsRes.rows,
-      checkpoints: checkpointsRes.rows.map(c => ({ sim_day: c.sim_day, sim_year: c.sim_year, population_count: c.population_count })),
-      technologies: techRes.rows.map(r => r.data?.name).filter(Boolean),
-      beliefs: beliefsRes.rows.map(r => r.data?.belief_type ?? r.data?.name).filter(Boolean),
+      current_stats: currentStats,
+      population_history: populationHistory,
+      technology_timeline: techTimeline,
+      belief_timeline: beliefTimeline,
+      art_timeline: artTimeline,
+      migration_history: migrationHistory,
+      death_statistics: {
+        total: Object.values(deathByCause).reduce((a, b) => a + b, 0),
+        by_cause: deathByCause,
+        by_age_group: deathByAge,
+      },
+      individuals,
+      notable_events: notableEvents,
+      all_events: allEvents,
       generated_at: new Date().toISOString(),
     });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Report generation failed' }); }
