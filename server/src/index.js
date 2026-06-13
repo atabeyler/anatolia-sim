@@ -19,7 +19,7 @@ import analysisRouter from './api/routes/analysis.js';
 import ariaRouter from './api/routes/aria.js';
 import adminRouter from './api/routes/admin.js';
 import { simulationManager } from './api/simulationManager.js';
-import { query } from './db/database.js';
+import pool, { query } from './db/database.js';
 import { verifyAccessToken } from './api/middleware/auth.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -189,3 +189,16 @@ async function main() {
 }
 
 main();
+
+function shutdown(signal) {
+  console.log(`${signal} alındı — graceful shutdown başlıyor`);
+  server.close(() => {
+    pool.end(() => {
+      console.log('Sunucu ve veritabanı bağlantısı kapatıldı.');
+      process.exit(0);
+    });
+  });
+  setTimeout(() => { console.error('Zorla kapatılıyor'); process.exit(1); }, 8000);
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT',  () => shutdown('SIGINT'));
