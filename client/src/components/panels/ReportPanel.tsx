@@ -40,39 +40,11 @@ export default function ReportPanel() {
     setLoading(false);
   }
 
-  function printReport() {
-    if (!currentSim) return;
-    if (!stats) { flash(t(lang, '✗ No stats yet — start the simulation first.', '✗ Henüz veri yok — simülasyonu başlatın.')); return; }
-    const recentEvents = events.slice(0, 30);
-    const html = `<!DOCTYPE html>
-<html lang="${lang}"><head><meta charset="UTF-8"><title>ANATOLİA-SİM — ${currentSim.name ?? currentSim.id}</title>
-<style>body{font-family:'Courier New',monospace;background:#fff;color:#111;margin:40px;font-size:13px;}h1{font-size:20px;border-bottom:2px solid #111;padding-bottom:8px;}h2{font-size:15px;margin-top:24px;border-bottom:1px solid #999;padding-bottom:4px;}table{width:100%;border-collapse:collapse;margin-top:8px;}td,th{border:1px solid #ccc;padding:4px 8px;text-align:left;}th{background:#f0f0f0;font-weight:bold;}.meta{color:#555;font-size:12px;}.event{margin:3px 0;}@media print{body{margin:20px;}}</style>
-</head><body>
-<h1>ANATOLİA-SİM ${t(lang,'Civilization Report','Medeniyet Raporu')}</h1>
-<p class="meta">${t(lang,'Simulation','Simülasyon')}: <strong>${currentSim.name??currentSim.id}</strong> &nbsp;|&nbsp; ${t(lang,'Generated','Oluşturuldu')}: ${new Date().toLocaleString(lang==='tr'?'tr-TR':'en-US')} &nbsp;|&nbsp; ${t(lang,'Year','Yıl')} ${stats.year} · ${t(lang,'Day','Gün')} ${stats.day}</p>
-<h2>${t(lang,'Population Statistics','Nüfus İstatistikleri')}</h2>
-<table><tr><th>${t(lang,'Metric','Gösterge')}</th><th>${t(lang,'Value','Değer')}</th></tr>
-${[[t(lang,'Population','Nüfus'),stats.population.toLocaleString()],[t(lang,'Average Age','Ortalama Yaş'),`${stats.avg_age} yr`],[t(lang,'Avg Intelligence','Ort. Zeka'),`${(stats.avg_intelligence*100).toFixed(1)}%`],[t(lang,'Technologies','Teknolojiler'),stats.technologies],[t(lang,'Beliefs','İnançlar'),stats.beliefs],[t(lang,'Art Forms','Sanat Formları'),stats.art_forms],[t(lang,'Social Groups','Sosyal Gruplar'),stats.groups],[t(lang,'Gini Coefficient','Gini Katsayısı'),stats.gini],[t(lang,'Happiness Index','Mutluluk İndeksi'),`${((stats as any).happiness_index*100).toFixed(0)}%`],[t(lang,'Sick Rate','Hastalık Oranı'),`${(stats.sick_rate*100).toFixed(1)}%`],[t(lang,'Food Abundance','Besin Bolluğu'),`${(stats.food_abundance*100).toFixed(0)}%`],[t(lang,'Water Abundance','Su Bolluğu'),`${((stats.water_abundance??0)*100).toFixed(0)}%`],[t(lang,'Season','Mevsim'),stats.season],[t(lang,'Temperature','Sıcaklık'),`${stats.temperature}°C`],[t(lang,'Language Stage','Dil Aşaması'),stats.max_language_stage],[t(lang,'Word Count','Kelime Sayısı'),stats.word_count]].map(([l,v])=>`<tr><td>${l}</td><td>${v}</td></tr>`).join('')}
-</table>
-<h2>${t(lang,'Recent Events','Son Olaylar')}</h2>
-${recentEvents.map(ev=>`<div class="event">Y${ev.sim_year} G${ev.sim_day} [${ev.event_type}] ${ev.description??''}</div>`).join('')}
-<p class="meta" style="margin-top:32px;border-top:1px solid #ccc;padding-top:8px;">Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026 · RST Q-Nation 200120401018</p>
-</body></html>`;
-    const w = window.open('', '_blank', 'width=800,height=900');
-    if (!w) return;
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-    setTimeout(() => w.print(), 300);
-  }
-
-  async function downloadPDF() {
-    if (!currentSim || !accessToken) return;
-    setPdfLoading(true);
-    try {
-      const { data: r } = await axios.get(`/api/simulations/${currentSim.id}/report`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+  async function buildReportHtml(): Promise<string> {
+    const sim = currentSim!;
+    const { data: r } = await axios.get(`/api/simulations/${sim.id}/report`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
 
       const S = r.current_stats ?? {};
       const TR = lang === 'tr';
@@ -109,11 +81,11 @@ ${recentEvents.map(ev=>`<div class="event">Y${ev.sim_year} G${ev.sim_day} [${ev.
         return Math.round(dead.reduce((s: number, i: Record<string,unknown>) => s + (i.age_at_death as number), 0) / dead.length * 10) / 10;
       })();
 
-      const introTR = `Bu rapor, ANATOLİA-SİM evrimsel medeniyet simülasyonunda "${r.simulation?.name ?? currentSim.id}" adıyla oluşturulan medeniyetin ${totalYears} yıllık tarihsel kaydını içermektedir. Simülasyon ${r.simulation?.start_latitude ?? '?'}° enlem, ${r.simulation?.start_longitude ?? '?'}° boylamda, ${r.simulation?.biome ?? '?'} biome'unda başlatılmıştır.
+      const introTR = `Bu rapor, ANATOLİA-SİM evrimsel medeniyet simülasyonunda "${r.simulation?.name ?? sim.id}" adıyla oluşturulan medeniyetin ${totalYears} yıllık tarihsel kaydını içermektedir. Simülasyon ${r.simulation?.start_latitude ?? '?'}° enlem, ${r.simulation?.start_longitude ?? '?'}° boylamda, ${r.simulation?.biome ?? '?'} biome'unda başlatılmıştır.
 
 Medeniyet tarihi boyunca toplam ${totalEver} birey doğmuş, nüfus en yüksek ${peakPop} kişiye ulaşmıştır. Topluluk ${(r.technology_timeline ?? []).length} teknoloji ve ${(r.belief_timeline ?? []).length} inanç geliştirmiş; dil ${langStageName} aşamasına ilerlemiştir. ${deathTotal} ölümün gerçekleştiği bu süreçte ortalama ölüm yaşı ${deadAvgAge ?? '?'} yıl olarak hesaplanmıştır${epicCount > 0 ? `; ${epicCount} salgın ve ${disCount} doğal afet kaydedilmiştir` : ''}. ${totalMigDist > 0 ? `Bant toplamda yaklaşık ${totalMigDist} km yer değiştirmiştir.` : ''}`;
 
-      const introEN = `This report contains the ${totalYears}-year historical record of the civilization "${r.simulation?.name ?? currentSim.id}" created in the ANATOLİA-SİM evolutionary civilization simulation. The simulation was initialized at latitude ${r.simulation?.start_latitude ?? '?'}°, longitude ${r.simulation?.start_longitude ?? '?'}° in the ${r.simulation?.biome ?? '?'} biome.
+      const introEN = `This report contains the ${totalYears}-year historical record of the civilization "${r.simulation?.name ?? sim.id}" created in the ANATOLİA-SİM evolutionary civilization simulation. The simulation was initialized at latitude ${r.simulation?.start_latitude ?? '?'}°, longitude ${r.simulation?.start_longitude ?? '?'}° in the ${r.simulation?.biome ?? '?'} biome.
 
 Throughout its history, a total of ${totalEver} individuals were born, with peak population reaching ${peakPop}. The civilization developed ${(r.technology_timeline ?? []).length} technologies and ${(r.belief_timeline ?? []).length} beliefs; language progressed to the ${langStageName} stage. Of the ${deathTotal} deaths recorded, the average age at death was ${deadAvgAge ?? '?'} years${epicCount > 0 ? `; ${epicCount} epidemic(s) and ${disCount} disaster(s) occurred` : ''}. ${totalMigDist > 0 ? `The band migrated approximately ${totalMigDist} km in total.` : ''}`;
 
@@ -219,7 +191,7 @@ Throughout its history, a total of ${totalEver} individuals were born, with peak
         `<span style="display:inline-block;background:${color}20;color:${color};border:1px solid ${color}40;border-radius:12px;padding:2px 10px;font-size:10px;margin:2px;">${text}</span>`;
 
       const html = `<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8">
-<title>ANATOLİA-SİM — ${currentSim.name ?? currentSim.id}</title>
+<title>ANATOLİA-SİM — ${sim.name ?? sim.id}</title>
 <style>
   *{box-sizing:border-box;}
   body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#1f2937;margin:0;font-size:12px;line-height:1.5;}
@@ -236,7 +208,7 @@ Throughout its history, a total of ${totalEver} individuals were born, with peak
     <div style="font-size:56px;font-weight:900;letter-spacing:3px;line-height:1;color:#fff;margin-bottom:16px;">SİM</div>
     <div style="font-size:18px;color:#94a3b8;letter-spacing:2px;margin-bottom:40px;">${TR ? 'MEDENİYET RAPORU' : 'CIVILIZATION REPORT'}</div>
     <div style="font-size:30px;font-weight:700;color:#f1f5f9;border-top:1px solid #334155;border-bottom:1px solid #334155;padding:14px 0;margin-bottom:36px;">
-      ${r.simulation?.name ?? currentSim.id}
+      ${r.simulation?.name ?? sim.id}
     </div>
     <div style="display:flex;gap:32px;flex-wrap:wrap;">
       <div>
@@ -413,29 +385,50 @@ ${r.individuals?.length ? styledTbl(
 </div>
 </body></html>`;
 
+    return html;
+  }
+
+  async function printReport() {
+    if (!currentSim || !accessToken) return;
+    setPdfLoading(true);
+    try {
+      const html = await buildReportHtml();
+      const w = window.open('', '_blank', 'width=900,height=1000');
+      if (!w) { flash(t(lang, '✗ Popup blocked.', '✗ Popup engellendi.')); setPdfLoading(false); return; }
+      w.document.write(html);
+      w.document.close();
+      w.focus();
+      setTimeout(() => w.print(), 500);
+    } catch {
+      flash(t(lang, '✗ Failed.', '✗ Başarısız.'));
+    }
+    setPdfLoading(false);
+  }
+
+  async function downloadPDF() {
+    if (!currentSim || !accessToken) return;
+    setPdfLoading(true);
+    try {
+      const html = await buildReportHtml();
       const container = document.createElement('div');
       container.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff;';
       container.innerHTML = html;
       document.body.appendChild(container);
-
       const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#fff' });
       document.body.removeChild(container);
-
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
       const imgW = pageW;
       const imgH = (canvas.height * pageW) / canvas.width;
-
       let posY = 0;
       while (posY < imgH) {
         if (posY > 0) pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, -posY, imgW, imgH);
         posY += pageH;
       }
-
-      const fname = `anatolia-sim-${currentSim.name ?? currentSim.id}-Y${r.simulation?.current_year ?? S.year ?? 0}.pdf`;
+      const fname = `anatolia-sim-${currentSim.name ?? currentSim.id}-Y${stats?.year ?? 0}.pdf`;
       pdf.save(fname);
       flash(t(lang, '✓ PDF downloaded.', '✓ PDF indirildi.'));
     } catch (err) {
