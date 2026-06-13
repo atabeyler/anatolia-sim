@@ -40,14 +40,18 @@ export const BELIEF_ARCHETYPES = {
 
 export function tryFormBelief(individual, existingBeliefs, discoveredTechs, worldState, simDay) {
   const p = individual.phenotype;
+  // Belief forms from accumulated reflection, not a daily dice roll.
+  // The same experiential factors (religiosity, disaster, scarcity) now feed a
+  // running counter; belief crystallizes when it crosses threshold 50.
+  // Average individual (gain≈0.35/day) forms first eligible belief ~140 days after conditions are met.
   const rel = p.religiosity ?? ((p.anxiety + p.curiosity) / 2);
-  const prob = (
-    rel * 0.5 +
-    p.fluid_intelligence * 0.2 +
-    (worldState.recent_disaster ? 0.3 : 0) +
-    Math.max(0, 1 - worldState.food_abundance) * 0.2
-  ) / 20;
-  if (Math.random() > Math.min(prob, 0.005)) return null;
+  const gain = rel * 0.5 +
+               p.fluid_intelligence * 0.2 +
+               (worldState.recent_disaster ? 0.3 : 0) +
+               Math.max(0, 1 - worldState.food_abundance) * 0.2;
+  individual._beliefReflection = (individual._beliefReflection ?? 0) + gain;
+  if (individual._beliefReflection < 50) return null;
+  individual._beliefReflection = 0;
   const eligible = Object.entries(BELIEF_ARCHETYPES).filter(([name, arch]) =>
     !existingBeliefs.has(name) &&
     p.fluid_intelligence >= arch.iq_min &&
@@ -96,20 +100,24 @@ export function updateBeliefSpread(population, existingBeliefs, groups, simDay) 
         Math.hypot((h.x ?? 0) - (ind.x ?? 0), (h.y ?? 0) - (ind.y ?? 0)) < 2
       );
       if (!inGroup && !nearby) continue;
+      // Exposure accumulates per tick near a believer; adoption when threshold reached.
+      // sus=0.5 → adopts after ~400 days exposure (same expected timing as prior 0.5% daily roll).
       const sus = ind.phenotype.religiosity ?? ((ind.phenotype.anxiety + ind.phenotype.curiosity) / 2);
-      if (Math.random() < sus * 0.005) {
-        ind.beliefs.add(belief);
-        const group = groups.find(g => g.member_ids?.includes(ind.id));
-        if (group) group.internal_tension = Math.max(0, (group.internal_tension ?? 0.5) - 0.05);
-        events.push({
-          type: 'belief_spread',
-          belief_id: belief,
-          individual_id: ind.id,
-          group_id: group?.id ?? null,
-          day: simDay,
-          importance: 'low',
-        });
-      }
+      if (!ind._beliefExposure) ind._beliefExposure = {};
+      ind._beliefExposure[belief] = (ind._beliefExposure[belief] ?? 0) + sus;
+      if (ind._beliefExposure[belief] < 200) continue;
+      delete ind._beliefExposure[belief];
+      ind.beliefs.add(belief);
+      const group = groups.find(g => g.member_ids?.includes(ind.id));
+      if (group) group.internal_tension = Math.max(0, (group.internal_tension ?? 0.5) - 0.05);
+      events.push({
+        type: 'belief_spread',
+        belief_id: belief,
+        individual_id: ind.id,
+        group_id: group?.id ?? null,
+        day: simDay,
+        importance: 'low',
+      });
     }
   }
   return events;
