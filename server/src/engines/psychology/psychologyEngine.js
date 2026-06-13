@@ -101,10 +101,12 @@ export function processBonding(indA, indB, interactionType) {
   indB.psychology.relationships[indA.id] = Math.min(Math.max((indB.psychology.relationships[indA.id] ?? 0) + d * bs, -1), 1);
 }
 
-export function computePopulationPsychStats(population) {
+export function computePopulationPsychStats(population, gini = 0) {
   const living = population.filter(i => !i.is_dead && i.psychology);
   if (living.length === 0) return { mean_wellbeing: 0, mean_stress: 0, happiness_index: 0 };
   const mw = living.reduce((s, i) => s + i.psychology.wellbeing, 0) / living.length;
   const ms = living.reduce((s, i) => s + i.psychology.stress_level, 0) / living.length;
-  return { mean_wellbeing: mw, mean_stress: ms, happiness_index: (mw + (1 - ms)) / 2 };
+  // Inequality above Gini 0.30 depresses collective happiness (poorer members drag average down)
+  const giniPenalty = Math.max(0, gini - 0.30) * 0.5;
+  return { mean_wellbeing: mw, mean_stress: ms, happiness_index: Math.max(0, Math.min(1, (mw + (1 - ms)) / 2 - giniPenalty)) };
 }

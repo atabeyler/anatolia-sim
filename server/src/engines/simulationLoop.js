@@ -184,7 +184,7 @@ export class SimulationEngine {
 
     // 1. Update world environment
     this.worldState.alive_count = alive.length;
-    updateWorldState(this.worldState, day);
+    updateWorldState(this.worldState, day, this.discoveredTechs);
     const resourcePressure = computeResourcePressure(this.worldState, alive.length);
 
     // 1b. Natural disaster check — low-probability random events per biome
@@ -602,7 +602,8 @@ export class SimulationEngine {
       }
       const groupSize = alive.filter(i => i.group_id === settlement.group_id).length;
       const crowdEv = checkSettlementOvercrowding(settlement, groupSize, day);
-      if (crowdEv) {
+      if (crowdEv && (!settlement._last_crowd_log || day - settlement._last_crowd_log >= 30)) {
+        settlement._last_crowd_log = day;
         tickEvents.push(crowdEv);
         this.logEvent(day, 'architecture', crowdEv.description, crowdEv, 3);
       }
@@ -1250,7 +1251,7 @@ export class SimulationEngine {
     const ages = alive.map(i => getAge(i, day));
     const avgAge = ages.length ? ages.reduce((a, b) => a + b, 0) / ages.length : 0;
     const econStats = computeEconomicStats(alive);
-    const psychStats = computePopulationPsychStats(alive);
+    const psychStats = computePopulationPsychStats(alive, econStats.gini ?? 0);
     const healthStats = computeHealthStats(alive);
 
     return {

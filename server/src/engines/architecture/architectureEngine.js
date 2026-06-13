@@ -177,7 +177,10 @@ export function processArchitectureTick(settlement, population, discoveredTechs,
 
 function getBuildPriority(s, gs, ws) {
   const ex = new Set(s.structures?.map(x => x.type) ?? []);
-  if (!ex.has('lean_to') && !ex.has('pit_house') && !ex.has('mud_brick_house')) {
+  const cap = (s.structures ?? []).reduce((c, x) => c + (STRUCTURE_TYPES[x.type]?.capacity ?? 0), 0);
+  // Overcrowding response: build post_frame_hut (wood only, stone_tools) until cap ≥ 70% of group
+  if (cap < gs * 0.7) return { id: 'post_frame_hut', requires_tech: ['stone_tools'] };
+  if (!ex.has('lean_to') && !ex.has('pit_house') && !ex.has('mud_brick_house') && !ex.has('post_frame_hut')) {
     return { id: 'lean_to', requires_tech: [] };
   }
   if (gs >= 6 && !ex.has('storage_pit')) return { id: 'storage_pit', requires_tech: ['stone_tools'] };

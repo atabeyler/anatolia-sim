@@ -168,7 +168,7 @@ export function createWorldState(latitude, longitude) {
   };
 }
 
-export function updateWorldState(worldState, simulationDay) {
+export function updateWorldState(worldState, simulationDay, discoveredTechs = null) {
   const dayOfYear = simulationDay % 365;
   worldState.day_of_year = dayOfYear;
   worldState.year = Math.floor(simulationDay / 365);
@@ -192,8 +192,16 @@ export function updateWorldState(worldState, simulationDay) {
   updateWeather(worldState);
 
   // Apply weather modifiers on top of seasonal baselines
-  worldState.food_abundance  = Math.max(0.02, Math.min(1, baseFood  + (worldState._weather_food_delta  ?? 0)));
-  worldState.water_abundance = Math.max(0.02, Math.min(1, baseWater + (worldState._weather_water_delta ?? 0)));
+  // Stored-food floor: civilizations with preservation/cultivation techs maintain winter reserves
+  let techFoodFloor = 0.05;
+  if (discoveredTechs) {
+    if (discoveredTechs.has('food_preservation')) techFoodFloor = 0.15;
+    if (discoveredTechs.has('plant_cultivation'))  techFoodFloor = Math.max(techFoodFloor, 0.18);
+    if (discoveredTechs.has('animal_herding'))      techFoodFloor = Math.max(techFoodFloor, 0.20);
+    if (discoveredTechs.has('pottery'))             techFoodFloor = Math.max(techFoodFloor, 0.22);
+  }
+  worldState.food_abundance  = Math.max(techFoodFloor, Math.min(1, baseFood  + (worldState._weather_food_delta  ?? 0)));
+  worldState.water_abundance = Math.max(0.02,          Math.min(1, baseWater + (worldState._weather_water_delta ?? 0)));
 
   worldState.natural_disaster = null;
   return worldState;
