@@ -69,20 +69,22 @@ export function updateMentalState(individual, events, worldState, simDay) {
   else ps.mental_state = 'calm';
   if (ps.trauma_events.length > 3) ps.trauma_anxiety = Math.min((ps.trauma_anxiety ?? 0) + 0.01, 0.7);
   if (ps.wellbeing < 0.3) individual.health_score = Math.max((individual.health_score ?? 0.5) - 0.005, 0);
-  // Theory of Mind advances from accumulated social observation, not a daily dice roll.
-  // Each tick spent in a group adds IQ-weighted observation points (_socialObservations).
-  // Thresholds: IQ=0.5 in group → ToM 1 ~600 days, ToM 2 ~1800, ToM 3 ~4500.
+  // Theory of Mind grows from pure social observation (1 point/day in group).
+  // The THRESHOLD comes from genetics — fast for high IQ×empathy, slow for low.
+  // Designer sets one base constant (150); actual timing emerges from the individual.
   if (individual.group_id) {
-    individual._socialObservations = (individual._socialObservations ?? 0) + (p.fluid_intelligence ?? 0.5);
+    individual._socialObservations = (individual._socialObservations ?? 0) + 1;
   }
   const _tom = ps.theory_of_mind ?? 0;
-  const _qi = p.fluid_intelligence ?? 0;
+  const _qi  = p.fluid_intelligence ?? 0;
+  const _emp = p.empathy ?? 0.5;
   const _ls2 = individual.language?.stage ?? 0;
-  const _c2 = individual.mind?.consciousness ?? 0;
+  const _c2  = individual.mind?.consciousness ?? 0;
   const _obs = individual._socialObservations ?? 0;
-  if (_tom < 1 && _ls2 >= 1 && _qi > 0.3 && _obs >= 300)  ps.theory_of_mind = 1;
-  if (_tom < 2 && _ls2 >= 2 && _c2 > 0.02 && _qi > 0.4 && _obs >= 900)  ps.theory_of_mind = 2;
-  if (_tom < 3 && _ls2 >= 3 && _c2 > 0.1 && _qi > 0.55 && _obs >= 2250) ps.theory_of_mind = 3;
+  const tomFactor = Math.max(_qi * _emp, 0.1);
+  if (_tom < 1 && _ls2 >= 1 && _qi > 0.3 && _obs >= 150  / tomFactor) ps.theory_of_mind = 1;
+  if (_tom < 2 && _ls2 >= 2 && _c2 > 0.02 && _qi > 0.4  && _obs >= 450  / tomFactor) ps.theory_of_mind = 2;
+  if (_tom < 3 && _ls2 >= 3 && _c2 > 0.1  && _qi > 0.55 && _obs >= 1125 / tomFactor) ps.theory_of_mind = 3;
   ps.life_satisfaction = (ps.wellbeing + (1 - ps.stress_level)) / 2;
 }
 

@@ -40,17 +40,16 @@ export const BELIEF_ARCHETYPES = {
 
 export function tryFormBelief(individual, existingBeliefs, discoveredTechs, worldState, simDay) {
   const p = individual.phenotype;
-  // Belief forms from accumulated reflection, not a daily dice roll.
-  // The same experiential factors (religiosity, disaster, scarcity) now feed a
-  // running counter; belief crystallizes when it crosses threshold 50.
-  // Average individual (gain≈0.35/day) forms first eligible belief ~140 days after conditions are met.
+  // Reflection accumulates from pure experience (environment, not genetics in the gain).
+  // The THRESHOLD is genetics-derived — curious/religious individuals need fewer days.
+  // Designer sets one base constant (100); actual timing emerges from the individual.
   const rel = p.religiosity ?? ((p.anxiety + p.curiosity) / 2);
-  const gain = rel * 0.5 +
-               p.fluid_intelligence * 0.2 +
-               (worldState.recent_disaster ? 0.3 : 0) +
-               Math.max(0, 1 - worldState.food_abundance) * 0.2;
-  individual._beliefReflection = (individual._beliefReflection ?? 0) + gain;
-  if (individual._beliefReflection < 50) return null;
+  const envGain = 1.0
+    + (worldState.recent_disaster ? 5.0 : 0)
+    + Math.max(0, 1 - worldState.food_abundance) * 3.0;
+  individual._beliefReflection = (individual._beliefReflection ?? 0) + envGain;
+  const threshold = 100 / Math.max(rel * (p.fluid_intelligence ?? 0.5), 0.1);
+  if (individual._beliefReflection < threshold) return null;
   individual._beliefReflection = 0;
   const eligible = Object.entries(BELIEF_ARCHETYPES).filter(([name, arch]) =>
     !existingBeliefs.has(name) &&
@@ -100,12 +99,12 @@ export function updateBeliefSpread(population, existingBeliefs, groups, simDay) 
         Math.hypot((h.x ?? 0) - (ind.x ?? 0), (h.y ?? 0) - (ind.y ?? 0)) < 2
       );
       if (!inGroup && !nearby) continue;
-      // Exposure accumulates per tick near a believer; adoption when threshold reached.
-      // sus=0.5 → adopts after ~400 days exposure (same expected timing as prior 0.5% daily roll).
+      // Pure exposure: 1 point/day near a believer.
+      // THRESHOLD from genetics: susceptible individuals need fewer exposure days.
       const sus = ind.phenotype.religiosity ?? ((ind.phenotype.anxiety + ind.phenotype.curiosity) / 2);
       if (!ind._beliefExposure) ind._beliefExposure = {};
-      ind._beliefExposure[belief] = (ind._beliefExposure[belief] ?? 0) + sus;
-      if (ind._beliefExposure[belief] < 200) continue;
+      ind._beliefExposure[belief] = (ind._beliefExposure[belief] ?? 0) + 1;
+      if (ind._beliefExposure[belief] < 200 / Math.max(sus, 0.1)) continue;
       delete ind._beliefExposure[belief];
       ind.beliefs.add(belief);
       const group = groups.find(g => g.member_ids?.includes(ind.id));

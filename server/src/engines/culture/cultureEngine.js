@@ -56,11 +56,13 @@ export function processCultureTick(population, groups, discoveredTechs, simDay) 
         members.length < meme.group_size_min ||
         (meme.requires_tech?.some(t => !discoveredTechs.has(t)))
       ) continue;
-      // Cultural pressure accumulates each tick; meme crystallizes at threshold 1.0.
-      // Deterministic equivalent of the prior probability — same expected emergence timing.
+      // Pure time: 1 point/day while conditions hold.
+      // THRESHOLD from group genetics (avgArt) × meme complexity (spread_rate).
+      // Artistic groups and simple memes crystallize sooner — no fixed designer deadline.
       if (!group._culturePressure) group._culturePressure = {};
-      group._culturePressure[memeId] = (group._culturePressure[memeId] ?? 0) + avgArt * meme.spread_rate * 0.01;
-      if (group._culturePressure[memeId] < 1.0) continue;
+      group._culturePressure[memeId] = (group._culturePressure[memeId] ?? 0) + 1;
+      const cultureThreshold = 100 / Math.max(avgArt * meme.spread_rate, 0.001);
+      if (group._culturePressure[memeId] < cultureThreshold) continue;
       group._culturePressure[memeId] = 0;
       group.culture.add(memeId);
       group.internal_tension = Math.max(0, (group.internal_tension ?? 0.5) - 0.03);
@@ -73,9 +75,9 @@ export function processCultureTick(population, groups, discoveredTechs, simDay) 
         description: MEME_DESC[memeId] ?? memeId
       });
     }
-    // Inter-group diffusion: contact accumulates until a cultural exchange occurs (~67 days avg).
-    group._diffusionPressure = (group._diffusionPressure ?? 0) + 0.015;
-    if (group._diffusionPressure >= 1.0) {
+    // Inter-group contact: 1 point/day; exchange fires every ~67 days.
+    group._diffusionPressure = (group._diffusionPressure ?? 0) + 1;
+    if (group._diffusionPressure >= 67) {
       group._diffusionPressure = 0;
       const others = groups.filter(g => g.id !== group.id && g.culture?.size > 0);
       if (others.length > 0) {
