@@ -46,7 +46,6 @@ const MODULES = [
   { id: 'timemachine',  label: 'GEÇMİŞ',     labelEn: 'HISTORY',  icon: '⏳' },
   { id: 'analysis',     label: 'ANALİZ',     labelEn: 'ANALYS.',  icon: '📊' },
   { id: 'pyramid',      label: 'PİRAMİT',    labelEn: 'PYRAMID',  icon: '📐' },
-  { id: 'report',       label: 'RAPOR',      labelEn: 'REPORT',   icon: '📄' },
   { id: 'biology',      label: 'MUTASYON',   labelEn: 'MUTAT.',   icon: '🧬' },
   { id: 'god',          label: 'TANRI',      labelEn: 'GOD',      icon: '✦',  accent: '#f97316' },
   { id: 'psychology',   label: 'AKIL',       labelEn: 'MIND',     icon: '🧠' },
@@ -815,6 +814,25 @@ export default function SimulationPage() {
                   }
                 </div>
               )}
+
+              {/* RAPOR */}
+              <button
+                onClick={() => setActivePanel(activePanel === 'report' ? null : 'report')}
+                title={lang === 'tr' ? 'RAPOR' : 'REPORT'}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: rightPanelExpanded ? 'flex-start' : 'center',
+                  gap: rightPanelExpanded ? 7 : 0,
+                  width: '100%', padding: rightPanelExpanded ? '6px 12px' : '7px 0',
+                  fontSize: 14, fontFamily: 'Share Tech Mono, monospace',
+                  background: activePanel === 'report' ? 'rgba(251,191,36,0.12)' : 'transparent',
+                  borderLeft: `2px solid ${activePanel === 'report' ? '#fbbf24' : 'transparent'}`,
+                  borderTop: 'none', borderRight: 'none', borderBottom: '1px solid #4a1a1a',
+                  color: activePanel === 'report' ? '#fbbf24' : '#8abda0',
+                  cursor: 'pointer', whiteSpace: 'nowrap', boxSizing: 'border-box',
+                }}>
+                <span style={{ fontSize: 16, flexShrink: 0 }}>📄</span>
+                {rightPanelExpanded && <span>{lang === 'tr' ? 'RAPOR' : 'REPORT'}</span>}
+              </button>
 
               {/* SONLANDIR */}
               <button
