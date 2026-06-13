@@ -104,6 +104,14 @@ const ART_DESC = {
   written_story: 'Narrative accounts preserved in written symbols'
 };
 
+// Art forms can only emerge while the individual is actively performing
+// the relevant activity (Cardinal Rule: behavior must arise from what the
+// individual does, not from a system scan of their traits).
+//   visual / instrument → requires active crafting
+//   music (percussion, vocal) → requires active socializing
+//   narrative → requires active socializing
+const ART_ACTION_GATE = { visual: 'craft', music: 'socialize', narrative: 'socialize' };
+
 export function processArtTick(population, discoveredArts, discoveredTechs, worldState, simDay) {
   const events = [];
   const surplus = worldState.food_abundance;
@@ -112,6 +120,7 @@ export function processArtTick(population, discoveredArts, discoveredTechs, worl
     const p = individual.phenotype;
     const a = p.artistic_sense ?? 0.3;
     const foxp2 = individual.language?.foxp2_expression ?? 0;
+    const action = individual._currentAction;
     for (const [artId, art] of Object.entries(ART_FORMS)) {
       if (
         discoveredArts.has(artId) ||
@@ -119,7 +128,8 @@ export function processArtTick(population, discoveredArts, discoveredTechs, worl
         a < art.artistic_min ||
         surplus < art.surplus_min ||
         (art.requires_tech?.some(t => !discoveredTechs.has(t))) ||
-        (art.foxp2_min && foxp2 < art.foxp2_min)
+        (art.foxp2_min && foxp2 < art.foxp2_min) ||
+        action !== ART_ACTION_GATE[art.medium]
       ) continue;
       if (Math.random() < a * p.fluid_intelligence * surplus / 5000) {
         discoveredArts.add(artId);

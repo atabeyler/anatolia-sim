@@ -229,26 +229,24 @@ function resolveConflict(gA, gB, population, simDay) {
   };
 }
 
+// Roles are inferred from each individual's accumulated behavioral history
+// (_behaviorCounts), not assigned from phenotype. This satisfies the Cardinal
+// Rule: the role an individual holds reflects what they actually do, which in
+// turn is driven by their needs and environment — not scripted by the system.
 export function assignGroupRoles(members, group) {
   if (!members || members.length === 0) return;
   for (const m of members) {
-    if (m.is_founder) {
-      m.group_role = 'anchor';
-      continue;
-    }
-    if (m.id === group.leader_id) {
-      m.group_role = GROUP_ROLES.LEADER;
-      continue;
-    }
-    const p = m.phenotype;
-    if (p.empathy > 0.65 && p.fluid_intelligence > 0.5) {
-      m.group_role = GROUP_ROLES.HEALER;
-    } else if (p.physical_strength > 0.65 && p.aggression > 0.5) {
-      m.group_role = GROUP_ROLES.WARRIOR;
-    } else if (p.curiosity > 0.6 && (m.age ?? 0) / 365 > 40) {
-      m.group_role = GROUP_ROLES.ELDER;
-    } else {
-      m.group_role = GROUP_ROLES.MEMBER;
-    }
+    if (m.is_founder) { m.group_role = 'anchor'; continue; }
+    if (m.id === group.leader_id) { m.group_role = GROUP_ROLES.LEADER; continue; }
+
+    const counts = m._behaviorCounts ?? {};
+    const dominant = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+    const ageYears = (m.age ?? 0) / 365;
+
+    if      (dominant === 'hunt')      m.group_role = GROUP_ROLES.WARRIOR;
+    else if (dominant === 'socialize') m.group_role = GROUP_ROLES.HEALER;
+    else if (dominant === 'forage')    m.group_role = GROUP_ROLES.GATHERER;
+    else if (ageYears > 40)            m.group_role = GROUP_ROLES.ELDER;
+    else                               m.group_role = GROUP_ROLES.MEMBER;
   }
 }

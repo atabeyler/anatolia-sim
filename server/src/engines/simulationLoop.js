@@ -164,8 +164,12 @@ export class SimulationEngine {
     const spatialGrid = buildSpatialGrid(alive);
 
     // 0. Each individual selects their action for this tick based on their own needs.
+    // _behaviorCounts accumulates lifetime action history — used by assignGroupRoles
+    // to infer social roles from what an individual actually does (Cardinal Rule).
     for (const ind of alive) {
       ind._currentAction = selectAction(ind, this.worldState);
+      if (!ind._behaviorCounts) ind._behaviorCounts = {};
+      ind._behaviorCounts[ind._currentAction] = (ind._behaviorCounts[ind._currentAction] ?? 0) + 1;
     }
 
     // 0b. Set age & life_stage on every individual (required by all engines)
