@@ -635,6 +635,48 @@ router.get('/:id/report', authenticate, requireSimulationOwner, async (req, res)
     });
 
     const notableEvents = allEvents.filter(e => (e.importance ?? 1) >= 3);
+    const deathTotal = Object.values(deathByCause).reduce((a, b) => a + b, 0);
+    const deadWithAge = individuals.filter(i => i.is_dead && i.age_at_death != null);
+    const avgAgeAtDeath = deadWithAge.length
+      ? Math.round(deadWithAge.reduce((s, i) => s + i.age_at_death, 0) / deadWithAge.length * 10) / 10
+      : null;
+    const peakPopEntry = populationHistory.reduce((mx, c) => (c.population ?? 0) > (mx?.population ?? 0) ? c : mx, null);
+    const totalMigDist = migrationHistory.reduce((s, m) => s + (m.distance_km ?? 0), 0);
+    const langStageNames = ['pre-linguistic','gesture','proto-language','verbal','complex','symbolic'];
+
+    // Summary block — human-readable overview for JSON consumers
+    const summary = {
+      civilization_name: sim.name,
+      total_years: sim.current_year,
+      total_days: sim.current_day,
+      start_coordinates: { latitude: sim.start_latitude, longitude: sim.start_longitude },
+      biome: sim.world_state?.biome,
+      total_individuals_ever: individuals.length,
+      peak_population: peakPopEntry?.population ?? 0,
+      peak_population_year: peakPopEntry?.year ?? null,
+      current_population: currentStats?.population ?? null,
+      technologies_discovered: techTimeline.length,
+      technology_list: techTimeline.map(t => t.name),
+      beliefs_formed: beliefTimeline.length,
+      belief_list: beliefTimeline.map(b => b.name),
+      art_forms: artTimeline.length,
+      language_stage: currentStats?.max_language_stage ?? null,
+      language_stage_name: langStageNames[currentStats?.max_language_stage ?? 0] ?? 'unknown',
+      vocabulary_size: currentStats?.word_count ?? null,
+      total_deaths: deathTotal,
+      avg_age_at_death_years: avgAgeAtDeath,
+      infant_mortality_rate: deathTotal ? Math.round((deathByAge.infant_0_1 ?? 0) / deathTotal * 100) / 100 : null,
+      child_mortality_rate: deathTotal ? Math.round((deathByAge.child_1_15 ?? 0) / deathTotal * 100) / 100 : null,
+      leading_cause_of_death: Object.entries(deathByCause).sort(([,a],[,b]) => b - a)[0]?.[0] ?? null,
+      migration_events: migrationHistory.length,
+      total_migration_distance_km: totalMigDist,
+      epidemic_count: notableEvents.filter(e => e.event_type === 'epidemic').length,
+      disaster_count: notableEvents.filter(e => e.event_type === 'disaster').length,
+      final_happiness_index: currentStats?.happiness_index ?? null,
+      final_gini: currentStats?.gini ?? null,
+      final_qol_index: currentStats?.qol_index ?? null,
+      report_generated_at: new Date().toISOString(),
+    };
 
     res.json({
       simulation: {
@@ -644,6 +686,7 @@ router.get('/:id/report', authenticate, requireSimulationOwner, async (req, res)
         current_year: sim.current_year, current_day: sim.current_day,
         created_at: sim.created_at,
       },
+      summary,
       current_stats: currentStats,
       population_history: populationHistory,
       technology_timeline: techTimeline,
@@ -651,7 +694,8 @@ router.get('/:id/report', authenticate, requireSimulationOwner, async (req, res)
       art_timeline: artTimeline,
       migration_history: migrationHistory,
       death_statistics: {
-        total: Object.values(deathByCause).reduce((a, b) => a + b, 0),
+        total: deathTotal,
+        avg_age_at_death: avgAgeAtDeath,
         by_cause: deathByCause,
         by_age_group: deathByAge,
       },

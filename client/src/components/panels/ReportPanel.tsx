@@ -93,24 +93,71 @@ ${recentEvents.map(ev=>`<div class="event">Y${ev.sim_year} G${ev.sim_day} [${ev.
       const deathTotal = r.death_statistics?.total ?? 0;
       const deathByAge = r.death_statistics?.by_age_group ?? {};
 
+      // Auto-generated intro stats
+      const totalYears = r.simulation?.current_year ?? S.year ?? 0;
+      const totalEver  = (r.individuals ?? []).length;
+      const peakPop    = (r.population_history ?? []).reduce((mx: number, c: Record<string,unknown>) => Math.max(mx, (c.population as number) ?? 0), 0);
+      const langStageNames = ['dil öncesi', 'jest dili', 'proto-dil', 'sözel dil', 'karmaşık dil', 'sembolik dil'];
+      const langStageName  = langStageNames[S.max_language_stage ?? 0] ?? '?';
+      const totalMigDist   = (r.migration_history ?? []).reduce((s: number, m: Record<string,unknown>) => s + ((m.distance_km as number) ?? 0), 0);
+      const epicCount  = (r.notable_events ?? []).filter((e: Record<string,unknown>) => e.event_type === 'epidemic').length;
+      const disCount   = (r.notable_events ?? []).filter((e: Record<string,unknown>) => e.event_type === 'disaster').length;
+      const deadAvgAge = (() => {
+        const dead = (r.individuals ?? []).filter((i: Record<string,unknown>) => i.is_dead && i.age_at_death != null);
+        if (!dead.length) return null;
+        return Math.round(dead.reduce((s: number, i: Record<string,unknown>) => s + (i.age_at_death as number), 0) / dead.length * 10) / 10;
+      })();
+
+      const introTR = `Bu rapor, ANATOLİA-SİM evrimsel medeniyet simülasyonunda "${r.simulation?.name ?? currentSim.id}" adıyla oluşturulan medeniyetin ${totalYears} yıllık tarihsel kaydını içermektedir. Simülasyon ${r.simulation?.start_latitude ?? '?'}° enlem, ${r.simulation?.start_longitude ?? '?'}° boylamda, ${r.simulation?.biome ?? '?'} biome'unda başlatılmıştır.
+
+Medeniyet tarihi boyunca toplam ${totalEver} birey doğmuş, nüfus en yüksek ${peakPop} kişiye ulaşmıştır. Topluluk ${(r.technology_timeline ?? []).length} teknoloji ve ${(r.belief_timeline ?? []).length} inanç geliştirmiş; dil ${langStageName} aşamasına ilerlemiştir. ${deathTotal} ölümün gerçekleştiği bu süreçte ortalama ölüm yaşı ${deadAvgAge ?? '?'} yıl olarak hesaplanmıştır${epicCount > 0 ? `; ${epicCount} salgın ve ${disCount} doğal afet kaydedilmiştir` : ''}. ${totalMigDist > 0 ? `Bant toplamda yaklaşık ${totalMigDist} km yer değiştirmiştir.` : ''}`;
+
+      const introEN = `This report contains the ${totalYears}-year historical record of the civilization "${r.simulation?.name ?? currentSim.id}" created in the ANATOLİA-SİM evolutionary civilization simulation. The simulation was initialized at latitude ${r.simulation?.start_latitude ?? '?'}°, longitude ${r.simulation?.start_longitude ?? '?'}° in the ${r.simulation?.biome ?? '?'} biome.
+
+Throughout its history, a total of ${totalEver} individuals were born, with peak population reaching ${peakPop}. The civilization developed ${(r.technology_timeline ?? []).length} technologies and ${(r.belief_timeline ?? []).length} beliefs; language progressed to the ${langStageName} stage. Of the ${deathTotal} deaths recorded, the average age at death was ${deadAvgAge ?? '?'} years${epicCount > 0 ? `; ${epicCount} epidemic(s) and ${disCount} disaster(s) occurred` : ''}. ${totalMigDist > 0 ? `The band migrated approximately ${totalMigDist} km in total.` : ''}`;
+
       const html = `<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8">
 <title>ANATOLİA-SİM — ${currentSim.name ?? currentSim.id}</title>
 <style>
-  body{font-family:'Courier New',monospace;background:#fff;color:#111;margin:40px;font-size:12px;line-height:1.4;}
+  body{font-family:'Courier New',monospace;background:#fff;color:#111;margin:0;font-size:12px;line-height:1.5;}
+  .page{padding:40px;box-sizing:border-box;}
+  .cover{display:flex;flex-direction:column;justify-content:space-between;min-height:1050px;padding:60px 50px;border-bottom:3px solid #111;}
+  .cover-brand{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#555;margin-bottom:60px;}
+  .cover-title{font-size:48px;font-weight:bold;letter-spacing:2px;line-height:1.1;margin-bottom:8px;}
+  .cover-subtitle{font-size:20px;color:#444;margin-bottom:40px;letter-spacing:1px;}
+  .cover-simname{font-size:28px;border-top:2px solid #111;border-bottom:2px solid #111;padding:12px 0;margin-bottom:30px;}
+  .cover-meta{font-size:12px;color:#333;line-height:2;}
+  .cover-footer{font-size:10px;color:#777;border-top:1px solid #ccc;padding-top:12px;margin-top:40px;}
   h1{font-size:22px;border-bottom:3px solid #111;padding-bottom:10px;margin:0 0 6px 0;}
+  h2{font-size:14px;border-bottom:2px solid #333;padding-bottom:4px;margin:24px 0 8px 0;}
+  .intro-box{background:#f8f8f8;border-left:4px solid #333;padding:16px 20px;margin-bottom:20px;font-size:12px;line-height:1.8;white-space:pre-wrap;}
   .meta{color:#555;font-size:11px;margin-bottom:20px;}
-  @media print{body{margin:20px;}h2{page-break-before:auto;}}
+  @media print{body{margin:0;}}
 </style></head><body>
 
-<!-- KAPAK -->
-<h1>ANATOLİA-SİM ${TR ? 'Medeniyet Raporu' : 'Civilization Report'}</h1>
-<p class="meta">
-  <strong>${TR?'Simülasyon':'Simulation'}:</strong> ${r.simulation?.name ?? currentSim.id} &nbsp;|&nbsp;
-  <strong>${TR?'Oluşturuldu':'Generated'}:</strong> ${now}<br>
-  <strong>${TR?'Koordinatlar':'Coordinates'}:</strong> ${r.simulation?.start_latitude ?? '?'}°, ${r.simulation?.start_longitude ?? '?'}° &nbsp;|&nbsp;
-  <strong>Biome:</strong> ${r.simulation?.biome ?? '?'} &nbsp;|&nbsp;
-  <strong>${TR?'Toplam Süre':'Total Duration'}:</strong> ${TR?'Yıl':'Year'} ${r.simulation?.current_year ?? S.year ?? '?'} · ${TR?'Gün':'Day'} ${r.simulation?.current_day ?? S.day ?? '?'}
-</p>
+<!-- KAPAK SAYFASI -->
+<div class="cover">
+  <div>
+    <div class="cover-brand">ANATOLİA-SİM · Evolutionary Civilization Engine</div>
+    <div class="cover-title">ANATOLİA<br>SİM</div>
+    <div class="cover-subtitle">${TR ? 'Medeniyet Raporu' : 'Civilization Report'}</div>
+    <div class="cover-simname"><strong>${r.simulation?.name ?? currentSim.id}</strong></div>
+    <div class="cover-meta">
+      <div><strong>${TR?'Koordinatlar':'Coordinates'}</strong> &nbsp; ${r.simulation?.start_latitude ?? '?'}° ${(r.simulation?.start_latitude??0) >= 0 ? 'K':'G'}, &nbsp;${r.simulation?.start_longitude ?? '?'}° ${(r.simulation?.start_longitude??0) >= 0 ? 'D':'B'}</div>
+      <div><strong>Biome</strong> &nbsp; ${r.simulation?.biome ?? '?'}</div>
+      <div><strong>${TR?'Simülasyon Süresi':'Duration'}</strong> &nbsp; ${totalYears} ${TR?'yıl':'years'} &nbsp;(${r.simulation?.current_day ?? S.day ?? '?'} ${TR?'gün':'days'})</div>
+      <div><strong>${TR?'Zirve Nüfus':'Peak Population'}</strong> &nbsp; ${peakPop} ${TR?'birey':'individuals'}</div>
+      <div><strong>${TR?'Toplam Birey':'Total Ever Lived'}</strong> &nbsp; ${totalEver}</div>
+      <div><strong>${TR?'Oluşturuldu':'Generated'}</strong> &nbsp; ${now}</div>
+    </div>
+  </div>
+  <div class="cover-footer">Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026 · RST Q-Nation 200120401018</div>
+</div>
+
+<!-- GİRİŞ -->
+<div class="page">
+<h2>${TR ? 'Giriş' : 'Introduction'}</h2>
+<div class="intro-box">${TR ? introTR : introEN}</div>
 
 <!-- ANLIK DURUM -->
 ${sec(TR?'Anlık Durum (Son Checkpoint)':'Current Snapshot')}
@@ -253,6 +300,7 @@ ${r.individuals?.length ? tbl(
 <p style="margin-top:32px;border-top:1px solid #ccc;padding-top:8px;color:#555;font-size:10px;">
   Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026 · RST Q-Nation 200120401018
 </p>
+</div>
 </body></html>`;
 
       const container = document.createElement('div');
