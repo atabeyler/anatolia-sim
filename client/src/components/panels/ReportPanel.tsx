@@ -41,7 +41,8 @@ export default function ReportPanel() {
   }
 
   function printReport() {
-    if (!stats || !currentSim) return;
+    if (!currentSim) return;
+    if (!stats) { flash(t(lang, '✗ No stats yet — start the simulation first.', '✗ Henüz veri yok — simülasyonu başlatın.')); return; }
     const recentEvents = events.slice(0, 30);
     const html = `<!DOCTYPE html>
 <html lang="${lang}"><head><meta charset="UTF-8"><title>ANATOLİA-SİM — ${currentSim.name ?? currentSim.id}</title>
@@ -507,7 +508,7 @@ ${r.individuals?.length ? styledTbl(
             </button>
             <button
               onClick={printReport}
-              disabled={!stats || !currentSim}
+              disabled={!currentSim}
               title={t(lang, 'Open Print View', 'Yazdırma Görünümünü Aç')}
               className="px-3 py-2 rounded border border-orange-400/30 bg-orange-400/5 hover:bg-orange-400/15 text-orange-400/70 transition-colors text-sm disabled:opacity-50"
             >
