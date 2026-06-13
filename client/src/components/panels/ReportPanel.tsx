@@ -116,190 +116,299 @@ Medeniyet tarihi boyunca toplam ${totalEver} birey doğmuş, nüfus en yüksek $
 
 Throughout its history, a total of ${totalEver} individuals were born, with peak population reaching ${peakPop}. The civilization developed ${(r.technology_timeline ?? []).length} technologies and ${(r.belief_timeline ?? []).length} beliefs; language progressed to the ${langStageName} stage. Of the ${deathTotal} deaths recorded, the average age at death was ${deadAvgAge ?? '?'} years${epicCount > 0 ? `; ${epicCount} epidemic(s) and ${disCount} disaster(s) occurred` : ''}. ${totalMigDist > 0 ? `The band migrated approximately ${totalMigDist} km in total.` : ''}`;
 
+      // ── SVG Chart Helpers ──────────────────────────────────────────────────
+      const popChartSvg = (() => {
+        const data = popHistory as Record<string, unknown>[];
+        if (data.length < 2) return '';
+        const W = 680, H = 180, PL = 42, PR = 16, PT = 14, PB = 32;
+        const maxP = Math.max(...data.map(d => (d.population as number) ?? 0), 1);
+        const minY = (data[0]?.year as number) ?? 0;
+        const maxY = (data[data.length - 1]?.year as number) ?? 1;
+        const xS = (y: number) => PL + ((y - minY) / Math.max(1, maxY - minY)) * (W - PL - PR);
+        const yS = (p: number) => PT + (H - PT - PB) * (1 - p / maxP);
+        const pts = data.map(d => `${xS(d.year as number).toFixed(1)},${yS(d.population as number).toFixed(1)}`).join(' ');
+        const area = `${xS(minY)},${H - PB} ${pts} ${xS(maxY)},${H - PB}`;
+        const grids = [0, 0.25, 0.5, 0.75, 1].map(f => {
+          const v = Math.round(maxP * f); const y = yS(v).toFixed(1);
+          return `<line x1="${PL}" y1="${y}" x2="${W - PR}" y2="${y}" stroke="#e5e7eb" stroke-width="0.8"/>
+                  <text x="${PL - 4}" y="${(parseFloat(y) + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="#9ca3af">${v}</text>`;
+        }).join('');
+        const step = Math.max(1, Math.floor(data.length / 8));
+        const xLbls = data.filter((_, i) => i % step === 0 || i === data.length - 1).map(d =>
+          `<text x="${xS(d.year as number).toFixed(1)}" y="${H - PB + 13}" text-anchor="middle" font-size="9" fill="#9ca3af">${d.year}</text>`).join('');
+        const dots = data.map(d =>
+          `<circle cx="${xS(d.year as number).toFixed(1)}" cy="${yS(d.population as number).toFixed(1)}" r="2.5" fill="#f59e0b"/>`).join('');
+        return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+          <rect width="${W}" height="${H}" fill="#fafafa" rx="6"/>
+          ${grids}
+          <polygon points="${area}" fill="#f59e0b" fill-opacity="0.12"/>
+          <polyline points="${pts}" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linejoin="round"/>
+          ${dots}
+          <line x1="${PL}" y1="${H - PB}" x2="${W - PR}" y2="${H - PB}" stroke="#d1d5db"/>
+          <line x1="${PL}" y1="${PT}" x2="${PL}" y2="${H - PB}" stroke="#d1d5db"/>
+          ${xLbls}
+        </svg>`;
+      })();
+
+      const deathCauseChartSvg = (() => {
+        const entries = Object.entries(deathByCause).sort(([, a], [, b]) => (b as number) - (a as number)).slice(0, 10);
+        if (!entries.length) return '';
+        const maxV = Math.max(...entries.map(([, v]) => v as number), 1);
+        const W = 680, BH = 18, GAP = 5, PL = 170, PR = 60, PT = 8;
+        const H = PT + entries.length * (BH + GAP);
+        const bars = entries.map(([cause, count], i) => {
+          const y = PT + i * (BH + GAP);
+          const bw = ((count as number) / maxV) * (W - PL - PR);
+          const pctStr = deathTotal ? ` (${Math.round((count as number) / deathTotal * 100)}%)` : '';
+          return `<text x="${PL - 6}" y="${y + BH - 4}" text-anchor="end" font-size="10" fill="#374151">${cause.replace(/_/g, ' ')}</text>
+                  <rect x="${PL}" y="${y}" width="${bw.toFixed(1)}" height="${BH}" fill="#ef4444" fill-opacity="0.75" rx="3"/>
+                  <text x="${PL + bw + 5}" y="${y + BH - 4}" font-size="10" fill="#374151">${count}${pctStr}</text>`;
+        }).join('');
+        return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg"><rect width="${W}" height="${H}" fill="#fafafa" rx="6"/>${bars}</svg>`;
+      })();
+
+      const ageChartSvg = (() => {
+        const groups = [
+          { label: '0–1', val: deathByAge.infant_0_1 ?? 0, color: '#ef4444' },
+          { label: '1–15', val: deathByAge.child_1_15 ?? 0, color: '#f97316' },
+          { label: '15–30', val: deathByAge.young_adult_15_30 ?? 0, color: '#eab308' },
+          { label: '30–50', val: deathByAge.adult_30_50 ?? 0, color: '#22c55e' },
+          { label: '50+', val: deathByAge.elder_50plus ?? 0, color: '#3b82f6' },
+        ];
+        const maxV = Math.max(...groups.map(g => g.val), 1);
+        const BW = 52, GAP = 16, PL = 20, PT = 10, PB = 28, H = 150;
+        const W = PL * 2 + groups.length * (BW + GAP) - GAP;
+        const bars = groups.map((g, i) => {
+          const x = PL + i * (BW + GAP);
+          const bh = ((g.val / maxV) * (H - PT - PB));
+          const y = H - PB - bh;
+          const pct = deathTotal ? Math.round(g.val / deathTotal * 100) : 0;
+          return `<rect x="${x}" y="${y.toFixed(1)}" width="${BW}" height="${bh.toFixed(1)}" fill="${g.color}" fill-opacity="0.8" rx="4"/>
+                  <text x="${x + BW / 2}" y="${(y - 4).toFixed(1)}" text-anchor="middle" font-size="9" fill="#374151" font-weight="bold">${g.val}</text>
+                  <text x="${x + BW / 2}" y="${H - PB + 13}" text-anchor="middle" font-size="9" fill="#6b7280">${g.label}</text>
+                  <text x="${x + BW / 2}" y="${H - PB + 23}" text-anchor="middle" font-size="8" fill="#9ca3af">${pct}%</text>`;
+        }).join('');
+        return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+          <rect width="${W}" height="${H}" fill="#fafafa" rx="6"/>
+          <line x1="${PL}" y1="${H - PB}" x2="${W - PL}" y2="${H - PB}" stroke="#d1d5db"/>
+          ${bars}
+        </svg>`;
+      })();
+
+      // ── CSS & Layout helpers ───────────────────────────────────────────────
+      const secColor = (title: string, color: string, icon: string) =>
+        `<div style="margin:28px 0 10px 0;padding:8px 14px;background:${color}18;border-left:4px solid ${color};border-radius:0 6px 6px 0;">
+           <span style="font-size:15px;font-weight:bold;color:${color};">${icon} ${title}</span>
+         </div>`;
+      const styledTbl = (headers: string[], rows: string, hdrColor: string) => {
+        const ths = headers.map(h => `<th style="padding:6px 8px;background:${hdrColor};color:#fff;font-size:10px;text-align:left;font-weight:600;">${h}</th>`).join('');
+        return `<table style="width:100%;border-collapse:collapse;margin-bottom:16px;border-radius:6px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+          <tr>${ths}</tr>${rows}</table>`;
+      };
+      const stRow = (cells: unknown[], i: number) => {
+        const bg = i % 2 === 0 ? '#ffffff' : '#f9fafb';
+        return `<tr style="background:${bg};">${cells.map(c => `<td style="padding:4px 8px;font-size:10px;border-bottom:1px solid #f0f0f0;">${c != null ? String(c) : '—'}</td>`).join('')}</tr>`;
+      };
+      const statCard = (label: string, value: string, color: string) =>
+        `<div style="flex:1;background:${color}12;border:1px solid ${color}30;border-radius:8px;padding:12px 14px;min-width:120px;">
+           <div style="font-size:10px;color:#6b7280;margin-bottom:4px;">${label}</div>
+           <div style="font-size:20px;font-weight:bold;color:${color};">${value}</div>
+         </div>`;
+      const badge = (text: string, color: string) =>
+        `<span style="display:inline-block;background:${color}20;color:${color};border:1px solid ${color}40;border-radius:12px;padding:2px 10px;font-size:10px;margin:2px;">${text}</span>`;
+
       const html = `<!DOCTYPE html><html lang="${lang}"><head><meta charset="UTF-8">
 <title>ANATOLİA-SİM — ${currentSim.name ?? currentSim.id}</title>
 <style>
-  body{font-family:'Courier New',monospace;background:#fff;color:#111;margin:0;font-size:12px;line-height:1.5;}
-  .page{padding:40px;box-sizing:border-box;}
-  .cover{display:flex;flex-direction:column;justify-content:space-between;min-height:1050px;padding:60px 50px;border-bottom:3px solid #111;}
-  .cover-brand{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#555;margin-bottom:60px;}
-  .cover-title{font-size:48px;font-weight:bold;letter-spacing:2px;line-height:1.1;margin-bottom:8px;}
-  .cover-subtitle{font-size:20px;color:#444;margin-bottom:40px;letter-spacing:1px;}
-  .cover-simname{font-size:28px;border-top:2px solid #111;border-bottom:2px solid #111;padding:12px 0;margin-bottom:30px;}
-  .cover-meta{font-size:12px;color:#333;line-height:2;}
-  .cover-footer{font-size:10px;color:#777;border-top:1px solid #ccc;padding-top:12px;margin-top:40px;}
-  h1{font-size:22px;border-bottom:3px solid #111;padding-bottom:10px;margin:0 0 6px 0;}
-  h2{font-size:14px;border-bottom:2px solid #333;padding-bottom:4px;margin:24px 0 8px 0;}
-  .intro-box{background:#f8f8f8;border-left:4px solid #333;padding:16px 20px;margin-bottom:20px;font-size:12px;line-height:1.8;white-space:pre-wrap;}
-  .meta{color:#555;font-size:11px;margin-bottom:20px;}
+  *{box-sizing:border-box;}
+  body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#1f2937;margin:0;font-size:12px;line-height:1.5;}
   @media print{body{margin:0;}}
 </style></head><body>
 
-<!-- KAPAK SAYFASI -->
-<div class="cover">
+<!-- ═══ KAPAK SAYFASI ═══ -->
+<div style="background:#0d1b2a;color:#fff;padding:64px 52px;min-height:1060px;display:flex;flex-direction:column;justify-content:space-between;">
   <div>
-    <div class="cover-brand">ANATOLİA-SİM · Evolutionary Civilization Engine</div>
-    <div class="cover-title">ANATOLİA<br>SİM</div>
-    <div class="cover-subtitle">${TR ? 'Medeniyet Raporu' : 'Civilization Report'}</div>
-    <div class="cover-simname"><strong>${r.simulation?.name ?? currentSim.id}</strong></div>
-    <div class="cover-meta">
-      <div><strong>${TR?'Koordinatlar':'Coordinates'}</strong> &nbsp; ${r.simulation?.start_latitude ?? '?'}° ${(r.simulation?.start_latitude??0) >= 0 ? 'K':'G'}, &nbsp;${r.simulation?.start_longitude ?? '?'}° ${(r.simulation?.start_longitude??0) >= 0 ? 'D':'B'}</div>
-      <div><strong>Biome</strong> &nbsp; ${r.simulation?.biome ?? '?'}</div>
-      <div><strong>${TR?'Simülasyon Süresi':'Duration'}</strong> &nbsp; ${totalYears} ${TR?'yıl':'years'} &nbsp;(${r.simulation?.current_day ?? S.day ?? '?'} ${TR?'gün':'days'})</div>
-      <div><strong>${TR?'Zirve Nüfus':'Peak Population'}</strong> &nbsp; ${peakPop} ${TR?'birey':'individuals'}</div>
-      <div><strong>${TR?'Toplam Birey':'Total Ever Lived'}</strong> &nbsp; ${totalEver}</div>
-      <div><strong>${TR?'Oluşturuldu':'Generated'}</strong> &nbsp; ${now}</div>
+    <div style="font-size:10px;letter-spacing:5px;text-transform:uppercase;color:#64748b;margin-bottom:52px;">
+      ANATOLİA-SİM &middot; EVOLUTIONARY CIVILIZATION ENGINE
+    </div>
+    <div style="font-size:56px;font-weight:900;letter-spacing:3px;line-height:1;color:#f59e0b;margin-bottom:6px;">ANATOLİA</div>
+    <div style="font-size:56px;font-weight:900;letter-spacing:3px;line-height:1;color:#fff;margin-bottom:16px;">SİM</div>
+    <div style="font-size:18px;color:#94a3b8;letter-spacing:2px;margin-bottom:40px;">${TR ? 'MEDENİYET RAPORU' : 'CIVILIZATION REPORT'}</div>
+    <div style="font-size:30px;font-weight:700;color:#f1f5f9;border-top:1px solid #334155;border-bottom:1px solid #334155;padding:14px 0;margin-bottom:36px;">
+      ${r.simulation?.name ?? currentSim.id}
+    </div>
+    <div style="display:flex;gap:32px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Biome</div>
+        <div style="font-size:14px;color:#e2e8f0;font-weight:600;">${r.simulation?.biome ?? '?'}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">${TR?'Koordinatlar':'Coordinates'}</div>
+        <div style="font-size:14px;color:#e2e8f0;font-weight:600;">${r.simulation?.start_latitude ?? '?'}°, ${r.simulation?.start_longitude ?? '?'}°</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">${TR?'Süre':'Duration'}</div>
+        <div style="font-size:14px;color:#e2e8f0;font-weight:600;">${totalYears} ${TR?'yıl':'yr'} · ${r.simulation?.current_day ?? S.day ?? '?'} ${TR?'gün':'days'}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:16px;margin-top:32px;flex-wrap:wrap;">
+      ${statCard(TR?'Zirve Nüfus':'Peak Pop.', String(peakPop), '#f59e0b')}
+      ${statCard(TR?'Toplam Birey':'Total Lived', String(totalEver), '#38bdf8')}
+      ${statCard(TR?'Teknoloji':'Technologies', String((r.technology_timeline ?? []).length), '#34d399')}
+      ${statCard(TR?'Toplam Ölüm':'Total Deaths', String(deathTotal), '#f87171')}
     </div>
   </div>
-  <div class="cover-footer">Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026 · RST Q-Nation 200120401018</div>
+  <div style="font-size:10px;color:#475569;border-top:1px solid #1e293b;padding-top:12px;margin-top:40px;">
+    Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. &copy; 2026 &middot; RST Q-Nation 200120401018 &nbsp;&nbsp;|&nbsp;&nbsp; ${TR?'Oluşturuldu':'Generated'}: ${now}
+  </div>
 </div>
 
+<!-- ═══ İÇERİK SAYFASI ═══ -->
+<div style="padding:40px 44px;">
+
 <!-- GİRİŞ -->
-<div class="page">
-<h2>${TR ? 'Giriş' : 'Introduction'}</h2>
-<div class="intro-box">${TR ? introTR : introEN}</div>
+${secColor(TR?'Giriş':'Introduction', '#475569', '📋')}
+<div style="background:#f8fafc;border-radius:8px;padding:18px 22px;font-size:12px;line-height:1.9;color:#374151;white-space:pre-wrap;border:1px solid #e2e8f0;">${TR ? introTR : introEN}</div>
 
 <!-- ANLIK DURUM -->
-${sec(TR?'Anlık Durum (Son Checkpoint)':'Current Snapshot')}
-${tbl(
-  [TR?'Gösterge':'Metric', TR?'Değer':'Value'],
-  [
-    tr2(TR?'Nüfus':'Population', S.population),
-    tr2(TR?'Ortalama Yaş':'Avg Age', S.avg_age ? `${S.avg_age} yr` : '—'),
-    tr2(TR?'Ortalama Zeka':'Avg Intelligence', pct(S.avg_intelligence)),
-    tr2(TR?'Teknoloji Sayısı':'Technologies', S.technologies),
-    tr2(TR?'İnanç Sayısı':'Beliefs', S.beliefs),
-    tr2(TR?'Sanat Formları':'Art Forms', S.art_forms),
-    tr2(TR?'Sosyal Gruplar':'Social Groups', S.groups),
-    tr2(TR?'Gini Katsayısı':'Gini Coefficient', S.gini),
-    tr2(TR?'Mutluluk İndeksi':'Happiness Index', pct(S.happiness_index)),
-    tr2(TR?'Hastalık Oranı':'Sick Rate', pct(S.sick_rate)),
-    tr2(TR?'Besin Bolluğu':'Food Abundance', pct(S.food_abundance)),
-    tr2(TR?'Su Bolluğu':'Water Abundance', pct(S.water_abundance)),
-    tr2(TR?'Mevsim':'Season', S.season),
-    tr2(TR?'Sıcaklık':'Temperature', S.temperature ? `${S.temperature}°C` : '—'),
-    tr2(TR?'Dil Aşaması':'Language Stage', S.max_language_stage),
-    tr2(TR?'Kelime Sayısı':'Word Count', S.word_count),
-    tr2(TR?'Toplam Doğum':'Total Births', S.births),
-    tr2(TR?'Toplam Ölüm':'Total Deaths', S.deaths),
-    tr2('QoL Index', S.qol_index),
-  ].join('')
+${secColor(TR?'Anlık Durum':'Current Snapshot', '#6366f1', '📊')}
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+  ${statCard(TR?'Nüfus':'Population', String(S.population ?? '—'), '#6366f1')}
+  ${statCard(TR?'Ort. Yaş':'Avg Age', S.avg_age ? S.avg_age + ' yr' : '—', '#8b5cf6')}
+  ${statCard(TR?'Mutluluk':'Happiness', pct(S.happiness_index), '#10b981')}
+  ${statCard('Gini', String(S.gini ?? '—'), '#f59e0b')}
+  ${statCard(TR?'Zeka':'Intelligence', pct(S.avg_intelligence), '#3b82f6')}
+  ${statCard('QoL', String(S.qol_index ?? '—'), '#06b6d4')}
+</div>
+${styledTbl(
+  [TR?'Gösterge':'Metric', TR?'Değer':'Value', TR?'Gösterge':'Metric', TR?'Değer':'Value'],
+  (() => {
+    const rows2 = [
+      [TR?'Besin Bolluğu':'Food Abundance', pct(S.food_abundance), TR?'Su Bolluğu':'Water Abundance', pct(S.water_abundance)],
+      [TR?'Hastalık Oranı':'Sick Rate', pct(S.sick_rate), TR?'Sıcaklık':'Temperature', S.temperature ? S.temperature + '°C' : '—'],
+      [TR?'Dil Aşaması':'Lang Stage', S.max_language_stage, TR?'Kelime Sayısı':'Word Count', S.word_count],
+      [TR?'Teknoloji':'Technologies', S.technologies, TR?'İnanç':'Beliefs', S.beliefs],
+      [TR?'Sanat':'Art Forms', S.art_forms, TR?'Gruplar':'Groups', S.groups],
+      [TR?'Mevsim':'Season', S.season, TR?'Hava':'Weather', S.weather ?? '—'],
+      [TR?'Toplam Doğum':'Total Births', S.births, TR?'Toplam Ölüm':'Total Deaths', S.deaths],
+    ];
+    return rows2.map((r2, i) => stRow(r2, i)).join('');
+  })(),
+  '#6366f1'
 )}
 
 <!-- NÜFUS TARİHİ -->
-${sec(TR?'Nüfus Tarihi (Yıllık)':'Population History (Annual)')}
-${tbl(
+${secColor(TR?'Nüfus Tarihi':'Population History', '#f59e0b', '📈')}
+<div style="margin-bottom:12px;">${popChartSvg}</div>
+${styledTbl(
   [TR?'Yıl':'Year', TR?'Nüfus':'Pop', TR?'Ort.Yaş':'Avg Age', TR?'Mutluluk':'Happiness', 'Gini',
-   TR?'Besin':'Food', TR?'Su':'Water', TR?'Teknoloji':'Tech', TR?'İnanç':'Belief',
-   TR?'Konum (X,Y)':'Location (X,Y)', TR?'Hareket Sebebi':'Movement Reason', TR?'Hava':'Weather'],
-  popHistory.map((c: Record<string, unknown>) => tr2(
-    c.year, c.population, c.avg_age ? `${c.avg_age}yr` : '—',
+   TR?'Besin':'Food', TR?'Su':'Water', TR?'Konum':'Location', TR?'Hareket Sebebi':'Move Reason', TR?'Hava':'Weather'],
+  popHistory.map((c: Record<string,unknown>, i: number) => stRow([
+    c.year, c.population, c.avg_age ? c.avg_age + 'yr' : '—',
     pct(c.happiness_index as number|undefined), c.gini,
     pct(c.food_abundance as number|undefined), pct(c.water_abundance as number|undefined),
-    c.technologies, c.beliefs,
-    (c.centroid_x != null || c.centroid_y != null) ? `${coord(c.centroid_x as number|undefined)},${coord(c.centroid_y as number|undefined)}` : '—',
-    c.dominant_drive ?? '—', c.weather ?? '—'
-  )).join('')
+    (c.centroid_x != null) ? coord(c.centroid_x as number) + ',' + coord(c.centroid_y as number) : '—',
+    c.dominant_drive ?? '—', c.weather ?? '—',
+  ], i)).join(''),
+  '#d97706'
 )}
 
 <!-- TEKNOLOJİ ZAMAN ÇİZELGESİ -->
-${sec(TR?'Teknoloji Zaman Çizelgesi':'Technology Timeline')}
-${r.technology_timeline?.length ? tbl(
-  [TR?'Yıl':'Year', TR?'Teknoloji':'Technology', TR?'Keşif Sebebi':'Discovery Reason',
-   TR?'Besin':'Food', TR?'Su':'Water', TR?'Nüfus':'Pop', TR?'Mevsim':'Season', TR?'Hava':'Weather'],
-  (r.technology_timeline as Record<string, unknown>[]).map(e => tr2(
-    e.year, e.name,
-    e.trigger_reason ?? '—',
-    pct(e.food_abundance as number|undefined), pct(e.water_abundance as number|undefined),
-    e.population, e.season, e.weather
-  )).join('')
-) : '<p style="color:#888;font-size:11px;">—</p>'}
+${secColor(TR?'Teknoloji Zaman Çizelgesi':'Technology Timeline', '#3b82f6', '⚙️')}
+<div style="margin-bottom:10px;">
+  ${(r.technology_timeline as Record<string,unknown>[] ?? []).map(e => badge(String(e.name ?? '?'), '#3b82f6')).join('')}
+</div>
+${r.technology_timeline?.length ? styledTbl(
+  [TR?'Yıl':'Year', TR?'Teknoloji':'Technology', TR?'Keşif Sebebi':'Discovery Reason', TR?'Nüfus':'Pop', TR?'Mevsim':'Season', TR?'Hava':'Weather'],
+  (r.technology_timeline as Record<string,unknown>[]).map((e, i) => stRow([
+    e.year, e.name, e.trigger_reason ?? '—', e.population, e.season, e.weather
+  ], i)).join(''),
+  '#2563eb'
+) : '<p style="color:#9ca3af;font-size:11px;padding:8px;">—</p>'}
 
-<!-- İNANÇ & KÜLTÜR ZAMAN ÇİZELGESİ -->
-${sec(TR?'İnanç & Kültür Zaman Çizelgesi':'Belief & Culture Timeline')}
-${(r.belief_timeline?.length || r.art_timeline?.length) ? tbl(
-  [TR?'Yıl':'Year', TR?'Tür':'Type', TR?'İsim':'Name', TR?'Oluşum Sebebi':'Formation Reason',
-   TR?'Nüfus':'Pop', TR?'Mevsim':'Season', TR?'Hava':'Weather'],
+<!-- İNANÇ & KÜLTÜR -->
+${secColor(TR?'İnanç & Kültür Zaman Çizelgesi':'Belief & Culture Timeline', '#8b5cf6', '🌀')}
+<div style="margin-bottom:10px;">
+  ${(r.belief_timeline as Record<string,unknown>[] ?? []).map(e => badge(String(e.name ?? '?'), '#8b5cf6')).join('')}
+  ${(r.art_timeline as Record<string,unknown>[] ?? []).map(e => badge(String(e.name ?? '?'), '#ec4899')).join('')}
+</div>
+${(r.belief_timeline?.length || r.art_timeline?.length) ? styledTbl(
+  [TR?'Yıl':'Year', TR?'Tür':'Type', TR?'İsim':'Name', TR?'Oluşum Sebebi':'Reason', TR?'Nüfus':'Pop', TR?'Mevsim':'Season'],
   [
-    ...(r.belief_timeline as Record<string, unknown>[] ?? []).map(e => tr2(
-      e.year, TR?'İnanç':'Belief', e.name,
-      e.trigger_reason ?? '—', e.population, e.season, e.weather
-    )),
-    ...(r.art_timeline as Record<string, unknown>[] ?? []).map(e => tr2(
-      e.year, e.type, e.name, '—', '—', '—', '—'
-    )),
-  ].join('')
-) : '<p style="color:#888;font-size:11px;">—</p>'}
+    ...(r.belief_timeline as Record<string,unknown>[] ?? []).map((e, i) => stRow([e.year, TR?'İnanç':'Belief', e.name, e.trigger_reason ?? '—', e.population, e.season], i)),
+    ...(r.art_timeline as Record<string,unknown>[] ?? []).map((e, i) => stRow([e.year, e.type, e.name, '—', '—', '—'], i + (r.belief_timeline?.length ?? 0))),
+  ].join(''),
+  '#7c3aed'
+) : '<p style="color:#9ca3af;font-size:11px;padding:8px;">—</p>'}
 
 <!-- GÖÇ TARİHİ -->
-${sec(TR?'Göç Tarihi':'Migration History')}
-${r.migration_history?.length ? tbl(
-  [TR?'Yıl':'Year', TR?'Mesafe':'Distance', TR?'Göç Sebebi':'Migration Reason',
-   TR?'Önceki Konum':'From', TR?'Yeni Konum':'To',
-   TR?'Besin':'Food', TR?'Su':'Water', TR?'Mevsim':'Season', TR?'Hava':'Weather'],
-  (r.migration_history as Record<string, unknown>[]).map(e => {
+${secColor(TR?'Göç Tarihi':'Migration History', '#10b981', '🧭')}
+${r.migration_history?.length ? styledTbl(
+  [TR?'Yıl':'Year', TR?'Mesafe':'Distance', TR?'Göç Sebebi':'Reason', TR?'Önceki':'From', TR?'Yeni':'To', TR?'Besin':'Food', TR?'Su':'Water', TR?'Mevsim':'Season'],
+  (r.migration_history as Record<string,unknown>[]).map((e, i) => {
     const from = e.from as Record<string,number>|undefined;
-    const to = e.to as Record<string,number>|undefined;
-    return tr2(
-      e.year, e.distance_km ? `${e.distance_km} km` : '—', e.reason ?? '—',
-      from ? `${coord(from.x)},${coord(from.y)}` : '—',
-      to   ? `${coord(to.x)},${coord(to.y)}` : '—',
-      pct(e.food_abundance as number|undefined), pct(e.water_abundance as number|undefined),
-      e.season, e.weather
-    );
-  }).join('')
-) : `<p style="color:#888;font-size:11px;">${TR?'Kayıt yok — göç verisi yeni checkpoint\'lerden itibaren toplanacak.':'No records — migration data will accumulate from future checkpoints.'}</p>`}
+    const to   = e.to   as Record<string,number>|undefined;
+    return stRow([
+      e.year, e.distance_km ? e.distance_km + ' km' : '—', e.reason ?? '—',
+      from ? coord(from.x) + ',' + coord(from.y) : '—',
+      to   ? coord(to.x)   + ',' + coord(to.y)   : '—',
+      pct(e.food_abundance as number|undefined), pct(e.water_abundance as number|undefined), e.season,
+    ], i);
+  }).join(''),
+  '#059669'
+) : `<p style="color:#9ca3af;font-size:11px;padding:8px;">${TR?'Göç kaydı bulunamadı — yeni checkpoint\'lerden itibaren toplanacak.':'No migration records yet — will accumulate from future checkpoints.'}</p>`}
 
 <!-- ÖLÜM İSTATİSTİKLERİ -->
-${sec(TR?'Ölüm İstatistikleri':'Death Statistics')}
-<div style="display:flex;gap:20px;">
-<div style="flex:1;">
-<strong style="font-size:11px;">${TR?'Nedene Göre':'By Cause'}</strong>
-${tbl(
-  [TR?'Sebep':'Cause', TR?'Sayı':'Count', '%'],
-  Object.entries(deathByCause).sort(([,a],[,b]) => (b as number)-(a as number))
-    .map(([cause, count]) => tr2(cause, count as number, deathTotal ? `${Math.round((count as number)/deathTotal*100)}%` : '—'))
-    .join('') || tr2(TR?'Veri yok':'No data','','')
-)}
+${secColor(TR?'Ölüm İstatistikleri':'Death Statistics', '#ef4444', '💀')}
+<div style="display:flex;gap:12px;margin-bottom:10px;">
+  ${statCard(TR?'Toplam Ölüm':'Total Deaths', String(deathTotal), '#ef4444')}
+  ${statCard(TR?'Ort. Ölüm Yaşı':'Avg Death Age', deadAvgAge != null ? deadAvgAge + ' yr' : '—', '#f97316')}
+  ${statCard(TR?'Bebek Ölümü':'Infant Deaths', String(deathByAge.infant_0_1 ?? 0), '#fbbf24')}
 </div>
-<div style="flex:1;">
-<strong style="font-size:11px;">${TR?'Yaş Grubuna Göre':'By Age Group'}</strong>
-${tbl(
-  [TR?'Yaş Grubu':'Age Group', TR?'Sayı':'Count', '%'],
-  [
-    tr2('0–1 (bebek)', deathByAge.infant_0_1, deathTotal ? `${Math.round((deathByAge.infant_0_1??0)/deathTotal*100)}%` : '—'),
-    tr2('1–15 (çocuk)', deathByAge.child_1_15, deathTotal ? `${Math.round((deathByAge.child_1_15??0)/deathTotal*100)}%` : '—'),
-    tr2('15–30 (genç)', deathByAge.young_adult_15_30, deathTotal ? `${Math.round((deathByAge.young_adult_15_30??0)/deathTotal*100)}%` : '—'),
-    tr2('30–50 (yetişkin)', deathByAge.adult_30_50, deathTotal ? `${Math.round((deathByAge.adult_30_50??0)/deathTotal*100)}%` : '—'),
-    tr2('50+ (yaşlı)', deathByAge.elder_50plus, deathTotal ? `${Math.round((deathByAge.elder_50plus??0)/deathTotal*100)}%` : '—'),
-  ].join('')
-)}
-</div>
+<div style="margin-bottom:14px;">${deathCauseChartSvg}</div>
+<div style="display:flex;gap:20px;align-items:flex-start;">
+  <div style="flex:2;">
+  <div style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:6px;">${TR?'Nedene Göre':'By Cause'}</div>
+  ${styledTbl(
+    [TR?'Sebep':'Cause', TR?'Sayı':'Count', '%'],
+    Object.entries(deathByCause).sort(([,a],[,b]) => (b as number) - (a as number))
+      .map(([cause, count], i) => stRow([cause.replace(/_/g,' '), count, deathTotal ? Math.round((count as number)/deathTotal*100)+'%' : '—'], i))
+      .join('') || stRow([TR?'Veri yok':'No data','',''], 0),
+    '#dc2626'
+  )}
+  </div>
+  <div style="flex:1;">
+  <div style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:6px;">${TR?'Yaş Grubuna Göre':'By Age'}</div>
+  <div>${ageChartSvg}</div>
+  </div>
 </div>
 
 <!-- ÖNEMLİ OLAYLAR -->
-${sec(TR?'Önemli Olaylar (önem ≥ 3)':'Notable Events (importance ≥ 3)')}
-${r.notable_events?.length ? tbl(
+${secColor(TR?'Önemli Olaylar (önem ≥ 3)':'Notable Events (importance ≥ 3)', '#f97316', '⚡')}
+${r.notable_events?.length ? styledTbl(
   [TR?'Yıl':'Year', TR?'Gün':'Day', TR?'Tür':'Type', TR?'Açıklama':'Description'],
-  (r.notable_events as Record<string, unknown>[]).map(e => tr2(e.sim_year, e.sim_day, e.event_type, e.description)).join('')
-) : '<p style="color:#888;font-size:11px;">—</p>'}
+  (r.notable_events as Record<string,unknown>[]).map((e, i) => stRow([e.sim_year, e.sim_day, e.event_type, e.description], i)).join(''),
+  '#ea580c'
+) : '<p style="color:#9ca3af;font-size:11px;padding:8px;">—</p>'}
 
 <!-- BİREYLER -->
-${sec(TR?'Bireyler':'Individuals')}
-${r.individuals?.length ? tbl(
-  [TR?'İsim':'Name', TR?'Cin.':'Sex', TR?'Kurucu':'Fnd', TR?'Doğum Yılı':'Born', TR?'Ölüm Yılı':'Died',
-   TR?'Ölüm Yaşı':'Age@Death', TR?'Ölüm Sebebi':'Cause', TR?'Zeka':'IQ'],
-  (r.individuals as Record<string, unknown>[]).map(i => tr2(
-    i.name, i.sex === 'male' ? '♂' : '♀', i.is_founder ? '✓' : '',
-    i.birth_year, i.is_dead ? i.death_year : TR?'(yaşıyor)':'(alive)',
-    i.age_at_death ?? (i.is_dead ? '—' : ''), i.death_cause ?? (i.is_dead ? '—' : ''),
-    i.intelligence != null ? `${Math.round((i.intelligence as number)*100)}%` : '—'
-  )).join('')
-) : '<p style="color:#888;font-size:11px;">—</p>'}
+${secColor(TR?'Bireyler':'Individuals', '#64748b', '👥')}
+${r.individuals?.length ? styledTbl(
+  [TR?'İsim':'Name', TR?'Cin.':'Sex', TR?'Kurucu':'Fnd', TR?'Doğum Yılı':'Born', TR?'Ölüm Yılı':'Died', TR?'Ölüm Yaşı':'Age@Death', TR?'Ölüm Sebebi':'Cause', TR?'Zeka':'IQ'],
+  (r.individuals as Record<string,unknown>[]).map((ind, i) => stRow([
+    ind.name, ind.sex === 'male' ? '♂' : '♀', ind.is_founder ? '★' : '',
+    ind.birth_year,
+    ind.is_dead ? ind.death_year : TR?'(yaşıyor)':'(alive)',
+    ind.age_at_death ?? (ind.is_dead ? '—' : ''),
+    ind.death_cause ?? (ind.is_dead ? '—' : ''),
+    ind.intelligence != null ? Math.round((ind.intelligence as number)*100)+'%' : '—',
+  ], i)).join(''),
+  '#475569'
+) : '<p style="color:#9ca3af;font-size:11px;padding:8px;">—</p>'}
 
-<p style="margin-top:32px;border-top:1px solid #ccc;padding-top:8px;color:#555;font-size:10px;">
-  Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. © 2026 · RST Q-Nation 200120401018
-</p>
+<div style="margin-top:40px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af;text-align:center;">
+  Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. &copy; 2026 &middot; RST Q-Nation 200120401018
+</div>
 </div>
 </body></html>`;
 
