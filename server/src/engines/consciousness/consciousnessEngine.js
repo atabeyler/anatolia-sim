@@ -15,7 +15,11 @@
 //       + 0.0002 (if in group)                    ← social ignition bonus (GWT)
 //       + (theory_of_mind/3) × 0.0003             ← ToM bonus (metacognition)
 //       − stress_level × 0.0003                   ← stress penalty
-//   ceiling = min(1, potential × 1.2)
+//   ceiling = min(1, potential × 1.2)   ← 20% experiential plasticity bonus: accumulated
+//                                          language/social/ToM stimulation can push realised
+//                                          capacity slightly beyond the genetic baseline,
+//                                          consistent with GWT's broadcast-amplification
+//                                          mechanism and empirical synaptic-plasticity data.
 
 export function updateConsciousness(ind) {
   if (!ind.mind) return;
