@@ -22,28 +22,253 @@ function makeSpriteTexture(): THREE.CanvasTexture {
   return new THREE.CanvasTexture(canvas);
 }
 
-/** Simple horizontal-band canvas texture for gas giants. */
-function makeStripeTex(bands: string[]): THREE.CanvasTexture {
+/** Jupiter: gradient bands + Great Red Spot */
+function makeJupiterTex(): THREE.CanvasTexture {
+  const W = 1024, H = 512;
   const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 256;
+  canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d')!;
-  const bh = canvas.height / bands.length;
-  bands.forEach((color, i) => {
-    ctx.fillStyle = color;
-    ctx.fillRect(0, Math.floor(i * bh), canvas.width, Math.ceil(bh) + 1);
-  });
+  const bd: [number,string][] = [
+    [0.00,'#c07030'],[0.06,'#f0d090'],[0.12,'#b85820'],[0.18,'#e8c880'],
+    [0.25,'#d07838'],[0.32,'#f4e09a'],[0.40,'#c06828'],[0.48,'#f0cc80'],
+    [0.54,'#c88040'],[0.60,'#e8c078'],[0.66,'#b86020'],[0.72,'#ecc880'],
+    [0.78,'#c07830'],[0.86,'#f0d090'],[0.93,'#c06030'],[1.00,'#c07030'],
+  ];
+  for (let i = 0; i < bd.length - 1; i++) {
+    const y1 = bd[i][0] * H, y2 = bd[i+1][0] * H;
+    const g = ctx.createLinearGradient(0,y1,0,y2);
+    g.addColorStop(0,bd[i][1]); g.addColorStop(1,bd[i+1][1]);
+    ctx.fillStyle = g; ctx.fillRect(0,y1,W,y2-y1+1);
+  }
+  ctx.globalAlpha = 0.14;
+  for (let y = 0; y < H; y += 3) {
+    const wave = Math.sin(y*0.06)*14 + Math.sin(y*0.025)*20;
+    const dark = ((y/H*bd.length)|0) % 2 === 0;
+    for (let x = 0; x < W; x += 3)
+      if (Math.sin((x+wave)*0.035+y*0.015) > 0.62) {
+        ctx.fillStyle = dark ? 'rgba(70,30,5,1)' : 'rgba(250,210,130,1)';
+        ctx.fillRect(x,y,3,3);
+      }
+  }
+  ctx.globalAlpha = 1;
+  ctx.save(); ctx.translate(W*0.68,H*0.575); ctx.scale(1,0.5);
+  const grs = ctx.createRadialGradient(0,0,0,0,0,W*0.056);
+  grs.addColorStop(0,'rgba(175,50,15,0.97)'); grs.addColorStop(0.35,'rgba(185,65,22,0.83)');
+  grs.addColorStop(0.68,'rgba(160,68,28,0.55)'); grs.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle = grs; ctx.beginPath(); ctx.arc(0,0,W*0.056,0,Math.PI*2); ctx.fill();
+  ctx.restore();
   return new THREE.CanvasTexture(canvas);
 }
 
-const JUPITER_BANDS = [
-  '#c88b3a','#e8c890','#c05820','#e8d4a8',
-  '#a86828','#e4c488','#b87038','#ead4a0',
-  '#c07030','#e8c890',
-];
-const SATURN_BANDS = [
-  '#e8d8a8','#d0c090','#ead8a8','#c8b080','#ead8a8','#d4c898','#e8d8a8',
-];
+/** Saturn: warm golden bands */
+function makeSaturnTex(): THREE.CanvasTexture {
+  const W = 1024, H = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d')!;
+  const bd: [number,string][] = [
+    [0.00,'#d4b870'],[0.10,'#e8cc88'],[0.22,'#c8a858'],[0.34,'#ead8a0'],
+    [0.46,'#d0b868'],[0.56,'#ecdca8'],[0.66,'#c8a858'],[0.76,'#ead8a0'],
+    [0.86,'#d4b870'],[1.00,'#d4b870'],
+  ];
+  for (let i = 0; i < bd.length - 1; i++) {
+    const y1 = bd[i][0]*H, y2 = bd[i+1][0]*H;
+    const g = ctx.createLinearGradient(0,y1,0,y2);
+    g.addColorStop(0,bd[i][1]); g.addColorStop(1,bd[i+1][1]);
+    ctx.fillStyle = g; ctx.fillRect(0,y1,W,y2-y1+1);
+  }
+  ctx.globalAlpha = 0.08;
+  for (let y = 0; y < H; y += 4) {
+    const wave = Math.sin(y*0.04)*10;
+    for (let x = 0; x < W; x += 4)
+      if (Math.sin((x+wave)*0.03+y*0.01) > 0.6) {
+        ctx.fillStyle = ((y/H*9)|0)%2===0 ? 'rgba(100,70,20,1)' : 'rgba(255,235,165,1)';
+        ctx.fillRect(x,y,4,4);
+      }
+  }
+  ctx.globalAlpha = 1;
+  return new THREE.CanvasTexture(canvas);
+}
+
+/** Saturn ring: C / B / Cassini-gap / A gradient */
+function makeSaturnRingTex(): THREE.CanvasTexture {
+  const W = 512, H = 1;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d')!;
+  const g = ctx.createLinearGradient(0,0,W,0);
+  g.addColorStop(0,    'rgba(0,0,0,0)');
+  g.addColorStop(0.05, 'rgba(160,140,100,0.15)');
+  g.addColorStop(0.20, 'rgba(200,180,130,0.55)');
+  g.addColorStop(0.42, 'rgba(235,215,165,0.88)');
+  g.addColorStop(0.56, 'rgba(210,190,140,0.72)');
+  g.addColorStop(0.60, 'rgba(12,6,2,0.08)');
+  g.addColorStop(0.63, 'rgba(12,6,2,0.06)');
+  g.addColorStop(0.68, 'rgba(190,170,120,0.60)');
+  g.addColorStop(0.82, 'rgba(175,155,108,0.48)');
+  g.addColorStop(0.90, 'rgba(155,138,98,0.28)');
+  g.addColorStop(1.00, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  return new THREE.CanvasTexture(canvas);
+}
+
+/** Mars: red terrain + polar ice caps */
+function makeMarsTex(): THREE.CanvasTexture {
+  const W = 1024, H = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d')!;
+  const base = ctx.createLinearGradient(0,0,0,H);
+  base.addColorStop(0,   '#e0e0d8'); base.addColorStop(0.07,'#cc5030');
+  base.addColorStop(0.28,'#c84c2a'); base.addColorStop(0.50,'#d05c38');
+  base.addColorStop(0.58,'#b03c24'); base.addColorStop(0.72,'#cc5030');
+  base.addColorStop(0.90,'#c04428'); base.addColorStop(0.95,'#e0e0d8');
+  base.addColorStop(1,   '#f0f0e8');
+  ctx.fillStyle = base; ctx.fillRect(0,0,W,H);
+  const patches: [number,number,number,number,string][] = [
+    [0.35,0.40,0.12,0.09,'rgba(90,28,8,0.38)'],
+    [0.62,0.52,0.26,0.06,'rgba(80,22,6,0.45)'],
+    [0.77,0.46,0.09,0.08,'rgba(75,18,5,0.35)'],
+    [0.14,0.43,0.07,0.07,'rgba(100,38,12,0.30)'],
+    [0.50,0.35,0.06,0.05,'rgba(85,25,8,0.28)'],
+  ];
+  for (const [px,py,rx,ry,c] of patches) {
+    ctx.save(); ctx.translate(px*W,py*H); ctx.scale(rx*W,ry*H);
+    const g = ctx.createRadialGradient(0,0,0,0,0,1);
+    g.addColorStop(0,c); g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0,0,1,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  const ncap = ctx.createRadialGradient(W/2,0,0,W/2,0,H*0.11);
+  ncap.addColorStop(0,'rgba(245,245,238,0.97)'); ncap.addColorStop(0.55,'rgba(230,230,220,0.75)'); ncap.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle = ncap; ctx.fillRect(0,0,W,H*0.15);
+  const scap = ctx.createRadialGradient(W/2,H,0,W/2,H,H*0.09);
+  scap.addColorStop(0,'rgba(248,248,240,0.95)'); scap.addColorStop(0.55,'rgba(230,228,218,0.65)'); scap.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle = scap; ctx.fillRect(0,H*0.86,W,H*0.14);
+  return new THREE.CanvasTexture(canvas);
+}
+
+/** Moon: grey highlands + dark maria + craters */
+function makeMoonTex(): THREE.CanvasTexture {
+  const W = 1024, H = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = '#c2c2ba'; ctx.fillRect(0,0,W,H);
+  const maria: [number,number,number,number][] = [
+    [0.64,0.45,0.13,0.10],[0.57,0.36,0.10,0.08],[0.44,0.40,0.19,0.14],
+    [0.24,0.48,0.22,0.16],[0.73,0.55,0.08,0.06],[0.80,0.43,0.07,0.06],[0.60,0.52,0.06,0.05],
+  ];
+  for (const [mx,my,rx,ry] of maria) {
+    ctx.save(); ctx.translate(mx*W,my*H); ctx.scale(rx*W,ry*H);
+    const g = ctx.createRadialGradient(0,0,0,0,0,1);
+    g.addColorStop(0,'rgba(78,78,72,0.88)'); g.addColorStop(0.55,'rgba(88,86,80,0.68)');
+    g.addColorStop(0.88,'rgba(100,98,92,0.32)'); g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0,0,1,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  const craters: [number,number,number][] = [
+    [0.82,0.30,0.025],[0.70,0.28,0.018],[0.50,0.32,0.022],[0.35,0.35,0.015],
+    [0.15,0.40,0.020],[0.88,0.58,0.015],[0.40,0.60,0.018],[0.92,0.38,0.012],
+  ];
+  for (const [cx,cy,cr] of craters) {
+    ctx.save(); ctx.translate(cx*W,cy*H);
+    ctx.fillStyle = 'rgba(58,58,52,0.38)';
+    ctx.beginPath(); ctx.arc(0,0,cr*W*1.1,0,Math.PI*2); ctx.fill();
+    const g = ctx.createRadialGradient(0,0,0,0,0,cr*W);
+    g.addColorStop(0,'rgba(205,205,195,0.62)'); g.addColorStop(0.65,'rgba(185,183,173,0.28)'); g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0,0,cr*W,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  const limb = ctx.createRadialGradient(W/2,H/2,W*0.28,W/2,H/2,W*0.54);
+  limb.addColorStop(0,'rgba(0,0,0,0)'); limb.addColorStop(0.75,'rgba(0,0,0,0)'); limb.addColorStop(1,'rgba(0,0,0,0.22)');
+  ctx.fillStyle = limb; ctx.fillRect(0,0,W,H);
+  return new THREE.CanvasTexture(canvas);
+}
+
+/** Mercury: dark grey with cratered patches */
+function makeMercuryTex(): THREE.CanvasTexture {
+  const W = 512, H = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = '#8a7e70'; ctx.fillRect(0,0,W,H);
+  const spots: [number,number,number,string][] = [
+    [0.20,0.40,0.12,'rgba(48,38,28,0.32)'],[0.50,0.60,0.10,'rgba(58,48,35,0.28)'],
+    [0.75,0.34,0.08,'rgba(118,108,88,0.38)'],[0.90,0.62,0.07,'rgba(48,38,28,0.22)'],
+    [0.35,0.28,0.06,'rgba(108,98,78,0.30)'],[0.62,0.45,0.09,'rgba(42,32,22,0.25)'],
+  ];
+  for (const [px,py,pr,pc] of spots) {
+    const g = ctx.createRadialGradient(px*W,py*H,0,px*W,py*H,pr*W);
+    g.addColorStop(0,pc); g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  }
+  return new THREE.CanvasTexture(canvas);
+}
+
+/** Venus: creamy yellow-orange with atmospheric swirls */
+function makeVenusTex(): THREE.CanvasTexture {
+  const W = 512, H = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d')!;
+  const base = ctx.createLinearGradient(0,0,0,H);
+  base.addColorStop(0,'#f8e8b0'); base.addColorStop(0.3,'#f0d888');
+  base.addColorStop(0.5,'#e8cc78'); base.addColorStop(0.7,'#f0d888');
+  base.addColorStop(1,'#f8e8b0');
+  ctx.fillStyle = base; ctx.fillRect(0,0,W,H);
+  ctx.globalAlpha = 0.20;
+  for (let y = 0; y < H; y += 3) {
+    const wave = Math.sin(y*0.04)*18 + Math.sin(y*0.016)*12;
+    for (let x = 0; x < W; x += 3)
+      if (Math.sin((x+wave)*0.025+y*0.012) > 0.5) {
+        ctx.fillStyle = Math.sin((x+wave)*0.025+y*0.012) > 0.75 ? 'rgba(215,175,55,1)' : 'rgba(255,240,155,1)';
+        ctx.fillRect(x,y,3,3);
+      }
+  }
+  ctx.globalAlpha = 1;
+  return new THREE.CanvasTexture(canvas);
+}
+
+/** Uranus: pale cyan-green */
+function makeUranusTex(): THREE.CanvasTexture {
+  const W = 256, H = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d')!;
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#72ccd4'); g.addColorStop(0.35,'#80dce4');
+  g.addColorStop(0.5,'#78d2da'); g.addColorStop(0.65,'#80dce4'); g.addColorStop(1,'#72ccd4');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  return new THREE.CanvasTexture(canvas);
+}
+
+/** Neptune: deep blue with cloud bands + Great Dark Spot */
+function makeNeptuneTex(): THREE.CanvasTexture {
+  const W = 256, H = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d')!;
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#2858c8'); g.addColorStop(0.3,'#2048b8');
+  g.addColorStop(0.5,'#3060d0'); g.addColorStop(0.7,'#2048b8'); g.addColorStop(1,'#2858c8');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  ctx.globalAlpha = 0.32;
+  for (let y = 0; y < H; y += 4) {
+    const wave = Math.sin(y*0.08)*6;
+    for (let x = 0; x < W; x += 4)
+      if (Math.sin((x+wave)*0.05+y*0.02) > 0.62) {
+        ctx.fillStyle = 'rgba(148,188,238,1)'; ctx.fillRect(x,y,4,2);
+      }
+  }
+  ctx.globalAlpha = 1;
+  ctx.save(); ctx.translate(W*0.55,H*0.45); ctx.scale(1,0.5);
+  const ds = ctx.createRadialGradient(0,0,0,0,0,W*0.09);
+  ds.addColorStop(0,'rgba(18,28,95,0.88)'); ds.addColorStop(0.7,'rgba(18,28,95,0.4)'); ds.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle = ds; ctx.beginPath(); ctx.arc(0,0,W*0.09,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  return new THREE.CanvasTexture(canvas);
+}
 
 // ─── Globe ───────────────────────────────────────────────────────────────────
 
@@ -127,6 +352,7 @@ function Sun() {
 
 function Moon() {
   const groupRef = useRef<THREE.Group>(null);
+  const moonMap = useMemo(() => makeMoonTex(), []);
   useFrame(({ clock }) => {
     if (groupRef.current) {
       const t = clock.elapsedTime * 0.28;
@@ -141,8 +367,8 @@ function Moon() {
   return (
     <group ref={groupRef}>
       <mesh>
-        <sphereGeometry args={[0.2, 20, 20]} />
-        <meshStandardMaterial color="#b0b8c8" roughness={0.92} metalness={0.02} />
+        <sphereGeometry args={[0.2, 32, 32]} />
+        <meshStandardMaterial map={moonMap} color="#ffffff" roughness={0.95} metalness={0.01} />
       </mesh>
       <pointLight intensity={0.08} color="#c8d8ff" distance={10} />
     </group>
@@ -177,10 +403,10 @@ interface PlanetProps {
   color: string;
   roughness?: number;
   map?: THREE.CanvasTexture;
-  rings?: boolean;
+  ringTex?: THREE.CanvasTexture;
 }
 
-function Planet({ radius, dist, speed, incl, color, roughness = 0.75, map, rings }: PlanetProps) {
+function Planet({ radius, dist, speed, incl, color, roughness = 0.75, map, ringTex }: PlanetProps) {
   const ref = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
     if (!ref.current) return;
@@ -203,10 +429,10 @@ function Planet({ radius, dist, speed, incl, color, roughness = 0.75, map, rings
           metalness={0.04}
         />
       </mesh>
-      {rings && (
-        <mesh rotation={[Math.PI * 0.48, 0.2, 0.15]}>
-          <ringGeometry args={[radius * 1.45, radius * 2.4, 80]} />
-          <meshBasicMaterial color="#c8b888" transparent opacity={0.55} side={THREE.DoubleSide} />
+      {ringTex && (
+        <mesh rotation={[Math.PI * 0.46, 0.18, 0.14]}>
+          <ringGeometry args={[radius * 1.38, radius * 2.55, 128]} />
+          <meshBasicMaterial map={ringTex} transparent side={THREE.DoubleSide} />
         </mesh>
       )}
     </group>
@@ -214,45 +440,51 @@ function Planet({ radius, dist, speed, incl, color, roughness = 0.75, map, rings
 }
 
 function SolarSystem() {
-  const jupiterMap = useMemo(() => makeStripeTex(JUPITER_BANDS), []);
-  const saturnMap  = useMemo(() => makeStripeTex(SATURN_BANDS),  []);
+  const mercuryMap = useMemo(() => makeMercuryTex(), []);
+  const venusMap   = useMemo(() => makeVenusTex(),   []);
+  const marsMap    = useMemo(() => makeMarsTex(),     []);
+  const jupiterMap = useMemo(() => makeJupiterTex(),  []);
+  const saturnMap  = useMemo(() => makeSaturnTex(),   []);
+  const saturnRing = useMemo(() => makeSaturnRingTex(),[]);
+  const uranusMap  = useMemo(() => makeUranusTex(),   []);
+  const neptuneMap = useMemo(() => makeNeptuneTex(),  []);
 
   return (
     <>
       {/* Mercury */}
       <group key="mercury">
         <OrbitPath dist={22} />
-        <Planet radius={0.10} dist={22} speed={0.074} incl={0.08} color="#9a9a9a" roughness={0.9} />
+        <Planet radius={0.10} dist={22} speed={0.074} incl={0.08} color="#8a7e70" roughness={0.92} map={mercuryMap} />
       </group>
       {/* Venus */}
       <group key="venus">
         <OrbitPath dist={30} />
-        <Planet radius={0.20} dist={30} speed={0.050} incl={0.04} color="#e8d4a0" roughness={0.65} />
+        <Planet radius={0.20} dist={30} speed={0.050} incl={0.04} color="#f0d888" roughness={0.55} map={venusMap} />
       </group>
       {/* Mars */}
       <group key="mars">
         <OrbitPath dist={45} />
-        <Planet radius={0.13} dist={45} speed={0.028} incl={0.17} color="#c1440e" roughness={0.85} />
+        <Planet radius={0.13} dist={45} speed={0.028} incl={0.17} color="#c04828" roughness={0.88} map={marsMap} />
       </group>
       {/* Jupiter */}
       <group key="jupiter">
         <OrbitPath dist={75} />
-        <Planet radius={0.75} dist={75} speed={0.012} incl={0.06} color="#c2956a" roughness={0.6} map={jupiterMap} />
+        <Planet radius={0.75} dist={75} speed={0.012} incl={0.06} color="#c2956a" roughness={0.55} map={jupiterMap} />
       </group>
-      {/* Saturn + rings */}
+      {/* Saturn + gradient rings */}
       <group key="saturn">
         <OrbitPath dist={110} />
-        <Planet radius={0.60} dist={110} speed={0.008} incl={0.18} color="#e8d5a0" roughness={0.55} map={saturnMap} rings />
+        <Planet radius={0.60} dist={110} speed={0.008} incl={0.18} color="#d4b870" roughness={0.50} map={saturnMap} ringTex={saturnRing} />
       </group>
       {/* Uranus */}
       <group key="uranus">
         <OrbitPath dist={148} />
-        <Planet radius={0.38} dist={148} speed={0.005} incl={0.48} color="#7de8e8" roughness={0.45} />
+        <Planet radius={0.38} dist={148} speed={0.005} incl={0.48} color="#78d4dc" roughness={0.40} map={uranusMap} />
       </group>
       {/* Neptune */}
       <group key="neptune">
         <OrbitPath dist={185} />
-        <Planet radius={0.36} dist={185} speed={0.003} incl={0.10} color="#4169e1" roughness={0.45} />
+        <Planet radius={0.36} dist={185} speed={0.003} incl={0.10} color="#2858c8" roughness={0.40} map={neptuneMap} />
       </group>
     </>
   );
