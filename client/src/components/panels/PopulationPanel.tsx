@@ -343,7 +343,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
               <TraitRow label={tr('Metabolizma', 'Metabolism')} value={ph.metabolism ?? 0} color="#d4a838" />
               <TraitRow label={tr('Doğurganlık', 'Fertility')} value={ph.fertility ?? 0} color="#ff8ab0" />
               <TraitRow label={tr('Bağışıklık', 'Immunity')} value={ph.immune_strength ?? 0} color="#4f6ef7" />
-              <StatRow label={tr('Azami Ömür', 'Max Lifespan')} value={`~${Math.round(40 + (ph.max_lifespan ?? 0.5) * 60)} ${tr('yıl','yr')}`} color="#a0b4ff" />
+              <StatRow label={tr('Azami Ömür', 'Max Lifespan')} value={`~${Math.round(ph.max_lifespan ?? 90)} ${tr('yıl','yr')}`} color="#a0b4ff" />
             </div>
           </div>
 
