@@ -156,31 +156,37 @@ function applyNE(g, e) {
   if (e.order) g.internal_tension = Math.max((g.internal_tension ?? 0.5) - 0.1, 0);
 }
 
+// Cardinal Rule: each individual's own phenotype determines whether they violate a norm.
+// No external lottery picks a random violator — aggression and conscientiousness drive the
+// per-individual probability. Shuffle order so list position doesn't bias selection.
 function procViolation(group, members, simDay) {
-  if (!group.norms || group.norms.size === 0 || Math.random() > 0.01) return null;
-  const v = members[Math.floor(Math.random() * members.length)];
-  if (!v) return null;
-  if (Math.random() > (v.phenotype.aggression - v.phenotype.conscientiousness + 1) / 2 * 0.3) return null;
-  const vn = [...group.norms][Math.floor(Math.random() * group.norms.size)];
-  let punishment = 'social_shaming';
-  if (group.norms.has('punishment_exile') && Math.random() < 0.2) {
-    punishment = 'exile';
-    group.member_ids = group.member_ids.filter(id => id !== v.id);
-    v.group_id = null;
-    if (v.social) v.social.group_id = null;
-  } else if (group.norms.has('leader_arbitration')) {
-    punishment = 'fine';
-    if (v.inventory?.food > 2) v.inventory.food -= 1;
+  if (!group.norms || group.norms.size === 0) return null;
+  const shuffled = members.slice().sort(() => Math.random() - 0.5);
+  for (const v of shuffled) {
+    const p = Math.max(0, ((v.phenotype.aggression ?? 0.5) - (v.phenotype.conscientiousness ?? 0.5) + 1) / 2) * 0.0003;
+    if (Math.random() > p) continue;
+    const vn = [...group.norms][Math.floor(Math.random() * group.norms.size)];
+    let punishment = 'social_shaming';
+    if (group.norms.has('punishment_exile') && Math.random() < 0.2) {
+      punishment = 'exile';
+      group.member_ids = group.member_ids.filter(id => id !== v.id);
+      v.group_id = null;
+      if (v.social) v.social.group_id = null;
+    } else if (group.norms.has('leader_arbitration')) {
+      punishment = 'fine';
+      if (v.inventory?.food > 2) v.inventory.food -= 1;
+    }
+    return {
+      type: 'norm_violation',
+      violator_id: v.id,
+      norm_id: vn,
+      punishment,
+      group_id: group.id,
+      day: simDay,
+      importance: punishment === 'exile' ? 'medium' : 'low'
+    };
   }
-  return {
-    type: 'norm_violation',
-    violator_id: v.id,
-    norm_id: vn,
-    punishment,
-    group_id: group.id,
-    day: simDay,
-    importance: punishment === 'exile' ? 'medium' : 'low'
-  };
+  return null;
 }
 
 // Larger groups need proportionally more norms to maintain the same order level.
