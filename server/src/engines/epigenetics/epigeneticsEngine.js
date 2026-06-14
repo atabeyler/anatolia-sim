@@ -6,10 +6,10 @@ const LOCI = {
   HPA_AXIS: { gene: 'COMT', reversible: true, heritability: 0.3 },
   BDNF_PROMOTER: { gene: 'BDNF', reversible: true, heritability: 0.2 },
   MAOA_REGULATION: { gene: 'MAOA', reversible: false, heritability: 0.4 },
-  LEPTIN_RESIST: { gene: 'obesity_risk', reversible: true, heritability: 0.5 },
+  LEPTIN_RESIST: { gene: 'LEPR', reversible: true, heritability: 0.5 },
   INSULIN_SENS: { gene: 'health_resilience', reversible: true, heritability: 0.35 },
   OXTR_METHYL: { gene: 'OXTR', reversible: true, heritability: 0.45 },
-  AVP_REGULATION: { gene: 'OXTR', reversible: true, heritability: 0.3 },
+  AVP_REGULATION: { gene: 'AVPR1A', reversible: true, heritability: 0.3 },
   IMMUNE_PRIMING: { gene: 'immune_strength', reversible: false, heritability: 0.6 }
 };
 
