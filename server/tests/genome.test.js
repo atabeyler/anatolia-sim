@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  createGenome, createGamete, combineGametes, computePhenotype, LOCI
+  createGenome, createGamete, combineGametes, computePhenotype, LOCI,
+  computeInbreedingCoefficient
 } from '../src/engines/biology/genome.js';
 
 describe('createGenome', () => {
@@ -77,5 +78,54 @@ describe('computePhenotype', () => {
     const genome = createGenome({ NRXN1_01: { a1: 0.99, a2: 0.99 }, SHANK3_01: { a1: 0.99, a2: 0.99 }, RELN_01: { a1: 0.99, a2: 0.99 }, FOXP2_01: { a1: 0.99, a2: 0.99 } });
     const phenotype = computePhenotype(genome);
     expect(phenotype.belief_capacity).toBeGreaterThan(0);
+  });
+});
+
+// Minimal individual factory for pedigree tests — no genome needed, only id/parent links.
+function mkInd(id, p1 = null, p2 = null) {
+  return { id, parent_1_id: p1, parent_2_id: p2, inbreeding_coeff: 0 };
+}
+
+describe('computeInbreedingCoefficient', () => {
+  // Wright's path coefficient method:
+  //   F = Σ_A (0.5)^(L1+L2+1) × (1+F_A)
+  // Verified targets: full siblings→0.25, half siblings→0.125, first cousins→0.0625
+
+  it('F(full siblings) = 0.25', () => {
+    const gp1 = mkInd('gp1');
+    const gp2 = mkInd('gp2');
+    const sib1 = mkInd('sib1', 'gp1', 'gp2');
+    const sib2 = mkInd('sib2', 'gp1', 'gp2');
+    const child = mkInd('child', 'sib1', 'sib2');
+    const pop = new Map([gp1, gp2, sib1, sib2, child].map(i => [i.id, i]));
+    expect(computeInbreedingCoefficient(child, pop)).toBeCloseTo(0.25, 10);
+  });
+
+  it('F(half siblings) = 0.125', () => {
+    const gp1 = mkInd('gp1');
+    const gp2 = mkInd('gp2');
+    const gp3 = mkInd('gp3');
+    // parent1 and parent2 share only gp1
+    const parent1 = mkInd('parent1', 'gp1', 'gp2');
+    const parent2 = mkInd('parent2', 'gp1', 'gp3');
+    const child = mkInd('child', 'parent1', 'parent2');
+    const pop = new Map([gp1, gp2, gp3, parent1, parent2, child].map(i => [i.id, i]));
+    expect(computeInbreedingCoefficient(child, pop)).toBeCloseTo(0.125, 10);
+  });
+
+  it('F(first cousins) = 0.0625', () => {
+    const gp1 = mkInd('gp1');
+    const gp2 = mkInd('gp2');
+    const gp3 = mkInd('gp3'); // mate of sib1
+    const gp4 = mkInd('gp4'); // mate of sib2
+    // sib1 and sib2 are full siblings — share both gp1 and gp2
+    const sib1 = mkInd('sib1', 'gp1', 'gp2');
+    const sib2 = mkInd('sib2', 'gp1', 'gp2');
+    // cousins are children of those siblings
+    const cousin1 = mkInd('cousin1', 'sib1', 'gp3');
+    const cousin2 = mkInd('cousin2', 'sib2', 'gp4');
+    const child = mkInd('child', 'cousin1', 'cousin2');
+    const pop = new Map([gp1, gp2, gp3, gp4, sib1, sib2, cousin1, cousin2, child].map(i => [i.id, i]));
+    expect(computeInbreedingCoefficient(child, pop)).toBeCloseTo(0.0625, 10);
   });
 });
