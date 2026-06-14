@@ -133,14 +133,20 @@ export class SimulationEngine {
       this._broadcastThisTick = (ticksSinceBroadcast % broadcastEvery === 0);
       ticksSinceBroadcast++;
 
+      const tickStart = Date.now();
       await this.tick();
+      const tickMs = Date.now() - tickStart;
 
-      // Always yield to the event loop so pause/speed changes take effect immediately.
+      // Fixed-rate loop: subtract tick duration from sleep so effective ticks/sec
+      // stays constant even as population grows and ticks take longer.
       if (spd < 100) {
-        await sleep(1000 / spd);
+        const remaining = (1000 / spd) - tickMs;
+        if (remaining > 1) {
+          await sleep(remaining);
+        } else {
+          await new Promise(resolve => setImmediate(resolve));
+        }
       } else {
-        // At max speed we still yield every tick so HTTP actions (speed/pause/terminate)
-        // can be processed promptly instead of waiting behind a long burst.
         await new Promise(resolve => setImmediate(resolve));
       }
     }
