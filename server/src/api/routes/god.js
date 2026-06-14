@@ -55,8 +55,8 @@ router.post('/:simId/intervene', authenticate, requireSimulationOwner, async (re
             if (Math.random() < mortality_rate * (1 - (ind.phenotype.immune_strength ?? 0.5))) { markDead(ind, engine.currentDay, 'epidemic'); deaths++; }
             else {
               if (!ind.infections) ind.infections = [];
-              if (!ind.infections.some(x => x.pathogen_id === 'epidemic')) {
-                ind.infections.push({ pathogen_id: 'epidemic', days_remaining: 21, infected_day: engine.currentDay, severity: mortality_rate });
+              if (!ind.infections.some(x => x.pathogen_id === 'pneumonia_like')) {
+                ind.infections.push({ pathogen_id: 'pneumonia_like', days_remaining: 21, infected_day: engine.currentDay });
               }
             }
             affected++;

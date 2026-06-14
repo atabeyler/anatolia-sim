@@ -205,7 +205,7 @@ Water drowning risk: +0.05/tick × (1 - waterExperience). Inbreeding coeff > 0.2
 | animism | 1 | 0.0 | 0.30 | — |
 | ancestor_cult | 2 | 0.3 | 0.40 | — |
 | shamanism | 2 | 0.4 | 0.50 | — |
-| polytheism | 3 | 0.5 | 0.60 | writing_system |
+| polytheism | 3 | 0.5 | 0.60 | pottery |
 | monotheism | 4 | 0.6 | 0.65 | writing_system + mathematics_basic |
 | philosophical | 4 | 0.7 | 0.70 | writing_system + mathematics_basic |
 

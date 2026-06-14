@@ -163,7 +163,7 @@ function attemptGroupFission(group, members, simDay) {
   if (members.length < 8) return null;
   const dissenters = members.filter(
     m =>
-      m.phenotype.independence > 0.6 &&
+      (m.phenotype?.independence ?? 0) > 0.6 &&
       computeSocialStatus(m, group) < 0.4 &&
       Math.random() < 0.1
   );
@@ -171,8 +171,8 @@ function attemptGroupFission(group, members, simDay) {
   group.member_ids = group.member_ids.filter(id => !dissenters.find(d => d.id === id));
   const nl = [...dissenters].sort(
     (a, b) =>
-      (b.phenotype.dominance + b.phenotype.fluid_intelligence) -
-      (a.phenotype.dominance + a.phenotype.fluid_intelligence)
+      ((b.phenotype?.dominance ?? 0.5) + (b.phenotype?.fluid_intelligence ?? 0.5)) -
+      ((a.phenotype?.dominance ?? 0.5) + (a.phenotype?.fluid_intelligence ?? 0.5))
   )[0];
   const ng = {
     id: `group_${simDay}_${Math.random().toString(36).slice(2, 7)}`,
@@ -207,8 +207,8 @@ function resolveConflict(gA, gB, population, simDay) {
   const lMap = new Map(population.map(i => [i.id, i]));
   const mA = gA.member_ids.map(id => lMap.get(id)).filter(Boolean);
   const mB = gB.member_ids.map(id => lMap.get(id)).filter(Boolean);
-  const sA = mA.reduce((s, m) => s + m.phenotype.physical_strength, 0) / Math.max(mA.length, 1);
-  const sB = mB.reduce((s, m) => s + m.phenotype.physical_strength, 0) / Math.max(mB.length, 1);
+  const sA = mA.reduce((s, m) => s + (m.phenotype?.physical_strength ?? 0.5), 0) / Math.max(mA.length, 1);
+  const sB = mB.reduce((s, m) => s + (m.phenotype?.physical_strength ?? 0.5), 0) / Math.max(mB.length, 1);
   const aWins = Math.random() < sA / (sA + sB);
   const loser = aWins ? mB : mA;
   const cc = Math.floor(loser.length * (0.05 + Math.random() * 0.15));

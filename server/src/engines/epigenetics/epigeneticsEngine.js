@@ -90,7 +90,7 @@ function applyFX(ind) {
   const p = ind.phenotype;
   p.stress_reactivity = (p.stress_reactivity ?? 0.5) * 0.99 + (e.HPA_AXIS?.methylation ?? 0.5) * 0.01;
   if ((e.MAOA_REGULATION?.methylation ?? 0.5) < 0.3) {
-    p.aggression = Math.min(p.aggression + 0.001, 1.0);
+    p.aggression = Math.min((p.aggression ?? 0.5) + 0.001, 1.0);
   }
   p.oxytocin_sensitivity = (p.oxytocin_sensitivity ?? 0.5) * 0.99 + (1 - (e.OXTR_METHYL?.methylation ?? 0.5)) * 0.01;
   p.learning_rate = (p.learning_rate ?? 0.5) * 0.99 + (1 - (e.BDNF_PROMOTER?.methylation ?? 0.5)) * 0.01;

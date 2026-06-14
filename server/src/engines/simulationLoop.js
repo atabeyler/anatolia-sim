@@ -1486,8 +1486,12 @@ function compactIndividual(ind) {
     home_x: ind.home_x ?? null,
     home_y: ind.home_y ?? null,
     _goodFoodAngle: ind._goodFoodAngle ?? null,
-    _currentAction: ind._currentAction  ?? null,
-    _experience:    ind._experience     ?? null,
+    _currentAction:       ind._currentAction       ?? null,
+    _experience:          ind._experience           ?? null,
+    _socialObservations:  ind._socialObservations   ?? null,
+    _beliefReflection:    ind._beliefReflection     ?? null,
+    _beliefExposure:      ind._beliefExposure       ?? null,
+    _behaviorCounts:      ind._behaviorCounts       ?? null,
   };
 }
 

@@ -18,7 +18,7 @@ Founders carry precisely tuned alleles across 32 gene loci (FOXP2, BDNF, NRXN1, 
 
 ## Architecture
 
-The simulation runs 17 concurrent engines per tick (1 tick = 1 simulation day):
+The simulation runs 20+ concurrent engines per tick (1 tick = 1 simulation day):
 
 | Engine | Purpose |
 |---|---|
@@ -50,7 +50,12 @@ Language capacity is not hardcoded. Each individual's `foxp2_expression` starts 
 ### Emergent Consciousness
 `mind.consciousness` accumulates daily from:
 ```
-Δ = consciousness_potential × 0.0001 + (lang_stage/6) × 0.00005 + social_bonus + (ToM/3) × 0.00003 − stress_penalty
+Δ = max(potential × 0.001, 0.00015)   ← genetic base rate
+  + (lang_stage/6) × 0.0005           ← language bonus
+  + 0.0002 (if in group)              ← social ignition bonus
+  + (ToM/3) × 0.0003                  ← theory-of-mind bonus
+  − stress_level × 0.0003             ← stress penalty
+  − (0.3 − hp) × 0.002 (if hp < 0.3) ← injury/illness penalty
 ```
 Hard ceiling: `consciousness_potential × 1.2` — individuals with low genetic potential cannot reach full consciousness regardless of environment.
 

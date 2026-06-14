@@ -348,8 +348,22 @@ router.post('/:id/checkpoint', authenticate, requireSimulationOwner, async (req,
     const snapshot = alive.map(i => ({
       id: i.id, sex: i.sex, birth_day: i.birth_day, death_day: i.death_day,
       is_dead: i.is_dead, x: i.x, y: i.y, genome: i.genome, phenotype: i.phenotype,
+      epigenome: i.epigenome, health: i.health, mind: i.mind, social: i.social,
+      skills: i.skills, beliefs: i.beliefs instanceof Set ? [...i.beliefs] : (i.beliefs ?? []),
+      known_techs: i.known_techs instanceof Set ? [...i.known_techs] : (i.known_techs ?? []),
+      language: i.language, memory: i.memory, inventory: i.inventory, psychology: i.psychology,
       language_stage: i.language?.stage ?? 0, group_id: i.group_id,
       parent_1_id: i.parent_1_id, parent_2_id: i.parent_2_id,
+      is_founder: i.is_founder ?? false,
+      satiation: i.satiation ?? 1, mating_urge: i.mating_urge ?? 0,
+      inbreeding_coeff: i.inbreeding_coeff ?? 0, age: i.age ?? 0,
+      _waterFear: i._waterFear ?? null, _fears: i._fears ?? null,
+      _waterExperience: i._waterExperience ?? null,
+      _experience:         i._experience         ?? null,
+      _socialObservations: i._socialObservations ?? null,
+      _beliefReflection:   i._beliefReflection   ?? null,
+      _beliefExposure:     i._beliefExposure     ?? null,
+      _behaviorCounts:     i._behaviorCounts     ?? null,
     }));
     const stats = engine.computeStats(engine.currentDay, alive);
     const { rows } = await query(
@@ -456,6 +470,11 @@ router.post('/:id/restore/:checkpointId', authenticate, requireSimulationOwner, 
           if (ind._waterExperience !== undefined) restored._waterExperience = ind._waterExperience;
           if (ind.inventory) restored.inventory = ind.inventory;
           if (ind.psychology) restored.psychology = ind.psychology;
+          if (ind._experience) restored._experience = ind._experience;
+          if (ind._socialObservations != null) restored._socialObservations = ind._socialObservations;
+          if (ind._beliefReflection != null) restored._beliefReflection = ind._beliefReflection;
+          if (ind._beliefExposure) restored._beliefExposure = ind._beliefExposure;
+          if (ind._behaviorCounts) restored._behaviorCounts = ind._behaviorCounts;
           liveEngine.population.set(restored.id, restored);
           if (restored.group_id && !restored.is_dead) {
             if (!groupMap.has(restored.group_id)) {
