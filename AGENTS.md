@@ -113,7 +113,7 @@ ceiling = min(1, consciousness_potential * 1.2)
 - Newborns: `language_capacity * 0.1`
 - Founders: `language_capacity * 0.7`
 - Growth per tick: `socialGain = min(groupSize, 10) * 0.000015`; `stagingGain = 0.000005` if stage > 0
-- ~670 days to 50% cap in a group of 10; ~1200+ days for solitary individuals
+- ~1290 days to reach 50% expression (language_capacity=0.5, group of 10, stage>0); ~1330 days for stage-0 or solitary individuals (no stagingGain, socialGain capped at 1)
 
 ## Language Stages
 
