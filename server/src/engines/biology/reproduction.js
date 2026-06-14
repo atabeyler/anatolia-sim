@@ -73,7 +73,7 @@ function conceptionProbability(female, male, currentDay) {
   // Slightly above !Kung San (TFR 4.7) to ensure small founding populations
   // survive early extinction risk; still far below the impossible original (TFR > 40).
   const p = ((female.phenotype?.fertility ?? 0.5) * ageFactor + mhcBonus - inbreedPenalty * 0.5) * 0.005 * urgeFactor;
-  return Math.max(0, Math.min(0.07, p));
+  return Math.max(0, p);
 }
 
 function deliverBirth(mother, father, birthDay, simulationId, communityLangStage = 0, phonology = null) {
