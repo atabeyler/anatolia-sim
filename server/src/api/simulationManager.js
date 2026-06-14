@@ -32,7 +32,7 @@ class SimulationManager {
     // Restore discovered sets from latest checkpoint so resumed simulations don't
     // re-fire technology/belief/art events that already happened before the pause.
     const { rows: cpRows } = await query(
-      'SELECT tech_state, belief_state, art_state FROM checkpoints WHERE simulation_id = $1 ORDER BY sim_day DESC LIMIT 1',
+      'SELECT tech_state, belief_state, art_state, groups FROM checkpoints WHERE simulation_id = $1 ORDER BY sim_day DESC LIMIT 1',
       [simulation.id]
     );
     if (cpRows[0]) {
@@ -44,6 +44,31 @@ class SimulationManager {
       if (beliefArr.length > 0) engine.discoveredBeliefs = new Set(beliefArr);
       const artArr = Array.isArray(cp.art_state) ? cp.art_state : [];
       if (artArr.length > 0) engine.discoveredArts = new Set(artArr);
+
+      // Restore group metadata (culture, norms, alliances, tension, etc.)
+      // load() already rebuilt groups from member group_id fields — here we
+      // overlay the group-level state that was serialised at the last checkpoint.
+      const savedGroups = Array.isArray(cp.groups) ? cp.groups : [];
+      if (savedGroups.length > 0) {
+        const metaById = new Map(savedGroups.map(g => [g.id, g]));
+        for (const group of engine.groups) {
+          const saved = metaById.get(group.id);
+          if (!saved) continue;
+          group.culture          = new Set(Array.isArray(saved.culture) ? saved.culture : []);
+          group.norms            = new Set(Array.isArray(saved.norms)   ? saved.norms   : []);
+          group.internal_tension = saved.internal_tension ?? 0;
+          group.prestige         = saved.prestige         ?? 0.1;
+          group.alliances        = saved.alliances        ?? [];
+          group.rival_ids        = saved.rival_ids        ?? [];
+          group.social_order     = saved.social_order     ?? 0;
+          group.leader_id        = saved.leader_id        ?? null;
+          group.founded_day      = saved.founded_day      ?? 0;
+          group.has_ritual       = saved.has_ritual       ?? null;
+          group.ritual_cohesion  = saved.ritual_cohesion  ?? 0;
+          group._culturePressure = saved._culturePressure ?? {};
+          group._diffusionPressure = saved._diffusionPressure ?? 0;
+        }
+      }
     }
 
     engine.onTick = (data) => this.broadcast(simulation.id, { type: 'tick', ...data });
