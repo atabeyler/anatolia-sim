@@ -68,11 +68,9 @@ function conceptionProbability(female, male, currentDay) {
   const inbreedPenalty = Math.max(female.inbreeding_coeff ?? 0, male.inbreeding_coeff ?? 0);
   // Çiftleşme dürtüsü gebe kalma olasılığını etkiler (0.6–1.0 arası çarpan)
   const urgeFactor = 0.6 + (female.mating_urge ?? 0.5) * 0.4;
-  // Base rate 0.005/day targets TFR ≈ 12–14 for a median-fertility female:
-  // IBI ≈ (1/0.0024) + 273 ≈ 690 d ≈ 1.9 yr → ~9 births over 18 peak fertile years.
-  // Slightly above !Kung San (TFR 4.7) to ensure small founding populations
-  // survive early extinction risk; still far below the impossible original (TFR > 40).
-  const p = ((female.phenotype?.fertility ?? 0.5) * ageFactor + mhcBonus - inbreedPenalty * 0.5) * 0.005 * urgeFactor;
+  // Base rate 0.07/day — high conception probability; effective IBI is bounded
+  // by pregnancy duration (~273 d) since re-conception during pregnancy is blocked.
+  const p = ((female.phenotype?.fertility ?? 0.5) * ageFactor + mhcBonus - inbreedPenalty * 0.5) * 0.07 * urgeFactor;
   return Math.max(0, p);
 }
 
