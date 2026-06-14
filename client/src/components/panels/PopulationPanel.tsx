@@ -907,6 +907,7 @@ export default function PopulationPanel() {
   const [compareSet, setCompareSet] = useState<any[]>([]);
   const [showCompare, setShowCompare] = useState(false);
   const [filter, setFilter] = useState<'all' | 'male' | 'female'>('all');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [deadExpanded, setDeadExpanded] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
 
@@ -943,7 +944,12 @@ export default function PopulationPanel() {
   }, [currentSim?.id]);
 
   const allForLookup = [...individuals, ...deadIndividuals];
-  const filtered = individuals.filter(i => filter === 'all' || i.sex === filter);
+  const filtered = individuals
+    .filter(i => filter === 'all' || i.sex === filter)
+    .sort((a, b) => {
+      const diff = parseFloat(a.age_years ?? 0) - parseFloat(b.age_years ?? 0);
+      return sortDir === 'asc' ? diff : -diff;
+    });
 
   return (
     <DetailPanel panelId="population" title="Population" titleTr="Nüfus">
@@ -995,7 +1001,7 @@ export default function PopulationPanel() {
         </div>
       </div>
 
-      {/* Filter tabs */}
+      {/* Filter tabs + sort */}
       <div className="flex gap-1 mb-3">
         {(['all', 'male', 'female'] as const).map(f => (
           <button key={f} onClick={() => setFilter(f)}
@@ -1009,6 +1015,18 @@ export default function PopulationPanel() {
             {f === 'all' ? t(lang, 'ALL', 'TÜMÜ') : f === 'male' ? t(lang, 'MALE', 'ERKEK') : t(lang, 'FEMALE', 'KADIN')}
           </button>
         ))}
+        <button
+          onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}
+          title={sortDir === 'asc' ? t(lang, 'Youngest first', 'En genç önce') : t(lang, 'Oldest first', 'En yaşlı önce')}
+          style={{
+            padding: '3px 7px', fontSize: 12, flexShrink: 0,
+            background: 'transparent',
+            border: '1px solid rgba(79,110,247,0.15)',
+            color: '#8898c8', cursor: 'pointer',
+            fontFamily: 'Share Tech Mono, monospace',
+          }}>
+          {t(lang, 'AGE', 'YAŞ')} {sortDir === 'asc' ? '↑' : '↓'}
+        </button>
       </div>
 
       {loading && individuals.length === 0 && (
