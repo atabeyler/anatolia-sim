@@ -10,7 +10,9 @@ export const LOCI = {
   DISC1_01:  { chr: 1,  trait: 'executive_function',   type: 'codominant' },
 
   // Language & communication
-  FOXP2_01:  { chr: 7,  trait: 'language_capacity',    type: 'dominant' },
+  // FOXP2 shows haploinsufficiency — one damaged allele causes severe language disorder.
+  // Codominant (average) correctly models heterozygous fitness reduction. (Lai et al. 2001)
+  FOXP2_01:  { chr: 7,  trait: 'language_capacity',    type: 'codominant' },
   CNTNAP2_01:{ chr: 7,  trait: 'language_learning',    type: 'codominant' },
 
   // Social & emotional
