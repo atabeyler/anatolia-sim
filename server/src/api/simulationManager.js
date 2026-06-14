@@ -73,6 +73,11 @@ class SimulationManager {
 
     engine.onTick = (data) => this.broadcast(simulation.id, { type: 'tick', ...data });
 
+    engine.onEnded = async ({ reason }) => {
+      await query("UPDATE simulations SET status = 'completed', updated_at = NOW() WHERE id = $1", [simulation.id]).catch(() => {});
+      this.broadcast(simulation.id, { type: 'simulation_ended', reason });
+    };
+
     // Batch event inserts — flush every 50 events or 5 seconds, whichever comes first
     const eventBuffer = [];
     let flushTimer = null;

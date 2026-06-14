@@ -247,7 +247,7 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
 export default function SimulationPage() {
   const { simId } = useParams<{ simId: string }>();
   const navigate = useNavigate();
-  const { user, accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, speedMultiplier, setSpeed, resetLiveState, setEvents } = useSimStore();
+  const { user, accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, speedMultiplier, setSpeed, resetLiveState, setEvents, simulationEnded, clearSimulationEnded } = useSimStore();
   const [individuals, setIndividuals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'harita' | 'durum'>('harita');
@@ -262,6 +262,16 @@ export default function SimulationPage() {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
   const [actionBusy, setActionBusy] = useState(false);
   const [speedBusy, setSpeedBusy] = useState(false);
+  const [endModal, setEndModal] = useState<{ mode: 'natural' | 'manual'; reason?: string } | null>(null);
+
+  // Show end modal when simulation ends naturally
+  useEffect(() => {
+    if (simulationEnded) {
+      setEndModal({ mode: 'natural', reason: simulationEnded });
+      clearSimulationEnded();
+    }
+  }, [simulationEnded]);
+
   // Responsive breakpoint
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth < 640);
@@ -299,12 +309,9 @@ export default function SimulationPage() {
           setMenuPage(null);
           break;
         case 'terminate_simulation': {
-          const { currentSim: sim, accessToken: tok, lang: l, setCurrentSim: setSim } = useSimStore.getState();
+          const { currentSim: sim, accessToken: tok } = useSimStore.getState();
           if (!sim || !tok) return;
-          if (!confirm(l === 'tr' ? 'Simülasyonu sonlandır?' : 'Terminate simulation?')) return;
-          axios.post(`/api/simulations/${sim.id}/terminate`, {}, { headers: { Authorization: `Bearer ${tok}` } })
-            .then(() => { setSim({ ...sim, status: 'completed' }); navigate('/'); })
-            .catch(() => {});
+          setEndModal({ mode: 'manual' });
           break;
         }
       }
@@ -396,14 +403,23 @@ export default function SimulationPage() {
     if (v >= 1 && v <= 1000) { changeSpeed(v); setCustomSpeed(''); }
   }
 
-  async function terminateSim() {
+  function terminateSim() {
     if (!currentSim || !accessToken) return;
-    if (!confirm(lang === 'tr' ? 'Simülasyonu sonlandır?' : 'Terminate simulation?')) return;
+    setEndModal({ mode: 'manual' });
+  }
+
+  async function doTerminate(openReport = false) {
+    if (!currentSim || !accessToken) return;
     const previous = currentSim;
     setCurrentSim({ ...currentSim, status: 'completed' });
+    setEndModal(null);
     try {
       await axios.post(`/api/simulations/${currentSim.id}/terminate`, {}, { headers: { Authorization: `Bearer ${accessToken}` } });
-      navigate('/');
+      if (openReport) {
+        setActivePanel('report');
+      } else {
+        navigate('/');
+      }
     } catch {
       setCurrentSim(previous);
     }
@@ -1016,6 +1032,92 @@ export default function SimulationPage() {
       <MomentsPanel />
       <WitnessPanel />
       <MilestoneToast />
+
+      {/* ═══ END MODAL ═══ */}
+      {endModal && (() => {
+        const isManual = endModal.mode === 'manual';
+        const reasonMsg = (() => {
+          if (!endModal.reason) return '';
+          if (lang === 'tr') {
+            if (endModal.reason === 'population_zero') return 'Toplulukta hiç birey kalmadı.';
+            if (endModal.reason === 'no_males') return 'Toplulukta erkek birey kalmadı — nesil devamı imkânsız.';
+            if (endModal.reason === 'no_females') return 'Toplulukta dişi birey kalmadı — nesil devamı imkânsız.';
+          } else {
+            if (endModal.reason === 'population_zero') return 'No individuals remain in the population.';
+            if (endModal.reason === 'no_males') return 'No males remain — reproduction is impossible.';
+            if (endModal.reason === 'no_females') return 'No females remain — reproduction is impossible.';
+          }
+          return '';
+        })();
+        const title = isManual
+          ? (lang === 'tr' ? 'SİMÜLASYONU SONLANDIR?' : 'TERMINATE SIMULATION?')
+          : (lang === 'tr' ? 'SİMÜLASYON SONA ERDİ' : 'SIMULATION ENDED');
+        const bodyText = isManual
+          ? (lang === 'tr' ? 'Bu işlem geri alınamaz.' : 'This action cannot be undone.')
+          : reasonMsg;
+        const btnBase: CSSProperties = {
+          padding: '8px 16px', fontSize: 13, fontFamily: 'Share Tech Mono, monospace',
+          letterSpacing: '0.08em', cursor: 'pointer', border: '1px solid',
+          background: 'transparent',
+        };
+        return (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0,0,0,0.75)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <div style={{
+              background: '#0a0a0a', border: '1px solid #4a1a1a',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.9)',
+              padding: '28px 32px', minWidth: 320, maxWidth: 400,
+              fontFamily: 'Share Tech Mono, monospace',
+            }}>
+              <div style={{ fontSize: 15, color: isManual ? '#c05050' : '#fbbf24', letterSpacing: '0.12em', marginBottom: 12 }}>
+                {title}
+              </div>
+              {bodyText && (
+                <div style={{ fontSize: 13, color: '#a0c8b0', marginBottom: 20, lineHeight: 1.6 }}>
+                  {bodyText}
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {isManual ? (
+                  <>
+                    <button
+                      onClick={() => doTerminate(true)}
+                      style={{ ...btnBase, borderColor: '#fbbf24', color: '#fbbf24' }}>
+                      📄 {lang === 'tr' ? 'RAPOR AL VE SONLANDIR' : 'GET REPORT & TERMINATE'}
+                    </button>
+                    <button
+                      onClick={() => doTerminate(false)}
+                      style={{ ...btnBase, borderColor: '#c05050', color: '#c05050' }}>
+                      {lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
+                    </button>
+                    <button
+                      onClick={() => setEndModal(null)}
+                      style={{ ...btnBase, borderColor: '#4a6050', color: '#8abda0' }}>
+                      {lang === 'tr' ? 'İPTAL' : 'CANCEL'}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => { setEndModal(null); setActivePanel('report'); }}
+                      style={{ ...btnBase, borderColor: '#fbbf24', color: '#fbbf24' }}>
+                      📄 {lang === 'tr' ? 'RAPOR AL' : 'GET REPORT'}
+                    </button>
+                    <button
+                      onClick={() => { setEndModal(null); navigate('/'); }}
+                      style={{ ...btnBase, borderColor: '#4a6050', color: '#8abda0' }}>
+                      {lang === 'tr' ? 'ANA SAYFAYA DÖN' : 'RETURN TO HOME'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

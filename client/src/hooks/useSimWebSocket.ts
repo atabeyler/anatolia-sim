@@ -43,6 +43,8 @@ export function useSimWebSocket(simId: string | null) {
                 }).catch(() => {});
               }
             }
+          } else if (data.type === 'simulation_ended') {
+            useSimStore.getState().setSimulationEnded(data.reason ?? 'unknown');
           } else if (data.type === 'error') {
             console.error('[WS]', data.error);
           }

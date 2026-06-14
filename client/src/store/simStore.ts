@@ -113,6 +113,11 @@ interface SimStore {
   setEvents: (events: SimEvent[]) => void;
   resetLiveState: () => void;
 
+  // Natural simulation end
+  simulationEnded: string | null;
+  setSimulationEnded: (reason: string) => void;
+  clearSimulationEnded: () => void;
+
   // Moments gallery
   moments: Moment[];
   addMoment: (m: Omit<Moment, 'id'>) => void;
@@ -176,7 +181,11 @@ export const useSimStore = create<SimStore>((set) => ({
     });
     set({ events: deduped });
   },
-  resetLiveState: () => set({ stats: null, events: [] }),
+  resetLiveState: () => set({ stats: null, events: [], simulationEnded: null }),
+
+  simulationEnded: null,
+  setSimulationEnded: (reason) => set({ simulationEnded: reason }),
+  clearSimulationEnded: () => set({ simulationEnded: null }),
 
   moments: [],
   addMoment: (m) => set(s => {

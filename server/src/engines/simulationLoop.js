@@ -160,7 +160,24 @@ export class SimulationEngine {
       ind.alive = true;
       ind.age = day - (ind.birth_day ?? 0);
     }
-    if (alive.length === 0) { this.running = false; return; }
+    if (alive.length === 0) {
+      this.logEvent(day, 'extinction', 'Topluluk yok oldu — son birey de hayatını kaybetti.', { cause: 'population_zero' }, 5);
+      this.onEnded?.({ reason: 'population_zero' });
+      this.running = false;
+      return;
+    }
+    const hasMales = alive.some(i => i.sex === 'male');
+    const hasFemales = alive.some(i => i.sex === 'female');
+    if (!hasMales || !hasFemales) {
+      const reason = !hasMales ? 'no_males' : 'no_females';
+      const msg = !hasMales
+        ? 'Toplulukta erkek birey kalmadı — nesil devamı imkânsız.'
+        : 'Toplulukta dişi birey kalmadı — nesil devamı imkânsız.';
+      this.logEvent(day, 'extinction', msg, { cause: reason }, 5);
+      this.onEnded?.({ reason });
+      this.running = false;
+      return;
+    }
     await new Promise(resolve => setImmediate(resolve));
     const tickEvents = [];
     // Built once per tick; used by tech observation, language learning, and social interactions.
