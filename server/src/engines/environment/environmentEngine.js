@@ -129,14 +129,23 @@ function updateWeather(worldState) {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
+// Biome classification uses latitude (primary) + a continentality proxy derived from
+// longitude (secondary). lonMod ∈ [0,90] represents position within a continental block:
+// edges (0–20, 70–90) are treated as coastal/maritime; centre (35–55) as continental
+// interior. This allows grassland and desert to emerge without elevation data.
+// Mountain biome requires real elevation input — not modelled at this resolution.
 export function getBiome(latitude, longitude) {
   const absLat = Math.abs(latitude);
-  if (absLat < 10) return 'tropical_rainforest';
-  if (absLat < 20) return 'tropical_savanna';
-  if (absLat < 30) return Math.abs(longitude % 90) < 20 ? 'coastal' : 'desert';
-  if (absLat < 45) return 'mediterranean';
-  if (absLat < 60) return 'temperate_forest';
-  if (absLat < 70) return 'boreal_forest';
+  const lonMod = Math.abs(longitude % 90);
+  const coastal      = lonMod < 20 || lonMod > 70;
+  const continental  = lonMod >= 35 && lonMod <= 55;
+
+  if (absLat < 10)  return coastal ? 'coastal' : 'tropical_rainforest';
+  if (absLat < 20)  return continental ? 'tropical_savanna' : 'tropical_rainforest';
+  if (absLat < 30)  return coastal ? 'coastal' : (continental ? 'desert' : 'tropical_savanna');
+  if (absLat < 45)  return coastal ? 'mediterranean' : (continental ? 'grassland' : 'temperate_forest');
+  if (absLat < 60)  return coastal ? 'temperate_forest' : (continental ? 'grassland' : 'boreal_forest');
+  if (absLat < 70)  return 'boreal_forest';
   return 'tundra';
 }
 

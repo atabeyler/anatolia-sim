@@ -15,6 +15,8 @@
 //       + 0.0002 (if in group)                    ← social ignition bonus (GWT)
 //       + (theory_of_mind/3) × 0.0003             ← ToM bonus (metacognition)
 //       − stress_level × 0.0003                   ← stress penalty
+//       − injury/illness penalty (hp < 0.3):       ← physiological disruption of global workspace
+//           (0.3 − hp) × 0.002                       severe trauma/disease compresses capacity
 //   ceiling = min(1, potential × 1.2)   ← 20% experiential plasticity bonus: accumulated
 //                                          language/social/ToM stimulation can push realised
 //                                          capacity slightly beyond the genetic baseline,
@@ -29,8 +31,11 @@ export function updateConsciousness(ind) {
   const socialBonus   = ind.group_id ? 0.0002 : 0;
   const stressPenalty = (ind.psychology?.stress_level ?? 0.3) * 0.0003;
   const tomBonus      = (ind.psychology?.theory_of_mind ?? 0) / 3 * 0.0003;
+  // Severe injury or illness (hp < 0.3) suppresses global workspace broadcast capacity.
+  const hp            = ind.health?.hp ?? 1.0;
+  const injuryPenalty = hp < 0.3 ? (0.3 - hp) * 0.002 : 0;
   const geneticCap    = Math.min(1, potential * 1.2);
   ind.mind.consciousness = Math.min(geneticCap, Math.max(0,
-    (ind.mind.consciousness ?? 0) + baseRate + langBonus + socialBonus + tomBonus - stressPenalty
+    (ind.mind.consciousness ?? 0) + baseRate + langBonus + socialBonus + tomBonus - stressPenalty - injuryPenalty
   ));
 }

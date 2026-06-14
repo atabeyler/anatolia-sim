@@ -18,7 +18,7 @@ const EXAMPLES_TR = [
   'Sanatsal kültürler daha karmaşık dil geliştirir',
 ];
 
-type Result = { verdict: 'supported' | 'refuted' | 'inconclusive'; confidence: number; reasoning: string };
+type Result = { verdict: 'supported' | 'refuted' | 'inconclusive'; confidence: number; ci_lower?: number; ci_upper?: number; n_evidence?: number; reasoning: string };
 
 export default function HypothesisPanel() {
   const { currentSim, accessToken, lang, stats, events } = useSimStore();
@@ -117,6 +117,14 @@ export default function HypothesisPanel() {
                 {result.verdict} ({(result.confidence * 100).toFixed(0)}% {lang === 'en' ? 'confidence' : 'güven'})
               </span>
             </div>
+            {result.ci_lower !== undefined && result.ci_upper !== undefined && (
+              <p className="text-xs text-sim-muted mb-2">
+                95% CI: [{(result.ci_lower * 100).toFixed(1)}%, {(result.ci_upper * 100).toFixed(1)}%]
+                {result.n_evidence !== undefined && (
+                  <span className="ml-2 opacity-60">n={result.n_evidence} {lang === 'en' ? 'events' : 'olay'}</span>
+                )}
+              </p>
+            )}
             <p className="text-sm text-sim-muted leading-relaxed">{result.reasoning}</p>
           </div>
         );

@@ -68,8 +68,11 @@ function conceptionProbability(female, male, currentDay) {
   const inbreedPenalty = Math.max(female.inbreeding_coeff ?? 0, male.inbreeding_coeff ?? 0);
   // Çiftleşme dürtüsü gebe kalma olasılığını etkiler (0.6–1.0 arası çarpan)
   const urgeFactor = 0.6 + (female.mating_urge ?? 0.5) * 0.4;
-  const p = ((female.phenotype?.fertility ?? 0.5) * ageFactor + mhcBonus - inbreedPenalty * 0.5) * 0.07 * urgeFactor;
-  return Math.max(0, Math.min(0.30, p));
+  // Base rate 0.003/day targets TFR ≈ 6–8 for a median-fertility female with nearby partner:
+  // p ≈ 0.002/day → E[inter-conception] ≈ 500 d → ~7 births over 24 fertile years.
+  // (Original 0.07 yielded TFR > 40, biologically impossible.)
+  const p = ((female.phenotype?.fertility ?? 0.5) * ageFactor + mhcBonus - inbreedPenalty * 0.5) * 0.003 * urgeFactor;
+  return Math.max(0, Math.min(0.05, p));
 }
 
 function deliverBirth(mother, father, birthDay, simulationId, communityLangStage = 0, phonology = null) {

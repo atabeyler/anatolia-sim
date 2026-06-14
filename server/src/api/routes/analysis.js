@@ -139,20 +139,37 @@ router.post('/:simId', authenticate, requireSimulationOwner, async (req, res) =>
   }
 });
 
+// Wilson score 95% confidence interval for a proportion p observed over n independent events.
+function wilsonCI(p, n) {
+  if (n <= 0) return [0, 1];
+  const z = 1.96;
+  const denom = 1 + (z * z) / n;
+  const centre = (p + (z * z) / (2 * n)) / denom;
+  const margin = (z * Math.sqrt(p * (1 - p) / n + (z * z) / (4 * n * n))) / denom;
+  return [Math.max(0, +(centre - margin).toFixed(3)), Math.min(1, +(centre + margin).toFixed(3))];
+}
+
 router.post('/:simId/hypothesis', authenticate, requireSimulationOwner, async (req, res) => {
   try {
-    const { hypothesis } = req.body;
+    const { hypothesis, events: clientEvents } = req.body;
     const engine = simulationManager.getEngine(req.params.simId);
     const context = buildEngineContext(engine);
     const text = await geminiChat({
       model: process.env.GEMINI_ANALYSIS_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite',
       max_tokens: 600,
       system: `You are a scientist evaluating hypotheses about a civilization simulation.\n${SIM_ARCHITECTURE}\n${context}`,
-      user: `Evaluate: "${hypothesis}"\nRespond JSON only: {"verdict":"supported"|"refuted"|"inconclusive","confidence":0.0-1.0,"reasoning":"..."}`,
+      user: `Evaluate: "${hypothesis}"\nRespond JSON only: {"verdict":"supported"|"refuted"|"inconclusive","confidence":0.0-1.0,"n_evidence":integer,"reasoning":"..."}`,
     });
     const match = text.match(/\{[\s\S]*\}/);
     const json = match ? JSON.parse(match[0]) : { verdict: 'inconclusive', confidence: 0.5, reasoning: 'Insufficient data.' };
-    res.json(json);
+    // Compute Wilson score 95% CI from confidence and evidence count.
+    // n_evidence is the number of observed events the LLM considers relevant;
+    // fall back to total events sent if the LLM didn't report it.
+    const n = (typeof json.n_evidence === 'number' && json.n_evidence > 0)
+      ? json.n_evidence
+      : (Array.isArray(clientEvents) ? clientEvents.length : 20);
+    const [ci_lower, ci_upper] = wilsonCI(json.confidence ?? 0.5, n);
+    res.json({ ...json, ci_lower, ci_upper, n_evidence: n });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Hypothesis test failed' });
