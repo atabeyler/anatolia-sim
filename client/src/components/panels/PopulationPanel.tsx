@@ -938,7 +938,7 @@ export default function PopulationPanel() {
   useEffect(() => {
     load();
     // List refreshes every 20s; counts come from WebSocket stats (real-time)
-    intervalRef.current = setInterval(load, 20000);
+    intervalRef.current = setInterval(load, 3000);
     return () => clearInterval(intervalRef.current);
   }, [currentSim?.id]);
 
