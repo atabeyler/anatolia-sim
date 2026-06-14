@@ -1,8 +1,25 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
 import { query } from '../../db/database.js';
 import { sendAdminRegistrationNotification, sendApprovalEmail } from '../../utils/email.js';
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Çok fazla giriş denemesi. 15 dakika sonra tekrar deneyin.' },
+});
+
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Çok fazla kayıt denemesi. 1 saat sonra tekrar deneyin.' },
+});
 
 function generateApprovalToken(userId) {
   return jwt.sign({ action: 'approve', userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -29,7 +46,7 @@ function validatePassword(password) {
   return null;
 }
 
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
   try {
     const { first_name, last_name, tc_no, email, password, user_code } = req.body;
     if (!first_name || !last_name || !tc_no || !email || !password || !user_code)
@@ -60,7 +77,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { user_code, password } = req.body;
     if (!user_code || !password) return res.status(400).json({ error: 'Kullanıcı kodu ve şifre gereklidir.' });

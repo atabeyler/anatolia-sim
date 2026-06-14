@@ -215,20 +215,17 @@ router.get('/test-email', authenticate, requireAdmin, async (req, res) => {
   }
 });
 
-// Seed first admin from env var
+// Seed first admin from env var — always requires ADMIN_SEED_TOKEN
 router.post('/seed-admin', async (req, res) => {
   try {
+    const seedToken = process.env.ADMIN_SEED_TOKEN;
+    if (!seedToken || req.headers['x-seed-token'] !== seedToken) {
+      return res.status(403).json({ error: 'Admin seed token gerekli.' });
+    }
     const adminCode = process.env.ADMIN_USER_CODE;
     const adminPass = process.env.ADMIN_PASSWORD;
-    const adminEmail = process.env.ADMIN_EMAIL ?? 'info@boldkimya.com.tr';
-    if (!adminCode || !adminPass) return res.status(400).json({ error: 'ADMIN_USER_CODE ve ADMIN_PASSWORD env var gerekli.' });
-    const adminCount = await query("SELECT COUNT(*)::int AS count FROM users WHERE role = 'admin' AND is_approved = true");
-    if (adminCount.rows[0].count > 0) {
-      const seedToken = process.env.ADMIN_SEED_TOKEN;
-      if (!seedToken || req.headers['x-seed-token'] !== seedToken) {
-        return res.status(403).json({ error: 'Admin seed token gerekli.' });
-      }
-    }
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (!adminCode || !adminPass || !adminEmail) return res.status(400).json({ error: 'ADMIN_USER_CODE, ADMIN_PASSWORD ve ADMIN_EMAIL env var gerekli.' });
     const bcrypt = (await import('bcrypt')).default;
     const hash = await bcrypt.hash(adminPass, 12);
 

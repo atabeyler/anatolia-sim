@@ -38,6 +38,7 @@ export function learnTechFromObservation(individual, nearby, discoveredTechs) {
       const tech = TECH_TREE[techId];
       if (!tech) continue;
       if ((individual.phenotype?.fluid_intelligence ?? 0) < tech.iq_min) continue;
+      if (!(tech.requires ?? []).every(p => individual.known_techs.has(p))) continue;
       // Observational rate: curiosity × IQ, difficulty-scaled; slower than discovery
       const rate = ((individual.phenotype?.curiosity ?? 0.5) * (individual.phenotype?.fluid_intelligence ?? 0.5)) / (tech.difficulty * 2000);
       if (Math.random() < rate) individual.known_techs.add(techId);
