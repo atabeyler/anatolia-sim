@@ -226,8 +226,39 @@ export class SimulationEngine {
 
     // 3. Economy — gather resources, consume, produce goods
     for (const ind of alive) {
-      const gathered = gatherResources(ind, this.worldState, this.discoveredTechs);
+      const ageYears = ind.age / 365;
       if (!ind.inventory) ind.inventory = initializeInventory();
+
+      // Infants (< 2 yr) are breastfed — they don't forage independently.
+      // Food is transferred from mother's inventory each tick.
+      if (ageYears < 2) {
+        const INFANT_DAILY_NEED = 0.3;
+        const WATER_DAILY_NEED  = 0.15;
+        const mother = this.population.get(ind.parent_1_id ?? ind.parent_2_id);
+        const feeder = (mother && !mother.is_dead) ? mother
+          : (() => {
+              const p2 = this.population.get(ind.parent_2_id ?? ind.parent_1_id);
+              return (p2 && !p2.is_dead) ? p2 : null;
+            })();
+        if (feeder?.inventory) {
+          const fed  = Math.min(feeder.inventory.food  ?? 0, INFANT_DAILY_NEED);
+          const watered = Math.min(feeder.inventory.water ?? 0, WATER_DAILY_NEED);
+          feeder.inventory.food  = Math.max(0, (feeder.inventory.food  ?? 0) - fed);
+          feeder.inventory.water = Math.max(0, (feeder.inventory.water ?? 0) - watered);
+          ind.inventory.food  = (ind.inventory.food  ?? 0) + fed;
+          ind.inventory.water = (ind.inventory.water ?? 0) + watered;
+        }
+        const { satiation, inv } = consumeResources(ind);
+        ind.inventory = inv;
+        ind.satiation = satiation;
+        if (ind.health) {
+          ind.health.calories  = (ind.health.calories  ?? 1) * 0.97 + Math.min(1, satiation * 1.3) * 0.03;
+          ind.health.hydration = (ind.health.hydration ?? 1) * 0.97 + ((inv.water ?? 0) > 0.15 ? 0.95 : 0.4) * 0.03;
+        }
+        continue;
+      }
+
+      const gathered = gatherResources(ind, this.worldState, this.discoveredTechs);
       for (const [res, qty] of Object.entries(gathered)) {
         ind.inventory[res] = (ind.inventory[res] ?? 0) + qty;
       }
