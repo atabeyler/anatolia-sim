@@ -82,7 +82,17 @@ export function processCultureTick(population, groups, discoveredTechs, simDay) 
       const others = groups.filter(g => g.id !== group.id && g.culture?.size > 0);
       if (others.length > 0) {
         const src = others[Math.floor(Math.random() * others.length)];
-        const novel = [...(src.culture ?? [])].find(m => !group.culture.has(m));
+        // Only diffuse memes the receiving group is actually capable of adopting —
+        // same prerequisite checks as organic emergence (foxp2, group size, tech).
+        const novel = [...(src.culture ?? [])].find(m => {
+          if (group.culture.has(m)) return false;
+          const meme = CULTURAL_MEMES[m];
+          if (!meme) return false;
+          if (avgFoxp2 < meme.foxp2_min) return false;
+          if (members.length < meme.group_size_min) return false;
+          if (meme.requires_tech?.some(t => !discoveredTechs.has(t))) return false;
+          return true;
+        });
         if (novel) {
           group.culture.add(novel);
           events.push({
