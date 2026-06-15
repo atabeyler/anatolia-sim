@@ -68,18 +68,18 @@ function evIcon(type: string) {
   return '◈';
 }
 function evLabel(type: string, lang: string) {
-  if (type === 'communication') return text(lang as LangCode, { tr: 'iletişim', en: 'comm' });
-  if (type === 'word')          return text(lang as LangCode, { tr: 'kelime',   en: 'word' });
-  return text(lang as LangCode, { tr: 'dil', en: 'lang' });
+  if (type === 'communication') return text(lang as LangCode, { tr: 'iletişim', en: 'comm', de: 'Komm.', fr: 'comm.', ar: 'تواصل' });
+  if (type === 'word')          return text(lang as LangCode, { tr: 'kelime',   en: 'word', de: 'Wort',  fr: 'mot',   ar: 'كلمة' });
+  return text(lang as LangCode, { tr: 'dil', en: 'lang', de: 'Sprache', fr: 'langue', ar: 'لغة' });
 }
 
 // ── Archive Modal ────────────────────────────────────────────────────────────
 
 const ARCHIVE_FILTERS = [
-  { id: 'all',           labelTr: 'Tümü',      labelEn: 'All' },
-  { id: 'language',      labelTr: 'Dil',        labelEn: 'Language' },
-  { id: 'communication', labelTr: 'İletişim',   labelEn: 'Comm.' },
-  { id: 'word',          labelTr: 'Kelime',     labelEn: 'Word' },
+  { id: 'all',           labelTr: 'Tümü',      labelEn: 'All',      labelDe: 'Alle',         labelFr: 'Tous',         labelAr: 'الكل'     },
+  { id: 'language',      labelTr: 'Dil',        labelEn: 'Language', labelDe: 'Sprache',      labelFr: 'Langue',       labelAr: 'لغة'      },
+  { id: 'communication', labelTr: 'İletişim',   labelEn: 'Comm.',    labelDe: 'Komm.',        labelFr: 'Comm.',        labelAr: 'تواصل'    },
+  { id: 'word',          labelTr: 'Kelime',     labelEn: 'Word',     labelDe: 'Wort',         labelFr: 'Mot',          labelAr: 'كلمة'     },
 ];
 
 const PAGE = 100;
@@ -152,10 +152,10 @@ function LangArchiveModal({ simId, accessToken, lang: uiLang, onClose }: {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: '1px solid rgba(160,180,255,0.15)', flexShrink: 0 }}>
           <span style={{ fontSize: 13, fontFamily: 'Orbitron, monospace', color: '#a0b4ff', fontWeight: 700, letterSpacing: '0.1em', flex: 1 }}>
-            {text(uiLang as LangCode, { tr: '📋 DİL & İLETİŞİM ARŞİVİ', en: '📋 LANGUAGE & COMM. ARCHIVE' })}
+            {text(uiLang as LangCode, { tr: '📋 DİL & İLETİŞİM ARŞİVİ', en: '📋 LANGUAGE & COMM. ARCHIVE', de: '📋 SPRACHE & KOMM.-ARCHIV', fr: '📋 ARCHIVE LANGUE & COMM.', ar: '📋 أرشيف اللغة والتواصل' })}
           </span>
           <span style={{ fontSize: 11, color: '#6a8878', fontFamily: 'Share Tech Mono, monospace' }}>
-            {total > 0 ? `${total} ${text(uiLang as LangCode, { tr: 'kayıt', en: 'records' })}` : ''}
+            {total > 0 ? `${total} ${text(uiLang as LangCode, { tr: 'kayıt', en: 'records', de: 'Einträge', fr: 'entrées', ar: 'سجلات' })}` : ''}
           </span>
           <button onClick={onClose} style={{ color: '#6a8878', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 4px' }}>✕</button>
         </div>
@@ -171,13 +171,13 @@ function LangArchiveModal({ simId, accessToken, lang: uiLang, onClose }: {
                 background: filter === f.id ? 'rgba(160,180,255,0.1)' : 'transparent',
                 fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer',
               }}>
-                {text(uiLang as LangCode, { tr: f.labelTr, en: f.labelEn })}
+                {text(uiLang as LangCode, { tr: f.labelTr, en: f.labelEn, de: f.labelDe, fr: f.labelFr, ar: f.labelAr })}
               </button>
             ))}
           </div>
           <input
             value={search} onChange={e => setSearch(e.target.value)}
-            placeholder={text(uiLang as LangCode, { tr: 'Açıklamada ara…', en: 'Search descriptions…' })}
+            placeholder={text(uiLang as LangCode, { tr: 'Açıklamada ara…', en: 'Search descriptions…', de: 'Beschreibungen suchen…', fr: 'Rechercher dans les descriptions…', ar: 'ابحث في الأوصاف…' })}
             style={{
               flex: 1, minWidth: 120, padding: '2px 8px', fontSize: 11,
               background: 'rgba(160,180,255,0.05)', border: '1px solid rgba(160,180,255,0.2)',
@@ -190,11 +190,11 @@ function LangArchiveModal({ simId, accessToken, lang: uiLang, onClose }: {
         <div style={{ flex: 1, overflowY: 'auto', padding: '6px 14px' }}>
           {loading && filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#6a8878', fontSize: 12, fontFamily: 'Share Tech Mono, monospace' }}>
-              {text(uiLang as LangCode, { tr: 'Yükleniyor…', en: 'Loading…' })}
+              {text(uiLang as LangCode, { tr: 'Yükleniyor…', en: 'Loading…', de: 'Lädt…', fr: 'Chargement…', ar: 'جارٍ التحميل…' })}
             </div>
           ) : filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#6a8878', fontSize: 12, fontStyle: 'italic' }}>
-              {text(uiLang as LangCode, { tr: 'Kayıt bulunamadı.', en: 'No records found.' })}
+              {text(uiLang as LangCode, { tr: 'Kayıt bulunamadı.', en: 'No records found.', de: 'Keine Einträge gefunden.', fr: 'Aucune entrée trouvée.', ar: 'لا توجد سجلات.' })}
             </div>
           ) : filtered.map((ev, i) => {
             const t = String(ev.event_type ?? '');
@@ -236,7 +236,7 @@ function LangArchiveModal({ simId, accessToken, lang: uiLang, onClose }: {
                 background: 'transparent', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer',
                 opacity: loading ? 0.5 : 1,
               }}>
-                {loading ? text(uiLang as LangCode, { tr: 'Yükleniyor…', en: 'Loading…' }) : text(uiLang as LangCode, { tr: `Daha fazla yükle (${rows.length}/${total})`, en: `Load more (${rows.length}/${total})` })}
+                {loading ? text(uiLang as LangCode, { tr: 'Yükleniyor…', en: 'Loading…', de: 'Lädt…', fr: 'Chargement…', ar: 'جارٍ التحميل…' }) : text(uiLang as LangCode, { tr: `Daha fazla yükle (${rows.length}/${total})`, en: `Load more (${rows.length}/${total})`, de: `Mehr laden (${rows.length}/${total})`, fr: `Charger plus (${rows.length}/${total})`, ar: `تحميل المزيد (${rows.length}/${total})` })}
               </button>
             </div>
           )}
@@ -245,7 +245,7 @@ function LangArchiveModal({ simId, accessToken, lang: uiLang, onClose }: {
         {/* Footer count */}
         <div style={{ padding: '6px 14px', borderTop: '1px solid rgba(160,180,255,0.08)', flexShrink: 0 }}>
           <span style={{ fontSize: 10, color: '#4a6a6a', fontFamily: 'Share Tech Mono, monospace' }}>
-            {filtered.length} / {rows.length} {text(uiLang as LangCode, { tr: 'gösteriliyor', en: 'shown' })} · {total} {text(uiLang as LangCode, { tr: 'toplam kayıt', en: 'total records' })}
+            {filtered.length} / {rows.length} {text(uiLang as LangCode, { tr: 'gösteriliyor', en: 'shown', de: 'angezeigt', fr: 'affichés', ar: 'معروض' })} · {total} {text(uiLang as LangCode, { tr: 'toplam kayıt', en: 'total records', de: 'Einträge gesamt', fr: 'entrées total', ar: 'المجموع' })}
           </span>
         </div>
       </div>
@@ -284,7 +284,7 @@ export default function LanguagePanel() {
       )}
 
       <div className="bg-sim-surface rounded-lg p-3 mb-2">
-        <div className="text-sim-muted text-sm mb-1">{text(lang as LangCode, { en: 'Current Stage', tr: 'Mevcut Aşama' })}</div>
+        <div className="text-sim-muted text-sm mb-1">{text(lang as LangCode, { tr: 'Mevcut Aşama', en: 'Current Stage', de: 'Aktuelle Stufe', fr: 'Étape actuelle', ar: 'المرحلة الحالية' })}</div>
         <div className="text-sim-gold font-bold text-base">
           Stage {currentStage}: {text(lang as LangCode, { en: LANGUAGE_STAGES[currentStage].name, tr: LANGUAGE_STAGES[currentStage].nameTr })}
         </div>
@@ -293,14 +293,14 @@ export default function LanguagePanel() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
         <div className="bg-sim-surface/70 rounded-lg p-3 border border-sim-border/40">
-          <div className="text-sim-muted text-xs uppercase tracking-widest mb-2">{text(lang as LangCode, { en: 'Actual Phonology', tr: 'Gerçek Ses Envanteri' })}</div>
-          <div className="text-xs text-sim-text mb-1">{text(lang as LangCode, { tr: 'Ünsüzler', en: 'Consonants' })}</div>
+          <div className="text-sim-muted text-xs uppercase tracking-widest mb-2">{text(lang as LangCode, { tr: 'Gerçek Ses Envanteri', en: 'Actual Phonology', de: 'Phonologie', fr: 'Phonologie réelle', ar: 'علم الأصوات' })}</div>
+          <div className="text-xs text-sim-text mb-1">{text(lang as LangCode, { tr: 'Ünsüzler', en: 'Consonants', de: 'Konsonanten', fr: 'Consonnes', ar: 'الحروف الساكنة' })}</div>
           <div className="flex flex-wrap gap-1 mb-2">
             {phonology.consonants.map(item => (
               <span key={item} className="px-2 py-0.5 rounded bg-sim-accent/10 text-sim-text text-xs border border-sim-accent/20">{item}</span>
             ))}
           </div>
-          <div className="text-xs text-sim-text mb-1">{text(lang as LangCode, { tr: 'Ünlüler', en: 'Vowels' })}</div>
+          <div className="text-xs text-sim-text mb-1">{text(lang as LangCode, { tr: 'Ünlüler', en: 'Vowels', de: 'Vokale', fr: 'Voyelles', ar: 'حروف العلة' })}</div>
           <div className="flex flex-wrap gap-1">
             {phonology.vowels.map(item => (
               <span key={item} className="px-2 py-0.5 rounded bg-sim-gold/10 text-sim-text text-xs border border-sim-gold/20">{item}</span>
@@ -309,7 +309,7 @@ export default function LanguagePanel() {
         </div>
 
         <div className="bg-sim-surface/70 rounded-lg p-3 border border-sim-border/40">
-          <div className="text-sim-muted text-xs uppercase tracking-widest mb-2">{text(lang as LangCode, { en: 'Stage Channel', tr: 'Aşama Kanalı' })}</div>
+          <div className="text-sim-muted text-xs uppercase tracking-widest mb-2">{text(lang as LangCode, { tr: 'Aşama Kanalı', en: 'Stage Channel', de: 'Stufenkanal', fr: 'Canal de stade', ar: 'قناة المرحلة' })}</div>
           <div className="text-sim-text text-sm mb-2">
             {text(lang as LangCode, { tr: LANGUAGE_STAGES[currentStage].nameTr, en: LANGUAGE_STAGES[currentStage].name })}
           </div>
@@ -319,11 +319,11 @@ export default function LanguagePanel() {
         </div>
 
         <div className="bg-sim-surface/70 rounded-lg p-3 border border-sim-border/40">
-          <div className="text-sim-muted text-xs uppercase tracking-widest mb-2">{text(lang as LangCode, { en: 'Surface Forms', tr: 'Yüzey Biçimleri' })}</div>
+          <div className="text-sim-muted text-xs uppercase tracking-widest mb-2">{text(lang as LangCode, { tr: 'Yüzey Biçimleri', en: 'Surface Forms', de: 'Oberflächenformen', fr: 'Formes de surface', ar: 'الأشكال السطحية' })}</div>
           <div className="flex flex-wrap gap-1">
             {surfaceForms.length === 0 ? (
               <span className="text-sim-muted text-xs italic">
-                {text(lang as LangCode, { tr: 'Henüz kalıcı ses biçimi yok.', en: 'No stable surface forms yet.' })}
+                {text(lang as LangCode, { tr: 'Henüz kalıcı ses biçimi yok.', en: 'No stable surface forms yet.', de: 'Noch keine stabilen Oberflächenformen.', fr: 'Pas encore de formes de surface stables.', ar: 'لا توجد أشكال سطحية مستقرة بعد.' })}
               </span>
             ) : surfaceForms.map(item => (
               <span key={item} className="px-2 py-0.5 rounded bg-sim-green/10 text-sim-text text-xs border border-sim-green/20">{item}</span>
@@ -334,7 +334,7 @@ export default function LanguagePanel() {
 
       <div className="bg-sim-surface/50 rounded-lg p-3 mb-3 border border-sim-border/30">
         <div className="text-sim-muted text-xs uppercase tracking-widest mb-1">
-          {text(lang as LangCode, { en: 'What This Stage Can Do', tr: 'Bu Aşamanın Yapabildikleri' })}
+          {text(lang as LangCode, { tr: 'Bu Aşamanın Yapabildikleri', en: 'What This Stage Can Do', de: 'Was diese Stufe kann', fr: 'Ce que ce stade peut faire', ar: 'ما يمكن لهذه المرحلة فعله' })}
         </div>
         <div className="text-sim-text text-sm leading-relaxed">
           {text(lang as LangCode, { en: LANGUAGE_STAGES[currentStage].desc, tr: LANGUAGE_STAGES[currentStage].descTr })}
@@ -343,7 +343,7 @@ export default function LanguagePanel() {
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {text(lang as LangCode, { en: 'Stage Progression', tr: 'Aşama İlerlemesi' })}
+          {text(lang as LangCode, { tr: 'Aşama İlerlemesi', en: 'Stage Progression', de: 'Stufenentwicklung', fr: 'Progression des stades', ar: 'تقدم المراحل' })}
         </h4>
         <div className="space-y-2">
           {LANGUAGE_STAGES.map(stage => {

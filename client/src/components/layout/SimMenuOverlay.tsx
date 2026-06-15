@@ -109,12 +109,12 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions, menuPag
         {page === null && (
           <div style={{ padding: '6px 0' }}>
             {([
-              { id: 'language', labels: { tr: '🌐 Dil / Language',    en: '🌐 Language'      } },
-              { id: 'guide',    labels: { tr: '📖 Kullanım Kılavuzu', en: '📖 User Guide'    } },
-              { id: 'about',    labels: { tr: 'Hakkımızda',           en: 'About'            } },
-              { id: 'mission',  labels: { tr: 'Misyon & Vizyon',      en: 'Mission & Vision' } },
-              { id: 'contact',  labels: { tr: 'İletişim',             en: 'Contact'          } },
-            ] as { id: NonNullable<Page>; labels: { tr: string; en: string } }[]).map(item => (
+              { id: 'language', labels: { tr: '🌐 Dil / Language',    en: '🌐 Language',      de: '🌐 Sprache',   fr: '🌐 Langue',   ar: '🌐 اللغة'  } },
+              { id: 'guide',    labels: { tr: '📖 Kullanım Kılavuzu', en: '📖 User Guide',    de: '📖 Anleitung', fr: '📖 Guide',    ar: '📖 دليل'   } },
+              { id: 'about',    labels: { tr: 'Hakkımızda',           en: 'About',            de: 'Über uns',     fr: 'À propos',    ar: 'حول'       } },
+              { id: 'mission',  labels: { tr: 'Misyon & Vizyon',      en: 'Mission & Vision', de: 'Mission',      fr: 'Mission',     ar: 'المهمة'    } },
+              { id: 'contact',  labels: { tr: 'İletişim',             en: 'Contact',          de: 'Kontakt',      fr: 'Contact',     ar: 'تواصل'     } },
+            ] as { id: NonNullable<Page>; labels: { tr: string; en: string; de: string; fr: string; ar: string } }[]).map(item => (
               <button key={item.id} onClick={() => setPage(item.id)}
                 style={{ display: 'block', width: '100%', padding: '9px 14px', background: 'transparent', border: 'none', borderBottom: '1px solid #0a1a10', color: '#a0c8b0', fontSize: 14, textAlign: 'left', cursor: 'pointer', letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace' }}>
                 › {text(lang as LangCode, item.labels)}

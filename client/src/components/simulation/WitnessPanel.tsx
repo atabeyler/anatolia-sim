@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Eye, EyeOff, GripHorizontal } from 'lucide-react';
 import axios from 'axios';
 import { useSimStore } from '../../store/simStore';
+import { text, type LangCode } from '../../utils/i18n';
 
 function useDrag(initial: { x: number; y: number }) {
   const [pos, setPos] = useState(initial);
@@ -98,14 +99,14 @@ function generateNarration(ind: any, lang: string): string[] {
   return lines.slice(0, 4);
 }
 
-const STAGE_NAMES: Record<number, { tr: string; en: string }> = {
-  0: { tr: 'Dil Öncesi', en: 'Pre-linguistic' },
-  1: { tr: 'Jest', en: 'Gestural' },
-  2: { tr: 'Duygusal Ses', en: 'Emotional Sound' },
-  3: { tr: 'Proto Kelime', en: 'Proto-word' },
-  4: { tr: 'Sözdizimi', en: 'Syntax' },
-  5: { tr: 'Soyut', en: 'Abstract' },
-  6: { tr: 'Yazı', en: 'Writing' },
+const STAGE_NAMES: Record<number, { tr: string; en: string; de: string; fr: string; ar: string }> = {
+  0: { tr: 'Dil Öncesi',    en: 'Pre-linguistic',   de: 'Vorsprachlich',    fr: 'Prélinguistique',  ar: 'ما قبل اللغة'  },
+  1: { tr: 'Jest',          en: 'Gestural',          de: 'Gestural',         fr: 'Gestuel',          ar: 'إيمائي'         },
+  2: { tr: 'Duygusal Ses',  en: 'Emotional Sound',   de: 'Emotionaler Laut', fr: 'Son émotionnel',   ar: 'صوت عاطفي'     },
+  3: { tr: 'Proto Kelime',  en: 'Proto-word',        de: 'Protowort',        fr: 'Proto-mot',        ar: 'كلمة أولى'     },
+  4: { tr: 'Sözdizimi',     en: 'Syntax',            de: 'Syntax',           fr: 'Syntaxe',          ar: 'نحو'            },
+  5: { tr: 'Soyut',         en: 'Abstract',          de: 'Abstrakt',         fr: 'Abstrait',         ar: 'مجرد'           },
+  6: { tr: 'Yazı',          en: 'Writing',           de: 'Schrift',          fr: 'Écriture',         ar: 'كتابة'          },
 };
 
 export default function WitnessPanel() {
@@ -166,12 +167,12 @@ export default function WitnessPanel() {
         <GripHorizontal size={10} style={{ color: '#6a9a80', flexShrink: 0 }} />
         <Eye size={10} style={{ color: '#00d4ff', flexShrink: 0 }} />
         <span style={{ fontSize: 10, color: '#00d4ff', letterSpacing: '0.2em', flex: 1 }}>
-          {tr('TANİK MODU', 'WITNESS MODE')}
+          {text(lang as LangCode, { tr: 'TANİK MODU', en: 'WITNESS MODE', de: 'ZEUGENMODUS', fr: 'MODE TÉMOIN', ar: 'وضع الشاهد' })}
         </span>
         <button
           onClick={() => setWatchedIndividual(null)}
           style={{ background: 'transparent', border: 'none', color: '#a0c8b0', cursor: 'pointer', lineHeight: 0, padding: 2 }}
-          title={tr('Takibi bırak', 'Stop watching')}
+          title={text(lang as LangCode, { tr: 'Takibi bırak', en: 'Stop watching', de: 'Beobachtung beenden', fr: 'Arrêter de regarder', ar: 'إيقاف المتابعة' })}
         >
           <EyeOff size={10} />
         </button>
@@ -186,8 +187,8 @@ export default function WitnessPanel() {
           </div>
           {age !== null && (
             <div style={{ fontSize: 11, color: '#a0b4ff', marginTop: 2 }}>
-              {age} {tr('yaş', 'yr')} · {STAGE_NAMES[stage]?.[lang === 'tr' ? 'tr' : 'en'] ?? '—'}
-              {ind?.group_id && <span style={{ color: '#4f6ef7', marginLeft: 6 }}>· {tr('grupta', 'in group')}</span>}
+              {age} {text(lang as LangCode, { tr: 'yaş', en: 'yr', de: 'J.', fr: 'ans', ar: 'سنة' })} · {text(lang as LangCode, STAGE_NAMES[stage] ?? { en: '—' })}
+              {ind?.group_id && <span style={{ color: '#4f6ef7', marginLeft: 6 }}>· {text(lang as LangCode, { tr: 'grupta', en: 'in group', de: 'in Gruppe', fr: 'dans groupe', ar: 'في المجموعة' })}</span>}
             </div>
           )}
         </div>
@@ -195,12 +196,12 @@ export default function WitnessPanel() {
         {/* Narration */}
         {!ind && (
           <div style={{ fontSize: 11, color: '#6a8878', letterSpacing: '0.08em' }}>
-            {tr('Birey yükleniyor…', 'Loading individual…')}
+            {text(lang as LangCode, { tr: 'Birey yükleniyor…', en: 'Loading individual…', de: 'Individuum lädt…', fr: 'Chargement de l\'individu…', ar: 'جارٍ تحميل الفرد…' })}
           </div>
         )}
         {isDead && (
           <div style={{ fontSize: 11, color: '#a05050' }}>
-            † {tr('Bu birey hayatını kaybetti.', 'This individual has died.')}
+            † {text(lang as LangCode, { tr: 'Bu birey hayatını kaybetti.', en: 'This individual has died.', de: 'Dieses Individuum ist gestorben.', fr: 'Cet individu est décédé.', ar: 'لقي هذا الفرد حتفه.' })}
           </div>
         )}
         {narration.map((line, i) => (
@@ -214,8 +215,8 @@ export default function WitnessPanel() {
           <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px solid rgba(0,212,255,0.1)', display: 'flex', gap: 8 }}>
             {[
               { l: 'HP', v: ind.health?.hp ?? 0, c: '#4ecb71' },
-              { l: tr('Kal', 'Cal'), v: ind.health?.calories ?? 0, c: '#d4a838' },
-              { l: tr('Su', 'H₂O'), v: ind.health?.hydration ?? 0, c: '#7dd3fc' },
+              { l: text(lang as LangCode, { tr: 'Kal', en: 'Cal', de: 'Kal.', fr: 'Cal', ar: 'سعر' }), v: ind.health?.calories ?? 0, c: '#d4a838' },
+              { l: text(lang as LangCode, { tr: 'Su', en: 'H₂O', de: 'H₂O', fr: 'H₂O', ar: 'ماء' }), v: ind.health?.hydration ?? 0, c: '#7dd3fc' },
             ].map(({ l, v, c }) => (
               <div key={l} style={{ flex: 1, textAlign: 'center' }}>
                 <div style={{ fontSize: 10, color: '#6a8878', marginBottom: 2 }}>{l}</div>

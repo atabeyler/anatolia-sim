@@ -47,6 +47,19 @@ const CAUSE_TR: Record<string, string> = {
   unknown:              'bilinmeyen neden',
 };
 
+export const CAUSE_LABELS: Record<string, TranslationMap> = {
+  starvation:          { tr: 'açlık',                 en: 'starvation',          de: 'Verhungern',           fr: 'famine',              ar: 'جوع' },
+  dehydration:         { tr: 'susuzluk',              en: 'dehydration',         de: 'Dehydrierung',         fr: 'déshydratation',      ar: 'جفاف' },
+  old_age:             { tr: 'yaşlılık',              en: 'old age',             de: 'Alter',                fr: 'vieillesse',          ar: 'الشيخوخة' },
+  predator:            { tr: 'yırtıcı hayvan',        en: 'predator',            de: 'Raubtier',             fr: 'prédateur',           ar: 'مفترس' },
+  genetic_disease:     { tr: 'genetik hastalık',      en: 'genetic disease',     de: 'Erbkrankheit',         fr: 'maladie génétique',   ar: 'مرض وراثي' },
+  infection:           { tr: 'enfeksiyon',             en: 'infection',           de: 'Infektion',            fr: 'infection',           ar: 'عدوى' },
+  trauma:              { tr: 'travma',                 en: 'trauma',              de: 'Trauma',               fr: 'traumatisme',         ar: 'صدمة' },
+  birth_complications: { tr: 'doğum komplikasyonu',   en: 'birth complications', de: 'Geburtskomplikationen',fr: 'complications à la naissance', ar: 'مضاعفات الولادة' },
+  conflict:            { tr: 'çatışma',               en: 'conflict',            de: 'Konflikt',             fr: 'conflit',             ar: 'نزاع' },
+  unknown:             { tr: 'bilinmeyen neden',       en: 'unknown cause',       de: 'unbekannte Ursache',   fr: 'cause inconnue',      ar: 'سبب مجهول' },
+};
+
 // ─── Exact-match dictionaries (server-generated English → Turkish) ─────────
 
 const BELIEF_DESC_TR: Record<string, string> = {
@@ -396,33 +409,33 @@ export function translateEventDescription(desc: string, lang: LangCode, event?: 
 export function translateEventType(type: string, lang: LangCode): string {
   const key = String(type ?? '').toLowerCase();
   const labels: Record<string, TranslationMap> = {
-    birth:        { tr: 'doğum',      en: 'birth' },
-    death:        { tr: 'ölüm',       en: 'death' },
-    technology:   { tr: 'teknoloji',  en: 'technology' },
-    language:     { tr: 'dil',        en: 'language' },
-    discovery:    { tr: 'keşif',      en: 'discovery' },
-    disaster:     { tr: 'afet',       en: 'disaster' },
-    belief:       { tr: 'inanç',      en: 'belief' },
-    culture:      { tr: 'kültür',     en: 'culture' },
-    art:          { tr: 'sanat',      en: 'art' },
-    astronomy:    { tr: 'astronomi',  en: 'astronomy' },
-    architecture: { tr: 'mimari',     en: 'architecture' },
-    law:          { tr: 'hukuk',      en: 'law' },
-    microbiome:   { tr: 'mikrobiyom', en: 'microbiome' },
-    epigenetics:  { tr: 'epigenetik', en: 'epigenetics' },
-    epidemic:     { tr: 'salgın',     en: 'epidemic' },
-    ritual:       { tr: 'ritüel',     en: 'ritual' },
-    trade:        { tr: 'ticaret',    en: 'trade' },
-    celestial:    { tr: 'göksel',     en: 'celestial' },
-    social:       { tr: 'sosyal',     en: 'social' },
-    norm:         { tr: 'norm',       en: 'norm' },
-    weather:      { tr: 'hava',       en: 'weather' },
-    communication:{ tr: 'iletişim',   en: 'communication' },
-    thought:      { tr: 'düşünce',    en: 'thought' },
-    sleep:        { tr: 'uyku',       en: 'sleep' },
-    activity:     { tr: 'etkinlik',   en: 'activity' },
-    mating:       { tr: 'çiftleşme',  en: 'mating' },
-    conflict:     { tr: 'çatışma',    en: 'conflict' },
+    birth:        { tr: 'doğum',      en: 'birth',         de: 'Geburt',        fr: 'naissance',       ar: 'ولادة' },
+    death:        { tr: 'ölüm',       en: 'death',         de: 'Tod',           fr: 'mort',            ar: 'وفاة' },
+    technology:   { tr: 'teknoloji',  en: 'technology',    de: 'Technologie',   fr: 'technologie',     ar: 'تكنولوجيا' },
+    language:     { tr: 'dil',        en: 'language',      de: 'Sprache',       fr: 'langue',          ar: 'لغة' },
+    discovery:    { tr: 'keşif',      en: 'discovery',     de: 'Entdeckung',    fr: 'découverte',      ar: 'اكتشاف' },
+    disaster:     { tr: 'afet',       en: 'disaster',      de: 'Katastrophe',   fr: 'catastrophe',     ar: 'كارثة' },
+    belief:       { tr: 'inanç',      en: 'belief',        de: 'Glaube',        fr: 'croyance',        ar: 'معتقد' },
+    culture:      { tr: 'kültür',     en: 'culture',       de: 'Kultur',        fr: 'culture',         ar: 'ثقافة' },
+    art:          { tr: 'sanat',      en: 'art',           de: 'Kunst',         fr: 'art',             ar: 'فن' },
+    astronomy:    { tr: 'astronomi',  en: 'astronomy',     de: 'Astronomie',    fr: 'astronomie',      ar: 'علم الفلك' },
+    architecture: { tr: 'mimari',     en: 'architecture',  de: 'Architektur',   fr: 'architecture',    ar: 'عمارة' },
+    law:          { tr: 'hukuk',      en: 'law',           de: 'Recht',         fr: 'droit',           ar: 'قانون' },
+    microbiome:   { tr: 'mikrobiyom', en: 'microbiome',    de: 'Mikrobiom',     fr: 'microbiome',      ar: 'ميكروبيوم' },
+    epigenetics:  { tr: 'epigenetik', en: 'epigenetics',   de: 'Epigenetik',    fr: 'épigénétique',    ar: 'علم التخلق' },
+    epidemic:     { tr: 'salgın',     en: 'epidemic',      de: 'Epidemie',      fr: 'épidémie',        ar: 'وباء' },
+    ritual:       { tr: 'ritüel',     en: 'ritual',        de: 'Ritual',        fr: 'rituel',          ar: 'طقوس' },
+    trade:        { tr: 'ticaret',    en: 'trade',         de: 'Handel',        fr: 'commerce',        ar: 'تجارة' },
+    celestial:    { tr: 'göksel',     en: 'celestial',     de: 'Himmlisch',     fr: 'céleste',         ar: 'سماوي' },
+    social:       { tr: 'sosyal',     en: 'social',        de: 'Sozial',        fr: 'social',          ar: 'اجتماعي' },
+    norm:         { tr: 'norm',       en: 'norm',          de: 'Norm',          fr: 'norme',           ar: 'معيار' },
+    weather:      { tr: 'hava',       en: 'weather',       de: 'Wetter',        fr: 'météo',           ar: 'طقس' },
+    communication:{ tr: 'iletişim',   en: 'communication', de: 'Kommunikation', fr: 'communication',   ar: 'تواصل' },
+    thought:      { tr: 'düşünce',    en: 'thought',       de: 'Gedanke',       fr: 'pensée',          ar: 'فكر' },
+    sleep:        { tr: 'uyku',       en: 'sleep',         de: 'Schlaf',        fr: 'sommeil',         ar: 'نوم' },
+    activity:     { tr: 'etkinlik',   en: 'activity',      de: 'Aktivität',     fr: 'activité',        ar: 'نشاط' },
+    mating:       { tr: 'çiftleşme',  en: 'mating',        de: 'Paarung',       fr: 'accouplement',    ar: 'تزاوج' },
+    conflict:     { tr: 'çatışma',    en: 'conflict',      de: 'Konflikt',      fr: 'conflit',         ar: 'نزاع' },
   };
 
   for (const [needle, values] of Object.entries(labels)) {

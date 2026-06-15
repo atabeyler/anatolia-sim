@@ -129,7 +129,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex flex-col leading-none gap-0.5 items-center">
               <span className="font-orbitron font-bold tracking-[0.2em]" style={{ fontSize: 'clamp(12px, 3.8vw, 18px)', color: '#e0e0f0' }}>ANATOLİA-SİM</span>
-              <span className="font-share-tech tracking-[0.25em]" style={{ fontSize: 'clamp(10px, 3vw, 16px)', color: '#cc2222' }}>{text(lang as LangCode, { tr: 'MEDENİYET', en: 'CIVILIZATION' })}</span>
+              <span className="font-share-tech tracking-[0.25em]" style={{ fontSize: 'clamp(10px, 3vw, 16px)', color: '#cc2222' }}>{text(lang as LangCode, { tr: 'MEDENİYET', en: 'CIVILIZATION', de: 'ZIVILISATION', fr: 'CIVILISATION', ar: 'الحضارة' })}</span>
             </div>
           </div>
 

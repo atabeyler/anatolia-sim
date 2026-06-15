@@ -1,25 +1,25 @@
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
-import { translateEventDescription, text, type LangCode } from '../../utils/i18n';
+import { translateEventDescription, text, type LangCode, type TranslationMap } from '../../utils/i18n';
 
-const SEASON_NAMES: Record<string, { tr: string; color: string; icon: string }> = {
-  spring: { tr: 'İlkbahar', color: '#4ecb71', icon: '🌿' },
-  summer: { tr: 'Yaz',      color: '#f97316', icon: '☀️' },
-  autumn: { tr: 'Sonbahar', color: '#d4a838', icon: '🍂' },
-  winter: { tr: 'Kış',      color: '#00d4ff', icon: '❄️' },
+const SEASON_NAMES: Record<string, { label: TranslationMap; color: string; icon: string }> = {
+  spring: { label: { tr: 'İlkbahar', en: 'Spring', de: 'Frühling',  fr: 'Printemps', ar: 'الربيع'  }, color: '#4ecb71', icon: '🌿' },
+  summer: { label: { tr: 'Yaz',      en: 'Summer', de: 'Sommer',    fr: 'Été',        ar: 'الصيف'   }, color: '#f97316', icon: '☀️' },
+  autumn: { label: { tr: 'Sonbahar', en: 'Autumn', de: 'Herbst',    fr: 'Automne',    ar: 'الخريف'  }, color: '#d4a838', icon: '🍂' },
+  winter: { label: { tr: 'Kış',      en: 'Winter', de: 'Winter',    fr: 'Hiver',      ar: 'الشتاء'  }, color: '#00d4ff', icon: '❄️' },
 };
 
-const BIOME_NAMES: Record<string, { tr: string; color: string }> = {
-  tropical_rainforest: { tr: 'Tropikal Yağmur Ormanı', color: '#22c55e' },
-  tropical_savanna:    { tr: 'Tropikal Savan',          color: '#84cc16' },
-  desert:              { tr: 'Çöl',                     color: '#f59e0b' },
-  mediterranean:       { tr: 'Akdeniz',                 color: '#06b6d4' },
-  temperate_forest:    { tr: 'Ilıman Orman',            color: '#4ade80' },
-  grassland:           { tr: 'Step/Çayırlık',           color: '#a3e635' },
-  boreal_forest:       { tr: 'Boreal Orman',            color: '#34d399' },
-  tundra:              { tr: 'Tundra',                  color: '#7dd3fc' },
-  mountain:            { tr: 'Dağlık',                  color: '#c0c0d0' },
-  coastal:             { tr: 'Kıyı',                    color: '#38bdf8' },
+const BIOME_NAMES: Record<string, { label: TranslationMap; color: string }> = {
+  tropical_rainforest: { label: { tr: 'Tropikal Yağmur Ormanı', en: 'Tropical Rainforest', de: 'Tropischer Regenwald',   fr: 'Forêt tropicale humide', ar: 'غابة استوائية مطيرة' }, color: '#22c55e' },
+  tropical_savanna:    { label: { tr: 'Tropikal Savan',          en: 'Tropical Savanna',    de: 'Tropische Savanne',      fr: 'Savane tropicale',        ar: 'سافانا استوائية'      }, color: '#84cc16' },
+  desert:              { label: { tr: 'Çöl',                     en: 'Desert',              de: 'Wüste',                  fr: 'Désert',                  ar: 'صحراء'                }, color: '#f59e0b' },
+  mediterranean:       { label: { tr: 'Akdeniz',                 en: 'Mediterranean',       de: 'Mediterran',             fr: 'Méditerranéen',           ar: 'متوسطي'               }, color: '#06b6d4' },
+  temperate_forest:    { label: { tr: 'Ilıman Orman',            en: 'Temperate Forest',    de: 'Gemäßigter Wald',        fr: 'Forêt tempérée',          ar: 'غابة معتدلة'          }, color: '#4ade80' },
+  grassland:           { label: { tr: 'Step/Çayırlık',           en: 'Grassland',           de: 'Grasland',               fr: 'Prairie',                 ar: 'مرج'                  }, color: '#a3e635' },
+  boreal_forest:       { label: { tr: 'Boreal Orman',            en: 'Boreal Forest',       de: 'Borealer Wald',          fr: 'Forêt boréale',           ar: 'غابة شمالية'          }, color: '#34d399' },
+  tundra:              { label: { tr: 'Tundra',                  en: 'Tundra',              de: 'Tundra',                 fr: 'Toundra',                 ar: 'التندرا'              }, color: '#7dd3fc' },
+  mountain:            { label: { tr: 'Dağlık',                  en: 'Mountain',            de: 'Gebirge',                fr: 'Montagne',                ar: 'جبلي'                 }, color: '#c0c0d0' },
+  coastal:             { label: { tr: 'Kıyı',                    en: 'Coastal',             de: 'Küste',                  fr: 'Côtier',                  ar: 'ساحلي'                }, color: '#38bdf8' },
 };
 
 const RAINFALL_BY_BIOME: Record<string, number> = {
@@ -59,8 +59,8 @@ export default function EnvironmentPanel() {
   const food = stats?.food_abundance ?? 0.5;
   const water = stats?.water_abundance ?? 0.7;
   const biome = stats?.biome ?? 'mediterranean';
-  const biomeInfo = BIOME_NAMES[biome] ?? { tr: biome, color: '#a0b4ff' };
-  const seasonInfo = SEASON_NAMES[season] ?? { tr: season, color: '#a0b4ff', icon: '🌍' };
+  const biomeInfo = BIOME_NAMES[biome] ?? { label: { tr: biome, en: biome }, color: '#a0b4ff' };
+  const seasonInfo = SEASON_NAMES[season] ?? { label: { tr: season, en: season }, color: '#a0b4ff', icon: '🌍' };
 
   const baseRain = RAINFALL_BY_BIOME[biome] ?? 0.5;
   const rainMult = SEASON_RAIN_MULT[season] ?? 1;
@@ -79,9 +79,9 @@ export default function EnvironmentPanel() {
 
       {/* Biome badge */}
       <div className="mb-3 px-2 py-1.5" style={{ background: `${biomeInfo.color}12`, border: `1px solid ${biomeInfo.color}40` }}>
-        <div className="font-share-tech tracking-widest" style={{ fontSize: 12, color: '#a0b4ff' }}>BİYOM</div>
+        <div className="font-share-tech tracking-widest" style={{ fontSize: 12, color: '#a0b4ff' }}>{text(lang as LangCode, { tr: 'BİYOM', en: 'BIOME', de: 'BIOM', fr: 'BIOME', ar: 'المناخ الحيوي' })}</div>
         <div className="font-orbitron font-bold mt-0.5" style={{ fontSize: 12, color: biomeInfo.color }}>
-          {lang === 'tr' ? biomeInfo.tr : biome.replace(/_/g, ' ').toUpperCase()}
+          {text(lang as LangCode, biomeInfo.label).toUpperCase()}
         </div>
       </div>
 
@@ -89,10 +89,10 @@ export default function EnvironmentPanel() {
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div className="p-2 text-center" style={{ background: `${seasonInfo.color}10`, border: `1px solid ${seasonInfo.color}35` }}>
           <div className="font-orbitron font-bold" style={{ color: seasonInfo.color, fontSize: 13 }}>
-            {lang === 'tr' ? seasonInfo.tr : season.charAt(0).toUpperCase() + season.slice(1)}
+            {text(lang as LangCode, seasonInfo.label)}
           </div>
           <div className="font-share-tech text-sim-muted tracking-widest mt-0.5" style={{ fontSize: 12 }}>
-            {lang === 'tr' ? 'MEVSİM' : 'SEASON'}
+            {text(lang as LangCode, { tr: 'MEVSİM', en: 'SEASON', de: 'JAHRESZEIT', fr: 'SAISON', ar: 'الموسم' })}
           </div>
         </div>
         <div className="p-2 text-center" style={{ background: temp > 35 ? 'rgba(224,90,90,0.1)' : temp < 0 ? 'rgba(0,212,255,0.1)' : 'rgba(79,110,247,0.08)', border: `1px solid ${temp > 35 ? '#e05a5a' : temp < 0 ? '#00d4ff' : '#4f6ef7'}40` }}>
@@ -100,7 +100,7 @@ export default function EnvironmentPanel() {
             {temp}°C
           </div>
           <div className="font-share-tech text-sim-muted tracking-widest mt-0.5" style={{ fontSize: 12 }}>
-            {lang === 'tr' ? 'SICAKLIK' : 'TEMP'}
+            {text(lang as LangCode, { tr: 'SICAKLIK', en: 'TEMP', de: 'TEMP', fr: 'TEMP', ar: 'الحرارة' })}
           </div>
         </div>
       </div>
@@ -108,23 +108,23 @@ export default function EnvironmentPanel() {
       {/* Weather metrics */}
       <div className="mb-3">
         <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 12 }}>
-          {lang === 'tr' ? 'HAVA KOŞULLARI' : 'WEATHER'}
+          {text(lang as LangCode, { tr: 'HAVA KOŞULLARI', en: 'WEATHER', de: 'WETTER', fr: 'MÉTÉO', ar: 'الطقس' })}
         </div>
         <div className="space-y-2">
           <div>
-            <StatRow label={lang === 'tr' ? 'Yağış İndeksi' : 'Precipitation'} value={Math.round(precipitation * 100)} unit="%" color="#00d4ff" />
+            <StatRow label={text(lang as LangCode, { tr: 'Yağış İndeksi', en: 'Precipitation', de: 'Niederschlag', fr: 'Précipitation', ar: 'هطول الأمطار' })} value={Math.round(precipitation * 100)} unit="%" color="#00d4ff" />
             <Bar value={precipitation} color="#00d4ff" />
           </div>
           <div>
-            <StatRow label={lang === 'tr' ? 'Nem' : 'Humidity'} value={Math.round(humidity * 100)} unit="%" color="#7dd3fc" />
+            <StatRow label={text(lang as LangCode, { tr: 'Nem', en: 'Humidity', de: 'Luftfeuchtigkeit', fr: 'Humidité', ar: 'الرطوبة' })} value={Math.round(humidity * 100)} unit="%" color="#7dd3fc" />
             <Bar value={humidity} color="#7dd3fc" />
           </div>
           <div>
-            <StatRow label={lang === 'tr' ? 'Rüzgar' : 'Wind'} value={windSpeed} unit=" km/h" color="#a0b4ff" />
+            <StatRow label={text(lang as LangCode, { tr: 'Rüzgar', en: 'Wind', de: 'Wind', fr: 'Vent', ar: 'الرياح' })} value={windSpeed} unit=" km/h" color="#a0b4ff" />
             <Bar value={windSpeed} max={60} color="#a0b4ff" />
           </div>
           <div>
-            <StatRow label={lang === 'tr' ? 'UV İndeksi' : 'UV Index'} value={uvIndex} color={uvIndex > 7 ? '#f97316' : uvIndex > 4 ? '#d4a838' : '#4ecb71'} />
+            <StatRow label={text(lang as LangCode, { tr: 'UV İndeksi', en: 'UV Index', de: 'UV-Index', fr: 'Indice UV', ar: 'مؤشر الأشعة فوق البنفسجية' })} value={uvIndex} color={uvIndex > 7 ? '#f97316' : uvIndex > 4 ? '#d4a838' : '#4ecb71'} />
             <Bar value={uvIndex} max={11} color={uvIndex > 7 ? '#f97316' : uvIndex > 4 ? '#d4a838' : '#4ecb71'} />
           </div>
         </div>
@@ -133,15 +133,15 @@ export default function EnvironmentPanel() {
       {/* Resources */}
       <div className="mb-3">
         <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 12 }}>
-          {lang === 'tr' ? 'KAYNAKLAR' : 'RESOURCES'}
+          {text(lang as LangCode, { tr: 'KAYNAKLAR', en: 'RESOURCES', de: 'RESSOURCEN', fr: 'RESSOURCES', ar: 'الموارد' })}
         </div>
         <div className="space-y-2">
           <div>
-            <StatRow label={lang === 'tr' ? 'Yiyecek Bolluğu' : 'Food Abundance'} value={Math.round(food * 100)} unit="%" color={food > 0.6 ? '#4ecb71' : food > 0.3 ? '#d4a838' : '#e05a5a'} />
+            <StatRow label={text(lang as LangCode, { tr: 'Yiyecek Bolluğu', en: 'Food Abundance', de: 'Nahrungsüberfluss', fr: 'Abondance alimentaire', ar: 'وفرة الغذاء' })} value={Math.round(food * 100)} unit="%" color={food > 0.6 ? '#4ecb71' : food > 0.3 ? '#d4a838' : '#e05a5a'} />
             <Bar value={food} color={food > 0.6 ? '#4ecb71' : food > 0.3 ? '#d4a838' : '#e05a5a'} />
           </div>
           <div>
-            <StatRow label={lang === 'tr' ? 'Su Kaynakları' : 'Water'} value={Math.round(water * 100)} unit="%" color="#00d4ff" />
+            <StatRow label={text(lang as LangCode, { tr: 'Su Kaynakları', en: 'Water', de: 'Wasserquellen', fr: 'Eau', ar: 'الماء' })} value={Math.round(water * 100)} unit="%" color="#00d4ff" />
             <Bar value={water} color="#00d4ff" />
           </div>
         </div>
@@ -150,11 +150,11 @@ export default function EnvironmentPanel() {
       {/* Disaster log */}
       <div>
         <div className="font-share-tech text-sim-muted tracking-widest mb-2" style={{ fontSize: 12 }}>
-          {lang === 'tr' ? 'AFET GEÇMİŞİ' : 'DISASTER LOG'}
+          {text(lang as LangCode, { tr: 'AFET GEÇMİŞİ', en: 'DISASTER LOG', de: 'KATASTROPHENPROTOKOLL', fr: 'JOURNAL DES CATASTROPHES', ar: 'سجل الكوارث' })}
         </div>
         {disasterEvents.length === 0 ? (
           <div className="font-share-tech text-sim-muted/40 italic" style={{ fontSize: 12 }}>
-            {lang === 'tr' ? 'Kayıtlı afet yok.' : 'No disasters recorded.'}
+            {text(lang as LangCode, { tr: 'Kayıtlı afet yok.', en: 'No disasters recorded.', de: 'Keine Katastrophen aufgezeichnet.', fr: 'Aucune catastrophe enregistrée.', ar: 'لا توجد كوارث مسجلة.' })}
           </div>
         ) : (
           <div className="space-y-1 max-h-32 overflow-y-auto">

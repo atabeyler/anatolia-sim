@@ -101,13 +101,13 @@ const HAIR_COLORS: Record<string, { dot: string; labelTr: string; labelEn: strin
   medium: { dot: '#6a3a18', labelTr: 'Orta',  labelEn: 'Medium' },
   light:  { dot: '#c8a060', labelTr: 'Açık',  labelEn: 'Light'  },
 };
-const ROLE_LABELS: Record<string, { tr: string; en: string }> = {
-  leader:   { tr: 'Lider',   en: 'Leader'   },
-  elder:    { tr: 'Yaşlı',   en: 'Elder'    },
-  warrior:  { tr: 'Savaşçı', en: 'Warrior'  },
-  gatherer: { tr: 'Toplayıcı', en: 'Gatherer' },
-  healer:   { tr: 'İyileştirici', en: 'Healer' },
-  member:   { tr: 'Üye',    en: 'Member'   },
+const ROLE_LABELS: Record<string, { tr: string; en: string; de: string; fr: string; ar: string }> = {
+  leader:   { tr: 'Lider',          en: 'Leader',   de: 'Anführer',  fr: 'Chef',       ar: 'قائد'   },
+  elder:    { tr: 'Yaşlı',          en: 'Elder',    de: 'Ältester',  fr: 'Aîné',       ar: 'كبير'   },
+  warrior:  { tr: 'Savaşçı',        en: 'Warrior',  de: 'Krieger',   fr: 'Guerrier',   ar: 'محارب'  },
+  gatherer: { tr: 'Toplayıcı',      en: 'Gatherer', de: 'Sammler',   fr: 'Cueilleur',  ar: 'جامع'   },
+  healer:   { tr: 'İyileştirici',   en: 'Healer',   de: 'Heiler',    fr: 'Guérisseur', ar: 'معالج'  },
+  member:   { tr: 'Üye',            en: 'Member',   de: 'Mitglied',  fr: 'Membre',     ar: 'عضو'    },
 };
 
 function SectionHeader({ label }: { label: string }) {

@@ -65,31 +65,31 @@ const TECH_NAMES: Record<string, { en: string; tr: string }> = {
   metallurgy_iron:    { en: 'Iron Metallurgy',    tr: 'Demir İşleme' },
 };
 
-const HOW_STORIES: Record<string, { tr: string; en: string }> = {
-  fire_making:        { tr: 'Taşları birbirine sürtünce kıvılcım çıktığını fark etti.', en: 'Noticed sparks when striking stones together.' },
-  stone_tools:        { tr: 'Sert taşları kırarak kesici kenarlar oluşturdu.', en: 'Broke hard stones to create sharp cutting edges.' },
-  foraging:           { tr: 'Bitki ve meyveleri gözlemleyerek yenilebilirliğini öğrendi.', en: 'Learned edibility by careful observation of plants and fruits.' },
-  hunting_spear:      { tr: 'Uzun bir dala keskin bir taş bağlayarak av menzilini artırdı.', en: 'Tied a sharp stone to a long branch to extend hunting reach.' },
-  shelter_basic:      { tr: 'Dal ve yapraklarla soğuk ve yağmurdan korundu.', en: 'Used branches and leaves to shelter from cold and rain.' },
-  water_container:    { tr: 'Su taşımak için hayvan derisi veya büyük yaprağı kullandı.', en: 'Used animal hide or large leaves to carry water.' },
-  animal_trap:        { tr: 'Hayvan izlerini takip ederek geçiş noktalarına tuzak kurdu.', en: 'Tracked animals and set traps along their paths.' },
-  clothing_basic:     { tr: 'Avladığı hayvanların derisini vücuduna sararak sıcak kaldı.', en: 'Wrapped animal hides around the body to stay warm.' },
-  fishing:            { tr: 'Sığ sularda balıkların hareketini izleyerek yakalamayı keşfetti.', en: 'Observed fish movements in shallow water and caught them.' },
-  plant_cultivation:  { tr: 'Düşen tohumların bahar ayında filizlendiğini fark ederek tarımı buldu.', en: 'Noticed fallen seeds sprouting each spring and began cultivating.' },
-  animal_herding:     { tr: 'Yavrularını yetiştirerek kontrollü sürü oluşturmayı öğrendi.', en: 'Raised young animals to build a managed herd.' },
-  food_preservation:  { tr: 'Kurutma ve tuzlamanın yiyecekleri uzun süre koruduğunu keşfetti.', en: 'Discovered that drying and salting extends food life significantly.' },
-  bow_arrow:          { tr: 'Esnek bir dalı iple gererek ok fırlatabildğini keşfetti.', en: 'Found that bending a flexible branch with sinew could launch projectiles.' },
-  pottery:            { tr: 'Islatılan kilin ateşte sertleştiğini gözlemleyerek kaplar yaptı.', en: 'Observed that wet clay hardens in fire and formed vessels.' },
-  weaving:            { tr: 'Bitki liflerini birbirine geçirerek dayanıklı bez üretti.', en: 'Interlaced plant fibers to produce durable cloth.' },
-  metallurgy_copper:  { tr: 'Bakır cevherinin ateşte eriyip kalıba dökülebildğini keşfetti.', en: 'Discovered copper ore melts and can be cast into shapes.' },
-  writing_system:     { tr: 'Kil üzerine işaretler çizerek bilgiyi gelecek nesillere aktardı.', en: 'Drew marks on clay to pass knowledge to future generations.' },
-  calendar:           { tr: 'Gökyüzündeki yıldız ve Güneş hareketlerini izleyerek mevsimleri öngördü.', en: 'Predicted seasons by studying star and sun movements.' },
-  mathematics_basic:  { tr: 'Nesneleri sayarak ve gruplandırarak sayı kavramını geliştirdi.', en: 'Developed number concepts by counting and grouping objects.' },
-  architecture_stone: { tr: 'Taşları özenle üst üste dizerek kalıcı yapılar inşa etti.', en: 'Stacked stones carefully to construct permanent structures.' },
-  wheel:              { tr: 'Yuvarlak taşların kaymasından ilham alarak tekerleği geliştirdi.', en: 'Inspired by rolling stones, developed the wheel.' },
-  irrigation:         { tr: 'Su kanalları açarak uzak tarım arazilerini suladı.', en: 'Dug channels to bring water to distant farmland.' },
-  sailing:            { tr: 'Rüzgarın gücünü ahşap bir tekneye aktarmayı öğrendi.', en: 'Learned to harness wind power on a wooden vessel.' },
-  metallurgy_iron:    { tr: 'Çok yüksek ısıda demir cevherini işlemenin yolunu buldu.', en: 'Found a way to work iron ore at extreme temperatures.' },
+const HOW_STORIES: Record<string, { tr: string; en: string; de: string; fr: string; ar: string }> = {
+  fire_making:        { tr: 'Taşları birbirine sürtünce kıvılcım çıktığını fark etti.',                      en: 'Noticed sparks when striking stones together.',                                de: 'Bemerkte Funken beim Aufeinanderreiben von Steinen.',                       fr: 'Remarqua des étincelles en frottant des pierres ensemble.',                    ar: 'لاحظ شرارات عند احتكاك الحجارة ببعضها.' },
+  stone_tools:        { tr: 'Sert taşları kırarak kesici kenarlar oluşturdu.',                               en: 'Broke hard stones to create sharp cutting edges.',                            de: 'Zerschlug harte Steine, um scharfe Schneidekanten zu erzeugen.',             fr: 'Cassa des pierres dures pour créer des bords tranchants.',                    ar: 'كسر الحجارة الصلبة لصنع حواف حادة.' },
+  foraging:           { tr: 'Bitki ve meyveleri gözlemleyerek yenilebilirliğini öğrendi.',                   en: 'Learned edibility by careful observation of plants and fruits.',               de: 'Erlernte Essbarkeit durch sorgfältige Beobachtung von Pflanzen und Früchten.',fr: 'Apprit la comestibilité par observation attentive des plantes et fruits.',     ar: 'تعلم صلاحية الأكل من خلال مراقبة النباتات والثمار.' },
+  hunting_spear:      { tr: 'Uzun bir dala keskin bir taş bağlayarak av menzilini artırdı.',                 en: 'Tied a sharp stone to a long branch to extend hunting reach.',                de: 'Band einen scharfen Stein an einen langen Ast, um die Jagdreichweite zu erhöhen.',fr: 'Attacha une pierre pointue à une longue branche pour chasser de plus loin.',  ar: 'ربط حجرًا حادًا بغصن طويل لتوسيع مدى الصيد.' },
+  shelter_basic:      { tr: 'Dal ve yapraklarla soğuk ve yağmurdan korundu.',                                en: 'Used branches and leaves to shelter from cold and rain.',                      de: 'Nutzte Äste und Blätter als Schutz vor Kälte und Regen.',                  fr: 'Utilisa des branches et des feuilles pour se protéger du froid et de la pluie.',ar: 'استخدم الأغصان والأوراق للحماية من البرد والمطر.' },
+  water_container:    { tr: 'Su taşımak için hayvan derisi veya büyük yaprağı kullandı.',                    en: 'Used animal hide or large leaves to carry water.',                            de: 'Nutzte Tierhaut oder große Blätter zum Wassertransport.',                   fr: 'Utilisa une peau animale ou de grandes feuilles pour transporter de l\'eau.',  ar: 'استخدم جلد الحيوان أو الأوراق الكبيرة لنقل الماء.' },
+  animal_trap:        { tr: 'Hayvan izlerini takip ederek geçiş noktalarına tuzak kurdu.',                   en: 'Tracked animals and set traps along their paths.',                            de: 'Verfolgte Tiere und stellte Fallen entlang ihrer Pfade auf.',               fr: 'Suivit les animaux et posa des pièges sur leurs chemins.',                    ar: 'تتبع الحيوانات ونصب فخاخًا على مساراتها.' },
+  clothing_basic:     { tr: 'Avladığı hayvanların derisini vücuduna sararak sıcak kaldı.',                   en: 'Wrapped animal hides around the body to stay warm.',                          de: 'Wickelte Tierhäute um den Körper, um warm zu bleiben.',                     fr: 'S\'enveloppa de peaux animales pour rester au chaud.',                        ar: 'لف جلود الحيوانات حول جسده للبقاء دافئًا.' },
+  fishing:            { tr: 'Sığ sularda balıkların hareketini izleyerek yakalamayı keşfetti.',              en: 'Observed fish movements in shallow water and caught them.',                   de: 'Beobachtete Fischbewegungen in flachem Wasser und fing sie.',               fr: 'Observa les mouvements des poissons en eau peu profonde et les attrapa.',     ar: 'راقب حركة الأسماك في المياه الضحلة واصطادها.' },
+  plant_cultivation:  { tr: 'Düşen tohumların bahar ayında filizlendiğini fark ederek tarımı buldu.',        en: 'Noticed fallen seeds sprouting each spring and began cultivating.',           de: 'Bemerkte, dass gefallene Samen jeden Frühling keimten, und begann zu kultivieren.',fr: 'Remarqua que les graines germaient chaque printemps et commença à cultiver.', ar: 'لاحظ أن البذور تنبت كل ربيع فبدأ الزراعة.' },
+  animal_herding:     { tr: 'Yavrularını yetiştirerek kontrollü sürü oluşturmayı öğrendi.',                  en: 'Raised young animals to build a managed herd.',                               de: 'Zog junge Tiere auf, um eine kontrollierte Herde aufzubauen.',              fr: 'Éleva de jeunes animaux pour constituer un troupeau géré.',                   ar: 'ربّى صغار الحيوانات لبناء قطيع منظم.' },
+  food_preservation:  { tr: 'Kurutma ve tuzlamanın yiyecekleri uzun süre koruduğunu keşfetti.',              en: 'Discovered that drying and salting extends food life significantly.',         de: 'Entdeckte, dass Trocknen und Salzen die Haltbarkeit von Lebensmitteln verlängert.',fr: 'Découvrit que sécher et saler prolonge la durée de conservation des aliments.',ar: 'اكتشف أن التجفيف والتمليح يطيل صلاحية الطعام.' },
+  bow_arrow:          { tr: 'Esnek bir dalı iple gererek ok fırlatabildğini keşfetti.',                       en: 'Found that bending a flexible branch with sinew could launch projectiles.',   de: 'Entdeckte, dass ein gebogener Ast mit Sehne Pfeile abschießen kann.',       fr: 'Découvrit qu\'une branche flexible tendue avec un tendon pouvait lancer des projectiles.',ar: 'اكتشف أن الغصن المرن مع وتر يمكنه إطلاق مقذوفات.' },
+  pottery:            { tr: 'Islatılan kilin ateşte sertleştiğini gözlemleyerek kaplar yaptı.',              en: 'Observed that wet clay hardens in fire and formed vessels.',                  de: 'Beobachtete, dass nasser Ton im Feuer hart wird, und formte Gefäße.',       fr: 'Observa que l\'argile humide durcit au feu et fabriqua des récipients.',     ar: 'لاحظ أن الطين الرطب يتصلب بالنار فصنع أوانٍ.' },
+  weaving:            { tr: 'Bitki liflerini birbirine geçirerek dayanıklı bez üretti.',                      en: 'Interlaced plant fibers to produce durable cloth.',                           de: 'Verflocht Pflanzenfasern zu haltbarem Stoff.',                              fr: 'Entrecroisa des fibres végétales pour produire un tissu solide.',             ar: 'نسج ألياف النباتات لإنتاج قماش متين.' },
+  metallurgy_copper:  { tr: 'Bakır cevherinin ateşte eriyip kalıba dökülebildğini keşfetti.',                en: 'Discovered copper ore melts and can be cast into shapes.',                    de: 'Entdeckte, dass Kupfererz schmilzt und in Formen gegossen werden kann.',    fr: 'Découvrit que le minerai de cuivre fond et peut être moulé.',                ar: 'اكتشف أن خام النحاس يذوب ويمكن صبه في قوالب.' },
+  writing_system:     { tr: 'Kil üzerine işaretler çizerek bilgiyi gelecek nesillere aktardı.',              en: 'Drew marks on clay to pass knowledge to future generations.',                  de: 'Ritzte Zeichen in Ton, um Wissen an kommende Generationen weiterzugeben.',  fr: 'Grava des signes sur l\'argile pour transmettre le savoir aux générations futures.',ar: 'رسم علامات على الطين لنقل المعرفة للأجيال القادمة.' },
+  calendar:           { tr: 'Gökyüzündeki yıldız ve Güneş hareketlerini izleyerek mevsimleri öngördü.',      en: 'Predicted seasons by studying star and sun movements.',                       de: 'Sagte Jahreszeiten vorher, indem er Stern- und Sonnenbewegungen studierte.',  fr: 'Prédit les saisons en étudiant les mouvements des étoiles et du soleil.',    ar: 'تنبأ بالمواسم بدراسة حركة النجوم والشمس.' },
+  mathematics_basic:  { tr: 'Nesneleri sayarak ve gruplandırarak sayı kavramını geliştirdi.',                 en: 'Developed number concepts by counting and grouping objects.',                  de: 'Entwickelte Zahlenbegriffe durch Zählen und Gruppieren von Objekten.',      fr: 'Développa des concepts numériques en comptant et regroupant des objets.',     ar: 'طور مفاهيم الأعداد بعد وتجميع الأشياء.' },
+  architecture_stone: { tr: 'Taşları özenle üst üste dizerek kalıcı yapılar inşa etti.',                    en: 'Stacked stones carefully to construct permanent structures.',                  de: 'Schichtete Steine sorgfältig, um dauerhafte Strukturen zu bauen.',          fr: 'Empila des pierres soigneusement pour construire des structures permanentes.', ar: 'رص الحجارة بعناية لبناء هياكل دائمة.' },
+  wheel:              { tr: 'Yuvarlak taşların kaymasından ilham alarak tekerleği geliştirdi.',              en: 'Inspired by rolling stones, developed the wheel.',                            de: 'Durch rollende Steine inspiriert, entwickelte er das Rad.',                 fr: 'Inspiré par des pierres qui roulent, développa la roue.',                    ar: 'مستلهمًا من الحجارة المتدحرجة، طور العجلة.' },
+  irrigation:         { tr: 'Su kanalları açarak uzak tarım arazilerini suladı.',                            en: 'Dug channels to bring water to distant farmland.',                            de: 'Grub Kanäle, um Wasser auf entfernte Felder zu bringen.',                   fr: 'Creusa des canaux pour amener l\'eau aux champs éloignés.',                  ar: 'حفر قنوات لإيصال الماء إلى الأراضي الزراعية البعيدة.' },
+  sailing:            { tr: 'Rüzgarın gücünü ahşap bir tekneye aktarmayı öğrendi.',                          en: 'Learned to harness wind power on a wooden vessel.',                           de: 'Lernte, Windkraft auf einem Holzschiff zu nutzen.',                         fr: 'Apprit à exploiter la force du vent sur un bateau en bois.',                 ar: 'تعلم تسخير قوة الرياح على سفينة خشبية.' },
+  metallurgy_iron:    { tr: 'Çok yüksek ısıda demir cevherini işlemenin yolunu buldu.',                     en: 'Found a way to work iron ore at extreme temperatures.',                       de: 'Fand einen Weg, Eisenerz bei extremen Temperaturen zu verarbeiten.',        fr: 'Trouva le moyen de travailler le minerai de fer à des températures extrêmes.', ar: 'وجد طريقة لمعالجة خام الحديد في درجات حرارة قصوى.' },
 };
 
 const TECH_ICONS: Record<string, string> = {
@@ -141,7 +141,7 @@ export default function TechnologyPanel() {
 
       {/* ── Summary bar ── */}
       <div className="flex justify-between items-center bg-sim-surface rounded-lg p-3 mb-2">
-        <span className="text-sim-muted">{text(lang as LangCode, { tr: 'Keşfedilen', en: 'Discovered' })}</span>
+        <span className="text-sim-muted">{text(lang as LangCode, { tr: 'Keşfedilen', en: 'Discovered', de: 'Entdeckt', fr: 'Découvert', ar: 'مكتشف' })}</span>
         <span className="text-sim-gold font-bold text-lg">{totalTechs} / {stats?.total_techs ?? 25}</span>
       </div>
 
@@ -149,7 +149,7 @@ export default function TechnologyPanel() {
       {techEvents.length > 0 && (
         <div className="mb-4">
           <div className="font-share-tech tracking-widest mb-2" style={{ fontSize: 11, color: '#6a8878', letterSpacing: '0.12em', borderBottom: '1px solid rgba(0,232,135,0.1)', paddingBottom: 2 }}>
-            {text(lang as LangCode, { tr: 'KEŞİF GÜNLÜĞÜ', en: 'DISCOVERY LOG' })}
+            {text(lang as LangCode, { tr: 'KEŞİF GÜNLÜĞÜ', en: 'DISCOVERY LOG', de: 'ENTDECKUNGSPROTOKOLL', fr: 'JOURNAL DES DÉCOUVERTES', ar: 'سجل الاكتشافات' })}
           </div>
           <div className="space-y-2">
             {techEvents.map((ev, i) => {
@@ -184,9 +184,9 @@ export default function TechnologyPanel() {
                       {/* Discoverer */}
                       {(discName || discId) && (
                         <div className="font-share-tech" style={{ fontSize: 11, color: '#a0b4ff', marginTop: 3, lineHeight: 1.3 }}>
-                          {text(lang as LangCode, { tr: 'Keşfeden:', en: 'Discoverer:' })} <span style={{ color: disc?.sex === 'female' ? '#ff8ab0' : '#6090ff' }}>{discName ?? `…`}</span>
-                          {age !== null && <span style={{ color: '#6a8878' }}> · {age} {text(lang as LangCode, { tr: 'yaş', en: 'yr' })}</span>}
-                          {iq !== null && <span style={{ color: '#6a8878' }}> · IQ {iq}% · {text(lang as LangCode, { tr: 'merak', en: 'curio' })} {curiosity}%</span>}
+                          {text(lang as LangCode, { tr: 'Keşfeden:', en: 'Discoverer:', de: 'Entdecker:', fr: 'Découvreur:', ar: 'المكتشف:' })} <span style={{ color: disc?.sex === 'female' ? '#ff8ab0' : '#6090ff' }}>{discName ?? `…`}</span>
+                          {age !== null && <span style={{ color: '#6a8878' }}> · {age} {text(lang as LangCode, { tr: 'yaş', en: 'yr', de: 'J.', fr: 'ans', ar: 'سنة' })}</span>}
+                          {iq !== null && <span style={{ color: '#6a8878' }}> · IQ {iq}% · {text(lang as LangCode, { tr: 'merak', en: 'curio', de: 'Neugier', fr: 'curiosité', ar: 'فضول' })} {curiosity}%</span>}
                         </div>
                       )}
 
