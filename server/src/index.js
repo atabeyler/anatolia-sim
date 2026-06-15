@@ -38,7 +38,7 @@ app.use(helmet({
       styleSrc:   ["'self'", "'unsafe-inline'"],   // Tailwind/CSS-in-JS
       connectSrc: ["'self'", "wss:", "ws:",
                    "https://generativelanguage.googleapis.com"], // Gemini API
-      imgSrc:     ["'self'", "data:", "blob:"],
+      imgSrc:     ["'self'", "data:", "blob:", "https://raw.githubusercontent.com"],
       fontSrc:    ["'self'", "data:"],
       workerSrc:  ["'self'", "blob:"],              // Three.js workers
       objectSrc:  ["'none'"],
