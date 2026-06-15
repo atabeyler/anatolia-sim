@@ -35,11 +35,11 @@ function nameFromId(id: string, sex: string, storedName?: string | null): string
 }
 
 function lifeStage(age: number, lang: string): { label: string; color: string } {
-  if (age < 2)  return { label: t(lang, 'Infant', 'Bebek'), color: '#00d4ff' };
-  if (age < 12) return { label: t(lang, 'Child', 'Çocuk'), color: '#4ecb71' };
-  if (age < 18) return { label: t(lang, 'Youth', 'Genç'), color: '#a0b4ff' };
-  if (age < 45) return { label: t(lang, 'Adult', 'Yetişkin'), color: '#d4a838' };
-  return            { label: t(lang, 'Elder', 'Yaşlı'), color: '#e05a5a' };
+  if (age < 2)  return { label: text(lang as LangCode, { en: 'Infant',  tr: 'Bebek'    }), color: '#00d4ff' };
+  if (age < 12) return { label: text(lang as LangCode, { en: 'Child',   tr: 'Çocuk'    }), color: '#4ecb71' };
+  if (age < 18) return { label: text(lang as LangCode, { en: 'Youth',   tr: 'Genç'     }), color: '#a0b4ff' };
+  if (age < 45) return { label: text(lang as LangCode, { en: 'Adult',   tr: 'Yetişkin' }), color: '#d4a838' };
+  return            { label: text(lang as LangCode, { en: 'Elder',   tr: 'Yaşlı'    }), color: '#e05a5a' };
 }
 
 function traitBar(value: number, color: string) {
