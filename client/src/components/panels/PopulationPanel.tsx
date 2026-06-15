@@ -90,16 +90,16 @@ function FamilySection({ label, indent, children }: { label: string; indent: num
   );
 }
 
-const EYE_COLORS: Record<string, { dot: string; labelTr: string; labelEn: string }> = {
-  brown:  { dot: '#7a4a1e', labelTr: 'Kahverengi', labelEn: 'Brown' },
-  blue:   { dot: '#3a8ad4', labelTr: 'Mavi',        labelEn: 'Blue'  },
-  green:  { dot: '#3a9a4a', labelTr: 'Yeşil',       labelEn: 'Green' },
-  hazel:  { dot: '#8a6a2e', labelTr: 'Ela',         labelEn: 'Hazel' },
+const EYE_COLORS: Record<string, { dot: string; labelTr: string; labelEn: string; labelDe: string; labelFr: string; labelAr: string }> = {
+  brown:  { dot: '#7a4a1e', labelTr: 'Kahverengi', labelEn: 'Brown', labelDe: 'Braun',      labelFr: 'Marron',   labelAr: 'بني'    },
+  blue:   { dot: '#3a8ad4', labelTr: 'Mavi',        labelEn: 'Blue',  labelDe: 'Blau',       labelFr: 'Bleu',     labelAr: 'أزرق'   },
+  green:  { dot: '#3a9a4a', labelTr: 'Yeşil',       labelEn: 'Green', labelDe: 'Grün',       labelFr: 'Vert',     labelAr: 'أخضر'   },
+  hazel:  { dot: '#8a6a2e', labelTr: 'Ela',         labelEn: 'Hazel', labelDe: 'Haselnuss',  labelFr: 'Noisette', labelAr: 'بندقي'  },
 };
-const HAIR_COLORS: Record<string, { dot: string; labelTr: string; labelEn: string }> = {
-  dark:   { dot: '#2a1a08', labelTr: 'Koyu',  labelEn: 'Dark'   },
-  medium: { dot: '#6a3a18', labelTr: 'Orta',  labelEn: 'Medium' },
-  light:  { dot: '#c8a060', labelTr: 'Açık',  labelEn: 'Light'  },
+const HAIR_COLORS: Record<string, { dot: string; labelTr: string; labelEn: string; labelDe: string; labelFr: string; labelAr: string }> = {
+  dark:   { dot: '#2a1a08', labelTr: 'Koyu', labelEn: 'Dark',   labelDe: 'Dunkel', labelFr: 'Foncé', labelAr: 'داكن'   },
+  medium: { dot: '#6a3a18', labelTr: 'Orta', labelEn: 'Medium', labelDe: 'Mittel', labelFr: 'Moyen', labelAr: 'متوسط'  },
+  light:  { dot: '#c8a060', labelTr: 'Açık', labelEn: 'Light',  labelDe: 'Hell',   labelFr: 'Clair', labelAr: 'فاتح'   },
 };
 const ROLE_LABELS: Record<string, { tr: string; en: string; de: string; fr: string; ar: string }> = {
   leader:   { tr: 'Lider',          en: 'Leader',   de: 'Anführer',  fr: 'Chef',       ar: 'قائد'   },
@@ -307,14 +307,14 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
                 <span className="font-share-tech" style={{ fontSize: 11, color: '#8898c8' }}>{tr('Göz Rengi', 'Eye Color')}</span>
                 <div className="flex items-center gap-1.5">
                   <div style={{ width: 12, height: 12, borderRadius: '50%', background: eyeInfo.dot, border: '1px solid rgba(255,255,255,0.2)' }} />
-                  <span className="font-share-tech" style={{ fontSize: 11, color: '#c8d8e8' }}>{text(lang as LangCode, { tr: eyeInfo.labelTr, en: eyeInfo.labelEn })}</span>
+                  <span className="font-share-tech" style={{ fontSize: 11, color: '#c8d8e8' }}>{text(lang as LangCode, { tr: eyeInfo.labelTr, en: eyeInfo.labelEn, de: eyeInfo.labelDe, fr: eyeInfo.labelFr, ar: eyeInfo.labelAr })}</span>
                 </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="font-share-tech" style={{ fontSize: 11, color: '#8898c8' }}>{tr('Saç Rengi', 'Hair Color')}</span>
                 <div className="flex items-center gap-1.5">
                   <div style={{ width: 12, height: 12, borderRadius: '50%', background: hairInfo.dot, border: '1px solid rgba(255,255,255,0.2)' }} />
-                  <span className="font-share-tech" style={{ fontSize: 11, color: '#c8d8e8' }}>{text(lang as LangCode, { tr: hairInfo.labelTr, en: hairInfo.labelEn })}</span>
+                  <span className="font-share-tech" style={{ fontSize: 11, color: '#c8d8e8' }}>{text(lang as LangCode, { tr: hairInfo.labelTr, en: hairInfo.labelEn, de: hairInfo.labelDe, fr: hairInfo.labelFr, ar: hairInfo.labelAr })}</span>
                 </div>
               </div>
               <div>
