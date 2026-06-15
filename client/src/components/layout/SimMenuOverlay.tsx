@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useSimStore } from '../../store/simStore';
+import { text, type LangCode } from '../../utils/i18n';
 
 type Page = 'language' | 'guide' | 'about' | 'mission' | 'contact' | null;
 
@@ -108,15 +109,15 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions, menuPag
         {page === null && (
           <div style={{ padding: '6px 0' }}>
             {([
-              { id: 'language', labelTr: '🌐 Dil / Language',      labelEn: '🌐 Language' },
-              { id: 'guide',    labelTr: '📖 Kullanım Kılavuzu',   labelEn: '📖 User Guide' },
-              { id: 'about',    labelTr: 'Hakkımızda',             labelEn: 'About' },
-              { id: 'mission',  labelTr: 'Misyon & Vizyon',        labelEn: 'Mission & Vision' },
-              { id: 'contact',  labelTr: 'İletişim',               labelEn: 'Contact' },
-            ] as { id: NonNullable<Page>; labelTr: string; labelEn: string }[]).map(item => (
+              { id: 'language', labels: { tr: '🌐 Dil / Language',    en: '🌐 Language'      } },
+              { id: 'guide',    labels: { tr: '📖 Kullanım Kılavuzu', en: '📖 User Guide'    } },
+              { id: 'about',    labels: { tr: 'Hakkımızda',           en: 'About'            } },
+              { id: 'mission',  labels: { tr: 'Misyon & Vizyon',      en: 'Mission & Vision' } },
+              { id: 'contact',  labels: { tr: 'İletişim',             en: 'Contact'          } },
+            ] as { id: NonNullable<Page>; labels: { tr: string; en: string } }[]).map(item => (
               <button key={item.id} onClick={() => setPage(item.id)}
                 style={{ display: 'block', width: '100%', padding: '9px 14px', background: 'transparent', border: 'none', borderBottom: '1px solid #0a1a10', color: '#a0c8b0', fontSize: 14, textAlign: 'left', cursor: 'pointer', letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace' }}>
-                › {lang === 'tr' ? item.labelTr : item.labelEn}
+                › {text(lang as LangCode, item.labels)}
               </button>
             ))}
             {mobileActions}
@@ -153,10 +154,10 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions, menuPag
 
         {/* ── About / Mission / Contact ── */}
         {page !== null && page !== 'language' && page !== 'guide' && (() => {
-          const text = lang === 'tr' ? PAGES_TEXT[page].tr : PAGES_TEXT[page].en;
+          const pageContent = lang === 'tr' ? PAGES_TEXT[page].tr : PAGES_TEXT[page].en;
           return (
             <div style={{ padding: '12px 14px', maxHeight: 320, overflowY: 'auto' }}>
-              {text.split('\n').map((line, i) => (
+              {pageContent.split('\n').map((line, i) => (
                 <p key={i} style={{ fontSize: 14, color: line === line.toUpperCase() && line.length > 2 ? '#00e887' : '#7aaa90', margin: '0 0 5px 0', letterSpacing: '0.05em', lineHeight: 1.6 }}>
                   {line || <br />}
                 </p>

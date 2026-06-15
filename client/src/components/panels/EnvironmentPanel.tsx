@@ -1,6 +1,6 @@
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
-import { translateEventDescription, type LangCode } from '../../utils/i18n';
+import { translateEventDescription, text, type LangCode } from '../../utils/i18n';
 
 const SEASON_NAMES: Record<string, { tr: string; color: string; icon: string }> = {
   spring: { tr: 'İlkbahar', color: '#4ecb71', icon: '🌿' },

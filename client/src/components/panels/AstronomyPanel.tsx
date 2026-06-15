@@ -1,4 +1,4 @@
-import { translateEventDescription, type LangCode } from '../../utils/i18n';
+import { translateEventDescription, text, type LangCode } from '../../utils/i18n';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { Telescope } from 'lucide-react';

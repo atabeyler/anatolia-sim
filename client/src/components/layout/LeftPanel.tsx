@@ -1,29 +1,30 @@
 import { useEffect } from 'react';
 import { Dna, TreePine, Telescope, Brain, MessageSquare, Cpu, Flame, Swords, Coins, Music, Building2, Scale, Microscope, HeartPulse, Zap, Clock, Bot, FlaskConical, Users, GitBranch, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSimStore } from '../../store/simStore';
+import { text, type LangCode } from '../../utils/i18n';
 
 const MODULES = [
-  { id: 'population',  icon: Users,          label: 'Population',     labelTr: 'Nüfus' },
-  { id: 'biology',      icon: Dna,           label: 'Biology',        labelTr: 'Biyoloji' },
-  { id: 'environment',  icon: TreePine,       label: 'Environment',    labelTr: 'Çevre' },
-  { id: 'astronomy',    icon: Telescope,      label: 'Astronomy',      labelTr: 'Astronomi' },
-  { id: 'culture',      icon: Brain,          label: 'Culture',        labelTr: 'Kültür' },
-  { id: 'language',     icon: MessageSquare,  label: 'Language',       labelTr: 'Dil' },
-  { id: 'technology',   icon: Cpu,            label: 'Technology',     labelTr: 'Teknoloji' },
-  { id: 'belief',       icon: Flame,          label: 'Belief',         labelTr: 'İnanç' },
-  { id: 'social',       icon: Swords,         label: 'Social',         labelTr: 'Sosyal' },
-  { id: 'economy',      icon: Coins,          label: 'Economy',        labelTr: 'Ekonomi' },
-  { id: 'art',          icon: Music,          label: 'Art',            labelTr: 'Sanat' },
-  { id: 'architecture', icon: Building2,      label: 'Architecture',   labelTr: 'Mimari' },
-  { id: 'law',          icon: Scale,          label: 'Law',            labelTr: 'Hukuk' },
-  { id: 'microbiome',   icon: Microscope,     label: 'Microbiome',     labelTr: 'Mikrobiyom' },
-  { id: 'psychology',   icon: HeartPulse,     label: 'Psychology',     labelTr: 'Psikoloji' },
-  { id: 'epigenetics',  icon: Zap,            label: 'Epigenetics',    labelTr: 'Epigenetik' },
-  { id: 'genealogy',    icon: GitBranch,      label: 'Genealogy',      labelTr: 'Soy Ağacı' },
-  { id: 'god',          icon: Zap,            label: 'God Mode',       labelTr: 'Tanrı Modu',     divider: true, accent: '#f97316' },
-  { id: 'timemachine',  icon: Clock,          label: 'Time Machine',   labelTr: 'Zaman Makinesi', accent: '#00d4ff' },
-  { id: 'analysis',     icon: Bot,            label: 'AI Analysis',    labelTr: 'AI Analiz',      accent: '#4ecb71' },
-  { id: 'hypothesis',   icon: FlaskConical,   label: 'Hypothesis',     labelTr: 'Hipotez',        accent: '#d4a838' },
+  { id: 'population',  icon: Users,          labels: { en: 'Population',   tr: 'Nüfus'         } },
+  { id: 'biology',      icon: Dna,           labels: { en: 'Biology',       tr: 'Biyoloji'      } },
+  { id: 'environment',  icon: TreePine,       labels: { en: 'Environment',   tr: 'Çevre'         } },
+  { id: 'astronomy',    icon: Telescope,      labels: { en: 'Astronomy',     tr: 'Astronomi'     } },
+  { id: 'culture',      icon: Brain,          labels: { en: 'Culture',       tr: 'Kültür'        } },
+  { id: 'language',     icon: MessageSquare,  labels: { en: 'Language',      tr: 'Dil'           } },
+  { id: 'technology',   icon: Cpu,            labels: { en: 'Technology',    tr: 'Teknoloji'     } },
+  { id: 'belief',       icon: Flame,          labels: { en: 'Belief',        tr: 'İnanç'         } },
+  { id: 'social',       icon: Swords,         labels: { en: 'Social',        tr: 'Sosyal'        } },
+  { id: 'economy',      icon: Coins,          labels: { en: 'Economy',       tr: 'Ekonomi'       } },
+  { id: 'art',          icon: Music,          labels: { en: 'Art',           tr: 'Sanat'         } },
+  { id: 'architecture', icon: Building2,      labels: { en: 'Architecture',  tr: 'Mimari'        } },
+  { id: 'law',          icon: Scale,          labels: { en: 'Law',           tr: 'Hukuk'         } },
+  { id: 'microbiome',   icon: Microscope,     labels: { en: 'Microbiome',    tr: 'Mikrobiyom'    } },
+  { id: 'psychology',   icon: HeartPulse,     labels: { en: 'Psychology',    tr: 'Psikoloji'     } },
+  { id: 'epigenetics',  icon: Zap,            labels: { en: 'Epigenetics',   tr: 'Epigenetik'    } },
+  { id: 'genealogy',    icon: GitBranch,      labels: { en: 'Genealogy',     tr: 'Soy Ağacı'     } },
+  { id: 'god',          icon: Zap,            labels: { en: 'God Mode',      tr: 'Tanrı Modu'    }, divider: true, accent: '#f97316' },
+  { id: 'timemachine',  icon: Clock,          labels: { en: 'Time Machine',  tr: 'Zaman Makinesi'}, accent: '#00d4ff' },
+  { id: 'analysis',     icon: Bot,            labels: { en: 'AI Analysis',   tr: 'AI Analiz'     }, accent: '#4ecb71' },
+  { id: 'hypothesis',   icon: FlaskConical,   labels: { en: 'Hypothesis',    tr: 'Hipotez'       }, accent: '#d4a838' },
 ];
 
 export default function LeftPanel() {
@@ -77,7 +78,7 @@ export default function LeftPanel() {
                 {sidebarExpanded && (
                   <span className="font-share-tech tracking-wider whitespace-nowrap overflow-hidden text-ellipsis"
                     style={{ fontSize: 12, color: isActive ? accent : '#9aabcf' }}>
-                    {lang === 'en' ? mod.label : mod.labelTr}
+                    {text(lang as LangCode, mod.labels)}
                   </span>
                 )}
               </button>

@@ -3,6 +3,7 @@ import axios from 'axios';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { Check, Lock } from 'lucide-react';
+import { text, type LangCode } from '../../utils/i18n';
 
 const TECH_TIERS = [
   {
@@ -110,7 +111,6 @@ function nameFromIndividual(ind: any): string {
 
 export default function TechnologyPanel() {
   const { stats, events, lang, currentSim, accessToken } = useSimStore();
-  const tr = (a: string, b: string) => lang === 'tr' ? a : b;
 
   const totalTechs = stats?.technologies ?? 0;
   const techProgress = stats?.tech_progress ?? {};
@@ -141,7 +141,7 @@ export default function TechnologyPanel() {
 
       {/* ── Summary bar ── */}
       <div className="flex justify-between items-center bg-sim-surface rounded-lg p-3 mb-2">
-        <span className="text-sim-muted">{tr('Keşfedilen', 'Discovered')}</span>
+        <span className="text-sim-muted">{text(lang as LangCode, { tr: 'Keşfedilen', en: 'Discovered' })}</span>
         <span className="text-sim-gold font-bold text-lg">{totalTechs} / {stats?.total_techs ?? 25}</span>
       </div>
 
@@ -149,7 +149,7 @@ export default function TechnologyPanel() {
       {techEvents.length > 0 && (
         <div className="mb-4">
           <div className="font-share-tech tracking-widest mb-2" style={{ fontSize: 11, color: '#6a8878', letterSpacing: '0.12em', borderBottom: '1px solid rgba(0,232,135,0.1)', paddingBottom: 2 }}>
-            {tr('KEŞİF GÜNLÜĞÜ', 'DISCOVERY LOG')}
+            {text(lang as LangCode, { tr: 'KEŞİF GÜNLÜĞÜ', en: 'DISCOVERY LOG' })}
           </div>
           <div className="space-y-2">
             {techEvents.map((ev, i) => {
@@ -161,7 +161,7 @@ export default function TechnologyPanel() {
               const iq = disc ? Math.round((disc.phenotype?.fluid_intelligence ?? 0) * 100) : null;
               const curiosity = disc ? Math.round((disc.phenotype?.curiosity ?? 0) * 100) : null;
               const story = HOW_STORIES[techId];
-              const techName = TECH_NAMES[techId]?.[lang === 'tr' ? 'tr' : 'en'] ?? techId.replace(/_/g, ' ');
+              const techName = TECH_NAMES[techId] ? text(lang as LangCode, TECH_NAMES[techId]) : techId.replace(/_/g, ' ');
               return (
                 <div key={i} style={{
                   background: 'rgba(4,4,18,0.7)',
@@ -184,16 +184,16 @@ export default function TechnologyPanel() {
                       {/* Discoverer */}
                       {(discName || discId) && (
                         <div className="font-share-tech" style={{ fontSize: 11, color: '#a0b4ff', marginTop: 3, lineHeight: 1.3 }}>
-                          {tr('Keşfeden:', 'Discoverer:')} <span style={{ color: disc?.sex === 'female' ? '#ff8ab0' : '#6090ff' }}>{discName ?? `…`}</span>
-                          {age !== null && <span style={{ color: '#6a8878' }}> · {age} {tr('yaş', 'yr')}</span>}
-                          {iq !== null && <span style={{ color: '#6a8878' }}> · IQ {iq}% · {tr('merak', 'curio')} {curiosity}%</span>}
+                          {text(lang as LangCode, { tr: 'Keşfeden:', en: 'Discoverer:' })} <span style={{ color: disc?.sex === 'female' ? '#ff8ab0' : '#6090ff' }}>{discName ?? `…`}</span>
+                          {age !== null && <span style={{ color: '#6a8878' }}> · {age} {text(lang as LangCode, { tr: 'yaş', en: 'yr' })}</span>}
+                          {iq !== null && <span style={{ color: '#6a8878' }}> · IQ {iq}% · {text(lang as LangCode, { tr: 'merak', en: 'curio' })} {curiosity}%</span>}
                         </div>
                       )}
 
                       {/* How story */}
                       {story && (
                         <div className="font-share-tech" style={{ fontSize: 11, color: '#8898c8', marginTop: 4, lineHeight: 1.4, fontStyle: 'italic' }}>
-                          "{lang === 'tr' ? story.tr : story.en}"
+                          "{text(lang as LangCode, story)}"
                         </div>
                       )}
                     </div>
@@ -209,7 +209,7 @@ export default function TechnologyPanel() {
       {TECH_TIERS.map(tier => (
         <div key={tier.tier} className="mb-3">
           <h4 className={`text-sm font-semibold uppercase tracking-widest mb-2 ${TIER_COLORS[tier.tier]}`}>
-            Tier {tier.tier} — {lang === 'en' ? tier.label : tier.labelTr}
+            Tier {tier.tier} — {text(lang as LangCode, { en: tier.label, tr: tier.labelTr })}
           </h4>
           <div className="space-y-1">
             {tier.techs.map(techId => {
@@ -226,7 +226,7 @@ export default function TechnologyPanel() {
                       : <Lock size={10} className="text-sim-muted flex-shrink-0" />
                     }
                     <span className={isDiscovered ? 'text-sim-text' : 'text-sim-muted'}>
-                      {TECH_NAMES[techId]?.[lang === 'tr' ? 'tr' : 'en'] ?? techId}
+                      {TECH_NAMES[techId] ? text(lang as LangCode, TECH_NAMES[techId]) : techId}
                     </span>
                     {!isDiscovered && progress > 0 && (
                       <span className="ml-auto text-sim-muted" style={{ fontSize: 10 }}>

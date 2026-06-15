@@ -1,11 +1,11 @@
-import { translateEventDescription, type LangCode } from '../../utils/i18n';
+import { text, translateEventDescription, type LangCode } from '../../utils/i18n';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { Scale, ShieldCheck } from 'lucide-react';
 
 const NORM_STAGES = [
   {
-    stage: 1, label: 'Spontaneous Norms', labelTr: 'Kendiliğinden Normlar',
+    stage: 1, en: 'Spontaneous Norms', tr: 'Kendiliğinden Normlar',
     norms: [
       { en: 'Reciprocity',   tr: 'Karşılıklılık' },
       { en: 'No Theft',      tr: 'Hırsızlık Yasağı' },
@@ -13,7 +13,7 @@ const NORM_STAGES = [
     ],
   },
   {
-    stage: 2, label: 'Social Norms', labelTr: 'Sosyal Normlar',
+    stage: 2, en: 'Social Norms', tr: 'Sosyal Normlar',
     norms: [
       { en: 'Elder Respect',  tr: 'Yaşlılara Saygı' },
       { en: 'Hospitality',    tr: 'Misafirperverlik' },
@@ -22,7 +22,7 @@ const NORM_STAGES = [
     ],
   },
   {
-    stage: 3, label: 'Proto-Law', labelTr: 'Proto-Hukuk',
+    stage: 3, en: 'Proto-Law', tr: 'Proto-Hukuk',
     norms: [
       { en: 'Leader Arbitration', tr: 'Lider Tahkimi' },
       { en: 'Property Rights',    tr: 'Mülkiyet Hakkı' },
@@ -30,7 +30,7 @@ const NORM_STAGES = [
     ],
   },
   {
-    stage: 4, label: 'Formal Law', labelTr: 'Resmi Hukuk',
+    stage: 4, en: 'Formal Law', tr: 'Resmi Hukuk',
     norms: [
       { en: 'Written Law',   tr: 'Yazılı Hukuk' },
       { en: 'Tax System',    tr: 'Vergi Sistemi' },
@@ -38,10 +38,6 @@ const NORM_STAGES = [
     ],
   },
 ];
-
-function t(lang: string, en: string, tr: string) {
-  return lang === 'en' ? en : tr;
-}
 
 export default function LawPanel() {
   const { events, lang } = useSimStore();
@@ -56,18 +52,18 @@ export default function LawPanel() {
         <div className="bg-sim-surface rounded-lg p-2 text-center">
           <ShieldCheck size={16} className="text-green-400 mx-auto mb-1" />
           <div className="text-green-400 font-bold text-lg">{normCount}</div>
-          <div className="text-sim-muted text-sm">{t(lang, 'Active Norms', 'Aktif Normlar')}</div>
+          <div className="text-sim-muted text-sm">{text(lang as LangCode, { en: 'Active Norms', tr: 'Aktif Normlar' })}</div>
         </div>
         <div className="bg-sim-surface rounded-lg p-2 text-center">
           <Scale size={16} className="text-yellow-400 mx-auto mb-1" />
           <div className="text-yellow-400 font-bold text-lg">{violationCount}</div>
-          <div className="text-sim-muted text-sm">{t(lang, 'Violations', 'İhlaller')}</div>
+          <div className="text-sim-muted text-sm">{text(lang as LangCode, { en: 'Violations', tr: 'İhlaller' })}</div>
         </div>
       </div>
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {t(lang, 'Norm Progression', 'Norm İlerlemesi')}
+          {text(lang as LangCode, { en: 'Norm Progression', tr: 'Norm İlerlemesi' })}
         </h4>
         <div className="space-y-3">
           {NORM_STAGES.map(stage => {
@@ -77,7 +73,7 @@ export default function LawPanel() {
             return (
               <div key={stage.stage}>
                 <div className="text-sm text-sim-muted mb-1 font-medium">
-                  {t(lang, `Stage ${stage.stage}: ${stage.label}`, `Aşama ${stage.stage}: ${stage.labelTr}`)}
+                  {text(lang as LangCode, { en: `Stage ${stage.stage}: ${stage.en}`, tr: `Aşama ${stage.stage}: ${stage.tr}` })}
                 </div>
                 <div className="space-y-0.5">
                   {stage.norms.map(norm => {
@@ -88,7 +84,7 @@ export default function LawPanel() {
                         className={`flex items-center gap-1.5 text-sm px-2 py-0.5 rounded ${active ? 'text-sim-text' : 'text-sim-muted opacity-50'}`}
                       >
                         <div className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-green-400' : 'bg-sim-border'}`} />
-                        {lang === 'tr' ? norm.tr : norm.en}
+                        {text(lang as LangCode, { en: norm.en, tr: norm.tr })}
                       </div>
                     );
                   })}
@@ -101,11 +97,11 @@ export default function LawPanel() {
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {t(lang, 'Legal Events', 'Hukuki Olaylar')}
+          {text(lang as LangCode, { en: 'Legal Events', tr: 'Hukuki Olaylar' })}
         </h4>
         {lawEvents.length === 0 ? (
           <p className="text-sim-muted italic text-sm">
-            {t(lang, 'No legal events yet.', 'Henüz hukuki olay yok.')}
+            {text(lang as LangCode, { en: 'No legal events yet.', tr: 'Henüz hukuki olay yok.' })}
           </p>
         ) : (
           <div className="space-y-1 max-h-40 overflow-y-auto">

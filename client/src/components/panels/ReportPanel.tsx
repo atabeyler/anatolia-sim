@@ -5,10 +5,7 @@ import axios from 'axios';
 import { Download, FileJson, FileDown, Printer } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-
-function t(lang: string, en: string, tr: string) {
-  return lang === 'en' ? en : tr;
-}
+import { text, type LangCode } from '../../utils/i18n';
 
 export default function ReportPanel() {
   const { currentSim, accessToken, lang, stats, events } = useSimStore();
@@ -33,9 +30,9 @@ export default function ReportPanel() {
       a.download = `anatolia-sim-${currentSim.name ?? currentSim.id}-Y${stats?.year ?? 0}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      flash(t(lang, '✓ JSON downloaded.', '✓ JSON indirildi.'));
+      flash(text(lang as LangCode, { en: '✓ JSON downloaded.', tr: '✓ JSON indirildi.' }));
     } catch {
-      flash(t(lang, '✗ Download failed.', '✗ İndirme başarısız.'));
+      flash(text(lang as LangCode, { en: '✗ Download failed.', tr: '✗ İndirme başarısız.' }));
     }
     setLoading(false);
   }
@@ -406,13 +403,13 @@ ${r.individuals?.length ? styledTbl(
     try {
       const html = await buildReportHtml();
       const w = window.open('', '_blank', 'width=900,height=1000');
-      if (!w) { flash(t(lang, '✗ Popup blocked.', '✗ Popup engellendi.')); setPdfLoading(false); return; }
+      if (!w) { flash(text(lang as LangCode, { en: '✗ Popup blocked.', tr: '✗ Popup engellendi.' })); setPdfLoading(false); return; }
       w.document.write(html);
       w.document.close();
       w.focus();
       setTimeout(() => w.print(), 500);
     } catch {
-      flash(t(lang, '✗ Failed.', '✗ Başarısız.'));
+      flash(text(lang as LangCode, { en: '✗ Failed.', tr: '✗ Başarısız.' }));
     }
     setPdfLoading(false);
   }
@@ -442,10 +439,10 @@ ${r.individuals?.length ? styledTbl(
       }
       const fname = `anatolia-sim-${currentSim.name ?? currentSim.id}-Y${stats?.year ?? 0}.pdf`;
       pdf.save(fname);
-      flash(t(lang, '✓ PDF downloaded.', '✓ PDF indirildi.'));
+      flash(text(lang as LangCode, { en: '✓ PDF downloaded.', tr: '✓ PDF indirildi.' }));
     } catch (err) {
       console.error(err);
-      flash(t(lang, '✗ PDF generation failed.', '✗ PDF oluşturulamadı.'));
+      flash(text(lang as LangCode, { en: '✗ PDF generation failed.', tr: '✗ PDF oluşturulamadı.' }));
     }
     setPdfLoading(false);
   }
@@ -454,10 +451,10 @@ ${r.individuals?.length ? styledTbl(
     <DetailPanel panelId="report" title="Report" titleTr="Rapor">
       <div className="bg-sim-surface rounded-lg p-3 mb-4">
         <p className="text-sim-muted text-sm italic">
-          {t(lang,
-            'Export the current simulation state as a JSON file or print a formatted PDF report.',
-            'Mevcut simülasyon durumunu JSON dosyası olarak dışa aktarın veya biçimlendirilmiş PDF raporu yazdırın.'
-          )}
+          {text(lang as LangCode, {
+            en: 'Export the current simulation state as a JSON file or print a formatted PDF report.',
+            tr: 'Mevcut simülasyon durumunu JSON dosyası olarak dışa aktarın veya biçimlendirilmiş PDF raporu yazdırın.',
+          })}
         </p>
       </div>
 
@@ -475,10 +472,10 @@ ${r.individuals?.length ? styledTbl(
             <span className="text-sim-text text-sm font-semibold">JSON</span>
           </div>
           <p className="text-sim-muted text-sm mb-3">
-            {t(lang,
-              'Full simulation data: stats, events, checkpoints, technologies, beliefs.',
-              'Tam simülasyon verisi: istatistikler, olaylar, kontrol noktaları, teknolojiler, inançlar.'
-            )}
+            {text(lang as LangCode, {
+              en: 'Full simulation data: stats, events, checkpoints, technologies, beliefs.',
+              tr: 'Tam simülasyon verisi: istatistikler, olaylar, kontrol noktaları, teknolojiler, inançlar.',
+            })}
           </p>
           <button
             onClick={downloadJSON}
@@ -486,7 +483,7 @@ ${r.individuals?.length ? styledTbl(
             className="w-full flex items-center justify-center gap-2 py-2 rounded border border-sim-accent/50 bg-sim-accent/10 hover:bg-sim-accent/25 text-sim-accent transition-colors text-sm font-share-tech disabled:opacity-50"
           >
             <Download size={14} className={loading ? 'animate-bounce' : ''} />
-            {loading ? t(lang, 'Preparing…', 'Hazırlanıyor…') : t(lang, 'Download JSON', 'JSON İndir')}
+            {loading ? text(lang as LangCode, { en: 'Preparing…', tr: 'Hazırlanıyor…' }) : text(lang as LangCode, { en: 'Download JSON', tr: 'JSON İndir' })}
           </button>
         </div>
 
@@ -497,10 +494,10 @@ ${r.individuals?.length ? styledTbl(
             <span className="text-sim-text text-sm font-semibold">PDF</span>
           </div>
           <p className="text-sim-muted text-sm mb-3">
-            {t(lang,
-              'Generates and downloads a .pdf file directly — no dialog needed.',
-              'Kapak + giriş + tüm bölümler dahil .pdf dosyası olarak indirir.'
-            )}
+            {text(lang as LangCode, {
+              en: 'Generates and downloads a .pdf file directly — no dialog needed.',
+              tr: 'Kapak + giriş + tüm bölümler dahil .pdf dosyası olarak indirir.',
+            })}
           </p>
           <div className="flex gap-2">
             <button
@@ -509,12 +506,12 @@ ${r.individuals?.length ? styledTbl(
               className="flex-1 flex items-center justify-center gap-2 py-2 rounded border border-orange-400/50 bg-orange-400/10 hover:bg-orange-400/25 text-orange-400 transition-colors text-sm font-share-tech disabled:opacity-50"
             >
               <FileDown size={14} className={pdfLoading ? 'animate-bounce' : ''} />
-              {pdfLoading ? t(lang, 'Generating…', 'Oluşturuluyor…') : t(lang, 'Download PDF', 'PDF İndir')}
+              {pdfLoading ? text(lang as LangCode, { en: 'Generating…', tr: 'Oluşturuluyor…' }) : text(lang as LangCode, { en: 'Download PDF', tr: 'PDF İndir' })}
             </button>
             <button
               onClick={printReport}
               disabled={!currentSim}
-              title={t(lang, 'Open Print View', 'Yazdırma Görünümünü Aç')}
+              title={text(lang as LangCode, { en: 'Open Print View', tr: 'Yazdırma Görünümünü Aç' })}
               className="px-3 py-2 rounded border border-orange-400/30 bg-orange-400/5 hover:bg-orange-400/15 text-orange-400/70 transition-colors text-sm disabled:opacity-50"
             >
               <Printer size={14} />
@@ -527,15 +524,15 @@ ${r.individuals?.length ? styledTbl(
       {stats && (
         <div className="mt-4 border-t border-sim-border/30 pt-3">
           <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-            {t(lang, 'Current Snapshot', 'Anlık Görüntü')}
+            {text(lang as LangCode, { en: 'Current Snapshot', tr: 'Anlık Görüntü' })}
           </h4>
           <div className="space-y-1">
             {[
-              [t(lang,'Year','Yıl'), stats.year],
-              [t(lang,'Population','Nüfus'), stats.population.toLocaleString()],
-              [t(lang,'Technologies','Teknoloji'), stats.technologies],
-              [t(lang,'Beliefs','İnanç'), stats.beliefs],
-              [t(lang,'Language Stage','Dil Aşaması'), stats.max_language_stage],
+              [text(lang as LangCode, { en: 'Year', tr: 'Yıl' }), stats.year],
+              [text(lang as LangCode, { en: 'Population', tr: 'Nüfus' }), stats.population.toLocaleString()],
+              [text(lang as LangCode, { en: 'Technologies', tr: 'Teknoloji' }), stats.technologies],
+              [text(lang as LangCode, { en: 'Beliefs', tr: 'İnanç' }), stats.beliefs],
+              [text(lang as LangCode, { en: 'Language Stage', tr: 'Dil Aşaması' }), stats.max_language_stage],
             ].map(([l, v]) => (
               <div key={String(l)} className="flex justify-between text-sm border-b border-sim-border/20 py-0.5">
                 <span className="text-sim-muted">{l}</span>

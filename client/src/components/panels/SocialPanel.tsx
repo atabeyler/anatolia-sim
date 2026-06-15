@@ -1,7 +1,7 @@
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { Users, Crown, Swords, ArrowLeftRight } from 'lucide-react';
-import { translateEventDescription, type LangCode } from '../../utils/i18n';
+import { text, translateEventDescription, type LangCode } from '../../utils/i18n';
 
 export default function SocialPanel() {
   const { stats, events, lang } = useSimStore();
@@ -16,26 +16,27 @@ export default function SocialPanel() {
   return (
     <DetailPanel panelId="social" title="Social" titleTr="Sosyal">
       <div className="grid grid-cols-2 gap-2 mb-3">
-        <StatCard icon={<Users size={14} />} label={lang === 'en' ? 'Groups' : 'Gruplar'} value={groupCount} color="text-blue-400" />
-        <StatCard icon={<Swords size={14} />} label={lang === 'en' ? 'Conflicts' : 'Çatışmalar'} value={conflictEvents.length} color="text-red-400" />
-        <StatCard icon={<Crown size={14} />} label={lang === 'en' ? 'Leadership Changes' : 'Liderlik Değ.'} value={leadershipEvents.length} color="text-yellow-400" />
-        <StatCard icon={<ArrowLeftRight size={14} />} label={lang === 'en' ? 'Splits' : 'Bölünmeler'} value={events.filter(e => e.event_type === 'group_split').length} color="text-orange-400" />
+        <StatCard icon={<Users size={14} />} label={text(lang as LangCode, { en: 'Groups', tr: 'Gruplar' })} value={groupCount} color="text-blue-400" />
+        <StatCard icon={<Swords size={14} />} label={text(lang as LangCode, { en: 'Conflicts', tr: 'Çatışmalar' })} value={conflictEvents.length} color="text-red-400" />
+        <StatCard icon={<Crown size={14} />} label={text(lang as LangCode, { en: 'Leadership Changes', tr: 'Liderlik Değ.' })} value={leadershipEvents.length} color="text-yellow-400" />
+        <StatCard icon={<ArrowLeftRight size={14} />} label={text(lang as LangCode, { en: 'Splits', tr: 'Bölünmeler' })} value={events.filter(e => e.event_type === 'group_split').length} color="text-orange-400" />
       </div>
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Social Hierarchy Model' : 'Sosyal Hiyerarşi Modeli'}
+          {text(lang as LangCode, { en: 'Social Hierarchy Model', tr: 'Sosyal Hiyerarşi Modeli' })}
         </h4>
         <p className="text-sim-muted text-sm italic mb-2">
-          {lang === 'en'
-            ? 'Dominance × strength → leadership. High independence → fission. MHC × aggression → conflict.'
-            : 'Baskınlık × güç → liderlik. Yüksek bağımsızlık → bölünme. MHC × saldırganlık → çatışma.'}
+          {text(lang as LangCode, {
+            en: 'Dominance × strength → leadership. High independence → fission. MHC × aggression → conflict.',
+            tr: 'Baskınlık × güç → liderlik. Yüksek bağımsızlık → bölünme. MHC × saldırganlık → çatışma.',
+          })}
         </p>
         <div className="space-y-1">
           {([['Leader','Lider'],['Elder','Yaşlı'],['Warrior','Savaşçı'],['Healer','İyileştirici'],['Member','Üye']] as [string,string][]).map(([en, tr]) => (
             <div key={en} className="flex justify-between py-0.5 text-sm border-b border-sim-border/30">
-              <span className="text-sim-text">{lang === 'tr' ? tr : en}</span>
-              <span className="text-sim-muted">{lang === 'en' ? 'Trait-driven assignment' : 'Özellik tabanlı'}</span>
+              <span className="text-sim-text">{text(lang as LangCode, { en, tr })}</span>
+              <span className="text-sim-muted">{text(lang as LangCode, { en: 'Trait-driven assignment', tr: 'Özellik tabanlı' })}</span>
             </div>
           ))}
         </div>
@@ -43,10 +44,10 @@ export default function SocialPanel() {
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Recent Social Events' : 'Son Sosyal Olaylar'}
+          {text(lang as LangCode, { en: 'Recent Social Events', tr: 'Son Sosyal Olaylar' })}
         </h4>
         {socialEvents.length === 0 ? (
-          <p className="text-sim-muted italic text-sm">{lang === 'en' ? 'No social events yet.' : 'Henüz sosyal olay yok.'}</p>
+          <p className="text-sim-muted italic text-sm">{text(lang as LangCode, { en: 'No social events yet.', tr: 'Henüz sosyal olay yok.' })}</p>
         ) : (
           <div className="space-y-1 max-h-48 overflow-y-auto">
             {socialEvents.slice(0, 12).map((ev, i) => (

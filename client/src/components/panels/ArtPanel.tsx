@@ -1,13 +1,13 @@
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { Music } from 'lucide-react';
-import { translateEventDescription, type LangCode } from '../../utils/i18n';
+import { text, translateEventDescription, type LangCode } from '../../utils/i18n';
 
 const ART_CATEGORIES = [
   {
     medium: 'visual',
-    label: 'Visual Art',
-    labelTr: 'Görsel Sanat',
+    en: 'Visual Art',
+    tr: 'Görsel Sanat',
     emoji: '🎨',
     items: [
       { en: 'Cave Painting',      tr: 'Mağara Resmi' },
@@ -19,8 +19,8 @@ const ART_CATEGORIES = [
   },
   {
     medium: 'music',
-    label: 'Music',
-    labelTr: 'Müzik',
+    en: 'Music',
+    tr: 'Müzik',
     emoji: '🎵',
     items: [
       { en: 'Rhythmic Percussion', tr: 'Ritimli Vurma' },
@@ -31,8 +31,8 @@ const ART_CATEGORIES = [
   },
   {
     medium: 'narrative',
-    label: 'Narrative',
-    labelTr: 'Anlatı',
+    en: 'Narrative',
+    tr: 'Anlatı',
     emoji: '📖',
     items: [
       { en: 'Oral Story',    tr: 'Sözlü Hikâye' },
@@ -41,10 +41,6 @@ const ART_CATEGORIES = [
     ],
   },
 ];
-
-function t(lang: string, en: string, tr: string) {
-  return lang === 'en' ? en : tr;
-}
 
 export default function ArtPanel() {
   const { events, stats, lang } = useSimStore();
@@ -59,21 +55,20 @@ export default function ArtPanel() {
         <div>
           <div className="text-pink-400 font-bold text-lg">{totalForms}</div>
           <div className="text-sim-muted text-sm">
-            {t(lang, 'Art Forms Discovered', 'Keşfedilen Sanat Formları')}
+            {text(lang as LangCode, { en: 'Art Forms Discovered', tr: 'Keşfedilen Sanat Formları' })}
           </div>
         </div>
       </div>
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {t(lang, 'Emergence Requirements', 'Ortaya Çıkış Gereksinimleri')}
+          {text(lang as LangCode, { en: 'Emergence Requirements', tr: 'Ortaya Çıkış Gereksinimleri' })}
         </h4>
         <p className="text-sim-muted text-sm italic">
-          {t(
-            lang,
-            'Art requires food surplus + artistic_sense gene × intelligence > threshold. Higher forms need cognitive prerequisites.',
-            'Sanat; gıda fazlası + artistik_duyarlılık geni × zekâ > eşik gerektirir. Yüksek formlar bilişsel önkoşullar ister.'
-          )}
+          {text(lang as LangCode, {
+            en: 'Art requires food surplus + artistic_sense gene × intelligence > threshold. Higher forms need cognitive prerequisites.',
+            tr: 'Sanat; gıda fazlası + artistik_duyarlılık geni × zekâ > eşik gerektirir. Yüksek formlar bilişsel önkoşullar ister.',
+          })}
         </p>
       </div>
 
@@ -85,7 +80,7 @@ export default function ArtPanel() {
           <div key={cat.medium} className="mb-3">
             <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2 flex items-center gap-1.5">
               <span>{cat.emoji}</span>
-              <span>{t(lang, cat.label, cat.labelTr)}</span>
+              <span>{text(lang as LangCode, { en: cat.en, tr: cat.tr })}</span>
               <span className="text-sim-muted font-normal normal-case tracking-normal">
                 ({discovered.length}/{cat.items.length})
               </span>
@@ -98,7 +93,7 @@ export default function ArtPanel() {
                     key={item.en}
                     className={`text-sm px-2 py-1 rounded ${isDiscovered ? 'text-sim-text bg-pink-500/10' : 'text-sim-muted opacity-40'}`}
                   >
-                    {isDiscovered ? '✓' : '○'} {lang === 'tr' ? item.tr : item.en}
+                    {isDiscovered ? '✓' : '○'} {text(lang as LangCode, { en: item.en, tr: item.tr })}
                   </div>
                 );
               })}
@@ -109,11 +104,11 @@ export default function ArtPanel() {
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {t(lang, 'Art Events', 'Sanat Olayları')}
+          {text(lang as LangCode, { en: 'Art Events', tr: 'Sanat Olayları' })}
         </h4>
         {artEvents.length === 0 ? (
           <p className="text-sim-muted italic text-sm">
-            {t(lang, 'No art events yet.', 'Henüz sanat olayı yok.')}
+            {text(lang as LangCode, { en: 'No art events yet.', tr: 'Henüz sanat olayı yok.' })}
           </p>
         ) : (
           <div className="space-y-1 max-h-36 overflow-y-auto">

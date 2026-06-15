@@ -2,19 +2,19 @@ import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
-import { translateEventDescription, translateEventType, type LangCode } from '../../utils/i18n';
+import { text, translateEventDescription, translateEventType, type LangCode } from '../../utils/i18n';
 
 const FILTERS = [
-  { id: 'all',        labelTr: 'Tümü',     labelEn: 'All',       color: '#a0c8b0' },
-  { id: 'birth',      labelTr: 'Doğum',    labelEn: 'Birth',     color: '#7aff9a' },
-  { id: 'death',      labelTr: 'Ölüm',     labelEn: 'Death',     color: '#e08080' },
-  { id: 'technology', labelTr: 'Teknoloji',labelEn: 'Tech',      color: '#7dd3fc' },
-  { id: 'language',   labelTr: 'Dil',      labelEn: 'Language',  color: '#a0b4ff' },
-  { id: 'discovery',  labelTr: 'Keşif',    labelEn: 'Discovery', color: '#d4a838' },
-  { id: 'disaster',   labelTr: 'Afet',     labelEn: 'Disaster',  color: '#f97316' },
-  { id: 'belief',     labelTr: 'İnanç',    labelEn: 'Belief',    color: '#a855f7' },
-  { id: 'culture',    labelTr: 'Kültür',   labelEn: 'Culture',   color: '#c084fc' },
-  { id: 'activity',   labelTr: 'Aktivite', labelEn: 'Activity',  color: '#f59e0b' },
+  { id: 'all',        tr: 'Tümü',     en: 'All',       color: '#a0c8b0' },
+  { id: 'birth',      tr: 'Doğum',    en: 'Birth',     color: '#7aff9a' },
+  { id: 'death',      tr: 'Ölüm',     en: 'Death',     color: '#e08080' },
+  { id: 'technology', tr: 'Teknoloji',en: 'Tech',      color: '#7dd3fc' },
+  { id: 'language',   tr: 'Dil',      en: 'Language',  color: '#a0b4ff' },
+  { id: 'discovery',  tr: 'Keşif',    en: 'Discovery', color: '#d4a838' },
+  { id: 'disaster',   tr: 'Afet',     en: 'Disaster',  color: '#f97316' },
+  { id: 'belief',     tr: 'İnanç',    en: 'Belief',    color: '#a855f7' },
+  { id: 'culture',    tr: 'Kültür',   en: 'Culture',   color: '#c084fc' },
+  { id: 'activity',   tr: 'Aktivite', en: 'Activity',  color: '#f59e0b' },
 ];
 
 function evColor(type: string) {
@@ -154,10 +154,10 @@ function EventsArchiveModal({ simId, accessToken, lang: uiLang, initialFilter, o
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: `1px solid ${activeFilter.color}18`, flexShrink: 0 }}>
           <span style={{ fontSize: 13, fontFamily: 'Orbitron, monospace', color: activeFilter.color, fontWeight: 700, letterSpacing: '0.1em', flex: 1 }}>
-            📋 {uiLang === 'tr' ? 'OLAY KAYDI ARŞİVİ' : 'EVENT LOG ARCHIVE'}
+            📋 {text(uiLang as LangCode, { tr: 'OLAY KAYDI ARŞİVİ', en: 'EVENT LOG ARCHIVE' })}
           </span>
           <span style={{ fontSize: 11, color: '#6a8878', fontFamily: 'Share Tech Mono, monospace' }}>
-            {total > 0 ? `${total.toLocaleString()} ${uiLang === 'tr' ? 'kayıt' : 'records'}` : ''}
+            {total > 0 ? `${total.toLocaleString()} ${text(uiLang as LangCode, { tr: 'kayıt', en: 'records' })}` : ''}
           </span>
           <button onClick={onClose} style={{ color: '#6a8878', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 4px' }}>✕</button>
         </div>
@@ -173,14 +173,14 @@ function EventsArchiveModal({ simId, accessToken, lang: uiLang, initialFilter, o
                 background: filter === f.id ? `${f.color}12` : 'transparent',
                 fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer',
               }}>
-                {uiLang === 'tr' ? f.labelTr : f.labelEn}
+                {text(uiLang as LangCode, { tr: f.tr, en: f.en })}
               </button>
             ))}
           </div>
           {/* Search */}
           <input
             value={search} onChange={e => setSearch(e.target.value)}
-            placeholder={uiLang === 'tr' ? 'Açıklamada ara…' : 'Search descriptions…'}
+            placeholder={text(uiLang as LangCode, { tr: 'Açıklamada ara…', en: 'Search descriptions…' })}
             style={{
               width: '100%', boxSizing: 'border-box', marginBottom: 6, padding: '3px 8px', fontSize: 11,
               background: 'rgba(160,200,176,0.04)', border: '1px solid rgba(160,200,176,0.15)',
@@ -193,11 +193,11 @@ function EventsArchiveModal({ simId, accessToken, lang: uiLang, initialFilter, o
         <div style={{ flex: 1, overflowY: 'auto', padding: '4px 14px' }}>
           {loading && filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#6a8878', fontSize: 12, fontFamily: 'Share Tech Mono, monospace' }}>
-              {uiLang === 'tr' ? 'Yükleniyor…' : 'Loading…'}
+              {text(uiLang as LangCode, { tr: 'Yükleniyor…', en: 'Loading…' })}
             </div>
           ) : filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 0', color: '#6a8878', fontSize: 12, fontStyle: 'italic' }}>
-              {uiLang === 'tr' ? 'Kayıt bulunamadı.' : 'No records found.'}
+              {text(uiLang as LangCode, { tr: 'Kayıt bulunamadı.', en: 'No records found.' })}
             </div>
           ) : filtered.map((ev, i) => {
             const color = evColor(ev.event_type);
@@ -239,8 +239,8 @@ function EventsArchiveModal({ simId, accessToken, lang: uiLang, initialFilter, o
                 opacity: loading ? 0.5 : 1,
               }}>
                 {loading
-                  ? (uiLang === 'tr' ? 'Yükleniyor…' : 'Loading…')
-                  : (uiLang === 'tr' ? `Daha fazla yükle (${rows.length.toLocaleString()} / ${total.toLocaleString()})` : `Load more (${rows.length.toLocaleString()} / ${total.toLocaleString()})`)}
+                  ? text(uiLang as LangCode, { tr: 'Yükleniyor…', en: 'Loading…' })
+                  : text(uiLang as LangCode, { tr: `Daha fazla yükle (${rows.length.toLocaleString()} / ${total.toLocaleString()})`, en: `Load more (${rows.length.toLocaleString()} / ${total.toLocaleString()})` })}
               </button>
             </div>
           )}
@@ -249,7 +249,7 @@ function EventsArchiveModal({ simId, accessToken, lang: uiLang, initialFilter, o
         {/* Footer */}
         <div style={{ padding: '5px 14px', borderTop: `1px solid rgba(160,200,176,0.08)`, flexShrink: 0 }}>
           <span style={{ fontSize: 10, color: '#3a5a5a', fontFamily: 'Share Tech Mono, monospace' }}>
-            {filtered.length.toLocaleString()} / {rows.length.toLocaleString()} {uiLang === 'tr' ? 'gösteriliyor' : 'shown'} · {total.toLocaleString()} {uiLang === 'tr' ? 'toplam' : 'total'}
+            {filtered.length.toLocaleString()} / {rows.length.toLocaleString()} {text(uiLang as LangCode, { tr: 'gösteriliyor', en: 'shown' })} · {total.toLocaleString()} {text(uiLang as LangCode, { tr: 'toplam', en: 'total' })}
           </span>
         </div>
       </div>
@@ -330,7 +330,7 @@ export default function EventsPanel() {
         {FILTERS.slice(1).map(f => (
           <div key={f.id} style={{ background: 'rgba(15,0,0,0.7)', border: `1px solid ${f.color}22`, padding: '3px 5px' }}>
             <div style={{ fontSize: 12, color: f.color, letterSpacing: '0.08em', opacity: 0.7, whiteSpace: 'nowrap', overflow: 'hidden' }}>
-              {lang === 'tr' ? f.labelTr.toUpperCase() : f.labelEn.toUpperCase()}
+              {text(lang as LangCode, { tr: f.tr.toUpperCase(), en: f.en.toUpperCase() })}
             </div>
             <div style={{ fontSize: 14, color: f.color, fontFamily: 'Orbitron, monospace', fontWeight: 700, lineHeight: 1 }}>
               {counts[f.id] ?? 0}
@@ -350,7 +350,7 @@ export default function EventsPanel() {
               background: filter === f.id ? `${f.color}14` : 'transparent',
               fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer',
             }}>
-            {lang === 'tr' ? f.labelTr : f.labelEn}
+            {text(lang as LangCode, { tr: f.tr, en: f.en })}
             {f.id !== 'all' && ` ${counts[f.id] ?? 0}`}
           </button>
         ))}
@@ -359,7 +359,7 @@ export default function EventsPanel() {
       {/* Total + Archive button */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <span style={{ fontSize: 12, color: '#8abda0', letterSpacing: '0.06em' }}>
-          {visible.length} / {summaryTotal || events.length} {lang === 'tr' ? 'olay' : 'events'}
+          {visible.length} / {summaryTotal || events.length} {text(lang as LangCode, { tr: 'olay', en: 'events' })}
         </span>
         {currentSim && accessToken && (
           <button onClick={() => setArchiveOpen(true)} style={{
@@ -369,7 +369,7 @@ export default function EventsPanel() {
             background: `${activeFilterObj.color}08`,
             fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', letterSpacing: '0.05em',
           }}>
-            📋 {lang === 'tr' ? 'ARŞİV' : 'ARCHIVE'}
+            📋 {text(lang as LangCode, { tr: 'ARŞİV', en: 'ARCHIVE' })}
           </button>
         )}
       </div>
@@ -377,7 +377,7 @@ export default function EventsPanel() {
       {/* Event list */}
       {visible.length === 0 ? (
         <div style={{ fontSize: 12, color: '#8abda0', textAlign: 'center', padding: '24px 0', fontStyle: 'italic' }}>
-          {lang === 'tr' ? 'Olay bulunamadı.' : 'No events found.'}
+          {text(lang as LangCode, { tr: 'Olay bulunamadı.', en: 'No events found.' })}
         </div>
       ) : visible.map((ev, i) => {
         const color = evColor(ev.event_type);

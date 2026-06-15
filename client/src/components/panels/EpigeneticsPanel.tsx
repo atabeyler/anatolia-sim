@@ -1,5 +1,6 @@
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
+import { text, type LangCode } from '../../utils/i18n';
 
 const LOCI = [
   { id: 'HPA_AXIS',       gene: 'COMT',      effect: 'Stress Reactivity', effectTr: 'Stres Tepkisi',       desc: 'Blunted under chronic stress',        descTr: 'Kronik stres altında zayıflar' },

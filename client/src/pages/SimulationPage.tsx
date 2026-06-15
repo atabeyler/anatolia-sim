@@ -35,55 +35,55 @@ import WitnessPanel from '../components/simulation/WitnessPanel';
 import PopulationPyramidPanel from '../components/panels/PopulationPyramidPanel';
 import ReportPanel from '../components/panels/ReportPanel';
 import EventsPanel from '../components/panels/EventsPanel';
-import { translateEventDescription, translateSeason, type LangCode } from '../utils/i18n';
+import { translateEventDescription, translateSeason, text, type LangCode } from '../utils/i18n';
 
 const SPEEDS = [1, 5, 20, 100];
 
 const MODULES = [
-  { id: 'population',   label: 'NÜFUS',      labelEn: 'POPUL.',   icon: '👥' },
-  { id: 'olaylar',      label: 'OLAYLAR',    labelEn: 'EVENTS',   icon: '📋', special: true },
-  { id: 'language',     label: 'DİL',        labelEn: 'LANG.',    icon: '🔤' },
-  { id: 'timemachine',  label: 'GEÇMİŞ',     labelEn: 'HISTORY',  icon: '⏳' },
-  { id: 'analysis',     label: 'ANALİZ',     labelEn: 'ANALYS.',  icon: '📊' },
-  { id: 'pyramid',      label: 'PİRAMİT',    labelEn: 'PYRAMID',  icon: '📐' },
-  { id: 'biology',      label: 'MUTASYON',   labelEn: 'MUTAT.',   icon: '🧬' },
-  { id: 'god',          label: 'TANRI',      labelEn: 'GOD',      icon: '✦',  accent: '#f97316' },
-  { id: 'psychology',   label: 'AKIL',       labelEn: 'MIND',     icon: '🧠' },
-  { id: 'environment',  label: 'ÇEVRE',      labelEn: 'ENV.',     icon: '🌿' },
-  { id: 'technology',   label: 'TEKNOLOJİ',  labelEn: 'TECH',     icon: '⚙' },
-  { id: 'belief',       label: 'İNANÇ',      labelEn: 'BELIEF',   icon: '☽' },
-  { id: 'social',       label: 'SOSYAL',     labelEn: 'SOCIAL',   icon: '🤝' },
-  { id: 'economy',      label: 'EKONOMİ',    labelEn: 'ECON.',    icon: '💰' },
-  { id: 'culture',      label: 'KÜLTÜR',     labelEn: 'CULT.',    icon: '🎭' },
-  { id: 'art',          label: 'SANAT',      labelEn: 'ART',      icon: '🎨' },
-  { id: 'astronomy',    label: 'ASTRONOMİ',  labelEn: 'ASTRO.',   icon: '🌙' },
-  { id: 'moments',      label: 'ANLAR',      labelEn: 'MOMENTS',  icon: '✦' },
-  { id: 'hypothesis',   label: 'HİPOTEZ',    labelEn: 'HYPOTH.',  icon: '💡' },
-  { id: 'epigenetics',  label: 'EPİGEN.',    labelEn: 'EPIGEN.',  icon: '🔬' },
-  { id: 'architecture', label: 'MİMARİ',     labelEn: 'ARCH.',    icon: '🏛️' },
-  { id: 'law',          label: 'HUKUK',      labelEn: 'LAW',      icon: '⚖️' },
-  { id: 'microbiome',   label: 'MİKROBİYOM', labelEn: 'MICROB.',  icon: '🦠' },
+  { id: 'population',   labels: { tr: 'NÜFUS',      en: 'POPUL.'  }, icon: '👥' },
+  { id: 'olaylar',      labels: { tr: 'OLAYLAR',    en: 'EVENTS'  }, icon: '📋', special: true },
+  { id: 'language',     labels: { tr: 'DİL',        en: 'LANG.'   }, icon: '🔤' },
+  { id: 'timemachine',  labels: { tr: 'GEÇMİŞ',     en: 'HISTORY' }, icon: '⏳' },
+  { id: 'analysis',     labels: { tr: 'ANALİZ',     en: 'ANALYS.' }, icon: '📊' },
+  { id: 'pyramid',      labels: { tr: 'PİRAMİT',    en: 'PYRAMID' }, icon: '📐' },
+  { id: 'biology',      labels: { tr: 'MUTASYON',   en: 'MUTAT.'  }, icon: '🧬' },
+  { id: 'god',          labels: { tr: 'TANRI',      en: 'GOD'     }, icon: '✦',  accent: '#f97316' },
+  { id: 'psychology',   labels: { tr: 'AKIL',       en: 'MIND'    }, icon: '🧠' },
+  { id: 'environment',  labels: { tr: 'ÇEVRE',      en: 'ENV.'    }, icon: '🌿' },
+  { id: 'technology',   labels: { tr: 'TEKNOLOJİ',  en: 'TECH'    }, icon: '⚙' },
+  { id: 'belief',       labels: { tr: 'İNANÇ',      en: 'BELIEF'  }, icon: '☽' },
+  { id: 'social',       labels: { tr: 'SOSYAL',     en: 'SOCIAL'  }, icon: '🤝' },
+  { id: 'economy',      labels: { tr: 'EKONOMİ',    en: 'ECON.'   }, icon: '💰' },
+  { id: 'culture',      labels: { tr: 'KÜLTÜR',     en: 'CULT.'   }, icon: '🎭' },
+  { id: 'art',          labels: { tr: 'SANAT',      en: 'ART'     }, icon: '🎨' },
+  { id: 'astronomy',    labels: { tr: 'ASTRONOMİ',  en: 'ASTRO.'  }, icon: '🌙' },
+  { id: 'moments',      labels: { tr: 'ANLAR',      en: 'MOMENTS' }, icon: '✦' },
+  { id: 'hypothesis',   labels: { tr: 'HİPOTEZ',    en: 'HYPOTH.' }, icon: '💡' },
+  { id: 'epigenetics',  labels: { tr: 'EPİGEN.',    en: 'EPIGEN.' }, icon: '🔬' },
+  { id: 'architecture', labels: { tr: 'MİMARİ',     en: 'ARCH.'   }, icon: '🏛️' },
+  { id: 'law',          labels: { tr: 'HUKUK',      en: 'LAW'     }, icon: '⚖️' },
+  { id: 'microbiome',   labels: { tr: 'MİKROBİYOM', en: 'MICROB.' }, icon: '🦠' },
 ];
 
 const TABS = [
-  { id: 'harita',  label: 'HARİTA',  labelEn: 'MAP' },
-  { id: 'durum',   label: 'DURUM',   labelEn: 'STATUS' },
+  { id: 'harita',  labels: { tr: 'HARİTA',  en: 'MAP'    } },
+  { id: 'durum',   labels: { tr: 'DURUM',   en: 'STATUS' } },
 ];
 
 const IMPORTANT_TYPES = ['birth', 'death', 'language', 'belief', 'technology', 'word', 'discovery'];
 
 const SHOWCASE_BUTTONS = [
-  { label: 'BAŞLAT', labelEn: 'START', icon: Play, tone: '#00e887', bg: 'rgba(0,232,135,0.12)', border: 'rgba(0,232,135,0.55)' },
-  { label: 'DURDUR', labelEn: 'PAUSE', icon: Pause, tone: '#e05a5a', bg: 'rgba(224,90,90,0.12)', border: 'rgba(224,90,90,0.55)' },
-  { label: 'HIZLANDIR', labelEn: 'BOOST', icon: Zap, tone: '#d4a838', bg: 'rgba(212,168,56,0.12)', border: 'rgba(212,168,56,0.55)' },
-  { label: 'KORUMA', labelEn: 'SHIELD', icon: Shield, tone: '#4f6ef7', bg: 'rgba(79,110,247,0.12)', border: 'rgba(79,110,247,0.55)' },
-  { label: 'YANGIN', labelEn: 'FIRE', icon: Flame, tone: '#f97316', bg: 'rgba(249,115,22,0.12)', border: 'rgba(249,115,22,0.55)' },
-  { label: 'SEVGİ', labelEn: 'BOND', icon: Heart, tone: '#ff8ab0', bg: 'rgba(255,138,176,0.12)', border: 'rgba(255,138,176,0.55)' },
-  { label: 'YENİLE', labelEn: 'RESET', icon: Sparkles, tone: '#7dd3fc', bg: 'rgba(125,211,252,0.12)', border: 'rgba(125,211,252,0.55)' },
-  { label: 'KILAVUZ', labelEn: 'GUIDE', icon: BookOpen, tone: '#a0b4ff', bg: 'rgba(160,180,255,0.12)', border: 'rgba(160,180,255,0.55)' },
-  { label: 'SİL', labelEn: 'DELETE', icon: Trash2, tone: '#ff6b6b', bg: 'rgba(255,107,107,0.12)', border: 'rgba(255,107,107,0.55)' },
-  { label: 'DEVRE DIŞI', labelEn: 'OFF', icon: CircleSlash2, tone: '#8abda0', bg: 'rgba(138,189,160,0.12)', border: 'rgba(138,189,160,0.4)' },
-] as const;
+  { labels: { tr: 'BAŞLAT',     en: 'START'  }, icon: Play,        tone: '#00e887', bg: 'rgba(0,232,135,0.12)',   border: 'rgba(0,232,135,0.55)' },
+  { labels: { tr: 'DURDUR',     en: 'PAUSE'  }, icon: Pause,       tone: '#e05a5a', bg: 'rgba(224,90,90,0.12)',   border: 'rgba(224,90,90,0.55)' },
+  { labels: { tr: 'HIZLANDIR',  en: 'BOOST'  }, icon: Zap,         tone: '#d4a838', bg: 'rgba(212,168,56,0.12)',  border: 'rgba(212,168,56,0.55)' },
+  { labels: { tr: 'KORUMA',     en: 'SHIELD' }, icon: Shield,      tone: '#4f6ef7', bg: 'rgba(79,110,247,0.12)',  border: 'rgba(79,110,247,0.55)' },
+  { labels: { tr: 'YANGIN',     en: 'FIRE'   }, icon: Flame,       tone: '#f97316', bg: 'rgba(249,115,22,0.12)',  border: 'rgba(249,115,22,0.55)' },
+  { labels: { tr: 'SEVGİ',      en: 'BOND'   }, icon: Heart,       tone: '#ff8ab0', bg: 'rgba(255,138,176,0.12)', border: 'rgba(255,138,176,0.55)' },
+  { labels: { tr: 'YENİLE',     en: 'RESET'  }, icon: Sparkles,    tone: '#7dd3fc', bg: 'rgba(125,211,252,0.12)', border: 'rgba(125,211,252,0.55)' },
+  { labels: { tr: 'KILAVUZ',    en: 'GUIDE'  }, icon: BookOpen,    tone: '#a0b4ff', bg: 'rgba(160,180,255,0.12)', border: 'rgba(160,180,255,0.55)' },
+  { labels: { tr: 'SİL',        en: 'DELETE' }, icon: Trash2,      tone: '#ff6b6b', bg: 'rgba(255,107,107,0.12)', border: 'rgba(255,107,107,0.55)' },
+  { labels: { tr: 'DEVRE DIŞI', en: 'OFF'    }, icon: CircleSlash2,tone: '#8abda0', bg: 'rgba(138,189,160,0.12)', border: 'rgba(138,189,160,0.4)' },
+];
 
 function ButtonShowcase({ lang, onClose }: { lang: string; onClose: () => void }) {
   return (
@@ -115,7 +115,7 @@ function ButtonShowcase({ lang, onClose }: { lang: string; onClose: () => void }
             const Icon = btn.icon;
             return (
               <button
-                key={btn.label}
+                key={btn.labels.tr}
                 type="button"
                 style={{
                   display: 'flex',
@@ -135,7 +135,7 @@ function ButtonShowcase({ lang, onClose }: { lang: string; onClose: () => void }
                 <Icon size={14} />
                 <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
                   <span style={{ fontSize: 12, letterSpacing: '0.08em', fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>
-                    {lang === 'tr' ? btn.label : btn.labelEn}
+                    {text(lang as LangCode, btn.labels)}
                   </span>
                   <span style={{ fontSize: 10, color: 'rgba(220,230,255,0.72)', letterSpacing: '0.04em' }}>
                     {btn.border.includes('255,107,107') ? 'critical' : btn.border.includes('0,232,135') ? 'primary' : btn.border.includes('249,115,22') ? 'alert' : 'utility'}
@@ -574,7 +574,7 @@ export default function SimulationPage() {
                 <button
                   key={mod.id}
                   onClick={() => setActivePanel(isActive ? null : mod.id)}
-                  title={lang === 'tr' ? mod.label : mod.labelEn}
+                  title={text(lang as LangCode, mod.labels)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -600,7 +600,7 @@ export default function SimulationPage() {
                   <span style={{ fontSize: 16, flexShrink: 0, lineHeight: 1 }}>{mod.icon}</span>
                   {sidebarExpanded && (
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {lang === 'tr' ? mod.label : mod.labelEn}
+                      {text(lang as LangCode, mod.labels)}
                     </span>
                   )}
                 </button>
@@ -666,7 +666,7 @@ export default function SimulationPage() {
                     borderRight: '1px solid #4a1a1a',
                     cursor: 'pointer',
                   }}>
-                  {lang === 'tr' ? tab.label : tab.labelEn}
+                  {text(lang as LangCode, tab.labels)}
                 </button>
               );
             })}
