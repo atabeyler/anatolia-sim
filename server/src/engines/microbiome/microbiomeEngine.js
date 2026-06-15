@@ -5,7 +5,7 @@ export const PATHOGEN_TYPES={
   respiratory_common: {transmission:'airborne',  base_mortality:0.02,duration_days:14,immunity_duration:180,  density_threshold:4},
   pneumonia_like:     {transmission:'airborne',  base_mortality:0.15,duration_days:21,immunity_duration:365*2,density_threshold:8},
   plague_like:        {transmission:'airborne',  base_mortality:0.4, duration_days:10,immunity_duration:365*10,density_threshold:30},
-  malaria_like:       {transmission:'vector',    base_mortality:0.1, duration_days:14,immunity_duration:365,  density_threshold:3,biomes:['tropical','coastal']},
+  malaria_like:       {transmission:'vector',    base_mortality:0.1, duration_days:14,immunity_duration:365,  density_threshold:3,biomes:['tropical_rainforest','tropical_savanna','coastal']},
   fever_tick:         {transmission:'vector',    base_mortality:0.08,duration_days:10,immunity_duration:365*2,density_threshold:3,biomes:['grassland','temperate_forest']},
   wound_infection:    {transmission:'contact',   base_mortality:0.12,duration_days:14,immunity_duration:60,  density_threshold:2},
   fungal_skin:        {transmission:'contact',   base_mortality:0.01,duration_days:30,immunity_duration:180, density_threshold:4},
