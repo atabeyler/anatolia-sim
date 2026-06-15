@@ -158,6 +158,7 @@ export class SimulationEngine {
   async tick() {
     if (!this.running) return;
     try {
+    this._consecutiveErrors = (this._consecutiveErrors ?? 0);
     this._todayBirths = 0;
     this._todayDeaths = 0;
     const day = this.currentDay;
@@ -785,10 +786,17 @@ export class SimulationEngine {
       this.onTick({ day, stats, events: this.events.slice(-20) });
     }
 
+    this._consecutiveErrors = 0;
     this.currentDay++;
     } catch (err) {
-      console.error(`[SimulationEngine] tick() error on day ${this.currentDay}:`, err);
+      this._consecutiveErrors = (this._consecutiveErrors ?? 0) + 1;
+      console.error(`[SimulationEngine] tick() error on day ${this.currentDay} (${this._consecutiveErrors}/5):`, err);
       this.currentDay++;
+      if (this._consecutiveErrors >= 5) {
+        console.error('[SimulationEngine] 5 ardışık hata — simülasyon duraklatıldı.');
+        this.running = false;
+        this.onEnded?.({ reason: 'tick_error', error: err.message });
+      }
     }
   }
 

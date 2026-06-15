@@ -30,7 +30,21 @@ const server = createServer(app);
 const PORT = process.env.PORT ?? 3001;
 
 app.set('trust proxy', 1);
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc:  ["'self'", "'unsafe-inline'"],   // Vite build inline chunks
+      styleSrc:   ["'self'", "'unsafe-inline'"],   // Tailwind/CSS-in-JS
+      connectSrc: ["'self'", "wss:", "ws:",
+                   "https://generativelanguage.googleapis.com"], // Gemini API
+      imgSrc:     ["'self'", "data:", "blob:"],
+      fontSrc:    ["'self'", "data:"],
+      workerSrc:  ["'self'", "blob:"],              // Three.js workers
+      objectSrc:  ["'none'"],
+    },
+  },
+}));
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3001',

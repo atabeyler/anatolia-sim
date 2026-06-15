@@ -7,14 +7,13 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  server-tests:
+    name: Server (Vitest)
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Node.js kurulum
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -26,4 +25,24 @@ jobs:
 
       - name: Testleri çalıştır
         working-directory: server
+        run: npm test
+
+  client-tests:
+    name: Client (Vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Bağımlılıkları yükle
+        working-directory: client
+        run: npm ci
+
+      - name: Testleri çalıştır
+        working-directory: client
         run: npm test
