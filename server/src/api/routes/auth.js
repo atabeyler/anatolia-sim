@@ -10,7 +10,7 @@ const loginLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Çok fazla giriş denemesi. 15 dakika sonra tekrar deneyin.' },
+  message: { error: 'Too many login attempts. Please try again in 15 minutes.' },
 });
 
 const registerLimiter = rateLimit({
@@ -18,7 +18,7 @@ const registerLimiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Çok fazla kayıt denemesi. 1 saat sonra tekrar deneyin.' },
+  message: { error: 'Too many registration attempts. Please try again in 1 hour.' },
 });
 
 function generateApprovalToken(userId) {
@@ -38,11 +38,11 @@ function generateUserCode() {
 }
 
 function validatePassword(password) {
-  if (password.length < 8) return 'Şifre en az 8 karakter olmalıdır.';
-  if (!/[A-Z]/.test(password)) return 'Şifre en az bir büyük harf içermelidir.';
-  if (!/[a-z]/.test(password)) return 'Şifre en az bir küçük harf içermelidir.';
-  if (!/[0-9]/.test(password)) return 'Şifre en az bir rakam içermelidir.';
-  if (!/[^A-Za-z0-9]/.test(password)) return 'Şifre en az bir noktalama/özel karakter içermelidir.';
+  if (password.length < 8) return 'Password must be at least 8 characters.';
+  if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter.';
+  if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter.';
+  if (!/[0-9]/.test(password)) return 'Password must contain at least one digit.';
+  if (!/[^A-Za-z0-9]/.test(password)) return 'Password must contain at least one punctuation/special character.';
   return null;
 }
 
@@ -50,12 +50,12 @@ router.post('/register', registerLimiter, async (req, res) => {
   try {
     const { first_name, last_name, tc_no, email, password, user_code } = req.body;
     if (!first_name || !last_name || !tc_no || !email || !password || !user_code)
-      return res.status(400).json({ error: 'Tüm alanlar zorunludur.' });
+      return res.status(400).json({ error: 'All fields are required.' });
     if (!/^\d{11}$/.test(tc_no))
-      return res.status(400).json({ error: 'TC Kimlik No 11 haneli rakam olmalıdır.' });
+      return res.status(400).json({ error: 'National ID must be an 11-digit number.' });
     const code = user_code.toUpperCase().trim();
     if (!/^[A-Z0-9]{4,20}$/.test(code))
-      return res.status(400).json({ error: 'Kullanıcı kodu 4-20 karakter, sadece harf ve rakam olmalıdır.' });
+      return res.status(400).json({ error: 'User code must be 4-20 characters, letters and digits only.' });
     const pwErr = validatePassword(password);
     if (pwErr) return res.status(400).json({ error: pwErr });
 
@@ -69,28 +69,28 @@ router.post('/register', registerLimiter, async (req, res) => {
 
     const approvalToken = generateApprovalToken(rows[0].id);
     await sendAdminRegistrationNotification({ first_name, last_name, tc_no, email, user_code_temp: code, approvalToken });
-    res.status(201).json({ message: 'Kayıt talebiniz alındı. Yönetim onayı bekleniyor.' });
+    res.status(201).json({ message: 'Your registration request has been received. Awaiting admin approval.' });
   } catch (err) {
-    if (err.code === '23505') return res.status(409).json({ error: 'Bu e-posta, TC No veya kullanıcı kodu zaten kayıtlı.' });
+    if (err.code === '23505') return res.status(409).json({ error: 'This email, national ID, or user code is already registered.' });
     console.error(err);
-    res.status(500).json({ error: 'Kayıt başarısız.' });
+    res.status(500).json({ error: 'Registration failed.' });
   }
 });
 
 router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { user_code, password } = req.body;
-    if (!user_code || !password) return res.status(400).json({ error: 'Kullanıcı kodu ve şifre gereklidir.' });
+    if (!user_code || !password) return res.status(400).json({ error: 'User code and password are required.' });
 
     const { rows } = await query('SELECT * FROM users WHERE user_code = $1', [user_code.toUpperCase().trim()]);
     const user = rows[0];
 
     if (!user || !(await bcrypt.compare(password, user.password_hash)))
-      return res.status(401).json({ error: 'Kullanıcı kodu veya şifre hatalı.' });
+      return res.status(401).json({ error: 'Invalid user code or password.' });
     if (!user.is_approved)
-      return res.status(403).json({ error: 'Hesabınız henüz onaylanmamış. Lütfen yönetim onayını bekleyin.' });
+      return res.status(403).json({ error: 'Your account has not been approved yet. Please wait for admin approval.' });
     if (user.is_banned)
-      return res.status(403).json({ error: `Hesabınız engellenmiştir.${user.ban_reason ? ' Sebep: ' + user.ban_reason : ''}` });
+      return res.status(403).json({ error: `Your account has been banned.${user.ban_reason ? ' Reason: ' + user.ban_reason : ''}` });
 
     const payload = { id: user.id, username: user.user_code, email: user.email, role: user.role };
     const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15m' });

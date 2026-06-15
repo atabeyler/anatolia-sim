@@ -91,7 +91,7 @@ function applyFX(ind) {
   const p = ind.phenotype;
   if (!p) return;
   p.stress_reactivity = (p.stress_reactivity ?? 0.5) * 0.99 + (e.HPA_AXIS?.methylation ?? 0.5) * 0.01;
-  // MAOA metilasyonu yükseldikçe (erken çocukluk stresi) agresyon yavaşça artar; metilasyon azalırsa geri döner (EMA)
+  // As MAOA methylation rises (early childhood stress) aggression slowly increases; reverts if methylation decreases (EMA)
   p.aggression = Math.min(Math.max((p.aggression ?? 0.5) * 0.999 + (e.MAOA_REGULATION?.methylation ?? 0.5) * 0.001, 0), 1);
   p.oxytocin_sensitivity = (p.oxytocin_sensitivity ?? 0.5) * 0.99 + (1 - (e.OXTR_METHYL?.methylation ?? 0.5)) * 0.01;
   p.learning_rate = (p.learning_rate ?? 0.5) * 0.99 + (1 - (e.BDNF_PROMOTER?.methylation ?? 0.5)) * 0.01;

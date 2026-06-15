@@ -16,7 +16,7 @@ function escapeHtml(value) {
 }
 
 function requireAdmin(req, res, next) {
-  if (req.user?.role !== 'admin') return res.status(403).json({ error: 'Yönetici yetkisi gerekli.' });
+  if (req.user?.role !== 'admin') return res.status(403).json({ error: 'Admin permission required.' });
   next();
 }
 
@@ -27,7 +27,7 @@ router.get('/users', authenticate, requireAdmin, async (req, res) => {
        FROM users ORDER BY created_at DESC`
     );
     res.json(rows);
-  } catch { res.status(500).json({ error: 'Kullanıcılar alınamadı.' }); }
+  } catch { res.status(500).json({ error: 'Failed to fetch users.' }); }
 });
 
 router.post('/users/:id/approve', authenticate, requireAdmin, async (req, res) => {
@@ -37,10 +37,10 @@ router.post('/users/:id/approve', authenticate, requireAdmin, async (req, res) =
        WHERE id=$1 RETURNING id, user_code, first_name, last_name, email`,
       [req.params.id]
     );
-    if (!rows[0]) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+    if (!rows[0]) return res.status(404).json({ error: 'User not found.' });
     await sendApprovalEmail(rows[0]);
-    res.json({ message: 'Kullanıcı onaylandı.', user: rows[0] });
-  } catch { res.status(500).json({ error: 'Onay başarısız.' }); }
+    res.json({ message: 'User approved.', user: rows[0] });
+  } catch { res.status(500).json({ error: 'Approval failed.' }); }
 });
 
 router.post('/users/:id/reject', authenticate, requireAdmin, async (req, res) => {
@@ -49,10 +49,10 @@ router.post('/users/:id/reject', authenticate, requireAdmin, async (req, res) =>
       `DELETE FROM users WHERE id=$1 AND is_approved=false RETURNING first_name, last_name, email`,
       [req.params.id]
     );
-    if (!rows[0]) return res.status(404).json({ error: 'Kullanıcı bulunamadı veya zaten onaylı.' });
+    if (!rows[0]) return res.status(404).json({ error: 'User not found or already approved.' });
     await sendRejectionEmail(rows[0]);
-    res.json({ message: 'Talep reddedildi.' });
-  } catch { res.status(500).json({ error: 'Red işlemi başarısız.' }); }
+    res.json({ message: 'Request rejected.' });
+  } catch { res.status(500).json({ error: 'Rejection failed.' }); }
 });
 
 router.post('/users/:id/ban', authenticate, requireAdmin, async (req, res) => {
@@ -62,9 +62,9 @@ router.post('/users/:id/ban', authenticate, requireAdmin, async (req, res) => {
       `UPDATE users SET is_banned=true, ban_reason=$2, updated_at=NOW() WHERE id=$1 RETURNING user_code, first_name, last_name`,
       [req.params.id, reason ?? null]
     );
-    if (!rows[0]) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
-    res.json({ message: 'Kullanıcı engellendi.' });
-  } catch { res.status(500).json({ error: 'Engelleme başarısız.' }); }
+    if (!rows[0]) return res.status(404).json({ error: 'User not found.' });
+    res.json({ message: 'User banned.' });
+  } catch { res.status(500).json({ error: 'Ban failed.' }); }
 });
 
 router.post('/users/:id/unban', authenticate, requireAdmin, async (req, res) => {
@@ -73,16 +73,16 @@ router.post('/users/:id/unban', authenticate, requireAdmin, async (req, res) => 
       `UPDATE users SET is_banned=false, ban_reason=NULL, updated_at=NOW() WHERE id=$1 RETURNING user_code`,
       [req.params.id]
     );
-    if (!rows[0]) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
-    res.json({ message: 'Engel kaldırıldı.' });
-  } catch { res.status(500).json({ error: 'Engel kaldırma başarısız.' }); }
+    if (!rows[0]) return res.status(404).json({ error: 'User not found.' });
+    res.json({ message: 'Ban lifted.' });
+  } catch { res.status(500).json({ error: 'Unban failed.' }); }
 });
 
 router.delete('/users/:id', authenticate, requireAdmin, async (req, res) => {
   try {
     await query('DELETE FROM users WHERE id=$1', [req.params.id]);
-    res.json({ message: 'Kullanıcı silindi.' });
-  } catch { res.status(500).json({ error: 'Silme başarısız.' }); }
+    res.json({ message: 'User deleted.' });
+  } catch { res.status(500).json({ error: 'Deletion failed.' }); }
 });
 
 const pageHtml = (user, token, msg) => {
@@ -102,9 +102,9 @@ const pageHtml = (user, token, msg) => {
   msg = safeMsg;
   token = safeToken;
   return `<!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ANATOLİA-SİM — Kayıt İnceleme</title>
+<title>ANATOLIA-SIM — Registration Review</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#030310;color:#c8d4f0;font-family:'Courier New',monospace;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -126,20 +126,20 @@ const pageHtml = (user, token, msg) => {
   .back{display:block;margin-top:20px;text-align:center;font-size:11px;letter-spacing:.2em;color:#4f6ef7;text-decoration:none}
 </style></head>
 <body><div class="card">
-  <h1>⬡ ANATOLİA-SİM — Kayıt Talebi</h1>
+  <h1>⬡ ANATOLIA-SIM — Registration Request</h1>
   ${safeMsg ? `<div class="msg ${safeMsg.ok ? 'ok' : 'err'}">${safeMsg.text}</div>` : ''}
   ${safeUser ? `
-  <div class="row"><span class="label">Ad Soyad</span><span class="val">${user.first_name} ${user.last_name}</span></div>
-  <div class="row"><span class="label">TC No</span><span class="val">${user.tc_no ?? '—'}</span></div>
-  <div class="row"><span class="label">E-posta</span><span class="val">${user.email}</span></div>
-  <div class="row"><span class="label">Kullanıcı Kodu</span><span class="val">${user.user_code}</span></div>
-  <div class="row"><span class="label">Kayıt Tarihi</span><span class="val">${new Date(user.created_at).toLocaleString('tr-TR')}</span></div>
+  <div class="row"><span class="label">Full Name</span><span class="val">${user.first_name} ${user.last_name}</span></div>
+  <div class="row"><span class="label">ID No</span><span class="val">${user.tc_no ?? '—'}</span></div>
+  <div class="row"><span class="label">Email</span><span class="val">${user.email}</span></div>
+  <div class="row"><span class="label">User Code</span><span class="val">${user.user_code}</span></div>
+  <div class="row"><span class="label">Registration Date</span><span class="val">${new Date(user.created_at).toLocaleString('en-US')}</span></div>
   <hr class="divider">
   <div class="btns">
-    <a class="btn approve" href="/api/admin/quick-approve/${token}">✔ ONAYLA</a>
-    <a class="btn reject" href="/api/admin/quick-reject/${token}">✘ REDDET</a>
+    <a class="btn approve" href="/api/admin/quick-approve/${token}">✔ APPROVE</a>
+    <a class="btn reject" href="/api/admin/quick-reject/${token}">✘ REJECT</a>
   </div>` : ''}
-  <a class="back" href="${safeAppUrl}/admin">← YÖNETİM PANELİ</a>
+  <a class="back" href="${safeAppUrl}/admin">← ADMIN PANEL</a>
 </div></body></html>`;
 };
 
@@ -147,18 +147,18 @@ const pageHtml = (user, token, msg) => {
 router.get('/review/:token', async (req, res) => {
   try {
     const payload = jwt.verify(req.params.token, process.env.JWT_SECRET);
-    if (payload.action !== 'approve') return res.status(400).send(pageHtml(null, '', { ok: false, text: 'Geçersiz token türü.' }));
+    if (payload.action !== 'approve') return res.status(400).send(pageHtml(null, '', { ok: false, text: 'Invalid token type.' }));
     const { rows } = await query(
       `SELECT id, user_code, first_name, last_name, tc_no, email, is_approved, created_at FROM users WHERE id=$1`,
       [payload.userId]
     );
-    if (!rows[0]) return res.send(pageHtml(null, '', { ok: false, text: 'Kullanıcı bulunamadı.' }));
-    if (rows[0].is_approved) return res.send(pageHtml(null, '', { ok: true, text: `${rows[0].first_name} ${rows[0].last_name} zaten onaylanmış.` }));
+    if (!rows[0]) return res.send(pageHtml(null, '', { ok: false, text: 'User not found.' }));
+    if (rows[0].is_approved) return res.send(pageHtml(null, '', { ok: true, text: `${rows[0].first_name} ${rows[0].last_name} is already approved.` }));
     res.send(pageHtml(rows[0], req.params.token, null));
   } catch (err) {
     const msg = err.name === 'TokenExpiredError'
-      ? 'Bu onay linkinin süresi dolmuş (7 gün). Yönetim panelini kullanın.'
-      : 'Geçersiz link. Yönetim panelinden onaylayın.';
+      ? 'This approval link has expired (7 days). Please use the admin panel.'
+      : 'Invalid link. Please approve from the admin panel.';
     res.status(400).send(pageHtml(null, '', { ok: false, text: msg }));
   }
 });
@@ -173,11 +173,11 @@ router.get('/quick-approve/:token', async (req, res) => {
        WHERE id=$1 AND is_approved=false RETURNING id, user_code, first_name, last_name, email`,
       [payload.userId]
     );
-    if (!rows[0]) return res.send(pageHtml(null, '', { ok: true, text: 'Bu kullanıcı zaten onaylanmış.' }));
-    try { await sendApprovalEmail(rows[0]); } catch (mailErr) { console.error('[APPROVE] Mail gönderilemedi:', mailErr.message); }
-    res.send(pageHtml(null, '', { ok: true, text: `✔ ${rows[0].first_name} ${rows[0].last_name} onaylandı — kullanıcı kodu: ${rows[0].user_code}.` }));
+    if (!rows[0]) return res.send(pageHtml(null, '', { ok: true, text: 'This user is already approved.' }));
+    try { await sendApprovalEmail(rows[0]); } catch (mailErr) { console.error('[APPROVE] Failed to send email:', mailErr.message); }
+    res.send(pageHtml(null, '', { ok: true, text: `✔ ${rows[0].first_name} ${rows[0].last_name} approved — user code: ${rows[0].user_code}.` }));
   } catch (err) {
-    const msg = err.name === 'TokenExpiredError' ? 'Link süresi dolmuş.' : 'Geçersiz link.';
+    const msg = err.name === 'TokenExpiredError' ? 'Link expired.' : 'Invalid link.';
     res.status(400).send(pageHtml(null, '', { ok: false, text: msg }));
   }
 });
@@ -191,11 +191,11 @@ router.get('/quick-reject/:token', async (req, res) => {
       `DELETE FROM users WHERE id=$1 AND is_approved=false RETURNING first_name, last_name, email`,
       [payload.userId]
     );
-    if (!rows[0]) return res.send(pageHtml(null, '', { ok: false, text: 'Kullanıcı bulunamadı veya zaten onaylı.' }));
-    try { await sendRejectionEmail(rows[0]); } catch (mailErr) { console.error('[REJECT] Mail gönderilemedi:', mailErr.message); }
-    res.send(pageHtml(null, '', { ok: true, text: `✘ ${rows[0].first_name} ${rows[0].last_name} reddedildi.` }));
+    if (!rows[0]) return res.send(pageHtml(null, '', { ok: false, text: 'User not found or already approved.' }));
+    try { await sendRejectionEmail(rows[0]); } catch (mailErr) { console.error('[REJECT] Failed to send email:', mailErr.message); }
+    res.send(pageHtml(null, '', { ok: true, text: `✘ ${rows[0].first_name} ${rows[0].last_name} rejected.` }));
   } catch (err) {
-    const msg = err.name === 'TokenExpiredError' ? 'Link süresi dolmuş.' : 'Geçersiz link.';
+    const msg = err.name === 'TokenExpiredError' ? 'Link expired.' : 'Invalid link.';
     res.status(400).send(pageHtml(null, '', { ok: false, text: msg }));
   }
 });
@@ -203,12 +203,12 @@ router.get('/quick-reject/:token', async (req, res) => {
 // SMTP test — GET /api/admin/test-email
 router.get('/test-email', authenticate, requireAdmin, async (req, res) => {
   const timer = setTimeout(() => {
-    if (!res.headersSent) res.status(504).json({ error: 'SMTP bağlantısı zaman aşımına uğradı (15s). Port 587 engellenmiş olabilir.' });
+    if (!res.headersSent) res.status(504).json({ error: 'SMTP connection timed out (15s). Port 587 may be blocked.' });
   }, 16000);
   try {
     await sendTestEmail();
     clearTimeout(timer);
-    if (!res.headersSent) res.json({ message: `Test maili ${process.env.ADMIN_EMAIL ?? 'info@boldkimya.com.tr'} adresine gönderildi.` });
+    if (!res.headersSent) res.json({ message: `Test email sent to ${process.env.ADMIN_EMAIL ?? 'info@boldkimya.com.tr'}.` });
   } catch (err) {
     clearTimeout(timer);
     if (!res.headersSent) res.status(500).json({ error: err.message });
@@ -220,12 +220,12 @@ router.post('/seed-admin', async (req, res) => {
   try {
     const seedToken = process.env.ADMIN_SEED_TOKEN;
     if (!seedToken || req.headers['x-seed-token'] !== seedToken) {
-      return res.status(403).json({ error: 'Admin seed token gerekli.' });
+      return res.status(403).json({ error: 'Admin seed token required.' });
     }
     const adminCode = process.env.ADMIN_USER_CODE;
     const adminPass = process.env.ADMIN_PASSWORD;
     const adminEmail = process.env.ADMIN_EMAIL;
-    if (!adminCode || !adminPass || !adminEmail) return res.status(400).json({ error: 'ADMIN_USER_CODE, ADMIN_PASSWORD ve ADMIN_EMAIL env var gerekli.' });
+    if (!adminCode || !adminPass || !adminEmail) return res.status(400).json({ error: 'ADMIN_USER_CODE, ADMIN_PASSWORD and ADMIN_EMAIL env vars are required.' });
     const bcrypt = (await import('bcrypt')).default;
     const hash = await bcrypt.hash(adminPass, 12);
 
@@ -234,18 +234,18 @@ router.post('/seed-admin', async (req, res) => {
     if (existing.rows.length > 0) {
       await query(`UPDATE users SET role='admin', is_approved=true, is_banned=false, password_hash=$1, user_code=$2, username=$2 WHERE user_code=$2 OR email=$3`,
         [hash, adminCode, adminEmail]);
-      return res.json({ message: 'Admin güncellendi.' });
+      return res.json({ message: 'Admin updated.' });
     }
 
     await query(
       `INSERT INTO users (user_code, username, first_name, last_name, email, password_hash, role, is_approved)
-       VALUES ($1,$1,'Admin','Yönetici',$2,$3,'admin',true)`,
+       VALUES ($1,$1,'Admin','Administrator',$2,$3,'admin',true)`,
       [adminCode, adminEmail, hash]
     );
-    res.json({ message: 'Admin oluşturuldu.' });
+    res.json({ message: 'Admin created.' });
   } catch (err) {
     console.error('seed-admin error:', err.message, err.code);
-    res.status(500).json({ error: 'Admin oluşturulamadı.', detail: err.message });
+    res.status(500).json({ error: 'Failed to create admin.', detail: err.message });
   }
 });
 
@@ -254,7 +254,7 @@ router.post('/seed-admin', async (req, res) => {
 router.post('/cleanup', async (req, res) => {
   const seedToken = process.env.ADMIN_SEED_TOKEN;
   if (!seedToken || req.headers['x-seed-token'] !== seedToken) {
-    return res.status(403).json({ error: 'Geçersiz token.' });
+    return res.status(403).json({ error: 'Invalid token.' });
   }
   try {
     const results = {};

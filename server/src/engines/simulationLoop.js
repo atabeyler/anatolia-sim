@@ -178,8 +178,8 @@ export class SimulationEngine {
     if (!hasMales || !hasFemales) {
       const reason = !hasMales ? 'no_males' : 'no_females';
       const msg = !hasMales
-        ? 'Toplulukta erkek birey kalmadı — nesil devamı imkânsız.'
-        : 'Toplulukta dişi birey kalmadı — nesil devamı imkânsız.';
+        ? 'No males remain in the community — continuation of the lineage is impossible.'
+        : 'No females remain in the community — continuation of the lineage is impossible.';
       this.logEvent(day, 'extinction', msg, { cause: reason }, 5);
       this.onEnded?.({ reason });
       this.running = false;
@@ -358,15 +358,15 @@ export class SimulationEngine {
       ind.y = caregiver.y * snapStr + ind.y * (1 - snapStr) + (Math.random() - 0.5) * scatter;
     }
 
-    // 4c. Tüm korkular zamanla azalır (unutma / yeniden uyum)
+    // 4c. All fears diminish over time (forgetting / re-adaptation)
     for (const ind of alive) {
       if ((ind._waterFear ?? 0) > 0) {
-        ind._waterFear = Math.max(0, ind._waterFear - 0.0005);   // ~2000 gün
+        ind._waterFear = Math.max(0, ind._waterFear - 0.0005);   // ~2000 days
       }
       if (ind._fears) {
         for (const key of Object.keys(ind._fears)) {
           if (ind._fears[key] > 0) {
-            // Afet/yırtıcı korkusu daha yavaş azalır; kıtlık/hastalık daha hızlı
+            // Predator/disaster fear decays more slowly; scarcity/infection decays faster
             const decayRate = (key === 'predator' || key === 'disaster') ? 0.0003
                             : (key === 'scarcity' || key === 'infection')  ? 0.001
                             : 0.0005;
@@ -376,23 +376,23 @@ export class SimulationEngine {
       }
     }
 
-    // 4d. Su deneyimi ve gözlemsel yüzme öğrenimi
-    // _waterExperience: 0→1 arası birikimli değer, genomda değil bellekte.
-    // Suda hayatta kalan bireyler deneyim kazanır; ebeveynini izleyen çocuklar
-    // gözlemsel öğrenmeyle bu deneyimin küçük bir kısmını edinir.
+    // 4d. Water experience and observational swimming learning
+    // _waterExperience: cumulative value 0→1, stored in memory not genome.
+    // Individuals who survive in water gain experience; children watching parents
+    // acquire a small fraction of that experience through observational learning.
     for (const ind of alive) {
       if (ind._inWater) {
-        // Her suda geçen tick'te biraz deneyim kazanır (çok yavaş)
+        // Gains a little experience each tick spent in water (very slow)
         ind._waterExperience = Math.min(1, (ind._waterExperience ?? 0) + 0.002);
       }
     }
-    // Gözlemsel öğrenme: ebeveyn sudan yeni çıktıysa (önceki tick'te suda, şimdi değil),
-    // yakındaki çocukları bunu görür ve bir miktar deneyim edinir.
+    // Observational learning: if a parent just left the water (was in water last tick, now on land),
+    // nearby children witness this and gain some experience.
     for (const ind of alive) {
       const wasInWater = ind._wasInWater ?? false;
       const nowOnLand  = !ind._inWater;
       if (wasInWater && nowOnLand) {
-        // Bu birey sudan çıktı — yakındaki gençler gözlem kazanır (spatial grid ile O(n·k))
+        // This individual exited the water — nearby youth gain observational experience (O(n·k) via spatial grid)
         for (const other of getNeighbours(ind, spatialGrid)) {
           if (other.id === ind.id) continue;
           const otherAge = (other.age ?? 0) / 365;
@@ -440,7 +440,7 @@ export class SimulationEngine {
       initializePsychology(nb);
       const p1 = this.population.get(nb.parent_1_id);
       const p2 = this.population.get(nb.parent_2_id);
-      // Yenidoğan ebeveynin grubunu miras alır — yoksa izolasyon stresi ve bilinç cezası oluşur
+      // Newborn inherits parent's group — without it, isolation stress and consciousness penalties apply
       const parentGroupId = p1?.group_id ?? p2?.group_id ?? null;
       if (parentGroupId) {
         nb.group_id = parentGroupId;
@@ -496,8 +496,8 @@ export class SimulationEngine {
         this._aliveIds.delete(ind.id);
         this._todayDeaths++;
         this.totalDeaths++;
-        // Grief event — her grup üyesine ve yakın akrabaya ayrı ayrı gönderilir
-        // (psychologyEngine sadece kendi individual_id'sine sahip event'leri işler)
+        // Grief event — sent separately to each group member and close relative
+        // (psychologyEngine only processes events that carry its own individual_id)
         for (const survivor of alive) {
           if (survivor.is_dead || survivor.id === ind.id) continue;
           const sameGroup = survivor.group_id && survivor.group_id === ind.group_id;
@@ -512,8 +512,8 @@ export class SimulationEngine {
         this.logEvent(day, 'death', `${deadName} died: ${cause}`, { individual_id: ind.id, cause, name: deadName }, 1);
         ind._death_logged = true;
 
-        // Tanıklık korkusu — gözlemsel öğrenme, gen değil.
-        // Her ölüm nedeni yakındaki bireylerde farklı bir korku izlenimi bırakır.
+        // Witness fear — observational learning, not genetic.
+        // Each cause of death leaves a different fear impression on nearby individuals.
         this._applyDeathWitnessFear(ind, cause, alive);
       }
     }
@@ -535,14 +535,14 @@ export class SimulationEngine {
       const w = this.worldState.current_weather;
       if (w && w !== 'clear') {
         const WEATHER_NAMES = {
-          rain: 'Yağmur', heavy_rain: 'Şiddetli yağmur', snow: 'Kar',
-          blizzard: 'Tipi fırtınası', storm: 'Fırtına',
-          heat_wave: 'Sıcak hava dalgası', drought: 'Kuraklık',
+          rain: 'Rain', heavy_rain: 'Heavy rain', snow: 'Snow',
+          blizzard: 'Blizzard', storm: 'Storm',
+          heat_wave: 'Heat wave', drought: 'Drought',
         };
         const label = WEATHER_NAMES[w] ?? w;
         const pct = Math.round((this.worldState.weather_intensity ?? 0.5) * 100);
         const severity = (w === 'blizzard' || w === 'drought') ? 4 : (w === 'storm' || w === 'heavy_rain') ? 3 : 2;
-        this.logEvent(day, 'weather', `${label} başladı (%${pct} şiddet, ${this.worldState.weather_days_remaining} gün)`, { weather: w, intensity: this.worldState.weather_intensity }, severity);
+        this.logEvent(day, 'weather', `${label} started (${pct}% intensity, ${this.worldState.weather_days_remaining} days)`, { weather: w, intensity: this.worldState.weather_intensity }, severity);
       }
       this._lastLoggedWeather = this.worldState.current_weather;
     }
@@ -601,11 +601,11 @@ export class SimulationEngine {
       accumulateExperience(ind, this.worldState);
       const emerged = checkTechEmergence(ind, this.discoveredTechs);
       for (const techId of emerged) {
-        const techTrigger = this.worldState.food_abundance < 0.3 ? 'besin kıtlığı'
-          : this.worldState.water_abundance < 0.2 ? 'su kıtlığı'
-          : (this.worldState.current_weather === 'drought' || this.worldState.current_weather === 'blizzard') ? 'iklim baskısı'
-          : alive.length >= 20 ? 'nüfus büyümesi'
-          : 'organik keşif';
+        const techTrigger = this.worldState.food_abundance < 0.3 ? 'food scarcity'
+          : this.worldState.water_abundance < 0.2 ? 'water scarcity'
+          : (this.worldState.current_weather === 'drought' || this.worldState.current_weather === 'blizzard') ? 'climate pressure'
+          : alive.length >= 20 ? 'population growth'
+          : 'organic discovery';
         const ev = {
           tech_id: techId, name: techId, discoverer_id: ind.id, discovery_day: day, x: ind.x, y: ind.y,
           context: {
@@ -635,10 +635,10 @@ export class SimulationEngine {
     for (const ind of alive) {
       const beliefEvent = tryFormBelief(ind, this.discoveredBeliefs, this.discoveredTechs, this.worldState, day);
       if (beliefEvent) {
-        const beliefTrigger = this.worldState.recent_disaster ? `doğal afet (${this.worldState.recent_disaster})`
-          : this.worldState.food_abundance < 0.25 ? 'aşırı besin kıtlığı'
-          : (this.worldState.current_weather === 'blizzard' || this.worldState.current_weather === 'drought') ? 'ekstrem hava olayı'
-          : 'sosyal-kültürel gelişim';
+        const beliefTrigger = this.worldState.recent_disaster ? `natural disaster (${this.worldState.recent_disaster})`
+          : this.worldState.food_abundance < 0.25 ? 'extreme food scarcity'
+          : (this.worldState.current_weather === 'blizzard' || this.worldState.current_weather === 'drought') ? 'extreme weather event'
+          : 'socio-cultural development';
         const enrichedBelief = {
           ...beliefEvent,
           context: {
@@ -761,10 +761,10 @@ export class SimulationEngine {
         if (this._prevCentroid) {
           const dist = Math.hypot(cx - this._prevCentroid.x, cy - this._prevCentroid.y);
           if (dist >= 0.05) {
-            const reason = stats.movement_context?.dominant_drive ?? 'bilinmiyor';
+            const reason = stats.movement_context?.dominant_drive ?? 'unknown';
             const distKm = Math.round(dist * 111);
             this.logEvent(day, 'migration',
-              `Bant ${distKm} km yer değiştirdi — sebep: ${reason}`,
+              `Band migrated ${distKm} km — reason: ${reason}`,
               {
                 from: { x: Math.round(this._prevCentroid.x * 10000) / 10000, y: Math.round(this._prevCentroid.y * 10000) / 10000 },
                 to:   { x: Math.round(cx * 10000) / 10000, y: Math.round(cy * 10000) / 10000 },
@@ -793,7 +793,7 @@ export class SimulationEngine {
       console.error(`[SimulationEngine] tick() error on day ${this.currentDay} (${this._consecutiveErrors}/5):`, err);
       this.currentDay++;
       if (this._consecutiveErrors >= 5) {
-        console.error('[SimulationEngine] 5 ardışık hata — simülasyon duraklatıldı.');
+        console.error('[SimulationEngine] 5 consecutive errors — simulation paused.');
         this.running = false;
         this.onEnded?.({ reason: 'tick_error', error: err.message });
       }
@@ -805,12 +805,12 @@ export class SimulationEngine {
     const events = [];
     const pName = ind => ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
     const CONCEPT_TR = {
-      danger:'tehlike', food:'yiyecek', water:'su', fire:'ateş',
-      here:'burada', there:'orada', me:'ben', you:'sen', us:'biz', them:'onlar',
-      good:'iyi', bad:'kötü', hunt:'av', eat:'yemek', sleep:'uyku',
-      die:'ölüm', born:'doğum', run:'koş', sun:'güneş', moon:'ay',
-      rain:'yağmur', dark:'karanlık', light:'ışık', god:'tanrı', spirit:'ruh',
-      sky:'gökyüzü', earth:'toprak', time:'zaman',
+      danger:'danger', food:'food', water:'water', fire:'fire',
+      here:'here', there:'there', me:'me', you:'you', us:'us', them:'them',
+      good:'good', bad:'bad', hunt:'hunt', eat:'eat', sleep:'sleep',
+      die:'death', born:'birth', run:'run', sun:'sun', moon:'moon',
+      rain:'rain', dark:'dark', light:'light', god:'god', spirit:'spirit',
+      sky:'sky', earth:'earth', time:'time',
     };
 
     // --- Communication: individuals with language.stage >= 1 signal nearby group members ---
@@ -848,12 +848,12 @@ export class SimulationEngine {
       let desc;
       if (word) {
         desc = isSound
-          ? `${name}, ${targetName}'a "${word}" dedi — ${conceptTr}`
-          : `${name}, ${targetName}'a "${word}" jesti yaptı — ${conceptTr}`;
+          ? `${name} said "${word}" to ${targetName} — ${conceptTr}`
+          : `${name} gestured "${word}" to ${targetName} — ${conceptTr}`;
       } else {
         desc = isSound
-          ? `${name}, ${targetName}'a ses çıkardı`
-          : `${name}, ${targetName}'a işaret etti`;
+          ? `${name} made a sound at ${targetName}`
+          : `${name} pointed at ${targetName}`;
       }
 
       events.push({ type: 'communication', description: desc, importance: 1,
@@ -872,19 +872,19 @@ export class SimulationEngine {
       const pregnant = ind.health?.pregnancy;
 
       let activity;
-      if (satiation < 0.25)  activity = 'yiyecek arıyor';
-      else if (hydration < 0.25) activity = 'su kaynağı arıyor';
-      else if (pregnant)     activity = 'doğuma hazırlanıyor';
-      else if (mentalState === 'grieving') activity = 'yas tutuyor';
-      else if (mentalState === 'excited')  activity = 'dinç ve aktif';
-      else if ((ind.mating_urge ?? 0) > 0.8) activity = 'eş arıyor';
+      if (satiation < 0.25)  activity = 'searching for food';
+      else if (hydration < 0.25) activity = 'searching for water';
+      else if (pregnant)     activity = 'preparing for birth';
+      else if (mentalState === 'grieving') activity = 'grieving';
+      else if (mentalState === 'excited')  activity = 'energetic and active';
+      else if ((ind.mating_urge ?? 0) > 0.8) activity = 'seeking a mate';
       else {
-        const dir = (ind._dx ?? 0) > 0.001 ? 'doğuya' : (ind._dx ?? 0) < -0.001 ? 'batıya' : 'çevresinde';
-        activity = `${dir} doğru ilerliyor`;
+        const dir = (ind._dx ?? 0) > 0.001 ? 'eastward' : (ind._dx ?? 0) < -0.001 ? 'westward' : 'around the area';
+        activity = `moving ${dir}`;
       }
 
       events.push({ type: 'activity', importance: 1,
-        description: `${name} (${ageYears} yaş, ${mentalState}): ${activity}`,
+        description: `${name} (${ageYears} yrs, ${mentalState}): ${activity}`,
         data: { individual_id: ind.id } });
     }
 
@@ -897,7 +897,7 @@ export class SimulationEngine {
         ind._was_sleeping = true;
         const name = pName(ind);
         events.push({ type: 'sleep', importance: 1,
-          description: `${name} tükendi ve uyudu (enerji: %${Math.round(satiation * 100)})`,
+          description: `${name} was exhausted and fell asleep (energy: ${Math.round(satiation * 100)}%)`,
           data: { individual_id: ind.id, satiation, wellbeing } });
       } else if (!tiredNow) {
         ind._was_sleeping = false;
@@ -929,7 +929,7 @@ export class SimulationEngine {
     speed *= (this.worldState.weather_move_mult ?? 1.0);
     if (ind.health?.pregnancy) speed *= 0.4;
 
-    // ── Hayatta kalma stresi: temel ihtiyaçlar ne kadar karşılanmıyor ────────
+    // ── Survival stress: how far basic needs are from being met ────────
     const cal = ind.health?.calories  ?? 0.7;
     const hyd = ind.health?.hydration ?? 0.7;
     const survivalStress = Math.min(1, Math.max(0,
@@ -941,8 +941,8 @@ export class SimulationEngine {
     ind._moveAngle = ((ind._moveAngle + (Math.random() - 0.5) * 0.25) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
 
     if (ind.is_founder) {
-      // Kurucular hafif hareket edebilir — home'a çekim kuvvetiyle kısıtlıdır.
-      // Sert sınır aşağıdaki blokta uygulanır (max 0.04° drift).
+      // Founders can move slightly — constrained by gravitational pull toward home.
+      // Hard limit is applied in the block below (max 0.04° drift).
       const hx = ind.home_x ?? ind.x;
       const hy = ind.home_y ?? ind.y;
       const hdx = hx - (ind.x ?? 0);
@@ -954,7 +954,7 @@ export class SimulationEngine {
       }
     }
     {
-      // ── Bant uyumu: centroide çekim ──────────────────────────────────────
+      // ── Band cohesion: gravitational pull toward centroid ──────────────────────────────────────
       const cx      = this._bandCentroid?.x ?? (this.worldState.longitude ?? 0);
       const cy      = this._bandCentroid?.y ?? (this.worldState.latitude  ?? 0);
       const bdx     = cx - (ind.x ?? 0);
@@ -963,7 +963,7 @@ export class SimulationEngine {
       const predatorFear  = ind._fears?.predator ?? 0;
       const disasterFear  = ind._fears?.disaster  ?? 0;
       const panicLevel    = Math.max(predatorFear, disasterFear);
-      // Yırtıcı/afet korkusu: sürüye daha yakın kalma (freeZone küçülür, kohezyon artar)
+      // Predator/disaster fear: stay closer to the herd (freeZone shrinks, cohesion increases)
       const freeZone    = Math.max(0.05, 0.3 + survivalStress * 1.2 - panicLevel * 0.25);
       const cohesionStr = Math.min(0.98, Math.max(0.15, 0.88 - survivalStress * 0.65 + panicLevel * 0.3));
       if (bdist > freeZone) {
@@ -971,7 +971,7 @@ export class SimulationEngine {
         ind._moveAngle = this._lerpAngle(ind._moveAngle, Math.atan2(bdy, bdx), pull);
       }
 
-      // ── Hafıza temelli yiyecek arama ──────────────────────────────────────
+      // ── Memory-based food seeking ──────────────────────────────────────
       if ((ind.satiation ?? 0.5) > 0.72) {
         ind._goodFoodAngle = ind._moveAngle;
       } else if ((survivalStress > 0.35 || (ind._fears?.scarcity ?? 0) > 0.2) && ind._goodFoodAngle !== undefined) {
@@ -980,7 +980,7 @@ export class SimulationEngine {
         ind._moveAngle = this._lerpAngle(ind._moveAngle, ind._goodFoodAngle, memPull);
       }
 
-      // ── Çiftleşme dürtüsü: temel ihtiyaçlar karşılandığında devreye girer ─
+      // ── Mating urge: activates when basic needs are met ─
       if (cal > 0.38 && hyd > 0.32 && !ind.health?.pregnancy
           && ageYears >= 13 && (ind.mating_urge ?? 0) > 0.65) {
         const oppSex = ind.sex === 'male' ? 'female' : 'male';
@@ -1001,14 +1001,14 @@ export class SimulationEngine {
       }
     }
 
-    // ── Su korkusu: boğulmaya tanık olan birey suya yönelmekten kaçınır.
-    //    _waterFear zamanla azalır; kaçınma gücü korkuya orantılı. ────────────
+    // ── Water fear: individuals who witnessed drowning avoid moving toward water.
+    //    _waterFear decreases over time; avoidance strength is proportional to fear. ────────────
     if ((ind._waterFear ?? 0) > 0.05 && !ind._inWater && ind._lastLandX !== undefined) {
-      const step0 = speed * 0.7; // bir sonraki adımın tahmini pozisyonu
+      const step0 = speed * 0.7; // estimated position of next step
       const testX = (ind.x ?? 0) + Math.cos(ind._moveAngle) * step0;
       const testY = (ind.y ?? 0) + Math.sin(ind._moveAngle) * step0;
       if (!isOnLand(testY, testX)) {
-        // Gidilecek yön su — kaçınma açısı hesapla (son kara pozisyonuna)
+        // Direction leads to water — compute avoidance angle (toward last land position)
         const ldx = (ind._lastLandX ?? ind.x ?? 0) - (ind.x ?? 0);
         const ldy = (ind._lastLandY ?? ind.y ?? 0) - (ind.y ?? 0);
         const avoidPull = Math.min(0.95, ind._waterFear ?? 0);
@@ -1016,8 +1016,8 @@ export class SimulationEngine {
       }
     }
 
-    // ── Su panik içgüdüsü: HP %60'ın altına düşünce en son bilinen kara
-    //    yönüne dönme. Bu bir gen değil — acı/tehlike farkındalığı. ───────────
+    // ── Water panic instinct: when HP drops below 60%, turn toward the last known land.
+    //    This is not a gene — it is pain/danger awareness. ───────────
     if (ind._inWater && (ind.health?.hp ?? 1) < 0.6 && ind._lastLandX !== undefined) {
       const ldx = ind._lastLandX - (ind.x ?? 0);
       const ldy = ind._lastLandY - (ind.y ?? 0);
@@ -1040,7 +1040,7 @@ export class SimulationEngine {
     }
     ind._inWater = nowInWater;
 
-    // ── Kurucular: sert konum sınırı ──────────────────────────────────────────
+    // ── Founders: hard position boundary ──────────────────────────────────────────
     if (ind.is_founder && ind.home_x !== undefined) {
       const dx   = ind.x - ind.home_x;
       const dy   = ind.y - ind.home_y;
@@ -1128,38 +1128,38 @@ export class SimulationEngine {
     if (ind.is_dead) return;
     const ageYears = ind.age / 365;
 
-    // Ergenlik öncesi veya çok yaşlı — dürtü yok
+    // Pre-puberty or very old — no urge
     if (ageYears < 13 || ageYears > 72) { ind.mating_urge = 0; return; }
 
-    // Hamilelikte sıfır
+    // Zero during pregnancy
     if (ind.health?.pregnancy) { ind.mating_urge = 0; return; }
 
     if (ind.mating_urge === undefined) ind.mating_urge = Math.random() * 0.4;
 
-    // Günlük birikim hızı
-    let rate = 0.006; // ~170 günde 1'e ulaşır
+    // Daily accumulation rate
+    let rate = 0.006; // reaches 1 in ~170 days
 
-    // Yaş etkisi: 18-35 en yüksek, sonra yavaşlar
+    // Age effect: peak 18-35, then slows
     if (ageYears < 18)       rate *= 0.55;
     else if (ageYears < 35)  rate *= 1.2;
     else if (ageYears > 55)  rate *= 0.55;
     else if (ageYears > 65)  rate *= 0.25;
 
-    // Sağlık etkisi: aç veya hasta → dürtü azalır
+    // Health effect: hungry or sick → urge decreases
     const hp  = ind.health?.hp       ?? 0.8;
     const cal = ind.health?.calories ?? 0.7;
     if (hp < 0.35 || cal < 0.25)        rate *= 0.15;
     else if (hp > 0.7 && cal > 0.6)     rate *= 1.1;
 
-    // Mevsim: ilkbahar ve yaz biraz artırır
+    // Season: spring and summer slightly increase urge
     const season = this.worldState.season ?? 'spring';
     if (season === 'spring' || season === 'summer') rate *= 1.15;
 
-    // Bireysel fenotip: fertilite yüksekse dürtü de yüksek
+    // Individual phenotype: high fertility means high urge
     const fertility = ind.phenotype?.fertility ?? 0.5;
     rate *= (0.65 + fertility * 0.7);
 
-    // Psikolojik stres dürtüyü bastırır
+    // Psychological stress suppresses urge
     const stress = ind.psychology?.stress_level ?? 0.3;
     if (stress > 0.7) rate *= 0.4;
 
@@ -1291,14 +1291,14 @@ export class SimulationEngine {
       if (deaths > 0) {
         this.logEvent(day, 'disaster', `${type} killed ${deaths} individuals`, { type, deaths, ...disaster }, 5);
       }
-      // Afeti yaşayan tüm hayatta kalanlar tanık sayılır — uzaklık fark etmez
-      // çünkü doğal afetler bölgesel olaylar.
+      // All survivors who experienced the disaster are counted as witnesses — distance doesn't matter
+      // because natural disasters are regional events.
       for (const ind of alive) {
         if (ind.is_dead) continue;
         if (!ind._fears) ind._fears = {};
-        // Yumuşatılmış birikme: mevcut korkuyu azaltarak üstüne ekler, 1.0'a kilitlenmez
+        // Softened accumulation: reduces existing fear then adds on top, does not lock at 1.0
         ind._fears.disaster = Math.min(1, (ind._fears.disaster ?? 0) * 0.6 + 0.5);
-        // Sel/deprem tipi afetler ek su/yer korkusu yaratır
+        // Flood/earthquake type disasters create additional water/ground fear
         if (type === 'flood') {
           ind._waterFear = Math.min(1, (ind._waterFear ?? 0) + 0.3);
         }
@@ -1310,8 +1310,8 @@ export class SimulationEngine {
     this.worldState.natural_disaster = null;
   }
 
-  // Tanıklık korkusu — her ölüm nedeni için yakındaki bireylere uygun korku uygular.
-  // 2° (~200 km) yarıçap, akrabalar daha güçlü etkilenir.
+  // Witness fear — applies appropriate fear to nearby individuals for each cause of death.
+  // 2° (~200 km) radius; relatives are affected more strongly.
   _applyDeathWitnessFear(dead, cause, alive) {
     const WITNESS_RADIUS = 2.0;
     for (const witness of alive) {
@@ -1328,28 +1328,28 @@ export class SimulationEngine {
 
       switch (cause) {
         case 'drowning':
-          // Su korkusu — moveIndividual'da su yönünü bastırır
+          // Water fear — suppresses movement toward water in moveIndividual
           witness._waterFear = Math.min(1, (witness._waterFear ?? 0) + base);
           break;
         case 'predator':
-          // Yırtıcı korkusu — grup kohezyon artar, hız yükselir
+          // Predator fear — increases group cohesion and speed
           witness._fears.predator = Math.min(1, (witness._fears.predator ?? 0) + base);
           break;
         case 'conflict':
-          // Şiddet korkusu — tanınan saldırgandan kaçınma, stres artar
+          // Violence fear — avoidance of known aggressors, increased stress
           witness._fears.conflict = Math.min(1, (witness._fears.conflict ?? 0) + base * 0.8);
           break;
         case 'starvation':
         case 'dehydration':
-          // Kıtlık korkusu — yiyecek arama güdüsü güçlenir
+          // Scarcity fear — strengthens food-seeking drive
           witness._fears.scarcity = Math.min(1, (witness._fears.scarcity ?? 0) + base * 0.5);
           break;
         case 'infection':
-          // Hastalık korkusu — hasta bireylere yaklaşmaktan kaçınma
+          // Disease fear — avoidance of approaching sick individuals
           witness._fears.infection = Math.min(1, (witness._fears.infection ?? 0) + base * 0.4);
           break;
         default:
-          // Genel travma — stres artışı
+          // General trauma — stress increase
           witness._fears.general = Math.min(1, (witness._fears.general ?? 0) + base * 0.3);
       }
     }
@@ -1461,7 +1461,7 @@ export class SimulationEngine {
           sex: i.sex,
           age: Math.round(getAge(i, day)),
           alive: !i.is_dead,
-          note: 'Kurucular tasarım gereği sabit konumdadır — aile bandının çıpasıdır',
+          note: 'Founders are fixed in position by design — they are the anchor of the family band',
         }));
       })(),
       centroid_x: Math.round((this._bandCentroid?.x ?? this.worldState.longitude ?? 0) * 10000) / 10000,
@@ -1474,7 +1474,7 @@ export class SimulationEngine {
         const cx = this._bandCentroid?.x ?? 0;
         const cy = this._bandCentroid?.y ?? 0;
         const avgDist   = alive.reduce((s, i) => s + Math.hypot((i.x??0)-cx, (i.y??0)-cy), 0) / alive.length;
-        const dominant  = avgCal < 0.38 ? 'yiyecek arama' : avgHyd < 0.32 ? 'su arama' : avgUrge > 0.65 ? 'çiftleşme arayışı' : 'bant uyumu (birlikte kalma)';
+        const dominant  = avgCal < 0.38 ? 'food seeking' : avgHyd < 0.32 ? 'water seeking' : avgUrge > 0.65 ? 'mate seeking' : 'band cohesion (staying together)';
         return {
           dominant_drive: dominant,
           avg_mating_urge: Math.round(avgUrge * 100) / 100,

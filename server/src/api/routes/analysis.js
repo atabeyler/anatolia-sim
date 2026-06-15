@@ -7,42 +7,42 @@ import { getAge } from '../../engines/biology/individual.js';
 const router = Router();
 
 const SIM_ARCHITECTURE = `
-SİMÜLASYON MİMARİSİ (tasarım kararları — bunları kesin olarak bil):
-- Kurucular (is_founder=true): Başlangıç koordinatlarına sabitlenmiş çıpalardır. Hareket ETMEZLER. Bu kasıtlı tasarım kararıdır — aile bandının merkezini tutarlar.
-- Diğer bireyler: Grubun ağırlık merkezine (centroid) çekilir; kurucuların konumu bu centroidi doğal olarak ev noktasına çeker.
-- Hareket öncelikleri: Açlık/susuzluk > bant uyumu > çiftleşme dürtüsü.
-- mating_urge: Günlük birikir; çiftleşince sıfırlanır; hamilelikte 0; temel ihtiyaçlar karşılanmadan hareketi etkilemez.
-- Tek eşlilik (monogami) yoktur. Yakındaki herhangi bir uygun birey ile çiftleşilebilir.
-- Bebek ölüm oranı: ~%8/yıl (0-1 yaş). Küçük gruplarda koruma mekanizması devrededir.
-- inbreeding_coeff > 0.25 ise ölüm riski %50 artar — yakın akraba çiftleşmeleri sorunludur.
+SIMULATION ARCHITECTURE (design decisions — know these precisely):
+- Founders (is_founder=true): Anchored to their starting coordinates. They do NOT move. This is an intentional design decision — they hold the center of the family band.
+- Other individuals: Attracted toward the group centroid; founder positions naturally pull this centroid toward the home point.
+- Movement priorities: Hunger/thirst > band cohesion > mating drive.
+- mating_urge: Accumulates daily; resets on mating; 0 during pregnancy; does not affect movement until basic needs are met.
+- No monogamy. Any nearby compatible individual can mate.
+- Infant mortality: ~8%/year (age 0-1). A protection mechanism is active for small groups.
+- If inbreeding_coeff > 0.25, death risk increases by 50% — close-relative mating is problematic.
 `;
 
 function buildEngineContext(engine) {
-  if (!engine) return 'Simülasyon şu an çalışmıyor.';
+  if (!engine) return 'Simulation is not currently running.';
 
   const day = engine.currentDay;
   const allInds = [...engine.population.values()];
   const alive   = allInds.filter(i => !i.is_dead);
   const dead    = allInds.filter(i => i.is_dead && i.birth_day != null);
 
-  // ── Dünya durumu ─────────────────────────────────────────────────────────
+  // ── World state ──────────────────────────────────────────────────────────
   const ws = engine.worldState ?? {};
-  const worldLine = `Dünya: Biyom=${ws.biome}, Mevsim=${ws.season}, ` +
-    `Sıcaklık=${Math.round(ws.temperature ?? 0)}°C, ` +
-    `Yiyecek=${((ws.food_abundance ?? 0) * 100).toFixed(0)}%, ` +
-    `Su=${((ws.water_abundance ?? 0) * 100).toFixed(0)}%, ` +
-    `Hava=${ws.current_weather ?? 'clear'} (şiddet %${Math.round((ws.weather_intensity ?? 0.5) * 100)})`;
+  const worldLine = `World: Biome=${ws.biome}, Season=${ws.season}, ` +
+    `Temperature=${Math.round(ws.temperature ?? 0)}°C, ` +
+    `Food=${((ws.food_abundance ?? 0) * 100).toFixed(0)}%, ` +
+    `Water=${((ws.water_abundance ?? 0) * 100).toFixed(0)}%, ` +
+    `Weather=${ws.current_weather ?? 'clear'} (intensity ${Math.round((ws.weather_intensity ?? 0.5) * 100)}%)`;
 
-  // ── Nüfus özeti ──────────────────────────────────────────────────────────
+  // ── Population summary ────────────────────────────────────────────────────
   const avgAge = alive.length
     ? (alive.reduce((s, i) => s + getAge(i, day), 0) / alive.length).toFixed(1)
     : 0;
-  const popLine = `Nüfus: ${alive.length} hayatta / ${allInds.length} toplam doğan, ` +
-    `Yıl: ${Math.floor(day / 365)}, Ortalama yaş: ${avgAge}, ` +
-    `Erkek: ${alive.filter(i => i.sex === 'male').length}, Dişi: ${alive.filter(i => i.sex === 'female').length}`;
+  const popLine = `Population: ${alive.length} alive / ${allInds.length} total born, ` +
+    `Year: ${Math.floor(day / 365)}, Average age: ${avgAge}, ` +
+    `Male: ${alive.filter(i => i.sex === 'male').length}, Female: ${alive.filter(i => i.sex === 'female').length}`;
 
-  // ── Ölüm istatistikleri ──────────────────────────────────────────────────
-  let deathLine = 'Ölüm: Henüz yok';
+  // ── Death statistics ─────────────────────────────────────────────────────
+  let deathLine = 'Deaths: None yet';
   if (dead.length) {
     const ages = dead.map(i => (i.death_day - i.birth_day) / 365);
     const avg  = (ages.reduce((a, b) => a + b, 0) / ages.length).toFixed(1);
@@ -52,22 +52,22 @@ function buildEngineContext(engine) {
     for (const i of dead) { const c = i.death_cause ?? i.cause_of_death ?? 'unknown'; causes[c] = (causes[c] ?? 0) + 1; }
     const topCauses = Object.entries(causes).sort((a, b) => b[1] - a[1]).slice(0, 4)
       .map(([k, v]) => `${k}:${v}`).join(', ');
-    deathLine = `Ölümler: ${dead.length} toplam, Ortalama ölüm yaşı: ${avg} yıl, ` +
-      `Bebek (<1 yıl): ${inf}, Çocuk (1-15 yıl): ${ch}, Nedenler: ${topCauses}`;
+    deathLine = `Deaths: ${dead.length} total, Average age at death: ${avg} years, ` +
+      `Infant (<1 year): ${inf}, Child (1-15 years): ${ch}, Causes: ${topCauses}`;
   }
 
-  // ── Kurucular ────────────────────────────────────────────────────────────
+  // ── Founders ─────────────────────────────────────────────────────────────
   const founders = allInds.filter(i => i.is_founder);
   const foundersLine = founders.length
-    ? 'Kurucular (sabit konumda, hareket etmezler):\n' + founders.map(f => {
+    ? 'Founders (fixed position, do not move):\n' + founders.map(f => {
         const age = Math.round(getAge(f, day));
-        return `  - ${f.sex === 'male' ? 'Erkek' : 'Dişi'} kurucu, yaş ${age}, ` +
-          `${f.is_dead ? `ÖLMÜŞ (${f.death_cause ?? '?'}, yaş ${Math.round((f.death_day - f.birth_day) / 365)})` : 'hayatta'}, ` +
-          `konum: (${(f.x ?? 0).toFixed(2)}°, ${(f.y ?? 0).toFixed(2)}°)`;
+        return `  - ${f.sex === 'male' ? 'Male' : 'Female'} founder, age ${age}, ` +
+          `${f.is_dead ? `DEAD (${f.death_cause ?? '?'}, age ${Math.round((f.death_day - f.birth_day) / 365)})` : 'alive'}, ` +
+          `position: (${(f.x ?? 0).toFixed(2)}°, ${(f.y ?? 0).toFixed(2)}°)`;
       }).join('\n')
-    : 'Kurucu bulunamadı';
+    : 'No founders found';
 
-  // ── Bireyler listesi ─────────────────────────────────────────────────────
+  // ── Individual list ───────────────────────────────────────────────────────
   const MAX_IND = 60;
   const indsToShow = alive.slice(0, MAX_IND);
   const indLines = indsToShow.map(i => {
@@ -76,49 +76,49 @@ function buildEngineContext(engine) {
     const hp     = Math.round((i.health?.hp ?? 1) * 100);
     const cal    = Math.round((i.health?.calories ?? 1) * 100);
     const urge   = Math.round((i.mating_urge ?? 0) * 100);
-    const preg   = i.health?.pregnancy ? ' [HAMİLE]' : '';
-    const found  = i.is_founder ? ' [KURUCU-SABİT]' : '';
-    const grp    = i.group_id ? ` [grup:${i.group_id.slice(-4)}]` : '';
+    const preg   = i.health?.pregnancy ? ' [PREGNANT]' : '';
+    const found  = i.is_founder ? ' [FOUNDER-FIXED]' : '';
+    const grp    = i.group_id ? ` [group:${i.group_id.slice(-4)}]` : '';
     const stress = Math.min(1, Math.max(0,
       Math.max((0.45 - (i.health?.calories ?? 0.7)) / 0.45, (0.35 - (i.health?.hydration ?? 0.7)) / 0.35)
     ));
-    const drive  = stress > 0.4 ? 'yiyecek/su arıyor' : urge > 65 ? 'çiftleşme arayışı' : 'bantta';
-    return `  ${name} | ${i.sex === 'male' ? 'E' : 'D'} yaş:${age} hp:${hp}% kalori:${cal}% çiftleşme-dürtüsü:${urge}%${preg}${found}${grp} → ${drive}`;
+    const drive  = stress > 0.4 ? 'seeking food/water' : urge > 65 ? 'seeking mate' : 'in band';
+    return `  ${name} | ${i.sex === 'male' ? 'M' : 'F'} age:${age} hp:${hp}% cal:${cal}% mating-urge:${urge}%${preg}${found}${grp} → ${drive}`;
   });
-  const indSection = `Bireyler (${alive.length} hayatta${alive.length > MAX_IND ? `, ilk ${MAX_IND} gösteriliyor` : ''}):\n` +
+  const indSection = `Individuals (${alive.length} alive${alive.length > MAX_IND ? `, showing first ${MAX_IND}` : ''}):\n` +
     indLines.join('\n');
 
-  // ── Gruplar ──────────────────────────────────────────────────────────────
-  let groupLine = 'Gruplar: Henüz yok';
+  // ── Groups ───────────────────────────────────────────────────────────────
+  let groupLine = 'Groups: None yet';
   if (engine.groups?.length) {
-    groupLine = 'Gruplar:\n' + engine.groups.map(g => {
+    groupLine = 'Groups:\n' + engine.groups.map(g => {
       const members = alive.filter(i => g.member_ids?.includes(i.id));
-      return `  - Grup ${g.id.slice(-4)}: ${members.length} üye, ` +
-        `merkez (${(g.territory?.x ?? 0).toFixed(1)}°, ${(g.territory?.y ?? 0).toFixed(1)}°)`;
+      return `  - Group ${g.id.slice(-4)}: ${members.length} members, ` +
+        `center (${(g.territory?.x ?? 0).toFixed(1)}°, ${(g.territory?.y ?? 0).toFixed(1)}°)`;
     }).join('\n');
   }
 
-  // ── Teknoloji / inanç / sanat ─────────────────────────────────────────────
-  const techLine  = `Teknolojiler (${engine.discoveredTechs?.size ?? 0}): ${[...(engine.discoveredTechs ?? [])].join(', ') || 'yok'}`;
-  const beliefLine = `İnançlar (${engine.discoveredBeliefs?.size ?? 0}): ${[...(engine.discoveredBeliefs ?? [])].slice(0, 10).join(', ') || 'yok'}`;
+  // ── Technology / belief / art ─────────────────────────────────────────────
+  const techLine  = `Technologies (${engine.discoveredTechs?.size ?? 0}): ${[...(engine.discoveredTechs ?? [])].join(', ') || 'none'}`;
+  const beliefLine = `Beliefs (${engine.discoveredBeliefs?.size ?? 0}): ${[...(engine.discoveredBeliefs ?? [])].slice(0, 10).join(', ') || 'none'}`;
 
-  // ── Son olaylar ──────────────────────────────────────────────────────────
+  // ── Recent events ────────────────────────────────────────────────────────
   const recentEvents = (engine.events ?? []).slice(-30).reverse()
     .map(e => `  Y${e.sim_year} [${e.event_type}] ${e.description}`)
     .join('\n');
 
-  // ── Hareket bağlamı ──────────────────────────────────────────────────────
+  // ── Movement context ─────────────────────────────────────────────────────
   const cx = alive.reduce((s, i) => s + (i.x ?? 0), 0) / Math.max(1, alive.length);
   const cy = alive.reduce((s, i) => s + (i.y ?? 0), 0) / Math.max(1, alive.length);
   const avgCal  = alive.reduce((s, i) => s + (i.health?.calories ?? 0.7), 0) / Math.max(1, alive.length);
   const avgUrge = alive.reduce((s, i) => s + (i.mating_urge ?? 0), 0) / Math.max(1, alive.length);
-  const dominant = avgCal < 0.38 ? 'yiyecek arama' : avgUrge > 0.65 ? 'çiftleşme arayışı' : 'bant uyumu';
-  const moveLine = `Hareket: Baskın dürtü="${dominant}", ort.kalori=${(avgCal * 100).toFixed(0)}%, ` +
-    `ort.çiftleşme-dürtüsü=${(avgUrge * 100).toFixed(0)}%, ` +
-    `bant merkezi=(${cx.toFixed(2)}°, ${cy.toFixed(2)}°)`;
+  const dominant = avgCal < 0.38 ? 'foraging' : avgUrge > 0.65 ? 'seeking mate' : 'band cohesion';
+  const moveLine = `Movement: Dominant drive="${dominant}", avg.calories=${(avgCal * 100).toFixed(0)}%, ` +
+    `avg.mating-urge=${(avgUrge * 100).toFixed(0)}%, ` +
+    `band center=(${cx.toFixed(2)}°, ${cy.toFixed(2)}°)`;
 
   return [worldLine, popLine, deathLine, '', foundersLine, '', indSection, '', groupLine, '',
-    techLine, beliefLine, moveLine, '', 'Son 30 olay:', recentEvents].join('\n');
+    techLine, beliefLine, moveLine, '', 'Last 30 events:', recentEvents].join('\n');
 }
 
 router.post('/:simId', authenticate, requireSimulationOwner, async (req, res) => {
@@ -129,7 +129,7 @@ router.post('/:simId', authenticate, requireSimulationOwner, async (req, res) =>
     const response = await geminiChat({
       model: process.env.GEMINI_ANALYSIS_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite',
       max_tokens: 800,
-      system: `Sen ANATOLIA-SIM medeniyet simulasyonunu analiz eden uzman bir yapay zeka asistansin.\n\n${SIM_ARCHITECTURE}\n\nMEVCUT SİMÜLASYON VERİSİ:\n${context}\n\nYaniti Turkce, kisa, net ve veriye dayali ver. Mimari tasarim kararlarini biliyorsun.`,
+      system: `You are an expert AI assistant analyzing the ANATOLIA-SIM civilization simulation.\n\n${SIM_ARCHITECTURE}\n\nCURRENT SIMULATION DATA:\n${context}\n\nProvide your response in English — concise, precise, and data-driven. You know the architectural design decisions.`,
       user: message,
     });
     res.json({ response });

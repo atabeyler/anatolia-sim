@@ -29,7 +29,7 @@ export function checkReproduction(population, currentDay, simulationId, communit
         father_id: male.id, conception_day: currentDay,
         due_day: currentDay + PREGNANCY_MIN + Math.floor(Math.random() * 14),
       };
-      // Çiftleşme dürtüsü sıfırlanır — biyolojik tatmin
+      // Mating urge resets — biological satisfaction
       female.mating_urge = 0;
       male.mating_urge = Math.max(0, (male.mating_urge ?? 0) - 0.7);
     }
@@ -66,7 +66,7 @@ function conceptionProbability(female, male, currentDay) {
   const mI2 = ((male.genome?.IMMUNE_02?.allele1?.value ?? 0.5) + (male.genome?.IMMUNE_02?.allele2?.value ?? 0.5)) / 2;
   const mhcBonus = ((Math.abs(fI1 - mI1) + Math.abs(fI2 - mI2)) / 2) * 0.2;
   const inbreedPenalty = Math.max(female.inbreeding_coeff ?? 0, male.inbreeding_coeff ?? 0);
-  // Çiftleşme dürtüsü gebe kalma olasılığını etkiler (0.6–1.0 arası çarpan)
+  // Mating urge affects conception probability (multiplier between 0.6–1.0)
   const urgeFactor = 0.6 + (female.mating_urge ?? 0.5) * 0.4;
   // Base rate 0.07/day — high conception probability; effective IBI is bounded
   // by pregnancy duration (~273 d) since re-conception during pregnancy is blocked.
@@ -86,8 +86,8 @@ function deliverBirth(mother, father, birthDay, simulationId, communityLangStage
   if (Math.random() < neonatalRisk) { first.alive = false; first.is_dead = true; first.death_day = birthDay; first.death_cause = 'birth_complications'; }
   children.push(first);
 
-  // İkiz ihtimali FSHR_01 (folikül uyarıcı hormon reseptörü) genine bağlı:
-  // düşük fertilite ~%0, orta ~%1.7, yüksek ~%4.5
+  // Twin chance is linked to the FSHR_01 (follicle-stimulating hormone receptor) gene:
+  // low fertility ~0%, medium ~1.7%, high ~4.5%
   const fshr = mother.phenotype?.fertility ?? 0.5;
   const twinChance = Math.max(0, 0.003 + (fshr - 0.3) * 0.07);
 
@@ -97,7 +97,7 @@ function deliverBirth(mother, father, birthDay, simulationId, communityLangStage
     if (Math.random() < neonatalRisk * 2.5) { twin.alive = false; twin.is_dead = true; twin.death_day = birthDay; twin.death_cause = 'birth_complications'; }
     children.push(twin);
 
-    // Üçüz: ikiz şansının %10'u kadar
+    // Triplets: ~10% of the twin chance
     if (Math.random() < twinChance * 0.1) {
       const triplet = createChild(mother, father, birthDay, simulationId, communityLangStage, phonology);
       triplet.is_twin = true;

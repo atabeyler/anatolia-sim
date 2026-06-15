@@ -1,17 +1,17 @@
 // Architecture Engine
 const YAPI_TR = {
-  cave_dwelling: 'mağara konutu',
-  lean_to: 'sığınak',
-  pit_house: 'çukur ev',
-  post_frame_hut: 'direkli kulübe',
-  storage_pit: 'depo çukuru',
-  mud_brick_house: 'kerpiç ev',
-  granary: 'tahıl ambarı',
-  defensive_wall: 'savunma duvarı',
-  stone_temple: 'taş tapınak',
-  stone_house: 'taş ev',
-  marketplace: 'pazar yeri',
-  city_wall: 'şehir surları'
+  cave_dwelling: 'cave dwelling',
+  lean_to: 'lean-to shelter',
+  pit_house: 'pit house',
+  post_frame_hut: 'post-frame hut',
+  storage_pit: 'storage pit',
+  mud_brick_house: 'mud brick house',
+  granary: 'granary',
+  defensive_wall: 'defensive wall',
+  stone_temple: 'stone temple',
+  stone_house: 'stone house',
+  marketplace: 'marketplace',
+  city_wall: 'city walls'
 };
 
 export const STRUCTURE_TYPES = {
@@ -162,7 +162,7 @@ export function processArchitectureTick(settlement, population, discoveredTechs,
           settlement_id: settlement.id,
           day: simDay,
           importance: st.tier >= 3 ? 'high' : 'medium',
-          description: `${settlement.name ?? 'Yerleşim'}, ${YAPI_TR[p.id] ?? p.id.replace(/_/g, ' ')} inşaatını tamamladı`
+          description: `${settlement.name ?? 'Settlement'} completed construction of ${YAPI_TR[p.id] ?? p.id.replace(/_/g, ' ')}`
         });
       }
     }
@@ -215,7 +215,7 @@ export function checkSettlementOvercrowding(settlement, groupSize, simDay) {
       settlement_id: settlement.id,
       day: simDay,
       importance: 'medium',
-      description: `${settlement.name ?? 'Yerleşim'} doldu taştı — ${groupSize} birey, mevcut kapasite: ${cap}`
+      description: `${settlement.name ?? 'Settlement'} is overcrowded — ${groupSize} individuals, current capacity: ${cap}`
     };
   }
   return null;
