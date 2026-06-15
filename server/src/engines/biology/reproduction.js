@@ -55,10 +55,10 @@ export function checkReproduction(population, currentDay, simulationId, communit
 function conceptionProbability(female, male, currentDay) {
   const age = getAge(female, currentDay);
   let ageFactor = 1;
-  if (age < 18)       ageFactor = 0.3;
-  else if (age < 20)  ageFactor = 0.7;
-  else if (age > 40)  ageFactor = 0.2;
+  if (age > 40)       ageFactor = 0.2;
   else if (age > 35)  ageFactor = 0.6;
+  else if (age < 18)  ageFactor = 0.3;
+  else if (age < 20)  ageFactor = 0.7;
   // MHC diversity: average across both alleles of both immune loci
   const fI1 = ((female.genome?.IMMUNE_01?.allele1?.value ?? 0.5) + (female.genome?.IMMUNE_01?.allele2?.value ?? 0.5)) / 2;
   const fI2 = ((female.genome?.IMMUNE_02?.allele1?.value ?? 0.5) + (female.genome?.IMMUNE_02?.allele2?.value ?? 0.5)) / 2;

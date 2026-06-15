@@ -325,8 +325,8 @@ export class SimulationEngine {
       this._bandCentroid = { x: this.worldState.longitude ?? 0, y: this.worldState.latitude ?? 0 };
     }
     // Pre-cache fertile individuals once per tick to avoid O(N²) mating search
-    this._fertileMales = alive.filter(i => i.sex === 'male' && i.age / 365 >= 15 && i.age / 365 <= 65 && !i.health?.pregnancy);
-    this._fertileFemales = alive.filter(i => i.sex === 'female' && i.age / 365 >= 15 && i.age / 365 <= 50 && !i.health?.pregnancy);
+    this._fertileMales = alive.filter(i => !i.is_dead && i.sex === 'male' && i.age / 365 >= 15 && i.age / 365 <= 65 && !i.health?.pregnancy);
+    this._fertileFemales = alive.filter(i => !i.is_dead && i.sex === 'female' && i.age / 365 >= 15 && i.age / 365 <= 50 && !i.health?.pregnancy);
     for (const ind of alive) {
       this.moveIndividual(ind);
     }

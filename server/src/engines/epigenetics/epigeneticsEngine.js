@@ -77,7 +77,8 @@ function mod(individual, id, delta, simDay) {
   if (!individual.epigenome[id]) {
     individual.epigenome[id] = { methylation: 0.5, last_modified: null };
   }
-  if (!locus.reversible && individual.epigenome[id].last_modified !== null) return;
+  if (!locus.reversible && individual.epigenome[id].locked) return;
+  if (!locus.reversible) individual.epigenome[id].locked = true;
   individual.epigenome[id].methylation = Math.min(
     Math.max((individual.epigenome[id].methylation ?? 0.5) + delta, 0),
     1
@@ -88,6 +89,7 @@ function mod(individual, id, delta, simDay) {
 function applyFX(ind) {
   const e = ind.epigenome;
   const p = ind.phenotype;
+  if (!p) return;
   p.stress_reactivity = (p.stress_reactivity ?? 0.5) * 0.99 + (e.HPA_AXIS?.methylation ?? 0.5) * 0.01;
   // MAOA metilasyonu yükseldikçe (erken çocukluk stresi) agresyon yavaşça artar; metilasyon azalırsa geri döner (EMA)
   p.aggression = Math.min(Math.max((p.aggression ?? 0.5) * 0.999 + (e.MAOA_REGULATION?.methylation ?? 0.5) * 0.001, 0), 1);

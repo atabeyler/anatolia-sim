@@ -121,7 +121,7 @@ export function combineGametes(gamete1, gamete2, childSex) {
       locusId,
       chromosome: meta.chr,
       allele1: { value: isMale && isXLinked ? a2 : a1, origin: isMale && isXLinked ? 'maternal' : 'paternal' },
-      allele2: { value: isMale && isXLinked ? a2 : a2, origin: isMale && isXLinked ? 'hemizygous' : 'maternal' },
+      allele2: { value: isMale && isXLinked ? null : a2, origin: isMale && isXLinked ? 'hemizygous' : 'maternal' },
       expressionType: isMale && isXLinked ? 'hemizygous' : meta.type,
       trait: meta.trait,
     };

@@ -9,6 +9,7 @@ const LANGUAGE_STAGES = [
 ];
 
 export function updateLanguageStage(individual, groupSize, generationCount, groupId = 'default') {
+  if (!individual.phenotype || !individual.language) return { upgraded: false };
   // Stage check uses expressed foxp2, not genetic ceiling.
   // Expression grows through social interaction (see updateFoxp2Expression).
   const foxp2 = individual.language?.foxp2_expression ?? (individual.phenotype?.language_capacity ?? 0.5) * 0.15;
