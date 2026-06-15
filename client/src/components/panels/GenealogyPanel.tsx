@@ -3,6 +3,7 @@ import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import axios from 'axios';
 import { RefreshCw } from 'lucide-react';
+import { text, type LangCode } from '../../utils/i18n';
 
 interface IndividualNode {
   id: string;
@@ -49,7 +50,7 @@ function TreeNode({ node, lang }: { node: any; lang: string }) {
       >
         <div className="font-medium text-sim-text" style={{ fontSize: 10 }}>{node.name}</div>
         <div className="text-sim-muted" style={{ fontSize: 9 }}>
-          {node.sex === 'male' ? (lang === 'tr' ? 'E' : 'M') : (lang === 'tr' ? 'K' : 'F')}
+          {node.sex === 'male' ? text(lang as LangCode, { tr: 'E', en: 'M', de: 'M', fr: 'M', ar: 'ذ' }) : text(lang as LangCode, { tr: 'K', en: 'F', de: 'W', fr: 'F', ar: 'أ' })}
           {' · '}IQ {((node.iq ?? 0.5) * 100).toFixed(0)}
         </div>
       </div>
@@ -110,7 +111,7 @@ export default function GenealogyPanel() {
           {founders.length === 0 && <option value="">{lang === 'en' ? 'No founders' : 'Kurucu yok'}</option>}
           {founders.map(f => (
             <option key={f.id} value={f.id}>
-              {f.phenotype?.name ?? f.id.slice(-8)} ({f.sex === 'male' ? (lang === 'tr' ? 'Erkek' : 'Male') : (lang === 'tr' ? 'Kadın' : 'Female')})
+              {f.phenotype?.name ?? f.id.slice(-8)} ({f.sex === 'male' ? text(lang as LangCode, { tr: 'Erkek', en: 'Male', de: 'Männlich', fr: 'Masculin', ar: 'ذكر' }) : text(lang as LangCode, { tr: 'Kadın', en: 'Female', de: 'Weiblich', fr: 'Féminin', ar: 'أنثى' })})
             </option>
           ))}
           {population.filter(i => i.parent_1_id || i.parent_2_id).slice(0, 20).map(i => (

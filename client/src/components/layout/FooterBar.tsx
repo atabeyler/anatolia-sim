@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSimStore } from '../../store/simStore';
+import { text, type LangCode } from '../../utils/i18n';
 
 const WRAPPER_BASE: React.CSSProperties = {
   textAlign: 'center',
@@ -22,12 +23,20 @@ export default function FooterBar({ mode = 'fixed', className = '', style }: Foo
       ? { ...WRAPPER_BASE, flexShrink: 0, padding: '4px 10px', display: 'flex', justifyContent: 'center', alignItems: 'center' }
       : { padding: '0', background: 'transparent', border: 'none' };
 
-  const companyName = lang === 'tr'
-    ? 'Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.'
-    : 'Bold Military Technology and Defense Industry Inc.';
-  const footerLabel = lang === 'tr'
-    ? 'Tüm hakları saklıdır.'
-    : 'All rights reserved.';
+  const companyName = text(lang as LangCode, {
+    tr: 'Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.',
+    en: 'Bold Military Technology and Defense Industry Inc.',
+    de: 'Bold Militärtechnologie und Verteidigungsindustrie AG',
+    fr: 'Bold Technologie Militaire et Industrie de Défense S.A.',
+    ar: 'شركة Bold للتكنولوجيا العسكرية وصناعة الدفاع',
+  });
+  const footerLabel = text(lang as LangCode, {
+    tr: 'Tüm hakları saklıdır.',
+    en: 'All rights reserved.',
+    de: 'Alle Rechte vorbehalten.',
+    fr: 'Tous droits réservés.',
+    ar: 'جميع الحقوق محفوظة.',
+  });
 
   return (
     <div style={{ ...wrapperStyle, ...style }} className={className}>

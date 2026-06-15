@@ -13,18 +13,27 @@ const LANGUAGES = [
   { code: 'ar' as const, label: 'العربية'  },
 ];
 
-const PAGES_TEXT: Record<string, { tr: string; en: string }> = {
+const PAGES_TEXT: Record<string, { tr: string; en: string; de: string; fr: string; ar: string }> = {
   about: {
     tr: 'ANATOLİA-SİM, Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. bünyesinde Yalçın Atabey tarafından geliştirilen, simülasyon hipotezini deneysel olarak test etmeye yönelik ileri düzey bir medeniyet simülasyon platformudur.\n\nGerçek biyolojik, genetik, çevresel ve sosyal mekanizmaları temel alarak iki bireyden başlayan bir nüfusun binlerce yıl boyunca nasıl evrildiğini, dil, inanç, teknoloji ve devlet yapılarını nasıl geliştirdiğini müdahalesiz biçimde gözlemlemeyi sağlar.\n\nProje Kodu: RST Q-Nation 200120401018',
     en: 'ANATOLİA-SİM is an advanced civilization simulation platform developed by Yalçın Atabey under Bold Askeri Teknoloji ve Savunma Sanayi A.Ş., designed to experimentally test the simulation hypothesis.\n\nIt models real biological, genetic, environmental and social mechanisms — observing a population that starts from two individuals, evolving over thousands of years into language, belief, technology and governance.\n\nProject Code: RST Q-Nation 200120401018',
+    de: 'ANATOLİA-SİM ist eine fortschrittliche Zivilisationssimulationsplattform, entwickelt von Yalçın Atabey unter Bold Askeri Teknoloji ve Savunma Sanayi A.Ş., um die Simulationshypothese experimentell zu testen.\n\nSie modelliert reale biologische, genetische, umweltbezogene und soziale Mechanismen — und beobachtet eine Bevölkerung, die mit zwei Individuen beginnt und sich über Jahrtausende in Sprache, Glaube, Technologie und Regierung entwickelt.\n\nProjektcode: RST Q-Nation 200120401018',
+    fr: "ANATOLİA-SİM est une plateforme de simulation de civilisation avancée développée par Yalçın Atabey au sein de Bold Askeri Teknoloji ve Savunma Sanayi A.Ş., conçue pour tester expérimentalement l'hypothèse de simulation.\n\nElle modélise de vrais mécanismes biologiques, génétiques, environnementaux et sociaux — en observant une population qui part de deux individus et évolue sur des millénaires vers le langage, la croyance, la technologie et la gouvernance.\n\nCode du projet: RST Q-Nation 200120401018",
+    ar: 'ANATOLİA-SİM هي منصة محاكاة حضارية متقدمة طوّرها يالتشين أتابي تحت مظلة شركة Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.، مصممة لاختبار فرضية المحاكاة تجريبياً.\n\nتُنمذج آليات بيولوجية وجينية وبيئية واجتماعية حقيقية — مراقبةً مجتمعاً يبدأ من فردين ويتطور على مدى آلاف السنين نحو اللغة والمعتقد والتكنولوجيا والحوكمة.\n\nرمز المشروع: RST Q-Nation 200120401018',
   },
   mission: {
     tr: 'MİSYON\nSimülasyon hipotezini bilimsel ve deneysel zeminlerde test etmek; insan medeniyetinin evrensel örüntülerini ortaya çıkarmak.\n\nVİZYON\nDünyanın en kapsamlı yapay yaşam ve medeniyet simülasyon platformu olmak; insanlığın kökeni, bilinci ve geleceği hakkında nesnel veriler üretmek.',
     en: "MISSION\nTest the simulation hypothesis on scientific and experimental grounds; reveal the universal patterns of human civilization.\n\nVISION\nBecome the world's most comprehensive artificial life and civilization simulation platform; produce objective data about the origin, consciousness and future of humanity.",
+    de: "MISSION\nDie Simulationshypothese auf wissenschaftlicher und experimenteller Grundlage testen; die universellen Muster der menschlichen Zivilisation aufdecken.\n\nVISION\nDie umfassendste Plattform für künstliches Leben und Zivilisationssimulation der Welt werden; objektive Daten über Ursprung, Bewusstsein und Zukunft der Menschheit erzeugen.",
+    fr: "MISSION\nTester l'hypothèse de simulation sur des bases scientifiques et expérimentales; révéler les schémas universels de la civilisation humaine.\n\nVISION\nDevenir la plateforme de simulation de vie artificielle et de civilisation la plus complète au monde; produire des données objectives sur l'origine, la conscience et l'avenir de l'humanité.",
+    ar: 'المهمة\nاختبار فرضية المحاكاة على أسس علمية وتجريبية؛ الكشف عن الأنماط الكونية للحضارة الإنسانية.\n\nالرؤية\nأن نصبح أشمل منصة لمحاكاة الحياة الاصطناعية والحضارة في العالم؛ إنتاج بيانات موضوعية حول أصل الإنسانية ووعيها ومستقبلها.',
   },
   contact: {
     tr: 'Proje Sahibi: Yalçın Atabey\nKuruluş: Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.\nE-posta: info@boldkimya.com.tr\nTelefon: +90 532 217 07 76\nORCID: 0009-0004-9037-5750\n\n© 2026 Tüm hakları saklıdır.',
     en: 'Project Owner: Yalçın Atabey\nOrganization: Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.\nE-mail: info@boldkimya.com.tr\nPhone: +90 532 217 07 76\nORCID: 0009-0004-9037-5750\n\n© 2026 All rights reserved.',
+    de: 'Projektinhaber: Yalçın Atabey\nOrganisation: Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.\nE-Mail: info@boldkimya.com.tr\nTelefon: +90 532 217 07 76\nORCID: 0009-0004-9037-5750\n\n© 2026 Alle Rechte vorbehalten.',
+    fr: 'Propriétaire du projet: Yalçın Atabey\nOrganisation: Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.\nE-mail: info@boldkimya.com.tr\nTéléphone: +90 532 217 07 76\nORCID: 0009-0004-9037-5750\n\n© 2026 Tous droits réservés.',
+    ar: 'مالك المشروع: يالتشين أتابي\nالمنظمة: Bold Askeri Teknoloji ve Savunma Sanayi A.Ş.\nالبريد الإلكتروني: info@boldkimya.com.tr\nالهاتف: +90 532 217 07 76\nORCID: 0009-0004-9037-5750\n\n© 2026 جميع الحقوق محفوظة.',
   },
 };
 
@@ -77,11 +86,11 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions, menuPag
   function close() { setPage(null); onClose(); }
 
   const pageTitle: Record<NonNullable<Page>, string> = {
-    language: lang === 'tr' ? 'DİL SEÇENEKLERİ' : 'LANGUAGE',
-    guide:    lang === 'tr' ? 'KULLANIM KILAVUZU' : 'USER GUIDE',
-    about:    lang === 'tr' ? 'HAKKIMIZDA'        : 'ABOUT',
-    mission:  lang === 'tr' ? 'MİSYON & VİZYON'  : 'MISSION & VISION',
-    contact:  lang === 'tr' ? 'İLETİŞİM'          : 'CONTACT',
+    language: text(lang as LangCode, { tr: 'DİL SEÇENEKLERİ', en: 'LANGUAGE',       de: 'SPRACHE',            fr: 'LANGUE',              ar: 'اللغة' }),
+    guide:    text(lang as LangCode, { tr: 'KULLANIM KILAVUZU', en: 'USER GUIDE',    de: 'BENUTZERHANDBUCH',   fr: "GUIDE D'UTILISATION", ar: 'دليل المستخدم' }),
+    about:    text(lang as LangCode, { tr: 'HAKKIMIZDA',        en: 'ABOUT',         de: 'ÜBER UNS',           fr: 'À PROPOS',            ar: 'حول' }),
+    mission:  text(lang as LangCode, { tr: 'MİSYON & VİZYON',  en: 'MISSION & VISION', de: 'MISSION & VISION', fr: 'MISSION & VISION',  ar: 'المهمة والرؤية' }),
+    contact:  text(lang as LangCode, { tr: 'İLETİŞİM',          en: 'CONTACT',       de: 'KONTAKT',            fr: 'CONTACT',             ar: 'تواصل' }),
   };
 
   return (
@@ -154,7 +163,7 @@ export default function SimMenuOverlay({ isOpen, onClose, mobileActions, menuPag
 
         {/* ── About / Mission / Contact ── */}
         {page !== null && page !== 'language' && page !== 'guide' && (() => {
-          const pageContent = lang === 'tr' ? PAGES_TEXT[page].tr : PAGES_TEXT[page].en;
+          const pageContent = text(lang as LangCode, PAGES_TEXT[page]);
           return (
             <div style={{ padding: '12px 14px', maxHeight: 320, overflowY: 'auto' }}>
               {pageContent.split('\n').map((line, i) => (

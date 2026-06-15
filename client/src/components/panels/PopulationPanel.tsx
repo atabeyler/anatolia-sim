@@ -154,7 +154,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
   const lang_ = ind.language ?? {};
   const isDead = ind.alive === false || ind.is_dead;
   const isFounder = ind.is_founder || (!ind.parent_1_id && !ind.parent_2_id);
-  const tr = (trStr: string, enStr: string) => text(lang as LangCode, { tr: trStr, en: enStr });
+  const tr = (trStr: string, enStr: string) => text(lang as LangCode, { tr: trStr, en: enStr, de: enStr, fr: enStr, ar: enStr });
 
   const [archivedJournal, setArchivedJournal] = useState<any[]>([]);
   const [archiveOpen, setArchiveOpen] = useState(false);
@@ -569,7 +569,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
 function FamilyTreeModal({ ind, allIndividuals, lang, onClose }: {
   ind: any; allIndividuals: any[]; lang: string; onClose: () => void;
 }) {
-  const tr = (trStr: string, enStr: string) => text(lang as LangCode, { tr: trStr, en: enStr });
+  const tr = (trStr: string, enStr: string) => text(lang as LangCode, { tr: trStr, en: enStr, de: enStr, fr: enStr, ar: enStr });
 
   const parent1 = allIndividuals.find(i => i.id === ind.parent_1_id) ?? null;
   const parent2 = allIndividuals.find(i => i.id === ind.parent_2_id) ?? null;
@@ -728,7 +728,7 @@ function JournalArchiveModal({ name, entries, typeIcon, lang, onClear, onClose }
   name: string; entries: any[]; typeIcon: Record<string, string>;
   lang: string; onClear: () => void; onClose: () => void;
 }) {
-  const tr = (trStr: string, enStr: string) => text(lang as LangCode, { tr: trStr, en: enStr });
+  const tr = (trStr: string, enStr: string) => text(lang as LangCode, { tr: trStr, en: enStr, de: enStr, fr: enStr, ar: enStr });
   const [confirmClear, setConfirmClear] = useState(false);
 
   return (
@@ -808,7 +808,7 @@ function JournalArchiveModal({ name, entries, typeIcon, lang, onClear, onClose }
 
 function CompareModal({ indA, indB, onClose }: { indA: any; indB: any; onClose: () => void }) {
   const { lang } = useSimStore();
-  const tr = (trStr: string, enStr: string) => text(lang as LangCode, { tr: trStr, en: enStr });
+  const tr = (trStr: string, enStr: string) => text(lang as LangCode, { tr: trStr, en: enStr, de: enStr, fr: enStr, ar: enStr });
 
   function Col({ ind }: { ind: any }) {
     const name = nameFromId(ind.id, ind.sex, ind.phenotype?.name ?? ind.name);

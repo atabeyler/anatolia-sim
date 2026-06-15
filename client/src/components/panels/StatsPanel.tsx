@@ -2,6 +2,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { useSimStore } from '../../store/simStore';
 import { useState, useEffect, useRef } from 'react';
 import { BarChart2, X, GripHorizontal } from 'lucide-react';
+import { text, type LangCode } from '../../utils/i18n';
 
 type Metric = 'pop' | 'food' | 'water' | 'happiness' | 'consciousness' | 'lang';
 
@@ -156,7 +157,7 @@ export default function StatsPanel() {
           <GripHorizontal size={12} style={{ color: '#6a9a80', flexShrink: 0 }} />
           <div style={{ width: 3, height: 14, background: '#4f6ef7', boxShadow: '0 0 6px rgba(79,110,247,0.8)', flexShrink: 0 }} />
           <span style={{ fontSize: 12, color: '#4f6ef7', letterSpacing: '0.22em', fontWeight: 700 }}>
-            {lang === 'tr' ? 'NÜFUS TELEMETRİSİ' : 'POPULATION TELEMETRY'}
+            {text(lang as LangCode, { tr: 'NÜFUS TELEMETRİSİ', en: 'POPULATION TELEMETRY', de: 'BEVÖLKERUNGSTELEMETRIE', fr: 'TÉLÉMÉTRIE POPULATION', ar: 'قياس السكان' })}
           </span>
           <div style={{ flex: 1 }} />
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: stats ? '#00e887' : '#a0c8b0', boxShadow: stats ? '0 0 6px #00e887' : 'none', animation: stats ? 'pulse 1.5s infinite' : 'none' }} />
@@ -181,7 +182,7 @@ export default function StatsPanel() {
                 cursor: 'pointer', borderRadius: 2, letterSpacing: '0.03em', transition: 'all 0.15s',
                 fontFamily: 'Share Tech Mono, monospace',
               }}>
-              {lang === 'tr' ? m.labelTr : m.label}
+              {text(lang as LangCode, { tr: m.labelTr, en: m.label, de: m.label, fr: m.label, ar: m.label })}
             </button>
           ))}
         </div>
@@ -198,7 +199,7 @@ export default function StatsPanel() {
                   labelStyle={{ color: '#a0c8b0' }}
                   formatter={(val: any, name: string) => {
                     const m = METRICS.find(x => x.key === name);
-                    return [name === 'pop' ? Number(val).toLocaleString() : `${val}%`, lang === 'tr' ? m?.labelTr : m?.label];
+                    return [name === 'pop' ? Number(val).toLocaleString() : `${val}%`, m ? text(lang as LangCode, { tr: m.labelTr, en: m.label, de: m.label, fr: m.label, ar: m.label }) : name];
                   }}
                 />
                 {METRICS.filter(m => activeMetrics.has(m.key)).map(m => (
@@ -210,7 +211,7 @@ export default function StatsPanel() {
         ) : (
           <div style={{ height: 72, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
             <span style={{ fontSize: 12, color: 'rgba(160,200,180,0.7)', letterSpacing: '0.1em' }}>
-              {lang === 'tr' ? 'VERİ BEKLENIYOR…' : 'AWAITING DATA…'}
+              {text(lang as LangCode, { tr: 'VERİ BEKLENIYOR…', en: 'AWAITING DATA…', de: 'DATEN WARTEN…', fr: 'EN ATTENTE…', ar: 'في انتظار البيانات…' })}
             </span>
           </div>
         )}
@@ -218,10 +219,10 @@ export default function StatsPanel() {
         {/* Quick stats */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 10 }}>
           {[
-            { l: lang === 'tr' ? 'NÜFUS' : 'POP',      v: stats ? stats.population.toLocaleString() : '—', c: '#4f6ef7' },
-            { l: lang === 'tr' ? 'ORT YAŞ' : 'AGE',    v: stats ? `${stats.avg_age.toFixed(1)} yr` : '—',   c: '#e0e0f0' },
-            { l: lang === 'tr' ? 'ZEKA' : 'INTEL',      v: stats ? `${(stats.avg_intelligence * 100).toFixed(0)}%` : '—', c: '#d4a838' },
-            { l: lang === 'tr' ? 'TEKNOLOJİ' : 'TECH', v: stats?.technologies ?? '—', c: '#4ecb71' },
+            { l: text(lang as LangCode, { tr: 'NÜFUS', en: 'POP', de: 'BEV.', fr: 'POP.', ar: 'سكان' }),      v: stats ? stats.population.toLocaleString() : '—', c: '#4f6ef7' },
+            { l: text(lang as LangCode, { tr: 'ORT YAŞ', en: 'AGE', de: 'ALTER', fr: 'ÂGE', ar: 'عمر' }),    v: stats ? `${stats.avg_age.toFixed(1)} yr` : '—',   c: '#e0e0f0' },
+            { l: text(lang as LangCode, { tr: 'ZEKA', en: 'INTEL', de: 'INTEL.', fr: 'INTEL.', ar: 'ذكاء' }),      v: stats ? `${(stats.avg_intelligence * 100).toFixed(0)}%` : '—', c: '#d4a838' },
+            { l: text(lang as LangCode, { tr: 'TEKNOLOJİ', en: 'TECH', de: 'TECH.', fr: 'TECH.', ar: 'تقنية' }), v: stats?.technologies ?? '—', c: '#4ecb71' },
           ].map(({ l, v, c }) => (
             <div key={l} style={{ background: 'rgba(4,4,15,0.8)', border: '1px solid rgba(255,255,255,0.07)', padding: '5px 8px', borderRadius: 2 }}>
               <div style={{ fontSize: 12, color: '#a0c8b0', letterSpacing: '0.1em', marginBottom: 2 }}>{l}</div>
@@ -232,9 +233,9 @@ export default function StatsPanel() {
 
         {/* Gauge bars */}
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 8 }}>
-          <GaugeBar label={lang === 'tr' ? 'BESİN' : 'FOOD'} value={stats?.food_abundance ?? 0} color="#4ecb71" />
-          <GaugeBar label={lang === 'tr' ? 'SU' : 'WATER'} value={stats?.water_abundance ?? 0} color="#7dd3fc" />
-          <GaugeBar label={lang === 'tr' ? 'MUTLULUK' : 'HAPPINESS'} value={(stats as any)?.happiness_index ?? 0} color="#ff8ab0" />
+          <GaugeBar label={text(lang as LangCode, { tr: 'BESİN', en: 'FOOD', de: 'NAHRUNG', fr: 'NOURRITURE', ar: 'غذاء' })} value={stats?.food_abundance ?? 0} color="#4ecb71" />
+          <GaugeBar label={text(lang as LangCode, { tr: 'SU', en: 'WATER', de: 'WASSER', fr: 'EAU', ar: 'ماء' })} value={stats?.water_abundance ?? 0} color="#7dd3fc" />
+          <GaugeBar label={text(lang as LangCode, { tr: 'MUTLULUK', en: 'HAPPINESS', de: 'GLÜCK', fr: 'BONHEUR', ar: 'سعادة' })} value={(stats as any)?.happiness_index ?? 0} color="#ff8ab0" />
         </div>
       </div>
 
@@ -259,7 +260,7 @@ export default function StatsPanel() {
           transition: 'background 0.2s, border-color 0.2s, box-shadow 0.2s',
           backdropFilter: 'blur(8px)',
         }}
-        title={lang === 'tr' ? 'Nüfus Telemetrisi' : 'Population Telemetry'}
+        title={text(lang as LangCode, { tr: 'Nüfus Telemetrisi', en: 'Population Telemetry', de: 'Bevölkerungstelemetrie', fr: 'Télémétrie Population', ar: 'قياس السكان' })}
       >
         {open ? <X size={18} /> : <BarChart2 size={18} />}
       </button>

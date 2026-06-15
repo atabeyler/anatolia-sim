@@ -1,7 +1,7 @@
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { Flame } from 'lucide-react';
-import { translateEventDescription, type LangCode } from '../../utils/i18n';
+import { translateEventDescription, text, type LangCode } from '../../utils/i18n';
 
 const BELIEF_INFO: Record<string, { stage: number; name: string; nameTr: string; desc: string; descTr: string; color: string }> = {
   animism:        { stage: 1, name: 'Animism',        nameTr: 'Animizm',           desc: 'Spirits in all living things',      descTr: 'Her canlıda ruhlar var',             color: '#6b8e23' },
@@ -52,10 +52,10 @@ export default function BeliefPanel() {
               >
                 <div className="flex justify-between items-center mb-0.5">
                   <span className="text-sm font-medium" style={{ color: discovered ? info.color : '#a0c8b0' }}>
-                    {lang === 'tr' ? info.nameTr : info.name}
+                    {text(lang as LangCode, { tr: info.nameTr, en: info.name, de: info.name, fr: info.name, ar: info.name })}
                   </span>
                   <span className="text-sm text-sim-muted">
-                    {lang === 'tr' ? `Aşama ${info.stage}` : `Stage ${info.stage}`}
+                    {text(lang as LangCode, { tr: `Aşama ${info.stage}`, en: `Stage ${info.stage}`, de: `Stufe ${info.stage}`, fr: `Étape ${info.stage}`, ar: `مرحلة ${info.stage}` })}
                   </span>
                 </div>
                 <div className="text-sm text-sim-muted">

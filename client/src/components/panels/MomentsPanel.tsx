@@ -1,23 +1,24 @@
 import { useSimStore } from '../../store/simStore';
 import DetailPanel from './DetailPanel';
 import { Sparkles } from 'lucide-react';
+import { text, type LangCode } from '../../utils/i18n';
 
 export default function MomentsPanel() {
   const { moments, clearMoments, lang, stats } = useSimStore();
-  const tr = (a: string, b: string) => lang === 'tr' ? a : b;
+  const t = (tr: string, en: string, de = en, fr = en, ar = en) => text(lang as LangCode, { tr, en, de, fr, ar });
 
   return (
     <DetailPanel panelId="moments" title="Moments" titleTr="Anlar">
 
       <div className="flex items-center justify-between mb-3">
         <span className="font-share-tech tracking-widest" style={{ fontSize: 11, color: '#6a8878' }}>
-          {moments.length} {tr('an kaydedildi', 'moments recorded')}
+          {moments.length} {t('an kaydedildi', 'moments recorded')}
         </span>
         {moments.length > 0 && (
           <button onClick={clearMoments}
             className="font-share-tech"
             style={{ fontSize: 11, color: '#6a8878', background: 'transparent', border: '1px solid rgba(160,200,176,0.2)', padding: '1px 6px', cursor: 'pointer' }}>
-            {tr('Temizle', 'Clear')}
+            {t('Temizle', 'Clear')}
           </button>
         )}
       </div>
@@ -26,10 +27,10 @@ export default function MomentsPanel() {
         <div className="flex flex-col items-center py-8 gap-2">
           <Sparkles size={24} style={{ color: 'rgba(160,200,176,0.2)' }} />
           <span className="font-share-tech tracking-widest" style={{ fontSize: 11, color: 'rgba(160,200,176,0.3)' }}>
-            {tr('Henüz önemli bir an yok', 'No moments yet')}
+            {t('Henüz önemli bir an yok', 'No moments yet')}
           </span>
           <span className="font-share-tech" style={{ fontSize: 11, color: 'rgba(160,200,176,0.2)', textAlign: 'center', lineHeight: 1.5 }}>
-            {tr('İlk ölüm, teknoloji keşfi, afetler\nve dil evrimi burada görünür', 'First deaths, discoveries,\ndisasters and language milestones\nwill appear here')}
+            {t('İlk ölüm, teknoloji keşfi, afetler\nve dil evrimi burada görünür', 'First deaths, discoveries,\ndisasters and language milestones\nwill appear here')}
           </span>
         </div>
       )}
@@ -63,7 +64,7 @@ export default function MomentsPanel() {
 
       {stats && moments.length === 0 && (
         <div className="mt-4 font-share-tech" style={{ fontSize: 11, color: '#6a8878', textAlign: 'center' }}>
-          {tr(`Simülasyon ${stats.year}. yılında`, `Simulation is in year ${stats.year}`)}
+          {t(`Simülasyon ${stats.year}. yılında`, `Simulation is in year ${stats.year}`)}
         </div>
       )}
 
