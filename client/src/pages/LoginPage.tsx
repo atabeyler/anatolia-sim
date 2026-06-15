@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { text, type LangCode } from '../utils/i18n';
 import FooterBar from '../components/layout/FooterBar';
 import SimMenuOverlay from '../components/layout/SimMenuOverlay';
 import { useNavigate } from 'react-router-dom';
@@ -516,7 +517,7 @@ export default function LoginPage() {
             }}
           >
             <ScrambleText
-              text={lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}
+              text={text(lang as LangCode, { tr: 'MEDENİYET', en: 'CIVILIZATION' })}
               active={scrambling}
               delay={900}
             />
@@ -547,7 +548,7 @@ export default function LoginPage() {
             <div className="bg-[#030310] px-3 flex items-center gap-2">
               <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
               <span className="font-share-tech text-sim-accent tracking-[0.1em] sm:tracking-[0.3em]" style={{ fontSize: 'clamp(12px, 3.8vw, 18px)' }}>
-                {mode === 'login' ? (lang === 'tr' ? 'KİMLİK DOĞRULAMA' : 'IDENTITY VERIFICATION') : (lang === 'tr' ? 'HESAP OLUŞTURMA' : 'ACCOUNT CREATION')}
+                {mode === 'login' ? text(lang as LangCode, { tr: 'KİMLİK DOĞRULAMA', en: 'IDENTITY VERIFICATION' }) : text(lang as LangCode, { tr: 'HESAP OLUŞTURMA', en: 'ACCOUNT CREATION' })}
               </span>
               <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
             </div>
