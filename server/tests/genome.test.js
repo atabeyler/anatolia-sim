@@ -31,6 +31,51 @@ describe('createGamete', () => {
       expect(gamete[locusId]).toBeLessThanOrEqual(1);
     }
   });
+
+  it('mutasyon oranı: 10000 gametde beklenen ~2 mutasyon/gamet (±%50 tolerans)', () => {
+    // Tüm alellar 0.5 — herhangi bir sapma gerçek mutasyondur (crossing-over etkisi sıfır)
+    const overrides = {};
+    for (const locusId of Object.keys(LOCI)) {
+      overrides[locusId] = { a1: 0.5, a2: 0.5 };
+    }
+
+    const TRIALS = 10000;
+    let totalMutations = 0;
+    for (let t = 0; t < TRIALS; t++) {
+      const genome = createGenome(overrides);
+      const gamete = createGamete(genome);
+      for (const locusId of Object.keys(LOCI)) {
+        if (Math.abs(gamete[locusId] - 0.5) > 1e-9) totalMutations++;
+      }
+    }
+
+    const avgPerGamete = totalMutations / TRIALS;
+    // Hedef: ~2 mutasyon/gamet (2/32 × 32 = 2 beklenen)
+    expect(avgPerGamete).toBeGreaterThan(0.8);
+    expect(avgPerGamete).toBeLessThan(4.0);
+  });
+
+  it('stres çarpanı mutasyon olasılığını artırır', () => {
+    // Tüm aleller 0.5 — sapma = gerçek mutasyon
+    const overrides = {};
+    for (const locusId of Object.keys(LOCI)) {
+      overrides[locusId] = { a1: 0.5, a2: 0.5 };
+    }
+
+    const TRIALS = 5000;
+    let normalMuts = 0;
+    let stressMuts = 0;
+    for (let t = 0; t < TRIALS; t++) {
+      const g = createGenome(overrides);
+      const gNormal = createGamete(createGenome(overrides), 1.0);
+      const gStress = createGamete(createGenome(overrides), 3.0);
+      for (const locusId of Object.keys(LOCI)) {
+        if (Math.abs(gNormal[locusId] - 0.5) > 1e-9) normalMuts++;
+        if (Math.abs(gStress[locusId] - 0.5) > 1e-9) stressMuts++;
+      }
+    }
+    expect(stressMuts).toBeGreaterThan(normalMuts);
+  });
 });
 
 describe('combineGametes', () => {

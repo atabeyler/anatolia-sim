@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { inheritEpigenome, initializeEpigenome } from '../src/engines/epigenetics/epigeneticsEngine.js';
+import { inheritEpigenome, initializeEpigenome, updateEpigenome } from '../src/engines/epigenetics/epigeneticsEngine.js';
 
 function makeParent(methylation) {
   const p = {};
@@ -48,5 +48,99 @@ describe('inheritEpigenome', () => {
     const child = {};
     expect(() => inheritEpigenome(child, p1, p2)).not.toThrow();
     expect(child.epigenome).toBeDefined();
+  });
+});
+
+describe('updateEpigenome — çevresel metilasyon dinamiği', () => {
+  function makeUpdatable(overrides = {}) {
+    return {
+      epigenome: {},
+      psychology: { stress_level: 0.3 },
+      satiation: 0.8,
+      health: { hydration: 0.8 },
+      group_id: 'g1',
+      age: 25 * 365,
+      infections: [],
+      phenotype: { anxiety: 0.3, stress_resilience: 0.5, serotonin: 0.5, oxytocin_sensitivity: 0.5,
+                   learning_rate: 0.5, immune_strength: 0.5 },
+      ...overrides,
+    };
+  }
+
+  it('updateEpigenome hata atmaz ve epigenomu başlatır', () => {
+    const ind = makeUpdatable();
+    expect(() => updateEpigenome(ind, {}, 1)).not.toThrow();
+    expect(ind.epigenome).toBeDefined();
+    expect(ind.epigenome.HPA_AXIS).toBeDefined();
+  });
+
+  it('yüksek stres (> 0.7) HPA_AXIS metilasyonunu artırır', () => {
+    const ind = makeUpdatable({ psychology: { stress_level: 0.9 } });
+    initializeEpigenome(ind);
+    const before = ind.epigenome.HPA_AXIS.methylation;
+
+    for (let d = 0; d < 100; d++) updateEpigenome(ind, {}, d);
+
+    expect(ind.epigenome.HPA_AXIS.methylation).toBeGreaterThan(before);
+  });
+
+  it('düşük stres (< 0.7) HPA_AXIS metilasyonunu azaltır (iyileşme)', () => {
+    const ind = makeUpdatable({ psychology: { stress_level: 0.1 } });
+    initializeEpigenome(ind);
+    ind.epigenome.HPA_AXIS.methylation = 0.8; // yüksek başlangıç
+
+    for (let d = 0; d < 100; d++) updateEpigenome(ind, {}, d);
+
+    expect(ind.epigenome.HPA_AXIS.methylation).toBeLessThan(0.8);
+  });
+
+  it('açlık (satiation < 0.3) LEPTIN_RESIST metilasyonunu artırır', () => {
+    const ind = makeUpdatable({ satiation: 0.1 });
+    initializeEpigenome(ind);
+    const before = ind.epigenome.LEPTIN_RESIST.methylation;
+
+    for (let d = 0; d < 100; d++) updateEpigenome(ind, {}, d);
+
+    expect(ind.epigenome.LEPTIN_RESIST.methylation).toBeGreaterThan(before);
+  });
+
+  it('sosyal izolasyon (group_id null) OXTR_METHYL metilasyonunu artırır', () => {
+    const ind = makeUpdatable({ group_id: null });
+    initializeEpigenome(ind);
+    const before = ind.epigenome.OXTR_METHYL.methylation;
+
+    for (let d = 0; d < 100; d++) updateEpigenome(ind, {}, d);
+
+    expect(ind.epigenome.OXTR_METHYL.methylation).toBeGreaterThan(before);
+  });
+
+  it('geri-dönüşsüz lokus (MAOA_REGULATION) bir kez set edildikten sonra değişmez', () => {
+    // age < 5 yaş + yüksek stres → MAOA kilitleniyor
+    const ind = makeUpdatable({
+      age: 2 * 365, // 2 yaşında
+      psychology: { stress_level: 0.9 },
+    });
+    initializeEpigenome(ind);
+
+    // İlk güncelleme: MAOA_REGULATION değişmeli (last_modified: null → set)
+    updateEpigenome(ind, {}, 1);
+    const afterFirst = ind.epigenome.MAOA_REGULATION.methylation;
+
+    // Sonraki güncellemeler: MAOA_REGULATION kilitli, değişmemeli
+    for (let d = 2; d < 200; d++) updateEpigenome(ind, {}, d);
+
+    expect(ind.epigenome.MAOA_REGULATION.methylation).toBe(afterFirst);
+  });
+
+  it('metilasyon değerleri [0, 1] aralığında kalır', () => {
+    const ind = makeUpdatable({ psychology: { stress_level: 1.0 }, satiation: 0.0 });
+    initializeEpigenome(ind);
+
+    for (let d = 0; d < 500; d++) updateEpigenome(ind, {}, d);
+
+    for (const locus of Object.values(ind.epigenome)) {
+      expect(locus.methylation).toBeGreaterThanOrEqual(0);
+      expect(locus.methylation).toBeLessThanOrEqual(1);
+    }
   });
 });
