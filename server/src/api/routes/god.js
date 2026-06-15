@@ -127,6 +127,7 @@ router.post('/:simId/intervene', authenticate, requireSimulationOwner, async (re
     }
     await query(`INSERT INTO god_interventions (simulation_id,sim_day,sim_year,type,params,affected_individuals,deaths,user_note) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
       [simId, engine.currentDay, Math.floor(engine.currentDay/365), type, JSON.stringify(params), affected, deaths, user_note]);
+    await query(`UPDATE simulations SET settings = jsonb_set(COALESCE(settings,'{}')::jsonb, '{intervened}', 'true'::jsonb, true) WHERE id = $1`, [simId]);
     res.json({ message: 'Intervention applied', affected, deaths });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Intervention failed' }); }
 });

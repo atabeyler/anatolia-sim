@@ -239,6 +239,18 @@ Throughout its history, a total of ${totalEver} individuals were born, with peak
 <!-- ═══ İÇERİK SAYFASI ═══ -->
 <div style="padding:40px 44px;">
 
+${r.simulation?.intervened ? `<!-- MÜDAHALELİ KOŞU UYARISI -->
+<div style="background:#fef3c7;border:2px solid #d97706;border-radius:8px;padding:20px 24px;margin-bottom:28px;display:flex;align-items:flex-start;gap:16px;">
+  <div style="font-size:28px;line-height:1;">⚠️</div>
+  <div>
+    <div style="font-weight:bold;color:#92400e;font-size:13px;margin-bottom:6px;">${TR ? 'MÜDAHALELİ DENEY KOŞUSU' : 'GOD MODE INTERVENTION DETECTED'}</div>
+    <div style="color:#78350f;font-size:11px;line-height:1.7;">${TR
+      ? 'Bu simülasyonda God Mode müdahalesi kullanılmıştır. Bu koşu doğal hipotez verisi değildir; rapordaki istatistikler deneysel kontrol grubu verisi olarak kullanılmamalıdır.'
+      : 'God Mode interventions were applied during this simulation run. This is not a clean natural-hypothesis dataset; statistics in this report should not be used as experimental control data.'
+    }</div>
+  </div>
+</div>` : ''}
+
 <!-- GİRİŞ -->
 ${secColor(TR?'Giriş':'Introduction', '#475569', '📋')}
 <div style="background:#f8fafc;border-radius:8px;padding:18px 22px;font-size:12px;line-height:1.9;color:#374151;white-space:pre-wrap;border:1px solid #e2e8f0;">${TR ? introTR : introEN}</div>

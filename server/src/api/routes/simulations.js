@@ -420,18 +420,26 @@ router.post('/:id/restore/:checkpointId', authenticate, requireSimulationOwner, 
           _waterExperience: ind._waterExperience ?? null,
           inventory: ind.inventory ?? null,
           psychology: ind.psychology ?? null,
+          known_techs: ind.known_techs instanceof Set ? [...ind.known_techs] : (Array.isArray(ind.known_techs) ? ind.known_techs : []),
+          _experience: ind._experience ?? {},
+          _socialObservations: ind._socialObservations ?? null,
+          _beliefReflection: ind._beliefReflection ?? null,
+          _beliefExposure: ind._beliefExposure ?? null,
+          _behaviorCounts: ind._behaviorCounts ?? null,
         };
         await query(
           `INSERT INTO individuals
             (id,simulation_id,birth_day,death_day,alive,sex,x,y,
              genome,phenotype,epigenome,health,mind,social,
              skills,beliefs,language,memory,
-             parent_1_id,parent_2_id,death_cause)
+             parent_1_id,parent_2_id,death_cause,
+             is_founder,is_dead,home_x,home_y,group_id,inbreeding_coeff,psychology,inventory)
            VALUES
             ($1,$2,$3,$4,$5,$6,$7,$8,
              $9,$10,$11,$12,$13,$14,
              $15,$16,$17,$18,
-             $19,$20,$21)
+             $19,$20,$21,
+             $22,$23,$24,$25,$26,$27,$28,$29)
            ON CONFLICT (id) DO NOTHING`,
           [
             ind.id, req.params.id, ind.birth_day, ind.death_day ?? null, !ind.is_dead, ind.sex, ind.x ?? 0, ind.y ?? 0,
@@ -442,6 +450,12 @@ router.post('/:id/restore/:checkpointId', authenticate, requireSimulationOwner, 
             JSON.stringify(Array.isArray(ind.beliefs) ? ind.beliefs : (ind.beliefs instanceof Set ? [...ind.beliefs] : [])),
             JSON.stringify(langObj), JSON.stringify(ind.memory ?? {}),
             ind.parent_1_id ?? null, ind.parent_2_id ?? null, ind.death_cause ?? null,
+            ind.is_founder ?? false, ind.is_dead ?? false,
+            ind.home_x ?? null, ind.home_y ?? null,
+            ind.group_id ?? ind.social?.group_id ?? null,
+            ind.inbreeding_coeff ?? 0,
+            JSON.stringify(ind.psychology ?? {}),
+            JSON.stringify(ind.inventory ?? {}),
           ]
         );
       }
@@ -704,6 +718,7 @@ router.get('/:id/report', authenticate, requireSimulationOwner, async (req, res)
         biome: sim.world_state?.biome,
         current_year: sim.current_year, current_day: sim.current_day,
         created_at: sim.created_at,
+        intervened: sim.settings?.intervened === true,
       },
       summary,
       current_stats: currentStats,
