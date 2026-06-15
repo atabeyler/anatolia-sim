@@ -168,7 +168,7 @@ export class SimulationEngine {
       ind.age = day - (ind.birth_day ?? 0);
     }
     if (alive.length === 0) {
-      this.logEvent(day, 'extinction', 'Topluluk yok oldu — son birey de hayatını kaybetti.', { cause: 'population_zero' }, 5);
+      this.logEvent(day, 'extinction', 'The community perished — the last individual has died.', { cause: 'population_zero' }, 5);
       this.onEnded?.({ reason: 'population_zero' });
       this.running = false;
       return;
