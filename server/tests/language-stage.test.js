@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { updateLanguageStage, updateFoxp2Expression, learnFromTeacher, generateProtoWord, CORE_CONCEPTS } from '../src/engines/language/languageEngine.js';
 
-// Eşikler (languageEngine.js ile senkronize)
+// Thresholds (synchronized with languageEngine.js)
 // stage 0: foxp2≥0,  group≥1,  gen≥0
 // stage 1: foxp2≥0,  group≥3,  gen≥0
 // stage 2: foxp2≥0.40, group≥5,  gen≥1
@@ -22,38 +22,38 @@ function makeInd(overrides = {}) {
   };
 }
 
-// ── updateLanguageStage — eşik kombinasyonları ──────────────────────────────
+// ── updateLanguageStage — threshold combinations ─────────────────────────────
 
-describe('updateLanguageStage — FOXP2 eşiği', () => {
-  it('FOXP2 < 0.40 → stage 2 geçişi engellenir (stage 1 kalır)', () => {
+describe('updateLanguageStage — FOXP2 threshold', () => {
+  it('FOXP2 < 0.40 → stage 2 transition blocked (stays at stage 1)', () => {
     const ind = makeInd({ language: makeLang(1, 0.35) });
     const res = updateLanguageStage(ind, 10, 5);
     expect(res.upgraded).toBe(false);
     expect(ind.language.stage).toBe(1);
   });
 
-  it('FOXP2 ≥ 0.40 + grup ≥ 5 + nesil ≥ 1 → stage 2 geçişi', () => {
+  it('FOXP2 ≥ 0.40 + group ≥ 5 + gen ≥ 1 → stage 2 transition', () => {
     const ind = makeInd({ language: makeLang(1, 0.42) });
     const res = updateLanguageStage(ind, 6, 2);
     expect(res.upgraded).toBe(true);
     expect(ind.language.stage).toBe(2);
   });
 
-  it('FOXP2 ≥ 0.55 + grup ≥ 8 + nesil ≥ 4 → stage 3 geçişi', () => {
+  it('FOXP2 ≥ 0.55 + group ≥ 8 + gen ≥ 4 → stage 3 transition', () => {
     const ind = makeInd({ language: makeLang(2, 0.56) });
     const res = updateLanguageStage(ind, 10, 5);
     expect(res.upgraded).toBe(true);
     expect(ind.language.stage).toBe(3);
   });
 
-  it('FOXP2 ≥ 0.65 + grup ≥ 15 + nesil ≥ 8 → stage 4 + grammar=true', () => {
+  it('FOXP2 ≥ 0.65 + group ≥ 15 + gen ≥ 8 → stage 4 + grammar=true', () => {
     const ind = makeInd({ language: makeLang(3, 0.66) });
     const res = updateLanguageStage(ind, 16, 9);
     expect(res.upgraded).toBe(true);
     expect(ind.language.grammar).toBe(true);
   });
 
-  it('FOXP2 ≥ 0.80 + grup ≥ 40 + nesil ≥ 25 → stage 6 + writing=true', () => {
+  it('FOXP2 ≥ 0.80 + group ≥ 40 + gen ≥ 25 → stage 6 + writing=true', () => {
     const ind = makeInd({ language: makeLang(5, 0.82) });
     const res = updateLanguageStage(ind, 45, 26);
     expect(res.upgraded).toBe(true);
@@ -62,83 +62,83 @@ describe('updateLanguageStage — FOXP2 eşiği', () => {
   });
 });
 
-describe('updateLanguageStage — grup boyutu eşiği', () => {
-  it('grup < 3 → stage 1 geçişi engellenir', () => {
+describe('updateLanguageStage — group size threshold', () => {
+  it('group < 3 → stage 1 transition blocked', () => {
     const ind = makeInd({ language: makeLang(0, 0.0) });
     const res = updateLanguageStage(ind, 2, 0);
     expect(res.upgraded).toBe(false);
   });
 
-  it('grup tam 15 → stage 4 geçişi (eşik dahil)', () => {
+  it('group exactly 15 → stage 4 transition (threshold inclusive)', () => {
     const ind = makeInd({ language: makeLang(3, 0.66) });
     const res = updateLanguageStage(ind, 15, 9);
     expect(res.upgraded).toBe(true);
     expect(ind.language.stage).toBe(4);
   });
 
-  it('grup 14 → stage 4 engellenir (eşik altında)', () => {
+  it('group 14 → stage 4 blocked (below threshold)', () => {
     const ind = makeInd({ language: makeLang(3, 0.66) });
     const res = updateLanguageStage(ind, 14, 9);
     expect(res.upgraded).toBe(false);
   });
 });
 
-describe('updateLanguageStage — nesil sayısı eşiği', () => {
-  it('nesil < 1 → stage 2 geçişi engellenir', () => {
+describe('updateLanguageStage — generation count threshold', () => {
+  it('gen < 1 → stage 2 transition blocked', () => {
     const ind = makeInd({ language: makeLang(1, 0.45) });
     const res = updateLanguageStage(ind, 10, 0);
     expect(res.upgraded).toBe(false);
   });
 
-  it('nesil < 4 → stage 3 geçişi engellenir', () => {
+  it('gen < 4 → stage 3 transition blocked', () => {
     const ind = makeInd({ language: makeLang(2, 0.60) });
     const res = updateLanguageStage(ind, 10, 3);
     expect(res.upgraded).toBe(false);
   });
 
-  it('nesil tam 8 → stage 4 geçişi (eşik dahil)', () => {
+  it('gen exactly 8 → stage 4 transition (threshold inclusive)', () => {
     const ind = makeInd({ language: makeLang(3, 0.66) });
     const res = updateLanguageStage(ind, 16, 8);
     expect(res.upgraded).toBe(true);
   });
 });
 
-describe('updateLanguageStage — çoklu eşik başarısızlığı', () => {
-  it('FOXP2 yeterli ama grup yetersiz → geçiş yok', () => {
+describe('updateLanguageStage — multiple threshold failures', () => {
+  it('FOXP2 sufficient but group insufficient → no transition', () => {
     const ind = makeInd({ language: makeLang(2, 0.60) });
     const res = updateLanguageStage(ind, 4, 5); // group < 8
     expect(res.upgraded).toBe(false);
   });
 
-  it('grup yeterli ama FOXP2 yetersiz → geçiş yok', () => {
+  it('group sufficient but FOXP2 insufficient → no transition', () => {
     const ind = makeInd({ language: makeLang(2, 0.50) }); // foxp2 < 0.55
     const res = updateLanguageStage(ind, 10, 5);
     expect(res.upgraded).toBe(false);
   });
 
-  it('nesil yeterli ama FOXP2 yetersiz → geçiş yok', () => {
+  it('gen sufficient but FOXP2 insufficient → no transition', () => {
     const ind = makeInd({ language: makeLang(3, 0.60) }); // foxp2 < 0.65
     const res = updateLanguageStage(ind, 20, 10);
     expect(res.upgraded).toBe(false);
   });
 
-  it('mevcut stage altı geçiş önerilmez (gerileme yok)', () => {
+  it('no transition below current stage is proposed (no regression)', () => {
     const ind = makeInd({ language: makeLang(4, 0.70) });
-    // tüm eşikler karşılanmış ama stage zaten 4
+    // all thresholds met but stage is already 4
     const res = updateLanguageStage(ind, 20, 10);
     expect(res.upgraded).toBe(false);
     expect(ind.language.stage).toBe(4);
   });
 });
 
-describe('updateLanguageStage — stage_name güncellenir', () => {
-  it('stage 3 geçişinde stage_name "proto-words" olur', () => {
+describe('updateLanguageStage — stage_name is updated', () => {
+  it('stage_name becomes "proto-words" on stage 3 transition', () => {
     const ind = makeInd({ language: makeLang(2, 0.56) });
     updateLanguageStage(ind, 10, 5);
     expect(ind.language.stage_name).toBe('proto-words');
   });
 
-  it('stage 6 geçişinde stage_name "writing" olur', () => {
+  it('stage_name becomes "writing" on stage 6 transition', () => {
     const ind = makeInd({ language: makeLang(5, 0.82) });
     updateLanguageStage(ind, 50, 30);
     expect(ind.language.stage_name).toBe('writing');
@@ -148,7 +148,7 @@ describe('updateLanguageStage — stage_name güncellenir', () => {
 // ── updateFoxp2Expression ───────────────────────────────────────────────────
 
 describe('updateFoxp2Expression', () => {
-  it('grup büyüklüğü arttıkça FOXP2 daha hızlı artar', () => {
+  it('FOXP2 increases faster as group size grows', () => {
     const ind1 = makeInd({ language: makeLang(1, 0.3) });
     const ind2 = makeInd({ language: makeLang(1, 0.3) });
     updateFoxp2Expression(ind1, 2);
@@ -156,14 +156,14 @@ describe('updateFoxp2Expression', () => {
     expect(ind2.language.foxp2_expression).toBeGreaterThan(ind1.language.foxp2_expression);
   });
 
-  it('genetik tavan aşılamaz', () => {
+  it('genetic ceiling cannot be exceeded', () => {
     const cap = 0.7;
     const ind = makeInd({ phenotype: { language_capacity: cap, fluid_intelligence: 0.7 }, language: makeLang(2, cap - 0.001) });
     for (let i = 0; i < 1000; i++) updateFoxp2Expression(ind, 10);
     expect(ind.language.foxp2_expression).toBeLessThanOrEqual(cap + 1e-9);
   });
 
-  it('grup yokken staging bonusu ile de artar (stage > 0)', () => {
+  it('also increases with staging bonus when no group (stage > 0)', () => {
     const ind = makeInd({ language: makeLang(1, 0.3) });
     const before = ind.language.foxp2_expression;
     updateFoxp2Expression(ind, 0);
@@ -174,21 +174,21 @@ describe('updateFoxp2Expression', () => {
 // ── learnFromTeacher ────────────────────────────────────────────────────────
 
 describe('learnFromTeacher', () => {
-  it('öğretmenin kelimelerini öğrenir', () => {
+  it('learns words from teacher', () => {
     const teacher = makeInd({ language: { stage: 3, foxp2_expression: 0.6, vocabulary: { fire: 'ba', water: 'mo' } } });
     const learner = makeInd({ phenotype: { language_capacity: 0.8, fluid_intelligence: 0.9 }, language: makeLang(3, 0.6) });
     learnFromTeacher(learner, teacher);
     expect(learner.language.vocabulary.fire).toBe('ba');
   });
 
-  it('zaten bilinen kelimeler ezilmez', () => {
+  it('already-known words are not overwritten', () => {
     const teacher = makeInd({ language: { stage: 3, foxp2_expression: 0.6, vocabulary: { fire: 'za' } } });
     const learner = makeInd({ phenotype: { language_capacity: 0.8, fluid_intelligence: 0.9 }, language: { stage: 3, foxp2_expression: 0.6, vocabulary: { fire: 'ba' } } });
     learnFromTeacher(learner, teacher);
-    expect(learner.language.vocabulary.fire).toBe('ba'); // orijinal kelime korunur
+    expect(learner.language.vocabulary.fire).toBe('ba'); // original word is preserved
   });
 
-  it('düşük IQ → az kelime öğrenir (maxLearn = floor(iq*3))', () => {
+  it('low IQ → learns fewer words (maxLearn = floor(iq*3))', () => {
     const teacher = makeInd({ language: { stage: 3, foxp2_expression: 0.6, vocabulary: { a: '1', b: '2', c: '3', d: '4' } } });
     const learner = makeInd({ phenotype: { language_capacity: 0.5, fluid_intelligence: 0.4 }, language: makeLang(3, 0.6) });
     learnFromTeacher(learner, teacher);
@@ -200,25 +200,25 @@ describe('learnFromTeacher', () => {
 // ── generateProtoWord ───────────────────────────────────────────────────────
 
 describe('generateProtoWord', () => {
-  it('aynı concept+groupId → deterministik kelime', () => {
+  it('same concept+groupId → deterministic word', () => {
     expect(generateProtoWord('fire', 'g1')).toBe(generateProtoWord('fire', 'g1'));
   });
 
-  it('farklı concept → farklı kelime', () => {
+  it('different concept → different word', () => {
     expect(generateProtoWord('fire', 'g1')).not.toBe(generateProtoWord('water', 'g1'));
   });
 
-  it('farklı groupId → farklı kelime (grup lehçe farkı)', () => {
+  it('different groupId → different word (group dialect difference)', () => {
     expect(generateProtoWord('fire', 'g1')).not.toBe(generateProtoWord('fire', 'g2'));
   });
 
-  it('kelime yalnızca harf içerir', () => {
+  it('word contains only letters', () => {
     for (const concept of CORE_CONCEPTS.slice(0, 10)) {
       expect(/^[a-z]+$/.test(generateProtoWord(concept, 'g1'))).toBe(true);
     }
   });
 
-  it('kelime uzunluğu 2-6 karakter arasında (1-3 hece × 2)', () => {
+  it('word length between 2-6 characters (1-3 syllables × 2)', () => {
     for (const concept of CORE_CONCEPTS) {
       const w = generateProtoWord(concept, 'g1');
       expect(w.length).toBeGreaterThanOrEqual(2);

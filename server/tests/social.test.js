@@ -46,12 +46,12 @@ function makeGroup(id, memberIds, overrides = {}) {
 }
 
 describe('computeSocialStatus', () => {
-  it('grup yoksa 0 döner', () => {
+  it('returns 0 when no group exists', () => {
     const ind = makeInd('i1');
     expect(computeSocialStatus(ind, null)).toBe(0);
   });
 
-  it('[0, 1] aralığında değer üretir', () => {
+  it('produces value in [0, 1] range', () => {
     const ind   = makeInd('i1', { phenotype: { dominance: 0.8, fluid_intelligence: 0.8, empathy: 0.8, physical_strength: 0.8 } });
     const group = makeGroup('g1', ['i1'], { founded_day: 1000 });
     const status = computeSocialStatus(ind, group);
@@ -59,14 +59,14 @@ describe('computeSocialStatus', () => {
     expect(status).toBeLessThanOrEqual(1);
   });
 
-  it('yüksek dominance + IQ → yüksek statü', () => {
+  it('high dominance + IQ → high status', () => {
     const high = makeInd('h', { phenotype: { dominance: 0.9, fluid_intelligence: 0.9, empathy: 0.9, physical_strength: 0.9 } });
     const low  = makeInd('l', { phenotype: { dominance: 0.1, fluid_intelligence: 0.1, empathy: 0.1, physical_strength: 0.1 } });
     const group = makeGroup('g1', ['h', 'l'], { founded_day: 500 });
     expect(computeSocialStatus(high, group)).toBeGreaterThan(computeSocialStatus(low, group));
   });
 
-  it('itibar (reputation) statüye katkıda bulunur', () => {
+  it('reputation contributes to status', () => {
     const highRep = makeInd('hr', { social: { reputation: 1.0 } });
     const lowRep  = makeInd('lr', { social: { reputation: 0.0 } });
     const group   = makeGroup('g1', ['hr', 'lr'], { founded_day: 500 });
@@ -74,8 +74,8 @@ describe('computeSocialStatus', () => {
   });
 });
 
-describe('processGroupDynamics — grup oluşumu', () => {
-  it('iki grupssuz birey yakın konumdaysa yeni grup oluşturur', () => {
+describe('processGroupDynamics — group formation', () => {
+  it('two groupless individuals in close proximity form a new group', () => {
     const i1 = makeInd('i1');
     const i2 = makeInd('i2');
     const population = [i1, i2];
@@ -88,7 +88,7 @@ describe('processGroupDynamics — grup oluşumu', () => {
     expect(i2.group_id).not.toBeNull();
   });
 
-  it('bireyler aynı gruba atanır', () => {
+  it('individuals are assigned to the same group', () => {
     const i1 = makeInd('i1');
     const i2 = makeInd('i2');
     const groups = [];
@@ -99,9 +99,9 @@ describe('processGroupDynamics — grup oluşumu', () => {
   });
 });
 
-describe('processGroupDynamics — grup bölünmesi (fission)', () => {
-  it('26+ üyeli grup bölünme girişimi yapar (eşik: 25)', () => {
-    // 26 birey oluştur — hepsi bağımsızlık yüksek, düşük statü (bölünme için)
+describe('processGroupDynamics — group fission', () => {
+  it('group with 26+ members attempts fission (threshold: 25)', () => {
+    // Create 26 individuals — all with high independence, low status (for fission)
     const members = Array.from({ length: 26 }, (_, i) =>
       makeInd(`m${i}`, {
         phenotype: { dominance: 0.1, fluid_intelligence: 0.5, empathy: 0.5, physical_strength: 0.5, independence: 0.8 },
@@ -112,7 +112,7 @@ describe('processGroupDynamics — grup bölünmesi (fission)', () => {
     const group = makeGroup('g1', members.map(m => m.id));
     const groups = [group];
 
-    // Fission olasılıklı — 50 denemede en az bir kez gerçekleşmeli
+    // Fission is probabilistic — should occur at least once in 50 tries
     let fissioned = false;
     for (let day = 0; day < 50; day++) {
       processGroupDynamics(members, groups, day);
@@ -121,7 +121,7 @@ describe('processGroupDynamics — grup bölünmesi (fission)', () => {
     expect(fissioned).toBe(true);
   });
 
-  it('gerilim > 0.8 bölünme tetikler', () => {
+  it('tension > 0.8 triggers fission', () => {
     const members = Array.from({ length: 10 }, (_, i) =>
       makeInd(`m${i}`, {
         phenotype: { dominance: 0.1, fluid_intelligence: 0.5, empathy: 0.5, physical_strength: 0.5, independence: 0.9 },
@@ -140,7 +140,7 @@ describe('processGroupDynamics — grup bölünmesi (fission)', () => {
     expect(fissioned).toBe(true);
   });
 
-  it('< 8 üyeli grup bölünmez (minimum boyut koşulu)', () => {
+  it('group with < 8 members does not split (minimum size condition)', () => {
     const members = Array.from({ length: 5 }, (_, i) =>
       makeInd(`m${i}`, {
         phenotype: { independence: 0.9, dominance: 0.1, fluid_intelligence: 0.5, empathy: 0.5, physical_strength: 0.5 },
@@ -154,28 +154,28 @@ describe('processGroupDynamics — grup bölünmesi (fission)', () => {
     for (let day = 0; day < 30; day++) {
       processGroupDynamics(members, groups, day);
     }
-    expect(groups.length).toBe(1); // bölünme olmamalı
+    expect(groups.length).toBe(1); // no fission should occur
   });
 });
 
-describe('RELATIONSHIP_TYPES — tanım kontrolü', () => {
-  it('6 ilişki tipi tanımlı', () => {
+describe('RELATIONSHIP_TYPES — definition check', () => {
+  it('6 relationship types defined', () => {
     expect(Object.keys(RELATIONSHIP_TYPES)).toHaveLength(6);
   });
 
-  it('temel tipleri içerir', () => {
+  it('contains basic types', () => {
     expect(RELATIONSHIP_TYPES.KIN).toBe('kin');
     expect(RELATIONSHIP_TYPES.MATE).toBe('mate');
     expect(RELATIONSHIP_TYPES.RIVAL).toBe('rival');
   });
 });
 
-describe('GROUP_ROLES — tanım kontrolü', () => {
-  it('6 rol tanımlı', () => {
+describe('GROUP_ROLES — definition check', () => {
+  it('6 roles defined', () => {
     expect(Object.keys(GROUP_ROLES)).toHaveLength(6);
   });
 
-  it('temel rolleri içerir', () => {
+  it('contains basic roles', () => {
     expect(GROUP_ROLES.LEADER).toBe('leader');
     expect(GROUP_ROLES.WARRIOR).toBe('warrior');
     expect(GROUP_ROLES.HEALER).toBe('healer');

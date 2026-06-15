@@ -108,31 +108,31 @@ router.post('/login', loginLimiter, async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Giriş başarısız.' });
+    res.status(500).json({ error: 'Login failed.' });
   }
 });
 
 router.post('/refresh', async (req, res) => {
   try {
     const token = req.cookies?.refresh_token;
-    if (!token) return res.status(401).json({ error: 'Oturum süresi doldu.' });
+    if (!token) return res.status(401).json({ error: 'Session expired.' });
     const payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
     const { rows } = await query('SELECT id, user_code, email, role, first_name, last_name, is_banned, is_approved FROM users WHERE id = $1', [payload.id]);
     const user = rows[0];
-    if (!user || user.is_banned || !user.is_approved) return res.status(401).json({ error: 'Geçersiz oturum.' });
+    if (!user || user.is_banned || !user.is_approved) return res.status(401).json({ error: 'Invalid session.' });
     const accessToken = jwt.sign(
       { id: user.id, username: user.user_code, email: user.email, role: user.role },
       process.env.JWT_SECRET, { expiresIn: '15m' }
     );
     res.json({ access_token: accessToken, user: { id: user.id, username: user.user_code, email: user.email, role: user.role, first_name: user.first_name, last_name: user.last_name } });
   } catch {
-    res.status(401).json({ error: 'Geçersiz oturum.' });
+    res.status(401).json({ error: 'Invalid session.' });
   }
 });
 
 router.post('/logout', (req, res) => {
   res.clearCookie('refresh_token');
-  res.json({ message: 'Çıkış yapıldı.' });
+  res.json({ message: 'Logged out.' });
 });
 
 router.get('/pending-status/:userCode', async (req, res) => {

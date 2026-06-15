@@ -8,7 +8,7 @@ import { simulationManager } from '../simulationManager.js';
 const router = Router();
 
 const TRAIT_LOCI = {
-  // ── Zihin / Mind ──────────────────────────────────────────────────────────
+  // ── Mind ──────────────────────────────────────────────────────────────────
   fluid_intelligence: ['BDNF_01', 'COMT_01', 'DTNBP1_01', 'NRG1_01', 'DISC1_01'],
   curiosity:          ['DRD4_01'],
   conscientiousness:  ['DISC1_01', 'COMT_01'],
@@ -19,13 +19,13 @@ const TRAIT_LOCI = {
   learning_rate:      ['ADRA2B_01', 'BDNF_01', 'COMT_01'],
   risk_tolerance:     ['CACNA1C_01', 'DRD4_01'],
   innovation:         ['CACNA1C_01', 'NRG1_01', 'BDNF_01'],
-  // ── Sosyal / Social ───────────────────────────────────────────────────────
+  // ── Social ────────────────────────────────────────────────────────────────
   empathy:            ['OXTR_01', 'RELN_01'],
   social_bonding:     ['OXTR_01'],
   aggression:         ['MAOA_01'],
   cooperation:        ['AVPR1A_01', 'OXTR_01'],
   dominance:          ['DRD2_01', 'MAOA_01', 'DISC1_01'],
-  // ── Beden / Body ──────────────────────────────────────────────────────────
+  // ── Body ──────────────────────────────────────────────────────────────────
   height:             ['HEIGHT_01', 'HEIGHT_02', 'HEIGHT_03'],
   metabolism:         ['METABOLISM_01'],
   physical_strength:  ['STRENGTH_01'],
@@ -167,21 +167,21 @@ router.get('/', authenticate, async (req, res) => {
 router.post('/', authenticate, async (req, res) => {
   try {
     const { name, latitude, longitude, founder1_params, founder2_params } = req.body;
-    if (!name?.trim()) return res.status(400).json({ error: 'Simülasyon adı gerekli' });
+    if (!name?.trim()) return res.status(400).json({ error: 'Simulation name is required' });
     const lat = parseFloat(latitude), lon = parseFloat(longitude);
-    if (isNaN(lat) || isNaN(lon)) return res.status(400).json({ error: 'Geçersiz koordinat' });
-    if (lat < -90 || lat > 90)    return res.status(400).json({ error: 'Enlem -90 ile 90 arasında olmalı' });
-    if (lon < -180 || lon > 180)  return res.status(400).json({ error: 'Boylam -180 ile 180 arasında olmalı' });
-    if (!founder1_params || !founder2_params) return res.status(400).json({ error: 'İki kurucu gerekli' });
+    if (isNaN(lat) || isNaN(lon)) return res.status(400).json({ error: 'Invalid coordinates' });
+    if (lat < -90 || lat > 90)    return res.status(400).json({ error: 'Latitude must be between -90 and 90' });
+    if (lon < -180 || lon > 180)  return res.status(400).json({ error: 'Longitude must be between -180 and 180' });
+    if (!founder1_params || !founder2_params) return res.status(400).json({ error: 'Two founders are required' });
     const worldState = createWorldState(lat, lon);
-    const f1Params = buildFounderParams(founder1_params, { name: 'Kurucu Erkek', ageYears: 22, eye_color: 'brown', hair_color: 'dark', skin_tone: 'olive' });
-    const f2Params = buildFounderParams(founder2_params, { name: 'Kurucu Kadın', ageYears: 20, eye_color: 'brown', hair_color: 'brown', skin_tone: 'olive' });
+    const f1Params = buildFounderParams(founder1_params, { name: 'Founder Male', ageYears: 22, eye_color: 'brown', hair_color: 'dark', skin_tone: 'olive' });
+    const f2Params = buildFounderParams(founder2_params, { name: 'Founder Female', ageYears: 20, eye_color: 'brown', hair_color: 'brown', skin_tone: 'olive' });
     const f1 = createFounder({ ...f1Params, sex: f1Params.sex ?? 'male',   x: lon,       y: lat });
     const f2 = createFounder({ ...f2Params, sex: f2Params.sex ?? 'female', x: lon + 0.1, y: lat });
     // Mark as founders: immune to random death/disease until age 60, anchored to home
     f1.is_founder = true; f1.home_x = f1.x; f1.home_y = f1.y;
     f2.is_founder = true; f2.home_x = f2.x; f2.home_y = f2.y;
-    // Kurucular yüzmeyi bilir — diğerleri gözlemsel öğrenmeyle edinir
+    // Founders know swimming — others acquire it through observational learning
     if (!f1.known_techs) f1.known_techs = new Set();
     if (!f2.known_techs) f2.known_techs = new Set();
     f1.known_techs.add('swimming');
@@ -251,7 +251,7 @@ router.post('/:id/complete', authenticate, requireSimulationOwner, async (req, r
 router.post('/:id/speed', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const speed = Number(req.body.speed_multiplier);
-    if (!Number.isInteger(speed) || speed < 1 || speed > 1000) return res.status(400).json({ error: 'Hız 1-1000 arasında tam sayı olmalı' });
+    if (!Number.isInteger(speed) || speed < 1 || speed > 1000) return res.status(400).json({ error: 'Speed must be an integer between 1 and 1000' });
     simulationManager.setSpeed(req.params.id, speed);
     const { rows } = await query(
       'UPDATE simulations SET speed_multiplier = $1, updated_at = NOW() WHERE id = $2 RETURNING speed_multiplier',

@@ -26,68 +26,68 @@ function makeInd(id, overrides = {}) {
   };
 }
 
-// worldState yardımcısı
+// worldState helper
 const CALM_WORLD   = { recent_disaster: false, food_abundance: 0.8 };
 const CRISIS_WORLD = { recent_disaster: true,  food_abundance: 0.1 };
 
-describe('BELIEF_ARCHETYPES — yapı doğrulaması', () => {
-  it('6 arketip tanımlı', () => {
+describe('BELIEF_ARCHETYPES — structure validation', () => {
+  it('6 archetypes defined', () => {
     expect(Object.keys(BELIEF_ARCHETYPES)).toHaveLength(6);
   });
 
-  it('animizm en düşük iq_min (0) ve stage (1) sahip', () => {
+  it('animism has lowest iq_min (0) and stage (1)', () => {
     expect(BELIEF_ARCHETYPES.animism.iq_min).toBe(0);
     expect(BELIEF_ARCHETYPES.animism.stage).toBe(1);
   });
 
-  it('politeizm çömlek teknolojisi gerektirir (yazı değil)', () => {
+  it('polytheism requires pottery technology (not writing)', () => {
     expect(BELIEF_ARCHETYPES.polytheism.requires_tech).toContain('pottery');
     expect(BELIEF_ARCHETYPES.polytheism.requires_tech).not.toContain('writing_system');
   });
 
-  it('monoteizm ve felsefi inanç yazı sistemi + matematik gerektirir', () => {
+  it('monotheism and philosophical belief require writing system + mathematics', () => {
     expect(BELIEF_ARCHETYPES.monotheism.requires_tech).toContain('writing_system');
     expect(BELIEF_ARCHETYPES.monotheism.requires_tech).toContain('mathematics_basic');
     expect(BELIEF_ARCHETYPES.philosophical.requires_tech).toContain('writing_system');
   });
 
-  it('arketipler aşama sırasına göre sıralanabilir (1→4)', () => {
+  it('archetypes can be sorted by stage order (1→4)', () => {
     const stages = Object.values(BELIEF_ARCHETYPES).map(a => a.stage);
     expect(Math.min(...stages)).toBe(1);
     expect(Math.max(...stages)).toBe(4);
   });
 });
 
-describe('tryFormBelief — birikim ve eşik', () => {
-  it('eşiğe ulaşılmadan inanç oluşmaz', () => {
+describe('tryFormBelief — accumulation and threshold', () => {
+  it('belief does not form before threshold is reached', () => {
     const ind = makeInd('i1');
     const result = tryFormBelief(ind, new Set(), new Set(), CALM_WORLD, 1);
     expect(result).toBeNull();
   });
 
-  it('yeterli birikim sonrası animizm oluşur (tüm koşullar karşılanmış)', () => {
+  it('animism forms after sufficient accumulation (all conditions met)', () => {
     const ind = makeInd('i1', {
       phenotype: { religiosity: 0.9, fluid_intelligence: 0.8, anxiety: 0.5, curiosity: 0.5 },
-      language: { foxp2_expression: 0.4 }, // animizm foxp2_min: 0.3
-      _beliefReflection: 9999, // eşiği geçmek için
+      language: { foxp2_expression: 0.4 }, // animism foxp2_min: 0.3
+      _beliefReflection: 9999, // to exceed threshold
     });
     const result = tryFormBelief(ind, new Set(), new Set(), CALM_WORLD, 1);
     expect(result).not.toBeNull();
-    expect(result.belief_id).toBe('animism'); // en düşük stage ilk seçilir
+    expect(result.belief_id).toBe('animism'); // lowest stage selected first
   });
 
-  it('felaket bonusu birikim hızını artırır', () => {
+  it('disaster bonus increases accumulation rate', () => {
     const indCalm   = makeInd('i1', { _beliefReflection: 0 });
     const indCrisis = makeInd('i2', { _beliefReflection: 0 });
 
     tryFormBelief(indCalm,   new Set(), new Set(), CALM_WORLD,   1);
     tryFormBelief(indCrisis, new Set(), new Set(), CRISIS_WORLD, 1);
 
-    // Kriz dünyasında birikim daha hızlı artmalı
+    // Accumulation should increase faster in a crisis world
     expect(indCrisis._beliefReflection).toBeGreaterThan(indCalm._beliefReflection);
   });
 
-  it('kıtlık bonusu (food_abundance < 1) birikim artırır', () => {
+  it('scarcity bonus (food_abundance < 1) increases accumulation', () => {
     const indPlenty = makeInd('i1', { _beliefReflection: 0 });
     const indScarse = makeInd('i2', { _beliefReflection: 0 });
 
@@ -97,38 +97,38 @@ describe('tryFormBelief — birikim ve eşik', () => {
     expect(indScarse._beliefReflection).toBeGreaterThan(indPlenty._beliefReflection);
   });
 
-  it('yüksek dinsellik × IQ → düşük eşik → daha hızlı inanç', () => {
-    // Eşik = 100 / max(religiosity × IQ, 0.1)
-    const highThreshold = 100 / Math.max(0.1 * 0.2, 0.1); // düşük rel+IQ → yüksek eşik
-    const lowThreshold  = 100 / Math.max(0.9 * 0.9, 0.1); // yüksek rel+IQ → düşük eşik
+  it('high religiosity × IQ → low threshold → faster belief formation', () => {
+    // Threshold = 100 / max(religiosity × IQ, 0.1)
+    const highThreshold = 100 / Math.max(0.1 * 0.2, 0.1); // low rel+IQ → high threshold
+    const lowThreshold  = 100 / Math.max(0.9 * 0.9, 0.1); // high rel+IQ → low threshold
     expect(lowThreshold).toBeLessThan(highThreshold);
   });
 
-  it('zaten sahip olunan inanç tekrar atanmaz', () => {
+  it('already-held belief is not re-assigned', () => {
     const ind = makeInd('i1', { _beliefReflection: 9999 });
     const existing = new Set(['animism']);
     const result = tryFormBelief(ind, existing, new Set(), CALM_WORLD, 1);
-    // animizm zaten var; ata kültü veya şamanizm denenecek ama foxp2 yeterli mi?
-    // Sonuç null veya animism olmayan bir inanç
+    // animism already held; ancestor cult or shamanism will be tried, but is foxp2 sufficient?
+    // Result is null or a belief other than animism
     if (result) expect(result.belief_id).not.toBe('animism');
   });
 
-  it('IQ eşiği yetersizse politeizm oluşmaz (iq < 0.5)', () => {
+  it('polytheism does not form if IQ threshold insufficient (iq < 0.5)', () => {
     const ind = makeInd('i1', {
       phenotype: { religiosity: 0.9, fluid_intelligence: 0.4, anxiety: 0.5, curiosity: 0.5 },
       language: { foxp2_expression: 0.9 },
       _beliefReflection: 9999,
     });
-    // Politeizm iq_min: 0.5 gerektirir; bu birey IQ=0.4 ile politeizme geçemez
+    // Polytheism requires iq_min: 0.5; this individual with IQ=0.4 cannot advance to polytheism
     const discovered = new Set(['pottery']);
-    const existing   = new Set(['animism', 'ancestor_cult', 'shamanism']); // düşük inançlar zaten var
+    const existing   = new Set(['animism', 'ancestor_cult', 'shamanism']); // lower beliefs already held
     const result = tryFormBelief(ind, existing, discovered, CALM_WORLD, 1);
     if (result) {
       expect(['polytheism', 'monotheism', 'philosophical']).not.toContain(result.belief_id);
     }
   });
 
-  it('birikim eşik sonrası sıfırlanır', () => {
+  it('accumulation resets after threshold is crossed', () => {
     const ind = makeInd('i1', {
       phenotype: { religiosity: 0.9, fluid_intelligence: 0.8, anxiety: 0.5, curiosity: 0.5 },
       language: { foxp2_expression: 0.4 },
@@ -139,13 +139,13 @@ describe('tryFormBelief — birikim ve eşik', () => {
   });
 });
 
-describe('updateBeliefSpread — sosyal yayılım', () => {
-  it('inançsız birey grup içindeki inanan komşudan inanç alabilir', () => {
+describe('updateBeliefSpread — social spread', () => {
+  it('non-believing individual can receive belief from a believing neighbor in the same group', () => {
     const believer  = makeInd('b1', { group_id: 'g1', beliefs: new Set(['animism']) });
     const receptive = makeInd('r1', {
       group_id: 'g1',
       phenotype: { religiosity: 0.9, anxiety: 0.5, curiosity: 0.5, fluid_intelligence: 0.5 },
-      _beliefExposure: { animism: 10000 }, // eşiği geçmek için önceden yüklü
+      _beliefExposure: { animism: 10000 }, // pre-loaded to exceed threshold
     });
     const population    = [believer, receptive];
     const existingBeliefs = new Set(['animism']);
@@ -155,7 +155,7 @@ describe('updateBeliefSpread — sosyal yayılım', () => {
     expect(receptive.beliefs.has('animism')).toBe(true);
   });
 
-  it('farklı grupta ve uzakta olan birey inanç almaz', () => {
+  it('individual in a different group and far away does not receive belief', () => {
     const believer  = makeInd('b1', { group_id: 'g1', x: 0,  y: 0,  beliefs: new Set(['animism']) });
     const isolated  = makeInd('r1', { group_id: 'g2', x: 10, y: 10, beliefs: new Set() });
     const population    = [believer, isolated];
@@ -167,27 +167,27 @@ describe('updateBeliefSpread — sosyal yayılım', () => {
     expect(isolated.beliefs.has('animism')).toBe(false);
   });
 
-  it('zaten sahip olunan inanç tekrar işlenmez', () => {
+  it('already-held belief is not processed again', () => {
     const holder = makeInd('h1', { group_id: 'g1', beliefs: new Set(['animism']) });
     const population = [holder];
     const events = updateBeliefSpread(population, new Set(['animism']), [], 1);
     expect(events).toHaveLength(0);
   });
 
-  it('yüksek dinsellik maruziyet eşiğini düşürür (200/religiosity)', () => {
-    const highRel = 200 / Math.max(0.9, 0.1); // ~222 gün
-    const lowRel  = 200 / Math.max(0.1, 0.1); // 2000 gün
+  it('high religiosity lowers exposure threshold (200/religiosity)', () => {
+    const highRel = 200 / Math.max(0.9, 0.1); // ~222 days
+    const lowRel  = 200 / Math.max(0.1, 0.1); // 2000 days
     expect(highRel).toBeLessThan(lowRel);
   });
 
-  it('updateBeliefSpread inanç olmadan hemen döner', () => {
+  it('updateBeliefSpread returns immediately with no beliefs', () => {
     const result = updateBeliefSpread([], new Set(), [], 1);
     expect(result).toEqual([]);
   });
 });
 
 describe('checkRitualEmergence', () => {
-  it('>%60 üye aynı inancı taşıyorsa ritüel oluşur', () => {
+  it('ritual emerges when >60% of members share the same belief', () => {
     const members = [
       makeInd('i1', { beliefs: new Set(['animism']) }),
       makeInd('i2', { beliefs: new Set(['animism']) }),
@@ -201,14 +201,14 @@ describe('checkRitualEmergence', () => {
     expect(group.has_ritual).toBe('animism');
   });
 
-  it('grup < 3 üye ise ritüel oluşmaz', () => {
+  it('ritual does not emerge if group has fewer than 3 members', () => {
     const members = [makeInd('i1', { beliefs: new Set(['animism']) })];
     const group   = { id: 'g1', member_ids: ['i1'], has_ritual: null };
     const result  = checkRitualEmergence(group, members, new Set(['animism']), 100);
     expect(result).toBeNull();
   });
 
-  it('ritüel oluştuğunda grup zaten ritüel sahibi ise tekrar oluşmaz', () => {
+  it('ritual does not form again if group already has a ritual', () => {
     const members = [
       makeInd('i1', { beliefs: new Set(['animism']) }),
       makeInd('i2', { beliefs: new Set(['animism']) }),
