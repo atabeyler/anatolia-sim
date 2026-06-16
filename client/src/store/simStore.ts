@@ -199,11 +199,12 @@ export const useSimStore = create<SimStore>((set) => ({
 
   activePanel: null,
   setActivePanel: (panel) => set(s => ({ activePanel: s.activePanel === panel ? null : panel })),
-  lang: 'tr',
-  setLang: (l) => set({ lang: l }),
+  lang: (localStorage.getItem('anatolia_lang') as any) || 'tr',
+  setLang: (l) => { localStorage.setItem('anatolia_lang', l); set({ lang: l }); },
   toggleLang: () => set(s => {
     const currentIndex = LANG_ORDER.indexOf(s.lang);
     const nextLang = LANG_ORDER[(currentIndex + 1) % LANG_ORDER.length] ?? 'en';
+    localStorage.setItem('anatolia_lang', nextLang);
     return { lang: nextLang };
   }),
   theme: 'dark',

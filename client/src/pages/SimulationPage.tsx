@@ -451,11 +451,11 @@ export default function SimulationPage() {
   }
 
   const uiText = {
-    live: lang === 'tr' ? 'CANLI' : 'LIVE',
-    speed: lang === 'tr' ? 'HIZ' : 'SPEED',
-    set: lang === 'tr' ? 'AYARLA' : 'SET',
-    creatorTime: lang === 'tr' ? 'KURUCU ZAMANI' : 'CREATOR TIME',
-    user: lang === 'tr' ? 'KULLANICI' : 'USER',
+    live:        text(lang as LangCode, { tr: 'CANLI',         en: 'LIVE',         de: 'LIVE',       fr: 'EN DIRECT', ar: 'مباشر'     }),
+    speed:       text(lang as LangCode, { tr: 'HIZ',           en: 'SPEED',        de: 'TEMPO',      fr: 'VITESSE',   ar: 'السرعة'    }),
+    set:         text(lang as LangCode, { tr: 'AYARLA',        en: 'SET',          de: 'SETZEN',     fr: 'DÉFINIR',   ar: 'تعيين'     }),
+    creatorTime: text(lang as LangCode, { tr: 'KURUCU ZAMANI', en: 'CREATOR TIME', de: 'ERSTELLZEIT',fr: 'HEURE',     ar: 'وقت المنشئ'}),
+    user:        text(lang as LangCode, { tr: 'KULLANICI',     en: 'USER',         de: 'BENUTZER',   fr: 'UTILISATEUR',ar: 'المستخدم' }),
   };
 
   const sidebarW = sidebarExpanded ? 180 : 44;
