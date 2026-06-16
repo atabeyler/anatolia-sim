@@ -31,7 +31,7 @@ function useDrag(initial: { x: number; y: number }) {
 
 function generateNarration(ind: any, lang: string): string[] {
   const lines: string[] = [];
-  const tr = (a: string, b: string) => lang === 'tr' ? a : b;
+  const t = (tr: string, en: string, de = en, fr = en, ar = en) => text(lang as LangCode, { tr, en, de, fr, ar });
   const health = ind.health ?? {};
   const mind = ind.mind ?? {};
   const language = ind.language ?? {};
@@ -46,54 +46,54 @@ function generateNarration(ind: any, lang: string): string[] {
 
   // Activity
   if (ind._inWater) {
-    lines.push(tr('Suda ilerliyor — tehlike yüksek.', 'Moving through water — high danger.'));
+    lines.push(t('Suda ilerliyor — tehlike yüksek.', 'Moving through water — high danger.'));
   } else if (cal < 0.15) {
-    lines.push(tr('Açlığın eşiğinde, yiyecek peşinde.', 'On the verge of starvation, searching for food.'));
+    lines.push(t('Açlığın eşiğinde, yiyecek peşinde.', 'On the verge of starvation, searching for food.'));
   } else if (hyd < 0.15) {
-    lines.push(tr('Susuzluktan zayıf, su arıyor.', 'Weakened by thirst, searching for water.'));
+    lines.push(t('Susuzluktan zayıf, su arıyor.', 'Weakened by thirst, searching for water.'));
   } else if (hp < 0.25) {
-    lines.push(tr('Ağır hasta, zar zor ayakta.', 'Seriously ill, barely standing.'));
+    lines.push(t('Ağır hasta, zar zor ayakta.', 'Seriously ill, barely standing.'));
   } else if (health.pregnancy) {
-    lines.push(tr('Doğuma yakın, yorgun ama güçlü.', 'Near birth, tired but strong.'));
+    lines.push(t('Doğuma yakın, yorgun ama güçlü.', 'Near birth, tired but strong.'));
   } else if (matingUrge > 0.8 && cal > 0.4) {
-    lines.push(tr('Eş arayışında, etrafı tarıyor.', 'Searching for a mate, scanning the surroundings.'));
+    lines.push(t('Eş arayışında, etrafı tarıyor.', 'Searching for a mate, scanning the surroundings.'));
   } else if (satiation > 0.75 && hp > 0.7) {
-    lines.push(tr('Tok ve sağlıklı, grubuyla yürüyor.', 'Well-fed and healthy, walking with the group.'));
+    lines.push(t('Tok ve sağlıklı, grubuyla yürüyor.', 'Well-fed and healthy, walking with the group.'));
   } else {
-    lines.push(tr('Günlük hayatta kalma rutininde.', 'Going through the daily survival routine.'));
+    lines.push(t('Günlük hayatta kalma rutininde.', 'Going through the daily survival routine.'));
   }
 
   // Fears
   if ((fears.predator ?? 0) > 0.4) {
-    lines.push(tr('Yırtıcı kokusu var — sinirli ve tetikte.', 'Senses predators — nervous and alert.'));
+    lines.push(t('Yırtıcı kokusu var — sinirli ve tetikte.', 'Senses predators — nervous and alert.'));
   } else if ((fears.scarcity ?? 0) > 0.4) {
-    lines.push(tr('Kıtlık korkusuyla yiyecek biriktiriyor.', 'Hoarding food, haunted by scarcity.'));
+    lines.push(t('Kıtlık korkusuyla yiyecek biriktiriyor.', 'Hoarding food, haunted by scarcity.'));
   } else if ((fears.disaster ?? 0) > 0.3) {
-    lines.push(tr('Son afetin gölgesi hâlâ üzerinde.', 'Still shadowed by the recent disaster.'));
+    lines.push(t('Son afetin gölgesi hâlâ üzerinde.', 'Still shadowed by the recent disaster.'));
   }
 
   // Language & social
   const stage = language.stage ?? 0;
   const wordCount = Object.keys(language.vocabulary ?? {}).length;
   if (stage >= 3 && wordCount > 0) {
-    lines.push(tr(`"${Object.keys(language.vocabulary)[0]}" dahil ${wordCount} kelimeyle iletişim kuruyor.`,
+    lines.push(t(`"${Object.keys(language.vocabulary)[0]}" dahil ${wordCount} kelimeyle iletişim kuruyor.`,
       `Communicates with ${wordCount} words including "${Object.keys(language.vocabulary)[0]}".`));
   } else if (stage === 2) {
-    lines.push(tr('Duygusal seslerle çevresine mesaj veriyor.', 'Sending messages to others with emotional sounds.'));
+    lines.push(t('Duygusal seslerle çevresine mesaj veriyor.', 'Sending messages to others with emotional sounds.'));
   } else if (stage === 1) {
-    lines.push(tr('El işaretleri ve seslerle anlaşıyor.', 'Communicating with gestures and simple sounds.'));
+    lines.push(t('El işaretleri ve seslerle anlaşıyor.', 'Communicating with gestures and simple sounds.'));
   }
 
   // Consciousness
   if (consciousness > 0.6) {
-    lines.push(tr(`Derin bir iç dünya — bilinç %${Math.round(consciousness * 100)}.`, `Deep inner world — consciousness ${Math.round(consciousness * 100)}%.`));
+    lines.push(t(`Derin bir iç dünya — bilinç %${Math.round(consciousness * 100)}.`, `Deep inner world — consciousness ${Math.round(consciousness * 100)}%.`));
   } else if (consciousness > 0.3) {
-    lines.push(tr('Çevresini giderek daha fazla sorguluyor.', 'Increasingly questioning its surroundings.'));
+    lines.push(t('Çevresini giderek daha fazla sorguluyor.', 'Increasingly questioning its surroundings.'));
   }
 
   // Stress
   if (stress > 0.7) {
-    lines.push(tr('Yüksek stres altında — vücut alarma geçmiş.', 'Under heavy stress — body on high alert.'));
+    lines.push(t('Yüksek stres altında — vücut alarma geçmiş.', 'Under heavy stress — body on high alert.'));
   }
 
   return lines.slice(0, 4);
@@ -113,7 +113,6 @@ export default function WitnessPanel() {
   const { watchedIndividualId, setWatchedIndividual, currentSim, accessToken, lang, stats } = useSimStore();
   const [ind, setInd] = useState<any>(null);
   const drag = useDrag({ x: 16, y: 120 });
-  const tr = (a: string, b: string) => lang === 'tr' ? a : b;
 
   useEffect(() => {
     if (!watchedIndividualId || !currentSim || !accessToken) { setInd(null); return; }

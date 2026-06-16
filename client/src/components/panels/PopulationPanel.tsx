@@ -13,16 +13,23 @@ const FEMALE_NAMES = ['Ela','Sera','Kaya','Mara','Sina','Tala','Nura','Bera','Ar
   'Elara','Serana','Kayira','Mirana','Sinara','Talara','Nurala','Berara','Aryala','Larara',
   'Esma','Ferda','Gülün','Hara','İlara','Kiran','Liran','Miran','Niran','Orana'];
 
-const CAUSE_TR: Record<string, string> = {
-  starvation: 'Açlık', dehydration: 'Susuzluk', old_age: 'Yaşlılık',
-  predator: 'Yırtıcı hayvan', genetic_disease: 'Genetik hastalık',
-  infection: 'Enfeksiyon', trauma: 'Travma', birth_complications: 'Doğum komplikasyonu',
-  conflict: 'Çatışma', unknown: 'Bilinmeyen',
+const CAUSE_I18N: Record<string, { tr: string; en: string; de: string; fr: string; ar: string }> = {
+  starvation:           { tr: 'Açlık',                  en: 'Starvation',          de: 'Verhungern',         fr: 'Famine',               ar: 'مجاعة'           },
+  dehydration:          { tr: 'Susuzluk',               en: 'Dehydration',         de: 'Austrocknung',       fr: 'Déshydratation',       ar: 'جفاف'            },
+  old_age:              { tr: 'Yaşlılık',               en: 'Old age',             de: 'Alter',              fr: 'Vieillesse',           ar: 'الشيخوخة'        },
+  predator:             { tr: 'Yırtıcı hayvan',         en: 'Predator',            de: 'Raubtier',           fr: 'Prédateur',            ar: 'حيوان مفترس'     },
+  genetic_disease:      { tr: 'Genetik hastalık',       en: 'Genetic disease',     de: 'Erbkrankheit',       fr: 'Maladie génétique',    ar: 'مرض وراثي'       },
+  infection:            { tr: 'Enfeksiyon',             en: 'Infection',           de: 'Infektion',          fr: 'Infection',            ar: 'عدوى'            },
+  trauma:               { tr: 'Travma',                 en: 'Trauma',              de: 'Trauma',             fr: 'Traumatisme',          ar: 'صدمة'            },
+  birth_complications:  { tr: 'Doğum komplikasyonu',   en: 'Birth complications', de: 'Geburtskomplikation',fr: 'Complications accouchement', ar: 'مضاعفات الولادة' },
+  conflict:             { tr: 'Çatışma',                en: 'Conflict',            de: 'Konflikt',           fr: 'Conflit',              ar: 'صراع'            },
+  unknown:              { tr: 'Bilinmeyen',             en: 'Unknown',             de: 'Unbekannt',          fr: 'Inconnu',              ar: 'مجهول'           },
 };
 
 function causeLabel(cause: string | null | undefined, lang: string): string {
-  if (!cause) return lang === 'tr' ? 'Bilinmeyen' : 'Unknown';
-  if (lang === 'tr') return CAUSE_TR[cause] ?? cause.replace(/_/g, ' ');
+  if (!cause) return text(lang as LangCode, { tr: 'Bilinmeyen', en: 'Unknown', de: 'Unbekannt', fr: 'Inconnu', ar: 'مجهول' });
+  const entry = CAUSE_I18N[cause];
+  if (entry) return text(lang as LangCode, entry);
   return cause.replace(/_/g, ' ');
 }
 

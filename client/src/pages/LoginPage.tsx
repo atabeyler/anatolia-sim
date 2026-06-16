@@ -419,7 +419,7 @@ export default function LoginPage() {
       {/* System status top-left */}
       {(() => {
         const ss = sysStatus;
-        const tr = lang === 'tr';
+        const isTr = lang === 'tr';
         const dot = '…';
         const STATUS = [
           { label: 'CORE SYSTEMS',   labelTr: 'ÇEKİRDEK SİSTEMLER', ok: ss?.status === 'online', val: ss ? (ss.status === 'online' ? 'ONLINE' : 'DEGRADED') : dot },
@@ -427,9 +427,9 @@ export default function LoginPage() {
           { label: 'GENOME MATRIX',  labelTr: 'GENOM MATRİSİ',        ok: true,                   val: ss ? `${ss.genome_loci} LOCI` : dot },
           { label: 'EPIGENOME',      labelTr: 'EPİGENOM',             ok: true,                   val: ss ? `${ss.epi_loci} LOCI` : dot },
           { label: 'NEURAL NET',     labelTr: 'SİNİR AĞI',            ok: !!ss,                   val: ss ? 'ACTIVE' : 'CONN…' },
-          { label: 'CLIMATE SIM',    labelTr: 'İKLİM SİMÜL.',         ok: true,                   val: ss ? (ss.active_sims > 0 ? `${ss.active_sims} ${tr ? 'AKTİF' : 'ACTIVE'}` : (tr ? 'HAZIR' : 'READY')) : dot },
-          { label: 'LANGUAGE CORE',  labelTr: 'DİL ÇEKİRDEĞİ',       ok: true,                   val: ss ? `${ss.lang_stages} ${tr ? 'AŞAMA' : 'STAGE'}` : dot },
-          { label: 'SOCIAL MATRIX',  labelTr: 'SOSYAL MATRİS',        ok: true,                   val: ss ? (ss.total_population > 0 ? `${ss.total_population.toLocaleString()} ${tr ? 'BİREY' : 'IND'}` : (tr ? 'HAZIR' : 'READY')) : dot },
+          { label: 'CLIMATE SIM',    labelTr: 'İKLİM SİMÜL.',         ok: true,                   val: ss ? (ss.active_sims > 0 ? `${ss.active_sims} ${isTr ? 'AKTİF' : 'ACTIVE'}` : (isTr ? 'HAZIR' : 'READY')) : dot },
+          { label: 'LANGUAGE CORE',  labelTr: 'DİL ÇEKİRDEĞİ',       ok: true,                   val: ss ? `${ss.lang_stages} ${isTr ? 'AŞAMA' : 'STAGE'}` : dot },
+          { label: 'SOCIAL MATRIX',  labelTr: 'SOSYAL MATRİS',        ok: true,                   val: ss ? (ss.total_population > 0 ? `${ss.total_population.toLocaleString()} ${isTr ? 'BİREY' : 'IND'}` : (isTr ? 'HAZIR' : 'READY')) : dot },
         ];
         return (
           <div
@@ -449,7 +449,7 @@ export default function LoginPage() {
                 <div key={s.label} className="flex items-center gap-1 boot-in" style={{ animationDelay: `${i * 80}ms` }}>
                   <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.ok ? 'bg-sim-green pulse-live' : 'bg-sim-red'}`} />
                   <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(11px, 1.05vw, 14px)', color: '#c0c8e8', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
-                    {tr ? s.labelTr : s.label}
+                    {isTr ? s.labelTr : s.label}
                   </span>
                   <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 'clamp(11px, 1.05vw, 14px)', color: '#4ecb71', marginLeft: 2, whiteSpace: 'nowrap' }}>
                     {s.val}

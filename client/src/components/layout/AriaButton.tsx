@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSimStore } from '../../store/simStore';
 import axios from 'axios';
 import { Mic, MicOff, Loader2 } from 'lucide-react';
+import { text, type LangCode } from '../../utils/i18n';
 
 type AriaState = 'idle' | 'listening' | 'processing';
 
@@ -508,7 +509,7 @@ export default function AriaButton() {
             <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
               <input ref={textInputRef} value={textInput} onChange={e => setTextInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') submitText(); }}
-                placeholder={store.lang === 'tr' ? 'komut yaz…' : 'type command…'}
+                placeholder={text(store.lang as LangCode, { tr: 'komut yaz…', en: 'type command…', de: 'Befehl eingeben…', fr: 'entrer commande…', ar: 'أدخل أمراً…' })}
                 style={{ flex: 1, background: 'transparent', border: '1px solid #00e88766', borderRadius: 4,
                   color: '#00e887', fontFamily: 'Share Tech Mono, monospace', fontSize: 10,
                   padding: '3px 6px', outline: 'none', pointerEvents: 'auto' }} />
@@ -519,7 +520,7 @@ export default function AriaButton() {
             </div>
           )}
           <div style={{ fontSize: 9, color: '#2a6a48', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.04em' }}>
-            {store.lang === 'tr' ? '[ tekrar bas = durdur ]' : '[ press again = stop ]'}
+            {text(store.lang as LangCode, { tr: '[ tekrar bas = durdur ]', en: '[ press again = stop ]', de: '[ nochmal drücken = stop ]', fr: '[ appuyer encore = stop ]', ar: '[ اضغط مجدداً = إيقاف ]' })}
           </div>
         </div>
       )}

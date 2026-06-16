@@ -13,8 +13,8 @@ const LOCI = [
   { id: 'IMMUNE_PRIMING', gene: 'Immune',    effect: 'Pathogen Memory',   effectTr: 'Patojen Belleği',     desc: 'Infection leaves lasting marks',      descTr: 'Enfeksiyon kalıcı izler bırakır' },
 ];
 
-function t(lang: string, en: string, tr: string) {
-  return lang === 'en' ? en : tr;
+function t(lang: string, enStr: string, trStr: string) {
+  return lang === 'tr' ? trStr : enStr;
 }
 
 export default function EpigeneticsPanel() {
@@ -49,10 +49,10 @@ export default function EpigeneticsPanel() {
               <div key={locus.id} className="bg-sim-surface/50 rounded p-2">
                 <div className="flex justify-between mb-1">
                   <span className="text-sim-text text-sm font-medium">{locus.gene}</span>
-                  <span className="text-sim-accent text-sm">{lang === 'tr' ? locus.effectTr : locus.effect}</span>
+                  <span className="text-sim-accent text-sm">{t(lang, locus.effect, locus.effectTr)}</span>
                 </div>
                 <div className="text-sim-muted text-sm italic mb-1">
-                  {lang === 'tr' ? locus.descTr : locus.desc}
+                  {t(lang, locus.desc, locus.descTr)}
                 </div>
                 <div className="mt-1 h-1.5 bg-sim-border rounded-full overflow-hidden">
                   <div

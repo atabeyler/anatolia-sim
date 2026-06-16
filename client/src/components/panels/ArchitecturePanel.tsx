@@ -21,8 +21,12 @@ const STRUCTURE_TR: Record<string, string> = {
 const TIER_LABEL = ['Natural', 'Simple', 'Permanent', 'Urban'];
 const TIER_LABEL_TR = ['Doğal', 'Basit', 'Kalıcı', 'Kentsel'];
 
-function t(lang: string, en: string, tr: string) {
-  return lang === 'tr' ? tr : en;
+function t(lang: string, enStr: string, trStr: string, deStr = enStr, frStr = enStr, arStr = enStr) {
+  if (lang === 'tr') return trStr;
+  if (lang === 'de') return deStr;
+  if (lang === 'fr') return frStr;
+  if (lang === 'ar') return arStr;
+  return enStr;
 }
 
 export default function ArchitecturePanel() {
@@ -61,7 +65,7 @@ export default function ArchitecturePanel() {
               <div key={s} className="flex items-center gap-1.5 bg-sim-surface rounded p-1.5">
                 <span>{STRUCTURE_ICONS[s] ?? '🏗️'}</span>
                 <span className="text-sm text-sim-text capitalize">
-                  {lang === 'tr' ? (STRUCTURE_TR[s] ?? s.replace(/_/g, ' ')) : s.replace(/_/g, ' ')}
+                  {t(lang, s.replace(/_/g, ' '), STRUCTURE_TR[s] ?? s.replace(/_/g, ' '))}
                 </span>
               </div>
             ))}
@@ -84,7 +88,7 @@ export default function ArchitecturePanel() {
                   .slice(tier * 3, tier * 3 + 3)
                   .map(([id, icon]) => (
                     <div key={id} className="text-sm bg-sim-surface/50 rounded px-1.5 py-0.5 text-sim-muted">
-                      {icon} {lang === 'tr' ? (STRUCTURE_TR[id] ?? id.replace(/_/g, ' ')) : id.replace(/_/g, ' ')}
+                      {icon} {t(lang, id.replace(/_/g, ' '), STRUCTURE_TR[id] ?? id.replace(/_/g, ' '))}
                     </div>
                   ))}
               </div>

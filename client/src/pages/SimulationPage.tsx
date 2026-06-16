@@ -104,7 +104,7 @@ function ButtonShowcase({ lang, onClose }: { lang: string; onClose: () => void }
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', borderBottom: '1px solid rgba(79,110,247,0.2)' }}>
         <div>
           <div style={{ fontSize: 11, color: '#a0b4ff', letterSpacing: '0.18em' }}>BUTTON SAMPLE</div>
-          <div style={{ fontSize: 14, color: '#e0e0f0', letterSpacing: '0.08em' }}>{lang === 'tr' ? 'Örnek Butonlar' : 'Button Showcase'}</div>
+          <div style={{ fontSize: 14, color: '#e0e0f0', letterSpacing: '0.08em' }}>{text(lang as LangCode, { tr: 'Örnek Butonlar', en: 'Button Showcase', de: 'Schaltflächen', fr: 'Boutons', ar: 'أزرار نموذجية' })}</div>
         </div>
         <button onClick={onClose} style={{ color: '#a0c8b0', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>✕</button>
       </div>
@@ -148,13 +148,13 @@ function ButtonShowcase({ lang, onClose }: { lang: string; onClose: () => void }
 
         <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
           <button style={{ flex: 1, padding: '8px 10px', borderRadius: 999, border: '1px solid rgba(0,232,135,0.45)', background: 'rgba(0,232,135,0.08)', color: '#00e887', cursor: 'pointer', letterSpacing: '0.08em' }}>
-            {lang === 'tr' ? 'PİL' : 'PILL'}
+            {text(lang as LangCode, { tr: 'PİL', en: 'PILL', de: 'PILLE', fr: 'PILULE', ar: 'حبة' })}
           </button>
           <button style={{ flex: 1, padding: '8px 10px', borderRadius: 999, border: '1px solid rgba(160,180,255,0.45)', background: 'rgba(160,180,255,0.08)', color: '#a0b4ff', cursor: 'pointer', letterSpacing: '0.08em' }}>
-            {lang === 'tr' ? 'İKİLİ' : 'SEGMENT'}
+            {text(lang as LangCode, { tr: 'İKİLİ', en: 'SEGMENT', de: 'SEGMENT', fr: 'SEGMENT', ar: 'قطعة' })}
           </button>
           <button style={{ flex: 1, padding: '8px 10px', borderRadius: 999, border: '1px dashed rgba(212,168,56,0.45)', background: 'rgba(212,168,56,0.08)', color: '#d4a838', cursor: 'pointer', letterSpacing: '0.08em' }}>
-            {lang === 'tr' ? 'ÖNEMLİ' : 'PRIMARY'}
+            {text(lang as LangCode, { tr: 'ÖNEMLİ', en: 'PRIMARY', de: 'PRIMÄR', fr: 'PRINCIPAL', ar: 'رئيسي' })}
           </button>
         </div>
       </div>
@@ -215,18 +215,18 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
         style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderBottom: '1px solid #4a1a1a', cursor: 'grab', background: 'rgba(0,20,10,0.9)', touchAction: 'none' }}>
         <div style={{ width: 3, height: 12, background: '#00e887', boxShadow: '0 0 4px #00e887', flexShrink: 0 }} />
         <span style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.2em', fontFamily: 'Share Tech Mono, monospace', flex: 1 }}>
-          {lang === 'tr' ? 'OLAY KAYDI' : 'EVENT LOG'}
+          {text(lang as LangCode, { tr: 'OLAY KAYDI', en: 'EVENT LOG', de: 'EREIGNISLOG', fr: 'JOURNAL', ar: 'سجل الأحداث' })}
         </span>
         <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#00e887', flexShrink: 0, animation: 'pulse 1.5s infinite' }} />
         <span style={{ fontSize: 14, color: '#4ecb71', letterSpacing: '0.1em', fontFamily: 'Share Tech Mono, monospace' }}>
-          {lang === 'tr' ? 'CANLI' : 'LIVE'}
+          {text(lang as LangCode, { tr: 'CANLI', en: 'LIVE', de: 'LIVE', fr: 'EN DIRECT', ar: 'مباشر' })}
         </span>
       </div>
       {/* Events — 3 rows max */}
       <div style={{ padding: '2px 6px' }}>
         {filtered.length === 0 ? (
           <div style={{ fontSize: 14, color: '#a0c8b0', padding: '4px 0', fontFamily: 'Share Tech Mono, monospace', fontStyle: 'italic' }}>
-            {lang === 'tr' ? 'Olay bekleniyor...' : 'Awaiting events...'}
+            {text(lang as LangCode, { tr: 'Olay bekleniyor...', en: 'Awaiting events...', de: 'Warte auf Ereignisse...', fr: 'En attente d\'événements...', ar: 'في انتظار الأحداث...' })}
           </div>
         ) : filtered.map((ev, i) => (
           <div key={i} style={{
@@ -458,6 +458,13 @@ export default function SimulationPage() {
     user:        text(lang as LangCode, { tr: 'KULLANICI',     en: 'USER',         de: 'BENUTZER',   fr: 'UTILISATEUR',ar: 'المستخدم' }),
   };
 
+  const cardDir = {
+    N: text(lang as LangCode, { tr: 'K', en: 'N', de: 'N', fr: 'N', ar: 'ش' }),
+    S: text(lang as LangCode, { tr: 'G', en: 'S', de: 'S', fr: 'S', ar: 'ج' }),
+    E: text(lang as LangCode, { tr: 'D', en: 'E', de: 'O', fr: 'E', ar: 'ش' }),
+    W: text(lang as LangCode, { tr: 'B', en: 'W', de: 'W', fr: 'O', ar: 'غ' }),
+  };
+
   const sidebarW = sidebarExpanded ? 180 : 44;
   const rightPanelW = rightPanelExpanded ? 120 : 36;
 
@@ -479,14 +486,14 @@ export default function SimulationPage() {
                   ANATOLİA-SİM
                 </span>
                 <span style={{ fontSize: isMobile ? 10 : 11, fontFamily: 'Share Tech Mono, monospace', fontWeight: 700, color: '#cc2222', letterSpacing: isMobile ? '0.16em' : '0.22em', textAlign: 'center', width: '100%' }}>
-                  {lang === 'tr' ? 'MEDENİYET' : 'CIVILIZATION'}
+                  {text(lang as LangCode, { tr: 'MEDENİYET', en: 'CIVILIZATION', de: 'ZIVILISATION', fr: 'CIVILISATION', ar: 'الحضارة' })}
                 </span>
               </div>
             </div>
 
           <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginLeft: isMobile ? 3 : 6 }}>
             <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em' }}>
-              {lang === 'tr' ? 'SİM ZAMANI' : 'SIM TIME'}
+              {text(lang as LangCode, { tr: 'SİM ZAMANI', en: 'SIM TIME', de: 'SIM-ZEIT', fr: 'TEMPS SIM', ar: 'وقت المحاكاة' })}
             </span>
             <span style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.04em', fontFamily: 'Orbitron, monospace' }}>
               Y{String(simYear).padStart(4, '0')} G{String(simDay % 365).padStart(3, '0')}
@@ -518,7 +525,7 @@ export default function SimulationPage() {
               opacity: (loading || actionBusy) ? 0.6 : 1,
             }}>
             {loading ? null : isRunning ? <Pause size={11} /> : <Play size={11} />}
-            {loading ? (lang === 'tr' ? '...' : '...') : isRunning ? (lang === 'tr' ? 'DURDUR' : 'PAUSE') : (lang === 'tr' ? 'BAŞLAT' : 'START')}
+            {loading ? '...' : isRunning ? text(lang as LangCode, { tr: 'DURDUR', en: 'PAUSE', de: 'PAUSE', fr: 'PAUSE', ar: 'إيقاف' }) : text(lang as LangCode, { tr: 'BAŞLAT', en: 'START', de: 'START', fr: 'DÉMARRER', ar: 'ابدأ' })}
           </button>
 
           {isRunning && (
@@ -530,14 +537,14 @@ export default function SimulationPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 0, padding: '0 10px', borderBottom: '1px solid #4a1a1a', overflow: 'hidden' }}>
           <div style={{ display: 'flex', alignItems: 'center', overflowX: isMobile ? 'auto' : 'visible', flex: 1, scrollbarWidth: 'none' }}>
               {[
-                { key: 'pop',  label: lang === 'tr' ? 'NÜFUS'  : 'POP',   value: stats?.population ?? '—',   color: '#00e887' },
-                { key: 'bir',  label: lang === 'tr' ? 'DOĞUM'  : 'BIRTH', value: births,                      color: '#4ecb71' },
-                { key: 'dth',  label: lang === 'tr' ? 'ÖLÜM'   : 'DEATH', value: deaths,                      color: '#e05a5a' },
-                { key: 'yr',   label: lang === 'tr' ? 'YIL'    : 'YEAR',  value: stats?.year ?? '—',          color: '#7dd3fc' },
-                { key: 'tech', label: lang === 'tr' ? 'TEKNOLOJİ' : 'TECH',    value: stats?.technologies ?? '—',  color: '#d4a838' },
-                { key: 'sea',  label: lang === 'tr' ? 'MEVSİM' : 'SEASON',value: seasonLabel,                 color: '#a0b4ff' },
-                { key: 'temp', label: lang === 'tr' ? 'SICAKLIK' : 'TEMP', value: stats?.temperature !== undefined ? `${stats.temperature}°` : '—', color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
-                { key: 'wthr', label: lang === 'tr' ? 'HAVA' : 'WEATHER', value: (() => { const icons: Record<string,string> = { clear: '☀️', rain: '🌧', heavy_rain: '⛈', snow: '❄️', blizzard: '🌨', storm: '🌩', heat_wave: '🔥', drought: '🏜' }; return icons[(stats as any)?.weather] ?? '☀️'; })(), color: '#e0d080' },
+                { key: 'pop',  label: text(lang as LangCode, { tr: 'NÜFUS',     en: 'POP',    de: 'BEV.',   fr: 'POP.',   ar: 'سكان'   }), value: stats?.population ?? '—',   color: '#00e887' },
+                { key: 'bir',  label: text(lang as LangCode, { tr: 'DOĞUM',     en: 'BIRTH',  de: 'GEB.',   fr: 'NAISS.', ar: 'مواليد' }), value: births,                      color: '#4ecb71' },
+                { key: 'dth',  label: text(lang as LangCode, { tr: 'ÖLÜM',      en: 'DEATH',  de: 'TOD',    fr: 'DÉCÈS',  ar: 'وفيات'  }), value: deaths,                      color: '#e05a5a' },
+                { key: 'yr',   label: text(lang as LangCode, { tr: 'YIL',       en: 'YEAR',   de: 'JAHR',   fr: 'ANNÉE',  ar: 'سنة'    }), value: stats?.year ?? '—',          color: '#7dd3fc' },
+                { key: 'tech', label: text(lang as LangCode, { tr: 'TEKNOLOJİ', en: 'TECH',   de: 'TECH.',  fr: 'TECH.',  ar: 'تقنية'  }), value: stats?.technologies ?? '—',  color: '#d4a838' },
+                { key: 'sea',  label: text(lang as LangCode, { tr: 'MEVSİM',    en: 'SEASON', de: 'SAISON', fr: 'SAISON', ar: 'موسم'   }), value: seasonLabel,                 color: '#a0b4ff' },
+                { key: 'temp', label: text(lang as LangCode, { tr: 'SICAKLIK',  en: 'TEMP',   de: 'TEMP.',  fr: 'TEMP.',  ar: 'حرارة'  }), value: stats?.temperature !== undefined ? `${stats.temperature}°` : '—', color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
+                { key: 'wthr', label: text(lang as LangCode, { tr: 'HAVA',      en: 'WTHR.',  de: 'WETTER', fr: 'MÉTÉO',  ar: 'طقس'    }), value: (() => { const icons: Record<string,string> = { clear: '☀️', rain: '🌧', heavy_rain: '⛈', snow: '❄️', blizzard: '🌨', storm: '🌩', heat_wave: '🔥', drought: '🏜' }; return icons[(stats as any)?.weather] ?? '☀️'; })(), color: '#e0d080' },
               ].map(({ key, label, value, color }) => (
               <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '2px 7px' : '2px 10px', borderRight: '1px solid #4a1a1a', flexShrink: 0, minWidth: isMobile ? 42 : 52 }}>
                 <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{label}</span>
@@ -639,7 +646,7 @@ export default function SimulationPage() {
               gap: 4,
             }}>
             {sidebarExpanded ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
-            {sidebarExpanded && <span style={{ fontSize: 14, letterSpacing: '0.08em' }}>{lang === 'tr' ? 'DARALT' : 'COLLAPSE'}</span>}
+            {sidebarExpanded && <span style={{ fontSize: 14, letterSpacing: '0.08em' }}>{text(lang as LangCode, { tr: 'DARALT', en: 'COLLAPSE', de: 'EINKLAPPEN', fr: 'RÉDUIRE', ar: 'طي' })}</span>}
           </button>
         </div>
 
@@ -692,7 +699,7 @@ export default function SimulationPage() {
                 {currentSim && (
                   <div style={{ position: 'absolute', bottom: 8, left: 8, zIndex: 10, background: 'rgba(0,0,0,0.7)', border: '1px solid #4a1a1a', padding: '3px 8px' }}>
                     <span style={{ fontSize: 14, color: '#a0c8b0', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.05em' }}>
-                      {lang === 'tr' ? 'BAŞLANGIÇ' : 'ORIGIN'}: {currentSim.start_latitude?.toFixed(3)}°{(currentSim.start_latitude ?? 0) >= 0 ? 'K' : 'G'}  {currentSim.start_longitude?.toFixed(3)}°{(currentSim.start_longitude ?? 0) >= 0 ? 'D' : 'B'}
+                      {text(lang as LangCode, { tr: 'BAŞLANGIÇ', en: 'ORIGIN', de: 'URSPRUNG', fr: 'ORIGINE', ar: 'الأصل' })}: {currentSim.start_latitude?.toFixed(3)}°{(currentSim.start_latitude ?? 0) >= 0 ? cardDir.N : cardDir.S}  {currentSim.start_longitude?.toFixed(3)}°{(currentSim.start_longitude ?? 0) >= 0 ? cardDir.E : cardDir.W}
                     </span>
                   </div>
                 )}
@@ -701,12 +708,12 @@ export default function SimulationPage() {
                 {globeCoord && (
                   <div style={{ position: 'absolute', bottom: 8, right: 8, zIndex: 20, background: 'rgba(0,5,2,0.92)', border: '1px solid #4a1a1a', padding: '5px 10px', fontFamily: 'Share Tech Mono, monospace' }}>
                     <div style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em', marginBottom: 2 }}>
-                      {lang === 'tr' ? '// KONUM' : '// COORDS'}
+                      {text(lang as LangCode, { tr: '// KONUM', en: '// COORDS', de: '// KOORD.', fr: '// COORDS', ar: '// إحداثيات' })}
                     </div>
                     <div style={{ fontSize: 14, color: '#00e887', letterSpacing: '0.06em' }}>
-                      {Math.abs(globeCoord.lat).toFixed(3)}°{globeCoord.lat >= 0 ? (lang === 'tr' ? 'K' : 'N') : (lang === 'tr' ? 'G' : 'S')}
+                      {Math.abs(globeCoord.lat).toFixed(3)}°{globeCoord.lat >= 0 ? cardDir.N : cardDir.S}
                       {'  '}
-                      {Math.abs(globeCoord.lon).toFixed(3)}°{globeCoord.lon >= 0 ? (lang === 'tr' ? 'D' : 'E') : (lang === 'tr' ? 'B' : 'W')}
+                      {Math.abs(globeCoord.lon).toFixed(3)}°{globeCoord.lon >= 0 ? cardDir.E : cardDir.W}
                     </div>
                     <button onClick={() => setGlobeCoord(null)} style={{ marginTop: 3, fontSize: 14, color: '#a0c8b0', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}>✕</button>
                   </div>
@@ -715,22 +722,22 @@ export default function SimulationPage() {
                 {/* Selected individual overlay */}
                 {selectedInd && (
                   <div style={{ position: 'absolute', top: 80, right: 8, zIndex: 50, background: 'rgba(0,5,2,0.97)', border: '1px solid #00e887', padding: 12, minWidth: 160, fontFamily: 'Share Tech Mono, monospace' }}>
-                    <div style={{ fontSize: 14, color: '#a0c8b0', marginBottom: 4 }}>// {lang === 'tr' ? 'BİREY' : 'INDIVIDUAL'}</div>
+                    <div style={{ fontSize: 14, color: '#a0c8b0', marginBottom: 4 }}>// {text(lang as LangCode, { tr: 'BİREY', en: 'INDIVIDUAL', de: 'INDIVIDUUM', fr: 'INDIVIDU', ar: 'فرد' })}</div>
                     <div style={{ fontSize: 14, color: '#00e887', marginBottom: 2 }}>
                       {selectedInd.name ?? `${selectedInd.sex === 'male' ? '♂' : '♀'}-${selectedInd.id?.slice(-4).toUpperCase()}`}
                     </div>
                     {!selectedInd.name && (
                       <div style={{ fontSize: 14, color: '#8abda0', marginBottom: 4, fontStyle: 'italic' }}>
-                        {lang === 'tr' ? '// dil henüz gelişmedi' : '// pre-linguistic era'}
+                        {text(lang as LangCode, { tr: '// dil henüz gelişmedi', en: '// pre-linguistic era', de: '// vorsprachliche Ära', fr: '// ère pré-linguistique', ar: '// حقبة ما قبل اللغة' })}
                       </div>
                     )}
-                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Cinsiyet' : 'Sex'}: <span style={{ color: '#fff' }}>{selectedInd.sex === 'male' ? (lang === 'tr' ? 'Erkek' : 'Male') : (lang === 'tr' ? 'Kadın' : 'Female')}</span></div>
-                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Yaş' : 'Age'}: <span style={{ color: '#fff' }}>{selectedInd.age_years ?? '—'}</span></div>
-                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Boy' : 'Height'}: <span style={{ color: '#a0e887' }}>{selectedInd.height_cm ?? selectedInd.phenotype?.height_cm ?? '—'} cm</span></div>
-                    <div style={{ fontSize: 14, color: '#6090a0' }}>{lang === 'tr' ? 'Kilo' : 'Weight'}: <span style={{ color: '#a0e887' }}>{selectedInd.weight_kg ?? '—'} kg</span></div>
+                    <div style={{ fontSize: 14, color: '#6090a0' }}>{text(lang as LangCode, { tr: 'Cinsiyet', en: 'Sex', de: 'Geschlecht', fr: 'Sexe', ar: 'الجنس' })}: <span style={{ color: '#fff' }}>{selectedInd.sex === 'male' ? text(lang as LangCode, { tr: 'Erkek', en: 'Male', de: 'Männlich', fr: 'Mâle', ar: 'ذكر' }) : text(lang as LangCode, { tr: 'Kadın', en: 'Female', de: 'Weiblich', fr: 'Femelle', ar: 'أنثى' })}</span></div>
+                    <div style={{ fontSize: 14, color: '#6090a0' }}>{text(lang as LangCode, { tr: 'Yaş', en: 'Age', de: 'Alter', fr: 'Âge', ar: 'العمر' })}: <span style={{ color: '#fff' }}>{selectedInd.age_years ?? '—'}</span></div>
+                    <div style={{ fontSize: 14, color: '#6090a0' }}>{text(lang as LangCode, { tr: 'Boy', en: 'Height', de: 'Größe', fr: 'Taille', ar: 'الطول' })}: <span style={{ color: '#a0e887' }}>{selectedInd.height_cm ?? selectedInd.phenotype?.height_cm ?? '—'} cm</span></div>
+                    <div style={{ fontSize: 14, color: '#6090a0' }}>{text(lang as LangCode, { tr: 'Kilo', en: 'Weight', de: 'Gewicht', fr: 'Poids', ar: 'الوزن' })}: <span style={{ color: '#a0e887' }}>{selectedInd.weight_kg ?? '—'} kg</span></div>
                     <div style={{ fontSize: 14, color: '#6090a0' }}>HP: <span style={{ color: selectedInd.health?.hp > 0.6 ? '#4ecb71' : '#e05a5a' }}>{selectedInd.health?.hp !== undefined ? (selectedInd.health.hp * 100).toFixed(0) + '%' : '—'}</span></div>
                     <button onClick={() => setSelectedInd(null)} style={{ marginTop: 8, fontSize: 14, color: '#a0c8b0', border: '1px solid #4a1a1a', padding: '2px 8px', background: 'transparent', width: '100%', cursor: 'pointer' }}>
-                      {lang === 'tr' ? 'KAPAT' : 'CLOSE'}
+                      {text(lang as LangCode, { tr: 'KAPAT', en: 'CLOSE', de: 'SCHLIESSEN', fr: 'FERMER', ar: 'إغلاق' })}
                     </button>
                   </div>
                 )}
@@ -754,19 +761,19 @@ export default function SimulationPage() {
               <div style={{ height: '100%', overflowY: 'auto', padding: 12, background: '#000' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {[
-                    { l: lang === 'tr' ? 'NÜFUS'      : 'POP.',      v: stats?.population ?? '—',                                                                 c: '#00e887' },
-                    { l: lang === 'tr' ? 'YIL'        : 'YEAR',      v: stats?.year ?? '—',                                                                        c: '#7dd3fc' },
-                    { l: lang === 'tr' ? 'GÜN'        : 'DAY',       v: stats?.day ?? '—',                                                                         c: '#a0b4ff' },
-                    { l: lang === 'tr' ? 'DOĞUM'      : 'BIRTHS',    v: births,                                                                                     c: '#4ecb71' },
-                    { l: lang === 'tr' ? 'ÖLÜM'       : 'DEATHS',    v: deaths,                                                                                     c: '#e05a5a' },
-                    { l: lang === 'tr' ? 'KELİME'     : 'WORDS',     v: wordCount,                                                                                  c: '#7dd3fc' },
-                    { l: lang === 'tr' ? 'ZEKA ORT.'  : 'AVG IQ',    v: stats?.avg_intelligence !== undefined ? (stats.avg_intelligence * 100).toFixed(0) + '%' : '—', c: '#d4a838' },
-                    { l: lang === 'tr' ? 'MUTLULUK'   : 'HAPPINESS', v: stats?.happiness_index !== undefined ? (stats.happiness_index * 100).toFixed(0) + '%' : '—',   c: '#ff8ab0' },
-                    { l: lang === 'tr' ? 'HASTALIK'   : 'DISEASE',   v: stats?.sick_rate !== undefined ? (stats.sick_rate * 100).toFixed(0) + '%' : '—',               c: '#f97316' },
-                    { l: lang === 'tr' ? 'TEKNOLOJİ'  : 'TECH',      v: stats?.technologies ?? '—',                                                                c: '#4ecb71' },
-                    { l: lang === 'tr' ? 'İNANÇ'      : 'BELIEFS',   v: stats?.beliefs ?? '—',                                                                    c: '#a855f7' },
-                    { l: lang === 'tr' ? 'SICAKLIK'   : 'TEMP',      v: stats?.temperature !== undefined ? `${stats.temperature}°` : '—',                          c: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
-                    { l: lang === 'tr' ? 'GRUPLAR'    : 'GROUPS',    v: stats?.groups ?? '—',                                                                      c: '#d4a838' },
+                    { l: text(lang as LangCode, { tr: 'NÜFUS',     en: 'POP.',      de: 'BEV.',     fr: 'POP.',      ar: 'سكان'    }), v: stats?.population ?? '—',                                                                 c: '#00e887' },
+                    { l: text(lang as LangCode, { tr: 'YIL',       en: 'YEAR',      de: 'JAHR',     fr: 'ANNÉE',     ar: 'سنة'     }), v: stats?.year ?? '—',                                                                        c: '#7dd3fc' },
+                    { l: text(lang as LangCode, { tr: 'GÜN',       en: 'DAY',       de: 'TAG',      fr: 'JOUR',      ar: 'يوم'     }), v: stats?.day ?? '—',                                                                         c: '#a0b4ff' },
+                    { l: text(lang as LangCode, { tr: 'DOĞUM',     en: 'BIRTHS',    de: 'GEB.',     fr: 'NAISS.',    ar: 'مواليد'  }), v: births,                                                                                     c: '#4ecb71' },
+                    { l: text(lang as LangCode, { tr: 'ÖLÜM',      en: 'DEATHS',    de: 'TODE',     fr: 'DÉCÈS',     ar: 'وفيات'   }), v: deaths,                                                                                     c: '#e05a5a' },
+                    { l: text(lang as LangCode, { tr: 'KELİME',    en: 'WORDS',     de: 'WÖRTER',   fr: 'MOTS',      ar: 'كلمات'   }), v: wordCount,                                                                                  c: '#7dd3fc' },
+                    { l: text(lang as LangCode, { tr: 'ZEKA ORT.', en: 'AVG IQ',    de: 'Ø IQ',     fr: 'IQ MOY.',   ar: 'متوسط IQ'}), v: stats?.avg_intelligence !== undefined ? (stats.avg_intelligence * 100).toFixed(0) + '%' : '—', c: '#d4a838' },
+                    { l: text(lang as LangCode, { tr: 'MUTLULUK',  en: 'HAPPINESS', de: 'GLÜCK',    fr: 'BONHEUR',   ar: 'سعادة'   }), v: stats?.happiness_index !== undefined ? (stats.happiness_index * 100).toFixed(0) + '%' : '—',   c: '#ff8ab0' },
+                    { l: text(lang as LangCode, { tr: 'HASTALIK',  en: 'DISEASE',   de: 'KRANKHEIT',fr: 'MALADIE',   ar: 'مرض'     }), v: stats?.sick_rate !== undefined ? (stats.sick_rate * 100).toFixed(0) + '%' : '—',               c: '#f97316' },
+                    { l: text(lang as LangCode, { tr: 'TEKNOLOJİ', en: 'TECH',      de: 'TECH.',    fr: 'TECH.',     ar: 'تقنية'   }), v: stats?.technologies ?? '—',                                                                c: '#4ecb71' },
+                    { l: text(lang as LangCode, { tr: 'İNANÇ',     en: 'BELIEFS',   de: 'GLAUBEN',  fr: 'CROYANCES', ar: 'معتقدات' }), v: stats?.beliefs ?? '—',                                                                    c: '#a855f7' },
+                    { l: text(lang as LangCode, { tr: 'SICAKLIK',  en: 'TEMP',      de: 'TEMP.',    fr: 'TEMP.',     ar: 'حرارة'   }), v: stats?.temperature !== undefined ? `${stats.temperature}°` : '—',                          c: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
+                    { l: text(lang as LangCode, { tr: 'GRUPLAR',   en: 'GROUPS',    de: 'GRUPPEN',  fr: 'GROUPES',   ar: 'مجموعات' }), v: stats?.groups ?? '—',                                                                      c: '#d4a838' },
                   ].map(({ l, v, c }) => (
                     <div key={l} style={{ background: 'rgba(0,20,10,0.6)', border: '1px solid #4a1a1a', padding: '8px 12px' }}>
                       <div style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.1em' }}>{l}</div>
@@ -797,7 +804,7 @@ export default function SimulationPage() {
               {/* MENÜ */}
               <button
                 onClick={() => setMenuOpen(true)}
-                title={lang === 'tr' ? 'MENÜ' : 'MENU'}
+                title={text(lang as LangCode, { tr: 'MENÜ', en: 'MENU', de: 'MENÜ', fr: 'MENU', ar: 'القائمة' })}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: rightPanelExpanded ? 'flex-start' : 'center',
                   gap: rightPanelExpanded ? 7 : 0,
@@ -808,7 +815,7 @@ export default function SimulationPage() {
                   color: '#8abda0', cursor: 'pointer', whiteSpace: 'nowrap', boxSizing: 'border-box',
                 }}>
                 <span style={{ fontSize: 16, flexShrink: 0 }}>☰</span>
-                {rightPanelExpanded && <span>{lang === 'tr' ? 'MENÜ' : 'MENU'}</span>}
+                {rightPanelExpanded && <span>{text(lang as LangCode, { tr: 'MENÜ', en: 'MENU', de: 'MENÜ', fr: 'MENU', ar: 'القائمة' })}</span>}
               </button>
 
               {/* User badge */}
@@ -834,7 +841,7 @@ export default function SimulationPage() {
               {/* RAPOR */}
               <button
                 onClick={() => setActivePanel(activePanel === 'report' ? null : 'report')}
-                title={lang === 'tr' ? 'RAPOR' : 'REPORT'}
+                title={text(lang as LangCode, { tr: 'RAPOR', en: 'REPORT', de: 'BERICHT', fr: 'RAPPORT', ar: 'تقرير' })}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: rightPanelExpanded ? 'flex-start' : 'center',
                   gap: rightPanelExpanded ? 7 : 0,
@@ -847,13 +854,13 @@ export default function SimulationPage() {
                   cursor: 'pointer', whiteSpace: 'nowrap', boxSizing: 'border-box',
                 }}>
                 <span style={{ fontSize: 16, flexShrink: 0 }}>📄</span>
-                {rightPanelExpanded && <span>{lang === 'tr' ? 'RAPOR' : 'REPORT'}</span>}
+                {rightPanelExpanded && <span>{text(lang as LangCode, { tr: 'RAPOR', en: 'REPORT', de: 'BERICHT', fr: 'RAPPORT', ar: 'تقرير' })}</span>}
               </button>
 
               {/* SONLANDIR */}
               <button
                 onClick={terminateSim}
-                title={lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
+                title={text(lang as LangCode, { tr: 'SONLANDIR', en: 'TERMINATE', de: 'BEENDEN', fr: 'TERMINER', ar: 'إنهاء' })}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: rightPanelExpanded ? 'flex-start' : 'center',
                   gap: rightPanelExpanded ? 7 : 0,
@@ -864,13 +871,13 @@ export default function SimulationPage() {
                   color: '#c05050', cursor: 'pointer', whiteSpace: 'nowrap', boxSizing: 'border-box',
                 }}>
                 <Trash2 size={16} style={{ flexShrink: 0 }} />
-                {rightPanelExpanded && <span>{lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}</span>}
+                {rightPanelExpanded && <span>{text(lang as LangCode, { tr: 'SONLANDIR', en: 'TERMINATE', de: 'BEENDEN', fr: 'TERMINER', ar: 'إنهاء' })}</span>}
               </button>
 
               {/* ÇIKIŞ */}
               <button
                 onClick={() => navigate('/')}
-                title={lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
+                title={text(lang as LangCode, { tr: 'ÇIKIŞ', en: 'EXIT', de: 'BEENDEN', fr: 'QUITTER', ar: 'خروج' })}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: rightPanelExpanded ? 'flex-start' : 'center',
                   gap: rightPanelExpanded ? 7 : 0,
@@ -881,7 +888,7 @@ export default function SimulationPage() {
                   color: '#8abda0', cursor: 'pointer', whiteSpace: 'nowrap', boxSizing: 'border-box',
                 }}>
                 <LogOut size={16} style={{ flexShrink: 0 }} />
-                {rightPanelExpanded && <span>{lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}</span>}
+                {rightPanelExpanded && <span>{text(lang as LangCode, { tr: 'ÇIKIŞ', en: 'EXIT', de: 'BEENDEN', fr: 'QUITTER', ar: 'خروج' })}</span>}
               </button>
 
               {/* Speed label */}
@@ -975,7 +982,7 @@ export default function SimulationPage() {
                 gap: 4,
               }}>
               {rightPanelExpanded ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
-              {rightPanelExpanded && <span style={{ fontSize: 11, letterSpacing: '0.08em' }}>{lang === 'tr' ? 'DARALT' : 'COLLAPSE'}</span>}
+              {rightPanelExpanded && <span style={{ fontSize: 11, letterSpacing: '0.08em' }}>{text(lang as LangCode, { tr: 'DARALT', en: 'COLLAPSE', de: 'EINKLAPPEN', fr: 'RÉDUIRE', ar: 'طي' })}</span>}
             </button>
           </div>
         )}
@@ -994,11 +1001,11 @@ export default function SimulationPage() {
           <div style={{ padding: '8px 14px', borderTop: '1px solid #4a1a1a', display: 'flex', gap: 8 }}>
             <button onClick={() => { setMenuOpen(false); navigate('/'); }}
               style={{ flex: 1, padding: '7px 0', fontSize: 14, border: '1px solid #4a1a1a', color: '#a0c8b0', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
-              ← {lang === 'tr' ? 'ÇIKIŞ' : 'EXIT'}
+              ← {text(lang as LangCode, { tr: 'ÇIKIŞ', en: 'EXIT', de: 'BEENDEN', fr: 'QUITTER', ar: 'خروج' })}
             </button>
             <button onClick={() => { setMenuOpen(false); terminateSim(); }}
               style={{ flex: 1, padding: '7px 0', fontSize: 14, border: '1px solid #6a2020', color: '#c05050', background: 'transparent', letterSpacing: '0.06em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer' }}>
-              {lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
+              {text(lang as LangCode, { tr: 'SONLANDIR', en: 'TERMINATE', de: 'BEENDEN', fr: 'TERMINER', ar: 'إنهاء' })}
             </button>
           </div>
         ) : undefined}
@@ -1038,22 +1045,16 @@ export default function SimulationPage() {
         const isManual = endModal.mode === 'manual';
         const reasonMsg = (() => {
           if (!endModal.reason) return '';
-          if (lang === 'tr') {
-            if (endModal.reason === 'population_zero') return 'Toplulukta hiç birey kalmadı.';
-            if (endModal.reason === 'no_males') return 'Toplulukta erkek birey kalmadı — nesil devamı imkânsız.';
-            if (endModal.reason === 'no_females') return 'Toplulukta dişi birey kalmadı — nesil devamı imkânsız.';
-          } else {
-            if (endModal.reason === 'population_zero') return 'No individuals remain in the population.';
-            if (endModal.reason === 'no_males') return 'No males remain — reproduction is impossible.';
-            if (endModal.reason === 'no_females') return 'No females remain — reproduction is impossible.';
-          }
+          if (endModal.reason === 'population_zero') return text(lang as LangCode, { tr: 'Toplulukta hiç birey kalmadı.', en: 'No individuals remain in the population.', de: 'Keine Individuen mehr in der Population.', fr: 'Plus d\'individus dans la population.', ar: 'لم يتبق أفراد في السكان.' });
+          if (endModal.reason === 'no_males') return text(lang as LangCode, { tr: 'Toplulukta erkek birey kalmadı — nesil devamı imkânsız.', en: 'No males remain — reproduction is impossible.', de: 'Keine Männchen mehr — Fortpflanzung unmöglich.', fr: 'Plus de mâles — reproduction impossible.', ar: 'لم يتبق ذكور — التكاثر مستحيل.' });
+          if (endModal.reason === 'no_females') return text(lang as LangCode, { tr: 'Toplulukta dişi birey kalmadı — nesil devamı imkânsız.', en: 'No females remain — reproduction is impossible.', de: 'Keine Weibchen mehr — Fortpflanzung unmöglich.', fr: 'Plus de femelles — reproduction impossible.', ar: 'لم تتبق إناث — التكاثر مستحيل.' });
           return '';
         })();
         const title = isManual
-          ? (lang === 'tr' ? 'SİMÜLASYONU SONLANDIR?' : 'TERMINATE SIMULATION?')
-          : (lang === 'tr' ? 'SİMÜLASYON SONA ERDİ' : 'SIMULATION ENDED');
+          ? text(lang as LangCode, { tr: 'SİMÜLASYONU SONLANDIR?', en: 'TERMINATE SIMULATION?', de: 'SIMULATION BEENDEN?', fr: 'TERMINER LA SIMULATION?', ar: 'إنهاء المحاكاة؟' })
+          : text(lang as LangCode, { tr: 'SİMÜLASYON SONA ERDİ', en: 'SIMULATION ENDED', de: 'SIMULATION BEENDET', fr: 'SIMULATION TERMINÉE', ar: 'انتهت المحاكاة' });
         const bodyText = isManual
-          ? (lang === 'tr' ? 'Bu işlem geri alınamaz.' : 'This action cannot be undone.')
+          ? text(lang as LangCode, { tr: 'Bu işlem geri alınamaz.', en: 'This action cannot be undone.', de: 'Diese Aktion kann nicht rückgängig gemacht werden.', fr: 'Cette action est irréversible.', ar: 'لا يمكن التراجع عن هذا الإجراء.' })
           : reasonMsg;
         const btnBase: CSSProperties = {
           padding: '8px 16px', fontSize: 13, fontFamily: 'Share Tech Mono, monospace',
@@ -1086,17 +1087,17 @@ export default function SimulationPage() {
                     <button
                       onClick={() => doTerminate(true)}
                       style={{ ...btnBase, borderColor: '#fbbf24', color: '#fbbf24' }}>
-                      📄 {lang === 'tr' ? 'RAPOR AL VE SONLANDIR' : 'GET REPORT & TERMINATE'}
+                      📄 {text(lang as LangCode, { tr: 'RAPOR AL VE SONLANDIR', en: 'GET REPORT & TERMINATE', de: 'BERICHT & BEENDEN', fr: 'RAPPORT & TERMINER', ar: 'تقرير وإنهاء' })}
                     </button>
                     <button
                       onClick={() => doTerminate(false)}
                       style={{ ...btnBase, borderColor: '#c05050', color: '#c05050' }}>
-                      {lang === 'tr' ? 'SONLANDIR' : 'TERMINATE'}
+                      {text(lang as LangCode, { tr: 'SONLANDIR', en: 'TERMINATE', de: 'BEENDEN', fr: 'TERMINER', ar: 'إنهاء' })}
                     </button>
                     <button
                       onClick={() => setEndModal(null)}
                       style={{ ...btnBase, borderColor: '#4a6050', color: '#8abda0' }}>
-                      {lang === 'tr' ? 'İPTAL' : 'CANCEL'}
+                      {text(lang as LangCode, { tr: 'İPTAL', en: 'CANCEL', de: 'ABBRECHEN', fr: 'ANNULER', ar: 'إلغاء' })}
                     </button>
                   </>
                 ) : (
@@ -1104,12 +1105,12 @@ export default function SimulationPage() {
                     <button
                       onClick={() => { setEndModal(null); setActivePanel('report'); }}
                       style={{ ...btnBase, borderColor: '#fbbf24', color: '#fbbf24' }}>
-                      📄 {lang === 'tr' ? 'RAPOR AL' : 'GET REPORT'}
+                      📄 {text(lang as LangCode, { tr: 'RAPOR AL', en: 'GET REPORT', de: 'BERICHT ABRUFEN', fr: 'OBTENIR RAPPORT', ar: 'الحصول على تقرير' })}
                     </button>
                     <button
                       onClick={() => { setEndModal(null); navigate('/'); }}
                       style={{ ...btnBase, borderColor: '#4a6050', color: '#8abda0' }}>
-                      {lang === 'tr' ? 'ANA SAYFAYA DÖN' : 'RETURN TO HOME'}
+                      {text(lang as LangCode, { tr: 'ANA SAYFAYA DÖN', en: 'RETURN TO HOME', de: 'ZUR STARTSEITE', fr: 'RETOUR ACCUEIL', ar: 'العودة للرئيسية' })}
                     </button>
                   </>
                 )}

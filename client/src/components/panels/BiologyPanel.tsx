@@ -160,7 +160,7 @@ export default function BiologyPanel() {
                     <Mini label={text(lang as LangCode, { en: 'IQ', tr: 'Zekâ' })} value={`${((ind.phenotype?.fluid_intelligence ?? 0) * 100).toFixed(0)}%`} />
                     <Mini
                       label={text(lang as LangCode, { en: 'Language', tr: 'Dil' })}
-                      value={lang === 'tr' ? (LANG_STAGE_TR[langStage.toLowerCase()] ?? langStage) : langStage.replace(/-/g, ' ')}
+                      value={lang === 'tr' ? (LANG_STAGE_TR[langStage.toLowerCase()] ?? langStage) : langStage.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                     />
                   </div>
                 </div>

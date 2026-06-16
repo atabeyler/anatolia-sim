@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSimStore } from '../../store/simStore';
+import { text, type LangCode } from '../../utils/i18n';
 
 interface Toast {
   id: string;
@@ -84,7 +85,7 @@ export default function MilestoneToast() {
     }
   }
 
-  const tr = (a: string, b: string) => lang === 'tr' ? a : b;
+  const t = (tr: string, en: string, de = en, fr = en, ar = en) => text(lang as LangCode, { tr, en, de, fr, ar });
 
   // Population milestones
   useEffect(() => {
@@ -93,7 +94,7 @@ export default function MilestoneToast() {
       const key = `pop_${n}`;
       if (!fired.current.has(key) && stats.population >= n) {
         fired.current.add(key);
-        push({ icon: '👥', color: '#4f6ef7', message: tr(`Nüfus ${n}'e ulaştı!`, `Population reached ${n}!`) });
+        push({ icon: '👥', color: '#4f6ef7', message: t(`Nüfus ${n}'e ulaştı!`, `Population reached ${n}!`, `Bevölkerung erreicht ${n}!`, `Population atteint ${n}!`, `وصل السكان إلى ${n}!`) });
       }
     }
   }, [stats?.population]);
@@ -103,7 +104,7 @@ export default function MilestoneToast() {
     if (!stats || !simIdRef.current || fired.current.has('first_death')) return;
     if ((stats.deaths ?? 0) > 0) {
       fired.current.add('first_death');
-      push({ icon: '†', color: '#e05a5a', message: tr('İlk ölüm gerçekleşti', 'First death occurred') });
+      push({ icon: '†', color: '#e05a5a', message: t('İlk ölüm gerçekleşti', 'First death occurred', 'Erster Todesfall', 'Premier décès', 'أول وفاة') });
     }
   }, [stats?.deaths]);
 
@@ -112,7 +113,7 @@ export default function MilestoneToast() {
     if (!stats || !simIdRef.current || fired.current.has('first_tech')) return;
     if ((stats.technologies ?? 0) > 2) {
       fired.current.add('first_tech');
-      push({ icon: '⚙', color: '#4ecb71', message: tr('İlk teknoloji keşfedildi!', 'First technology discovered!') });
+      push({ icon: '⚙', color: '#4ecb71', message: t('İlk teknoloji keşfedildi!', 'First technology discovered!', 'Erste Technologie entdeckt!', 'Première technologie découverte!', 'اكتُشفت أول تقنية!') });
     }
   }, [stats?.technologies]);
 
@@ -130,7 +131,7 @@ export default function MilestoneToast() {
         const key = `disaster_${ev.sim_day}`;
         if (!fired.current.has(key)) {
           fired.current.add(key);
-          push({ icon: '⚠', color: '#f97316', message: tr('Doğal afet!', 'Natural disaster!'), sub: ev.description }, ev.description);
+          push({ icon: '⚠', color: '#f97316', message: t('Doğal afet!', 'Natural disaster!', 'Naturkatastrophe!', 'Catastrophe naturelle!', 'كارثة طبيعية!'), sub: ev.description }, ev.description);
         }
       }
       if (ev.event_type === 'language' && (ev.data?.stage ?? 0) >= 3) {
@@ -138,14 +139,14 @@ export default function MilestoneToast() {
         if (!fired.current.has(key)) {
           fired.current.add(key);
           const stageName = ev.data?.stage_name ?? `stage ${ev.data?.stage}`;
-          push({ icon: '◆', color: '#00d4ff', message: tr(`Dil evrimi: ${stageName}`, `Language: ${stageName}`) });
+          push({ icon: '◆', color: '#00d4ff', message: t(`Dil evrimi: ${stageName}`, `Language: ${stageName}`, `Sprache: ${stageName}`, `Langue: ${stageName}`, `اللغة: ${stageName}`) });
         }
       }
       if (ev.event_type === 'birth' && ev.data?.is_twin) {
         const key = `twin_${ev.sim_day}_${ev.data?.individual_id}`;
         if (!fired.current.has(key)) {
           fired.current.add(key);
-          push({ icon: '✦', color: '#ff8ab0', message: tr('İkizler doğdu!', 'Twins born!'), sub: ev.description });
+          push({ icon: '✦', color: '#ff8ab0', message: t('İkizler doğdu!', 'Twins born!', 'Zwillinge geboren!', 'Des jumeaux nés!', 'وُلد توأم!'), sub: ev.description });
         }
       }
     }

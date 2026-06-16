@@ -17,8 +17,12 @@ const PATHOGEN_INFO: Record<string, { name: string; nameTr: string; transmission
   wound_infection:     { name: 'Wound Infection',       nameTr: 'Yara Enfeksiyonu',      transmission: 'Contact',    severity: 'Medium',   color: 'text-orange-400', trTransmission: 'Temas ile' },
 };
 
-function t(lang: string, en: string, tr: string) {
-  return lang === 'tr' ? tr : en;
+function t(lang: string, enStr: string, trStr: string, deStr = enStr, frStr = enStr, arStr = enStr) {
+  if (lang === 'tr') return trStr;
+  if (lang === 'de') return deStr;
+  if (lang === 'fr') return frStr;
+  if (lang === 'ar') return arStr;
+  return enStr;
 }
 
 export default function MicrobiomePanel() {
@@ -48,14 +52,14 @@ export default function MicrobiomePanel() {
             <div key={id} className="flex items-center gap-2 bg-sim-surface/50 rounded p-1.5">
               <div className="flex-1">
                 <div className="text-sm text-sim-text">
-                  {lang === 'tr' ? info.nameTr : info.name}
+                  {t(lang, info.name, info.nameTr)}
                 </div>
                 <div className="text-sm text-sim-muted">
-                  {lang === 'tr' ? info.trTransmission : info.transmission}
+                  {t(lang, info.transmission, info.trTransmission)}
                 </div>
               </div>
               <span className={`text-sm font-medium ${info.color}`}>
-                {lang === 'tr' ? (SEVERITY_TR[info.severity] ?? info.severity) : info.severity}
+                {t(lang, info.severity, SEVERITY_TR[info.severity] ?? info.severity)}
               </span>
             </div>
           ))}
