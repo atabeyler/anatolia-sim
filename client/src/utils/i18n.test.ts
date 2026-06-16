@@ -113,3 +113,73 @@ describe('translateEventType()', () => {
     expect(translateEventType('', 'tr')).toBe('');
   });
 });
+
+// ── isValidLangCode() ───────────────────────────────────────────────────────
+
+import { isValidLangCode } from './i18n';
+
+describe('isValidLangCode()', () => {
+  it('geçerli kodları kabul eder', () => {
+    expect(isValidLangCode('tr')).toBe(true);
+    expect(isValidLangCode('en')).toBe(true);
+    expect(isValidLangCode('de')).toBe(true);
+    expect(isValidLangCode('fr')).toBe(true);
+    expect(isValidLangCode('ar')).toBe(true);
+  });
+
+  it('geçersiz kodları reddeder', () => {
+    expect(isValidLangCode('es')).toBe(false);
+    expect(isValidLangCode('')).toBe(false);
+    expect(isValidLangCode(null)).toBe(false);
+    expect(isValidLangCode(undefined)).toBe(false);
+    expect(isValidLangCode(42)).toBe(false);
+  });
+});
+
+// ── translateEventDescription() de/fr/ar ───────────────────────────────────
+
+describe('translateEventDescription() — de/fr/ar', () => {
+  it('Almanca: ölüm olayını çevirir', () => {
+    expect(translateEventDescription('John died: starvation', 'de')).toBe('John starb: Verhungern');
+  });
+
+  it('Almanca: doğum olayını çevirir', () => {
+    expect(translateEventDescription('Born: Alice (Bob & Carol)', 'de')).toBe('Geboren: Alice (Bob & Carol)');
+  });
+
+  it('Fransızca: ölüm olayını çevirir', () => {
+    expect(translateEventDescription('Jane died: old_age', 'fr')).toBe('Jane est décédé: Vieillesse');
+  });
+
+  it('Arapça: ölüm olayını çevirir', () => {
+    expect(translateEventDescription('Ali died: infection', 'ar')).toBe('مات Ali: عدوى');
+  });
+
+  it('İngilizce: olduğu gibi döner', () => {
+    expect(translateEventDescription('John died: starvation', 'en')).toBe('John died: starvation');
+  });
+
+  it('Almanca: afet olayını çevirir', () => {
+    expect(translateEventDescription('Earthquake killed 5 individuals', 'de')).toBe('Erdbeben tötete 5 Personen');
+  });
+
+  it('Fransızca: afet olayını çevirir', () => {
+    expect(translateEventDescription('Flood killed 3 individuals', 'fr')).toBe('Inondation a tué 3 personnes');
+  });
+});
+
+// ── translateSeason() de/fr/ar ──────────────────────────────────────────────
+
+describe('translateSeason() — de/fr/ar', () => {
+  it('"spring" → "Frühling" (Almanca)', () => {
+    expect(translateSeason('spring', 'de')).toBe('Frühling');
+  });
+
+  it('"summer" → "Été" (Fransızca)', () => {
+    expect(translateSeason('summer', 'fr')).toBe('Été');
+  });
+
+  it('"winter" → "الشتاء" (Arapça)', () => {
+    expect(translateSeason('winter', 'ar')).toBe('الشتاء');
+  });
+});

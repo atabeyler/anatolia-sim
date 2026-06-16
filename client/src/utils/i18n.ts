@@ -1,9 +1,13 @@
 export type LangCode = 'tr' | 'en' | 'de' | 'fr' | 'ar';
 
-export type TranslationMap = Partial<Record<LangCode, string>> & {
-  tr?: string;
-  en?: string;
-};
+export const LANG_CODES = ['tr', 'en', 'de', 'fr', 'ar'] as const;
+
+export function isValidLangCode(code: unknown): code is LangCode {
+  return LANG_CODES.includes(code as LangCode);
+}
+
+export type TranslationMap = Partial<Record<LangCode, string>> &
+  ({ en: string } | { tr: string });
 
 const UI_FALLBACK_LABELS: Record<string, TranslationMap> = {
   total: { tr: 'TOPLAM', en: 'TOTAL', de: 'GESAMT', fr: 'TOTAL', ar: 'المجموع' },
@@ -234,9 +238,251 @@ const DISASTER_TR: Record<string, string> = {
   storm: 'fırtına', tsunami: 'tsunami', landslide: 'heyelan',
 };
 
+const CAUSE_DE: Record<string, string> = {
+  starvation: 'Verhungern', dehydration: 'Austrocknung', old_age: 'Alter',
+  predator: 'Raubtier', genetic_disease: 'Erbkrankheit', infection: 'Infektion',
+  trauma: 'Trauma', birth_complications: 'Geburtskomplikationen', conflict: 'Konflikt',
+  unknown: 'Unbekannte Ursache'
+};
+const CAUSE_FR: Record<string, string> = {
+  starvation: 'Famine', dehydration: 'Déshydratation', old_age: 'Vieillesse',
+  predator: 'Prédateur', genetic_disease: 'Maladie génétique', infection: 'Infection',
+  trauma: 'Traumatisme', birth_complications: 'Complications à la naissance',
+  conflict: 'Conflit', unknown: 'Cause inconnue'
+};
+const CAUSE_AR: Record<string, string> = {
+  starvation: 'مجاعة', dehydration: 'جفاف', old_age: 'الشيخوخة',
+  predator: 'مفترس', genetic_disease: 'مرض وراثي', infection: 'عدوى',
+  trauma: 'صدمة', birth_complications: 'مضاعفات الولادة', conflict: 'نزاع',
+  unknown: 'سبب مجهول'
+};
+const DISASTER_DE: Record<string, string> = {
+  earthquake: 'Erdbeben', flood: 'Flut', drought: 'Dürre', fire: 'Feuer',
+  conflict: 'Konflikt', volcano: 'Vulkanausbruch', storm: 'Sturm',
+  tsunami: 'Tsunami', landslide: 'Erdrutsch'
+};
+const DISASTER_FR: Record<string, string> = {
+  earthquake: 'Séisme', flood: 'Inondation', drought: 'Sécheresse', fire: 'Incendie',
+  conflict: 'Conflit', volcano: 'Éruption volcanique', storm: 'Tempête',
+  tsunami: 'Tsunami', landslide: 'Glissement de terrain'
+};
+const DISASTER_AR: Record<string, string> = {
+  earthquake: 'زلزال', flood: 'فيضان', drought: 'جفاف', fire: 'حريق',
+  conflict: 'نزاع', volcano: 'ثوران بركاني', storm: 'عاصفة',
+  tsunami: 'تسونامي', landslide: 'انهيار أرضي'
+};
+
 const BELIEF_TYPE_TR: Record<string, string> = {
   animism: 'animizm', ancestor_cult: 'ata kültü', 'ancestor cult': 'ata kültü', shamanism: 'şamanizm',
   polytheism: 'çok tanrıcılık', monotheism: 'tek tanrıcılık', philosophical: 'felsefi düşünce',
+};
+
+const BELIEF_TYPE_DE: Record<string, string> = {
+  animism: 'Animismus', ancestor_cult: 'Ahnenkult', 'ancestor cult': 'Ahnenkult', shamanism: 'Schamanismus',
+  polytheism: 'Polytheismus', monotheism: 'Monotheismus', philosophical: 'Philosophie',
+};
+const BELIEF_TYPE_FR: Record<string, string> = {
+  animism: 'animisme', ancestor_cult: 'culte des ancêtres', 'ancestor cult': 'culte des ancêtres', shamanism: 'chamanisme',
+  polytheism: 'polythéisme', monotheism: 'monothéisme', philosophical: 'philosophie',
+};
+const BELIEF_TYPE_AR: Record<string, string> = {
+  animism: 'الروحانية', ancestor_cult: 'عبادة الأجداد', 'ancestor cult': 'عبادة الأجداد', shamanism: 'الشامانية',
+  polytheism: 'تعدد الآلهة', monotheism: 'التوحيد', philosophical: 'الفلسفة',
+};
+
+const EXACT_DESC_DE: Record<string, string> = {
+  'Spirits inhabit all living things and natural features': 'Geister bewohnen alle Lebewesen und natürliche Elemente',
+  'The spirits of ancestors guide and protect the living': 'Die Geister der Vorfahren führen und schützen die Lebenden',
+  'Selected individuals commune with the spirit world': 'Ausgewählte Individuen kommunizieren mit der Geisterwelt',
+  'Multiple deities govern different aspects of existence': 'Mehrere Gottheiten regieren verschiedene Aspekte der Existenz',
+  'A single all-powerful deity rules the cosmos': 'Eine einzige allmächtige Gottheit regiert den Kosmos',
+  'Abstract reasoning about existence, ethics, and cosmos': 'Abstraktes Denken über Existenz, Ethik und Kosmos',
+  'Pigments applied to rock surfaces depict animals and figures': 'Auf Felsoberflächen aufgetragene Pigmente zeigen Tiere und Figuren',
+  'Three-dimensional forms carved from stone or bone': 'Dreidimensionale Formen aus Stein oder Knochen geschnitzt',
+  'Geometric and figurative patterns adorn ceramic surfaces': 'Geometrische und figurative Muster schmücken Keramikoberflächen',
+  'Woven cloth bears complex repeating patterns': 'Gewebter Stoff trägt komplexe Wiederholungsmuster',
+  'Buildings are decorated with carved reliefs and motifs': 'Gebäude sind mit geschnitzten Reliefs und Motiven verziert',
+  'Stones and bones struck together in rhythmic patterns': 'Steine und Knochen werden rhythmisch zusammengeschlagen',
+  'Sustained pitched vocalizations form melodic sequences': 'Anhaltende Tonvokalisierungen bilden melodische Sequenzen',
+  'A hollow bone with finger holes produces musical tones': 'Ein hohler Knochen mit Fingerlöchern erzeugt musikalische Töne',
+  'A taut cord vibrates to produce musical notes': 'Eine gespannte Saite schwingt und erzeugt Töne',
+  'Narrative accounts passed between individuals by spoken word': 'Erzählungen werden mündlich weitergegeben',
+  'Long rhythmic verse recounts heroic deeds and origins': 'Lange rhythmische Verse erzählen von heroischen Taten',
+  'Narrative accounts preserved in written symbols': 'Erzählungen in Schriftsymbolen erhalten',
+  'A consistent greeting gesture develops': 'Eine einheitliche Begrüßungsgeste entwickelt sich',
+  'Communal mourning practices emerge for the dead': 'Gemeinschaftliche Trauerrituale entstehen',
+  'Food is shared equally among group members': 'Nahrung wird gleichmäßig geteilt',
+  'Gifts and favors are expected to be returned': 'Geschenke und Gefälligkeiten werden erwidert',
+  'Different tasks become associated with different sexes': 'Verschiedene Aufgaben werden verschiedenen Geschlechtern zugeordnet',
+  'Elders are accorded special respect': 'Älteste genießen besonderen Respekt',
+  'Ceremonial gift-giving strengthens social bonds': 'Zeremonielles Schenken stärkt soziale Bindungen',
+  'Pigments and natural materials used for body adornment': 'Pigmente für Körperverzierung verwendet',
+  'Oral narratives preserve group memory and values': 'Mündliche Erzählungen bewahren das Gedächtnis der Gruppe',
+  'Rhythmic percussion emerges as social bonding activity': 'Rhythmisches Schlagzeug als soziale Bindungsaktivität',
+  'Coordinated movement used in group ceremonies': 'Koordinierte Bewegung bei Gruppenzeremonien',
+  'Birth is marked with naming rites': 'Geburt wird mit Benennungsriten markiert',
+  'Pair-bonding is formalized through ritual': 'Paarbindung wird durch Ritual formalisiert',
+  'Cyclical celebrations mark the seasons': 'Zyklische Feiern markieren die Jahreszeiten',
+  'Certain behaviors become culturally forbidden': 'Bestimmte Verhaltensweisen werden kulturell verboten',
+  'Exchange is ritualized to build trust': 'Austausch wird ritualisiert',
+  'Origin stories are recorded in written form': 'Ursprungsgeschichten werden schriftlich festgehalten',
+  'Rules and punishments are written and formalized': 'Regeln und Strafen werden formalisiert',
+  'Members are expected to return favors': 'Von Mitgliedern wird erwartet Gefälligkeiten zu erwidern',
+  "Taking others' possessions is prohibited": 'Das Entnehmen fremder Besitztümer ist verboten',
+  'Mating between close relatives is forbidden': 'Paarung zwischen engen Verwandten ist verboten',
+  'Elders are addressed with deference': 'Älteste werden mit Ehrerbietung behandelt',
+  'Strangers must be offered food and shelter': 'Fremden muss Nahrung und Unterkunft angeboten werden',
+  'Violence against a kin member demands revenge': 'Gewalt gegen Verwandte fordert Rache',
+  'All able members must contribute to group tasks': 'Alle fähigen Mitglieder müssen beitragen',
+  'The leader resolves disputes': 'Der Anführer löst Streitigkeiten',
+  'Individual ownership of goods is recognized': 'Individuelles Eigentum wird anerkannt',
+  'Persistent violators may be driven out': 'Hartnäckige Verstöße können zur Vertreibung führen',
+  'Rules are codified in written form': 'Regeln sind schriftlich kodifiziert',
+  'Members contribute a portion of resources to the group': 'Mitglieder tragen Ressourcen zur Gruppe bei',
+  'Agreements between parties are legally binding': 'Vereinbarungen sind rechtlich bindend',
+  'The moon completes another cycle of phases': 'Der Mond schließt einen weiteren Phasenzyklus ab',
+  'The sun reaches its extreme position': 'Die Sonne erreicht ihre Extremposition',
+  'Day and night are of equal length': 'Tag und Nacht sind gleich lang',
+  'A prominent star rises at sunset': 'Ein markanter Stern geht bei Sonnenuntergang auf',
+  'The sun is obscured — a solar eclipse': 'Die Sonne wird verdeckt — Sonnenfinsternis',
+  'The moon turns blood red — a lunar eclipse': 'Der Mond wird blutrot — Mondfinsternis',
+  'A wandering star moves against the fixed stars': 'Ein Wanderstern bewegt sich gegen die Fixsterne',
+  'A bright object with a tail crosses the sky': 'Ein helles Objekt mit Schweif überquert den Himmel',
+  'The phases of the moon can be predicted': 'Die Mondphasen können vorhergesagt werden',
+  'A calendar based on sun and moon positions is developed': 'Ein Kalender wird entwickelt',
+  'Named star constellations guide navigation': 'Benannte Sternkonstellationen leiten die Navigation',
+  'Solar and lunar eclipses can be predicted': 'Finsternisse können vorhergesagt werden',
+  'A model explains the motion of wandering stars': 'Ein Modell erklärt die Bewegung der Wandersterne',
+};
+
+const EXACT_DESC_FR: Record<string, string> = {
+  'Spirits inhabit all living things and natural features': 'Les esprits habitent tous les êtres vivants et les éléments naturels',
+  'The spirits of ancestors guide and protect the living': 'Les esprits des ancêtres guident et protègent les vivants',
+  'Selected individuals commune with the spirit world': 'Des individus communiquent avec le monde des esprits',
+  'Multiple deities govern different aspects of existence': 'Plusieurs divinités gouvernent différents aspects de l\'existence',
+  'A single all-powerful deity rules the cosmos': 'Une seule divinité toute-puissante gouverne le cosmos',
+  'Abstract reasoning about existence, ethics, and cosmos': 'Raisonnement abstrait sur l\'existence et le cosmos',
+  'Pigments applied to rock surfaces depict animals and figures': 'Des pigments sur des surfaces rocheuses représentent des animaux',
+  'Three-dimensional forms carved from stone or bone': 'Des formes tridimensionnelles sculptées dans la pierre ou l\'os',
+  'Geometric and figurative patterns adorn ceramic surfaces': 'Des motifs ornent les surfaces céramiques',
+  'Woven cloth bears complex repeating patterns': 'Le tissu tissé porte des motifs répétitifs',
+  'Buildings are decorated with carved reliefs and motifs': 'Les bâtiments sont décorés de reliefs sculptés',
+  'Stones and bones struck together in rhythmic patterns': 'Des pierres et des os sont frappés en rythme',
+  'Sustained pitched vocalizations form melodic sequences': 'Des vocalisations forment des séquences mélodiques',
+  'A hollow bone with finger holes produces musical tones': 'Un os creux avec des trous produit des sons musicaux',
+  'A taut cord vibrates to produce musical notes': 'Une corde tendue vibre pour produire des notes musicales',
+  'Narrative accounts passed between individuals by spoken word': 'Des récits transmis oralement entre individus',
+  'Long rhythmic verse recounts heroic deeds and origins': 'De longs vers relatent des exploits héroïques',
+  'Narrative accounts preserved in written symbols': 'Des récits préservés dans des symboles écrits',
+  'A consistent greeting gesture develops': 'Un geste de salutation cohérent se développe',
+  'Communal mourning practices emerge for the dead': 'Des pratiques de deuil communautaires émergent',
+  'Food is shared equally among group members': 'La nourriture est partagée équitablement',
+  'Gifts and favors are expected to be returned': 'Les cadeaux et les faveurs sont rendus',
+  'Different tasks become associated with different sexes': 'Différentes tâches sont associées à différents sexes',
+  'Elders are accorded special respect': 'Les anciens bénéficient d\'un respect particulier',
+  'Ceremonial gift-giving strengthens social bonds': 'Les dons cérémoniaux renforcent les liens sociaux',
+  'Pigments and natural materials used for body adornment': 'Des pigments utilisés pour la parure corporelle',
+  'Oral narratives preserve group memory and values': 'Les récits oraux préservent la mémoire du groupe',
+  'Rhythmic percussion emerges as social bonding activity': 'La percussion rythmique comme activité de lien social',
+  'Coordinated movement used in group ceremonies': 'Des mouvements coordonnés dans les cérémonies de groupe',
+  'Birth is marked with naming rites': 'La naissance est marquée par des rites de dénomination',
+  'Pair-bonding is formalized through ritual': 'Le lien de couple est formalisé par un rituel',
+  'Cyclical celebrations mark the seasons': 'Des célébrations cycliques marquent les saisons',
+  'Certain behaviors become culturally forbidden': 'Certains comportements deviennent interdits',
+  'Exchange is ritualized to build trust': 'L\'échange est ritualisé pour établir la confiance',
+  'Origin stories are recorded in written form': 'Les récits d\'origine sont consignés par écrit',
+  'Rules and punishments are written and formalized': 'Les règles et punitions sont formalisées',
+  'Members are expected to return favors': 'Les membres sont censés rendre les faveurs',
+  "Taking others' possessions is prohibited": 'S\'emparer des biens d\'autrui est interdit',
+  'Mating between close relatives is forbidden': 'L\'accouplement entre proches parents est interdit',
+  'Elders are addressed with deference': 'Les anciens sont traités avec déférence',
+  'Strangers must be offered food and shelter': 'Les étrangers doivent se voir offrir nourriture et abri',
+  'Violence against a kin member demands revenge': 'La violence contre un membre de la famille exige vengeance',
+  'All able members must contribute to group tasks': 'Tous les membres capables doivent contribuer',
+  'The leader resolves disputes': 'Le chef résout les différends',
+  'Individual ownership of goods is recognized': 'La propriété individuelle des biens est reconnue',
+  'Persistent violators may be driven out': 'Les contrevenants persistants peuvent être chassés',
+  'Rules are codified in written form': 'Les règles sont codifiées par écrit',
+  'Members contribute a portion of resources to the group': 'Les membres contribuent des ressources au groupe',
+  'Agreements between parties are legally binding': 'Les accords entre parties sont contraignants',
+  'The moon completes another cycle of phases': 'La lune complète un autre cycle de phases',
+  'The sun reaches its extreme position': 'Le soleil atteint sa position extrême',
+  'Day and night are of equal length': 'Le jour et la nuit sont de longueur égale',
+  'A prominent star rises at sunset': 'Une étoile proéminente se lève au coucher du soleil',
+  'The sun is obscured — a solar eclipse': 'Le soleil est obscurci — éclipse solaire',
+  'The moon turns blood red — a lunar eclipse': 'La lune devient rouge sang — éclipse lunaire',
+  'A wandering star moves against the fixed stars': 'Une étoile errante se déplace à contre-courant',
+  'A bright object with a tail crosses the sky': 'Un objet brillant avec une queue traverse le ciel',
+  'The phases of the moon can be predicted': 'Les phases de la lune peuvent être prédites',
+  'A calendar based on sun and moon positions is developed': 'Un calendrier basé sur les positions du soleil est développé',
+  'Named star constellations guide navigation': 'Des constellations d\'étoiles guident la navigation',
+  'Solar and lunar eclipses can be predicted': 'Les éclipses peuvent être prédites',
+  'A model explains the motion of wandering stars': 'Un modèle explique le mouvement des étoiles errantes',
+};
+
+const EXACT_DESC_AR: Record<string, string> = {
+  'Spirits inhabit all living things and natural features': 'الأرواح تسكن جميع الكائنات الحية والعناصر الطبيعية',
+  'The spirits of ancestors guide and protect the living': 'أرواح الأجداد ترشد وتحمي الأحياء',
+  'Selected individuals commune with the spirit world': 'أفراد مختارون يتواصلون مع عالم الأرواح',
+  'Multiple deities govern different aspects of existence': 'آلهة متعددة تحكم جوانب مختلفة من الوجود',
+  'A single all-powerful deity rules the cosmos': 'إله واحد كلي القدرة يحكم الكون',
+  'Abstract reasoning about existence, ethics, and cosmos': 'التفكير المجرد في الوجود والأخلاق والكون',
+  'Pigments applied to rock surfaces depict animals and figures': 'الأصباغ على أسطح الصخور تصور الحيوانات والأشكال',
+  'Three-dimensional forms carved from stone or bone': 'أشكال ثلاثية الأبعاد منحوتة من الحجر أو العظم',
+  'Geometric and figurative patterns adorn ceramic surfaces': 'الأنماط الهندسية تزين الأسطح الخزفية',
+  'Woven cloth bears complex repeating patterns': 'القماش المنسوج يحمل أنماطاً متكررة معقدة',
+  'Buildings are decorated with carved reliefs and motifs': 'المباني مزينة بالنقوش البارزة والزخارف',
+  'Stones and bones struck together in rhythmic patterns': 'الحجارة والعظام تُضرب معاً بأنماط إيقاعية',
+  'Sustained pitched vocalizations form melodic sequences': 'الأصوات الصوتية المستدامة تشكل تسلسلات لحنية',
+  'A hollow bone with finger holes produces musical tones': 'عظمة مجوفة بثقوب تنتج نغمات موسيقية',
+  'A taut cord vibrates to produce musical notes': 'وتر مشدود يتذبذب لإنتاج نغمات',
+  'Narrative accounts passed between individuals by spoken word': 'روايات تتناقل بين الأفراد شفهياً',
+  'Long rhythmic verse recounts heroic deeds and origins': 'أشعار إيقاعية طويلة تروي الأعمال البطولية',
+  'Narrative accounts preserved in written symbols': 'روايات محفوظة في رموز مكتوبة',
+  'A consistent greeting gesture develops': 'تطورت إيماءة تحية متسقة',
+  'Communal mourning practices emerge for the dead': 'ظهرت ممارسات الحداد الجماعي على الموتى',
+  'Food is shared equally among group members': 'يتم توزيع الطعام بالتساوي',
+  'Gifts and favors are expected to be returned': 'يُتوقع رد الهدايا والمعروف بالمثل',
+  'Different tasks become associated with different sexes': 'تصبح المهام مرتبطة بالجنسين المختلفين',
+  'Elders are accorded special respect': 'يُحظى المسنون باحترام خاص',
+  'Ceremonial gift-giving strengthens social bonds': 'تبادل الهدايا يعزز الروابط الاجتماعية',
+  'Pigments and natural materials used for body adornment': 'الأصباغ والمواد الطبيعية لزينة الجسد',
+  'Oral narratives preserve group memory and values': 'الروايات الشفهية تحفظ ذاكرة المجموعة وقيمها',
+  'Rhythmic percussion emerges as social bonding activity': 'الإيقاع يظهر كنشاط للترابط الاجتماعي',
+  'Coordinated movement used in group ceremonies': 'الحركة المنسقة في الاحتفالات الجماعية',
+  'Birth is marked with naming rites': 'تُحيَّا الولادة بطقوس التسمية',
+  'Pair-bonding is formalized through ritual': 'يتم تنظيم الارتباط رسمياً من خلال الطقوس',
+  'Cyclical celebrations mark the seasons': 'الاحتفالات الدورية تعلم الفصول',
+  'Certain behaviors become culturally forbidden': 'تصبح سلوكيات معينة محظورة ثقافياً',
+  'Exchange is ritualized to build trust': 'يتم تحويل التبادل إلى طقوس لبناء الثقة',
+  'Origin stories are recorded in written form': 'قصص الأصل يتم تسجيلها كتابياً',
+  'Rules and punishments are written and formalized': 'القواعد والعقوبات تُكتب وتُرسَّم رسمياً',
+  'Members are expected to return favors': 'يُتوقع من الأعضاء رد المعروف بالمثل',
+  "Taking others' possessions is prohibited": 'أخذ ممتلكات الآخرين محظور',
+  'Mating between close relatives is forbidden': 'التزاوج بين الأقارب المقربين محظور',
+  'Elders are addressed with deference': 'يُخاطب المسنون بتبجيل',
+  'Strangers must be offered food and shelter': 'يجب تقديم الطعام والمأوى للغرباء',
+  'Violence against a kin member demands revenge': 'العنف ضد أحد أفراد العائلة يستوجب الانتقام',
+  'All able members must contribute to group tasks': 'جميع الأعضاء القادرين يجب أن يساهموا',
+  'The leader resolves disputes': 'القائد يحل النزاعات',
+  'Individual ownership of goods is recognized': 'تُعترف بالملكية الفردية للبضائع',
+  'Persistent violators may be driven out': 'قد يُطرد المخالفون المستمرون',
+  'Rules are codified in written form': 'القواعد مُقنَّنة كتابياً',
+  'Members contribute a portion of resources to the group': 'الأعضاء يساهمون بجزء من الموارد',
+  'Agreements between parties are legally binding': 'الاتفاقيات بين الأطراف ملزمة قانونياً',
+  'The moon completes another cycle of phases': 'القمر يكمل دورة أخرى من مراحله',
+  'The sun reaches its extreme position': 'تصل الشمس إلى موضعها الأقصى',
+  'Day and night are of equal length': 'النهار والليل متساويان في الطول',
+  'A prominent star rises at sunset': 'نجم بارز يشرق عند غروب الشمس',
+  'The sun is obscured — a solar eclipse': 'الشمس تُحجب — كسوف الشمس',
+  'The moon turns blood red — a lunar eclipse': 'القمر يتحول إلى الأحمر — خسوف القمر',
+  'A wandering star moves against the fixed stars': 'نجم سيار يتحرك عكس النجوم الثابتة',
+  'A bright object with a tail crosses the sky': 'جسم مضيء بذيل يعبر السماء',
+  'The phases of the moon can be predicted': 'يمكن التنبؤ بمراحل القمر',
+  'A calendar based on sun and moon positions is developed': 'تم تطوير تقويم يستند إلى مواضع الشمس والقمر',
+  'Named star constellations guide navigation': 'كوكبات النجوم المسماة تُرشد الملاحة',
+  'Solar and lunar eclipses can be predicted': 'يمكن التنبؤ بكسوف الشمس وخسوف القمر',
+  'A model explains the motion of wandering stars': 'نموذج يفسر حركة النجوم السيارة',
 };
 
 function replaceByMap(source: string, map: Record<string, string>) {
@@ -249,8 +495,9 @@ function replaceByMap(source: string, map: Record<string, string>) {
 
 export function translateEventDescription(desc: string, lang: LangCode, event?: any): string {
   if (!desc) return '';
-  if (lang !== 'tr') return desc;
+  if (lang === 'en') return desc;
 
+  if (lang === 'tr') {
   const EXACT: Record<string, string> = {
     ...BELIEF_DESC_TR,
     ...ART_DESC_TR,
@@ -320,6 +567,138 @@ export function translateEventDescription(desc: string, lang: LangCode, event?: 
       const map: Record<string, string> = { 'searching for food': 'yiyecek arıyor', 'looking for water': 'su arıyor', 'resting': 'dinleniyor' };
       return `${name} ${map[action] ?? action}`;
     });
+  }
+
+  if (lang === 'de') {
+    if (EXACT_DESC_DE[desc]) return EXACT_DESC_DE[desc];
+    const deathMatch = desc.match(/^(.+) died: (.+)$/);
+    const birthMatch = desc.match(/^Born: (.+) \((.+) & (.+)\)$/);
+    const techMatch = desc.match(/^Technology discovered: (.+)$/i);
+    const diseaseMatch = desc.match(/^A (.+) outbreak begins$/);
+    const disasterMatch = desc.match(/^(.+) killed (\d+) individuals?$/);
+    const settlementMatch = desc.match(/^(.+) completes a (.+)$/);
+    const ritualMatch = desc.match(/^A (.+) ritual emerges in the group$/);
+    const langStageMatch = desc.match(/^(.+) language stage advanced to (.+)$/);
+    if (deathMatch) {
+      const [, person, cause] = deathMatch;
+      return `${person} starb: ${CAUSE_DE[cause] ?? cause.replace(/_/g, ' ')}`;
+    }
+    if (birthMatch) {
+      const [, bornName, p1, p2] = birthMatch;
+      return `Geboren: ${bornName} (${p1} & ${p2})`;
+    }
+    if (techMatch) return `Technologie entdeckt: ${techMatch[1]}`;
+    if (diseaseMatch) return `Ein ${diseaseMatch[1]}-Ausbruch beginnt`;
+    if (disasterMatch) {
+      const [, name, count] = disasterMatch;
+      return `${DISASTER_DE[name.toLowerCase().trim()] ?? name} tötete ${count} Personen`;
+    }
+    if (settlementMatch) {
+      const [, settlement, structure] = settlementMatch;
+      return `${settlement} baute ein ${structure}`;
+    }
+    if (ritualMatch) return `Ein ${ritualMatch[1]}-Ritual entstand in der Gruppe`;
+    if (langStageMatch) {
+      const [, person, stage] = langStageMatch;
+      return `${person} hat die Sprachstufe auf ${stage} vorgerückt`;
+    }
+    return desc
+      .replace('Culture event:', 'Kulturereignis:')
+      .replace('Art event:', 'Kunstereignis:')
+      .replace('Astronomy event:', 'Astronomieereignis:')
+      .replace('Architecture event:', 'Architekturerreignis:')
+      .replace('Law event:', 'Rechtsereignis:')
+      .replace('Microbiome event:', 'Mikrobiomereignis:')
+      .replace('Epigenetics event:', 'Epigenetikereignis:');
+  }
+
+  if (lang === 'fr') {
+    if (EXACT_DESC_FR[desc]) return EXACT_DESC_FR[desc];
+    const deathMatch = desc.match(/^(.+) died: (.+)$/);
+    const birthMatch = desc.match(/^Born: (.+) \((.+) & (.+)\)$/);
+    const techMatch = desc.match(/^Technology discovered: (.+)$/i);
+    const diseaseMatch = desc.match(/^A (.+) outbreak begins$/);
+    const disasterMatch = desc.match(/^(.+) killed (\d+) individuals?$/);
+    const settlementMatch = desc.match(/^(.+) completes a (.+)$/);
+    const ritualMatch = desc.match(/^A (.+) ritual emerges in the group$/);
+    const langStageMatch = desc.match(/^(.+) language stage advanced to (.+)$/);
+    if (deathMatch) {
+      const [, person, cause] = deathMatch;
+      return `${person} est décédé: ${CAUSE_FR[cause] ?? cause.replace(/_/g, ' ')}`;
+    }
+    if (birthMatch) {
+      const [, bornName, p1, p2] = birthMatch;
+      return `Né: ${bornName} (${p1} & ${p2})`;
+    }
+    if (techMatch) return `Technologie découverte: ${techMatch[1]}`;
+    if (diseaseMatch) return `Une épidémie de ${diseaseMatch[1]} commence`;
+    if (disasterMatch) {
+      const [, name, count] = disasterMatch;
+      return `${DISASTER_FR[name.toLowerCase().trim()] ?? name} a tué ${count} personnes`;
+    }
+    if (settlementMatch) {
+      const [, settlement, structure] = settlementMatch;
+      return `${settlement} a construit un ${structure}`;
+    }
+    if (ritualMatch) return `Un rituel ${ritualMatch[1]} est apparu dans le groupe`;
+    if (langStageMatch) {
+      const [, person, stage] = langStageMatch;
+      return `${person} a avancé l'étape linguistique à ${stage}`;
+    }
+    return desc
+      .replace('Culture event:', 'Événement culturel:')
+      .replace('Art event:', 'Événement artistique:')
+      .replace('Astronomy event:', 'Événement astronomique:')
+      .replace('Architecture event:', 'Événement architectural:')
+      .replace('Law event:', 'Événement juridique:')
+      .replace('Microbiome event:', 'Événement microbiotique:')
+      .replace('Epigenetics event:', 'Événement épigénétique:');
+  }
+
+  if (lang === 'ar') {
+    if (EXACT_DESC_AR[desc]) return EXACT_DESC_AR[desc];
+    const deathMatch = desc.match(/^(.+) died: (.+)$/);
+    const birthMatch = desc.match(/^Born: (.+) \((.+) & (.+)\)$/);
+    const techMatch = desc.match(/^Technology discovered: (.+)$/i);
+    const diseaseMatch = desc.match(/^A (.+) outbreak begins$/);
+    const disasterMatch = desc.match(/^(.+) killed (\d+) individuals?$/);
+    const settlementMatch = desc.match(/^(.+) completes a (.+)$/);
+    const ritualMatch = desc.match(/^A (.+) ritual emerges in the group$/);
+    const langStageMatch = desc.match(/^(.+) language stage advanced to (.+)$/);
+    if (deathMatch) {
+      const [, person, cause] = deathMatch;
+      return `مات ${person}: ${CAUSE_AR[cause] ?? cause.replace(/_/g, ' ')}`;
+    }
+    if (birthMatch) {
+      const [, bornName, p1, p2] = birthMatch;
+      return `وُلد: ${bornName} (${p1} & ${p2})`;
+    }
+    if (techMatch) return `اكتُشفت تقنية: ${techMatch[1]}`;
+    if (diseaseMatch) return `بدأ تفشي ${diseaseMatch[1]}`;
+    if (disasterMatch) {
+      const [, name, count] = disasterMatch;
+      return `قتلت ${DISASTER_AR[name.toLowerCase().trim()] ?? name} ${count} أفراداً`;
+    }
+    if (settlementMatch) {
+      const [, settlement, structure] = settlementMatch;
+      return `أكمل ${settlement} بناء ${structure}`;
+    }
+    if (ritualMatch) return `ظهرت طقوس ${ritualMatch[1]} في المجموعة`;
+    if (langStageMatch) {
+      const [, person, stage] = langStageMatch;
+      return `تقدم ${person} في مرحلة اللغة إلى ${stage}`;
+    }
+    return desc
+      .replace('Culture event:', 'حدث ثقافي:')
+      .replace('Art event:', 'حدث فني:')
+      .replace('Astronomy event:', 'حدث فلكي:')
+      .replace('Architecture event:', 'حدث معماري:')
+      .replace('Law event:', 'حدث قانوني:')
+      .replace('Microbiome event:', 'حدث ميكروبيومي:')
+      .replace('Epigenetics event:', 'حدث جيني:');
+  }
+
+  return desc;
 }
 
 export function translateEventType(type: string, lang: LangCode): string {

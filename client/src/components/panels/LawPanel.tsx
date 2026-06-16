@@ -73,7 +73,7 @@ export default function LawPanel() {
             return (
               <div key={stage.stage}>
                 <div className="text-sm text-sim-muted mb-1 font-medium">
-                  {text(lang as LangCode, { en: `Stage ${stage.stage}: ${stage.en}`, tr: `Aşama ${stage.stage}: ${stage.tr}` })}
+                  {text(lang as LangCode, { en: `Stage ${stage.stage}: ${stage.en}`, tr: `Aşama ${stage.stage}: ${stage.tr}`, de: `Stufe ${stage.stage}: ${stage.de}`, fr: `Étape ${stage.stage}: ${stage.fr}`, ar: `المرحلة ${stage.stage}: ${stage.ar}` })}
                 </div>
                 <div className="space-y-0.5">
                   {stage.norms.map(norm => {
@@ -84,7 +84,7 @@ export default function LawPanel() {
                         className={`flex items-center gap-1.5 text-sm px-2 py-0.5 rounded ${active ? 'text-sim-text' : 'text-sim-muted opacity-50'}`}
                       >
                         <div className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-green-400' : 'bg-sim-border'}`} />
-                        {text(lang as LangCode, { en: norm.en, tr: norm.tr })}
+                        {text(lang as LangCode, { en: norm.en, tr: norm.tr, de: norm.de, fr: norm.fr, ar: norm.ar })}
                       </div>
                     );
                   })}

@@ -45,7 +45,7 @@ const MODULES = [
   { id: 'language',     labels: { tr: 'DİL',        en: 'LANG.',    de: 'SPRACHE',  fr: 'LANGUE',   ar: 'اللغة'      }, icon: '🔤' },
   { id: 'timemachine',  labels: { tr: 'GEÇMİŞ',     en: 'HISTORY',  de: 'GESCH.',   fr: 'HIST.',    ar: 'التاريخ'    }, icon: '⏳' },
   { id: 'analysis',     labels: { tr: 'ANALİZ',     en: 'ANALYS.',  de: 'ANALYSE',  fr: 'ANALYSE',  ar: 'التحليل'    }, icon: '📊' },
-  { id: 'pyramid',      labels: { tr: 'PİRAMİT',    en: 'PYRAMID',  de: 'PYRAMID.',  fr: 'PYRAMID.',  ar: 'الهرم'     }, icon: '📐' },
+  { id: 'pyramid',      labels: { tr: 'PİRAMİT',    en: 'PYRAMID',  de: 'PYRAMIDE',  fr: 'PYRAMIDE',  ar: 'الهرم'     }, icon: '📐' },
   { id: 'biology',      labels: { tr: 'MUTASYON',   en: 'MUTAT.',   de: 'MUTAT.',   fr: 'MUTAT.',   ar: 'الطفرة'     }, icon: '🧬' },
   { id: 'god',          labels: { tr: 'TANRI',      en: 'GOD',      de: 'GOTT',     fr: 'DIEU',     ar: 'الإله'      }, icon: '✦',  accent: '#f97316' },
   { id: 'psychology',   labels: { tr: 'AKIL',       en: 'MIND',     de: 'GEIST',    fr: 'ESPRIT',   ar: 'العقل'      }, icon: '🧠' },
