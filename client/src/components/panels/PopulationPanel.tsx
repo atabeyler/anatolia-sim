@@ -76,12 +76,12 @@ function PersonRow({ obj, fallbackId, tag, lang }: { obj?: any; fallbackId?: str
       {tag && <span className="font-share-tech" style={{ fontSize: 12, color: '#8abda0', marginLeft: 2 }}>{tag}</span>}
       {obj && (
         alive
-          ? <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>{parseFloat(obj.age_years ?? 0).toFixed(0)}{text(lang as LangCode, { en: ' yr', tr: ' yaş' })}</span>
+          ? <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>{parseFloat(obj.age_years ?? 0).toFixed(0)}{text(lang as LangCode, { en: ' yr', tr: ' yaş', de: ' yr', fr: ' yr', ar: ' yr' })}</span>
           : <span className="font-share-tech" style={{ fontSize: 12, color: '#a05050' }}>
-              † {obj.death_cause ? causeLabel(obj.death_cause, lang) : text(lang as LangCode, { en: 'dec.', tr: 'ölü' })}
+              † {obj.death_cause ? causeLabel(obj.death_cause, lang) : text(lang as LangCode, { en: 'dec.', tr: 'ölü', de: 'dec.', fr: 'dec.', ar: 'dec.' })}
             </span>
       )}
-      {!obj && <span className="font-share-tech" style={{ fontSize: 12, color: '#a05050' }}>† {text(lang as LangCode, { en: 'dec.', tr: 'ölü' })}</span>}
+      {!obj && <span className="font-share-tech" style={{ fontSize: 12, color: '#a05050' }}>† {text(lang as LangCode, { en: 'dec.', tr: 'ölü', de: 'dec.', fr: 'dec.', ar: 'dec.' })}</span>}
     </div>
   );
 }
@@ -257,18 +257,18 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => setTreeOpen(true)}
-              title={text(lang as LangCode, { en: 'View family tree', tr: 'Soy ağacını görüntüle' })}
+              title={text(lang as LangCode, { en: 'View family tree', tr: 'Soy ağacını görüntüle', de: 'Stammbaum anzeigen', fr: 'Voir l’arbre généalogique', ar: 'عرض شجرة العائلة' })}
               style={{
                 background: 'transparent',
                 border: '1px solid rgba(160,200,176,0.3)',
                 color: '#a0c8b0', cursor: 'pointer', padding: '2px 6px',
                 fontSize: 11, lineHeight: 1, fontFamily: 'Share Tech Mono, monospace', borderRadius: 2,
               }}>
-              {text(lang as LangCode, { en: '🌿 TREE', tr: '🌿 SOY' })}
+              {text(lang as LangCode, { en: '🌿 TREE', tr: '🌿 SOY', de: '🌿 BAUM', fr: '🌿 ARBRE', ar: '🌿 الشجرة' })}
             </button>
             <button
               onClick={() => { setWatchedIndividual(watchedIndividualId === ind.id ? null : ind.id); onClose(); }}
-              title={watchedIndividualId === ind.id ? text(lang as LangCode, { en: 'Stop watching', tr: 'Takibi bırak' }) : text(lang as LangCode, { en: 'Watch in witness mode', tr: 'Tanık modunda takip et' })}
+              title={watchedIndividualId === ind.id ? text(lang as LangCode, { en: 'Stop watching', tr: 'Takibi bırak', de: 'Beobachtung stoppen', fr: 'Arrêter le suivi', ar: 'إيقاف المتابعة' }) : text(lang as LangCode, { en: 'Watch in witness mode', tr: 'Tanık modunda takip et', de: 'Im Zeugmodus verfolgen', fr: 'Suivre en mode témoin', ar: 'المتابعة في وضع الشاهد' })}
               style={{
                 background: watchedIndividualId === ind.id ? 'rgba(0,212,255,0.15)' : 'transparent',
                 border: `1px solid ${watchedIndividualId === ind.id ? 'rgba(0,212,255,0.6)' : 'rgba(160,200,176,0.3)'}`,
@@ -276,34 +276,10 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
                 cursor: 'pointer', padding: '2px 6px', fontSize: 11, lineHeight: 1,
                 fontFamily: 'Share Tech Mono, monospace', borderRadius: 2,
               }}>
-              {watchedIndividualId === ind.id ? text(lang as LangCode, { en: '👁 WATCHING', tr: '👁 TAKİPTE' }) : text(lang as LangCode, { en: 'WATCH', tr: 'TAKİP ET' })}
+              {watchedIndividualId === ind.id ? text(lang as LangCode, { en: '👁 WATCHING', tr: '👁 TAKİPTE', de: '👁 VERFOLGT', fr: '👁 EN SURVEILLANCE', ar: '👁 قيد المتابعة' }) : text(lang as LangCode, { en: 'WATCH', tr: 'TAKİP ET', de: 'VERFOLGEN', fr: 'SUIVRE', ar: 'تابع' })}
             </button>
             <button onClick={onClose} className="text-sim-muted hover:text-sim-accent transition-colors"><X size={14} /></button>
           </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-
-          {/* ── Death info ── */}
-          {isDead && (
-            <div style={{ background: 'rgba(160,80,80,0.1)', border: '1px solid rgba(160,80,80,0.35)', padding: '8px 10px' }}>
-              <SectionHeader label={tr('ÖLÜM BİLGİSİ', 'DEATH INFO')} />
-              <StatRow label={tr('Neden', 'Cause')} value={causeLabel(ind.death_cause, lang)} color="#e08080" />
-              {ind.death_day != null && <StatRow label={tr('Gün', 'Day')} value={ind.death_day} color="#e08080" />}
-            </div>
-          )}
-
-          {/* ── Location ── */}
-          {!isDead && (
-            <div>
-              <SectionHeader label={tr('KONUM', 'LOCATION')} />
-              <div className="flex items-center gap-1 font-share-tech" style={{ fontSize: 11, color: '#a0b4ff' }}>
-                <MapPin size={10} />
-                {(ind.y ?? 0).toFixed(3)}°{(ind.y ?? 0) >= 0 ? text(lang as LangCode, { en: 'N', tr: 'K' }) : text(lang as LangCode, { en: 'S', tr: 'G' })}
-                {'  '}
-                {(ind.x ?? 0).toFixed(3)}°{(ind.x ?? 0) >= 0 ? text(lang as LangCode, { en: 'E', tr: 'D' }) : text(lang as LangCode, { en: 'W', tr: 'B' })}
-              </div>
-            </div>
           )}
 
           {/* ── Görünüm / Appearance ── */}
@@ -401,7 +377,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
           <div>
             <SectionHeader label={tr('DİL', 'LANGUAGE')} />
             <div className="space-y-1.5">
-              <StatRow label={tr('Aşama', 'Stage')} value={lang_.stage_name ?? text(lang as LangCode, { en: 'pre-linguistic', tr: 'dil öncesi' })} color="#00d4ff" />
+              <StatRow label={tr('Aşama', 'Stage')} value={lang_.stage_name ?? text(lang as LangCode, { en: 'pre-linguistic', tr: 'dil öncesi', de: 'pre-linguistic', fr: 'pre-linguistic', ar: 'pre-linguistic' })} color="#00d4ff" />
               <StatRow label={tr('Kelime Sayısı', 'Vocabulary')} value={`${wordCount} ${tr('kelime', 'words')}`} color="#7dd3fc" />
               <TraitRow label="FOXP2" value={lang_.foxp2_expression ?? (ph.language_capacity ?? 0) * 0.1} color="#00e887" />
             </div>
@@ -971,7 +947,7 @@ export default function PopulationPanel() {
           {compareSet.length === 2 && (
             <button onClick={() => setShowCompare(true)}
               style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#4f6ef7', background: 'rgba(79,110,247,0.15)', border: '1px solid rgba(79,110,247,0.5)', padding: '2px 8px', cursor: 'pointer' }}>
-              {text(lang as LangCode, { en: 'COMPARE', tr: 'KARŞILAŞTIR' })}
+              {text(lang as LangCode, { en: 'COMPARE', tr: 'KARŞILAŞTIR', de: 'VERGLEICHEN', fr: 'COMPARER', ar: 'مقارنة' })}
             </button>
           )}
           <button onClick={() => setCompareSet([])}
@@ -985,7 +961,7 @@ export default function PopulationPanel() {
       <div className="flex gap-2 mb-3">
         <div className="flex-1 p-2 text-center" style={{ background: 'rgba(79,110,247,0.08)', border: '1px solid rgba(79,110,247,0.2)' }}>
           <div className="font-orbitron font-bold" style={{ color: '#4f6ef7', fontSize: 14 }}>{stats?.population ?? individuals.length}</div>
-          <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 12 }}>{text(lang as LangCode, { en: 'TOTAL', tr: 'TOPLAM' })}</div>
+          <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 12 }}>{text(lang as LangCode, { en: 'TOTAL', tr: 'TOPLAM', de: 'GESAMT', fr: 'TOTAL', ar: 'الإجمالي' })}</div>
         </div>
         <div className="flex-1 p-2 text-center" style={{ background: 'rgba(96,144,255,0.08)', border: '1px solid rgba(96,144,255,0.2)' }}>
           <div className="font-orbitron font-bold" style={{ color: '#6090ff', fontSize: 14 }}>
@@ -993,7 +969,7 @@ export default function PopulationPanel() {
               ? Math.round(stats.population * (stats.sex_ratio ?? 0.5))
               : individuals.filter(i => i.sex === 'male').length}
           </div>
-          <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 12 }}>{text(lang as LangCode, { en: 'MALE', tr: 'ERKEK' })}</div>
+          <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 12 }}>{text(lang as LangCode, { en: 'MALE', tr: 'ERKEK', de: 'MÄNNLICH', fr: 'MÂLE', ar: 'ذكر' })}</div>
         </div>
         <div className="flex-1 p-2 text-center" style={{ background: 'rgba(255,138,176,0.08)', border: '1px solid rgba(255,138,176,0.2)' }}>
           <div className="font-orbitron font-bold" style={{ color: '#ff8ab0', fontSize: 14 }}>
@@ -1001,7 +977,7 @@ export default function PopulationPanel() {
               ? stats.population - Math.round(stats.population * (stats.sex_ratio ?? 0.5))
               : individuals.filter(i => i.sex === 'female').length}
           </div>
-          <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 12 }}>{text(lang as LangCode, { en: 'FEMALE', tr: 'KADIN' })}</div>
+          <div className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 12 }}>{text(lang as LangCode, { en: 'FEMALE', tr: 'KADIN', de: 'WEIBLICH', fr: 'FEMELLE', ar: 'أنثى' })}</div>
         </div>
       </div>
 
@@ -1016,12 +992,12 @@ export default function PopulationPanel() {
               border: `1px solid ${filter === f ? 'rgba(79,110,247,0.5)' : 'rgba(79,110,247,0.15)'}`,
               color: filter === f ? '#c0ccff' : '#8898c8',
             }}>
-            {f === 'all' ? text(lang as LangCode, { en: 'ALL', tr: 'TÜMÜ' }) : f === 'male' ? text(lang as LangCode, { en: 'MALE', tr: 'ERKEK' }) : text(lang as LangCode, { en: 'FEMALE', tr: 'KADIN' })}
+            {f === 'all' ? text(lang as LangCode, { en: 'ALL', tr: 'TÜMÜ', de: 'ALLE', fr: 'TOUT', ar: 'الكل' }) : f === 'male' ? text(lang as LangCode, { en: 'MALE', tr: 'ERKEK', de: 'MÄNNLICH', fr: 'MÂLE', ar: 'ذكر' }) : text(lang as LangCode, { en: 'FEMALE', tr: 'KADIN', de: 'WEIBLICH', fr: 'FEMELLE', ar: 'أنثى' })}
           </button>
         ))}
         <button
           onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}
-          title={sortDir === 'asc' ? text(lang as LangCode, { en: 'Youngest first', tr: 'En genç önce' }) : text(lang as LangCode, { en: 'Oldest first', tr: 'En yaşlı önce' })}
+          title={sortDir === 'asc' ? text(lang as LangCode, { en: 'Youngest first', tr: 'En genç önce', de: 'Jüngste zuerst', fr: 'Le plus jeune d’abord', ar: 'الأصغر أولاً' }) : text(lang as LangCode, { en: 'Oldest first', tr: 'En yaşlı önce', de: 'Älteste zuerst', fr: 'Le plus âgé d’abord', ar: 'الأكبر أولاً' })}
           style={{
             padding: '3px 7px', fontSize: 12, flexShrink: 0,
             background: 'transparent',
@@ -1029,13 +1005,13 @@ export default function PopulationPanel() {
             color: '#8898c8', cursor: 'pointer',
             fontFamily: 'Share Tech Mono, monospace',
           }}>
-          {text(lang as LangCode, { en: 'AGE', tr: 'YAŞ' })} {sortDir === 'asc' ? '↑' : '↓'}
+          {text(lang as LangCode, { en: 'AGE', tr: 'YAŞ', de: 'ALTER', fr: 'ÂGE', ar: 'العمر' })} {sortDir === 'asc' ? '↑' : '↓'}
         </button>
       </div>
 
       {loading && individuals.length === 0 && (
         <div className="text-center py-4">
-          <span className="font-share-tech text-sim-muted/50 animate-pulse tracking-widest" style={{ fontSize: 12 }}>{text(lang as LangCode, { en: 'LOADING DATA...', tr: 'VERİ YÜKLENİYOR...' })}</span>
+          <span className="font-share-tech text-sim-muted/50 animate-pulse tracking-widest" style={{ fontSize: 12 }}>{text(lang as LangCode, { en: 'LOADING DATA...', tr: 'VERİ YÜKLENİYOR...', de: 'DATEN WERDEN GELADEN...', fr: 'CHARGEMENT DES DONNÉES...', ar: 'جارٍ تحميل البيانات...' })}</span>
         </div>
       )}
 
@@ -1045,15 +1021,15 @@ export default function PopulationPanel() {
           const name = nameFromId(ind.id, ind.sex, ind.name);
           const age = parseFloat(ind.age_years ?? 0);
           const stage = lifeStage(age, lang);
-          const isMale = ind.sex === 'male';
+          const isMale = ind.sex === "male";
           const isFounder = !ind.parent_1_id && !ind.parent_2_id;
 
           return (
             <button key={ind.id} onClick={() => setSelected(ind)}
               className="w-full flex items-center gap-2 px-2 py-1.5 transition-all text-left hover:bg-sim-border/20"
-              style={{ border: '1px solid transparent', borderBottom: '1px solid rgba(79,110,247,0.06)' }}>
+              style={{ border: "1px solid transparent", borderBottom: "1px solid rgba(79,110,247,0.06)" }}>
               <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                style={{ background: isMale ? '#6090ff' : '#ff8ab0', boxShadow: `0 0 4px ${isMale ? '#6090ff' : '#ff8ab0'}` }} />
+                style={{ background: isMale ? "#6090ff" : "#ff8ab0", boxShadow: `0 0 4px ${isMale ? "#6090ff" : "#ff8ab0"}` }} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="font-share-tech font-bold tracking-wider truncate"
@@ -1061,16 +1037,16 @@ export default function PopulationPanel() {
                     {name}
                   </span>
                   {isFounder && (
-                    <span className="font-share-tech px-1 py-0" style={{ fontSize: 12, color: '#d4a838', border: '1px solid rgba(212,168,56,0.4)' }}>{text(lang as LangCode, { en: 'FOUNDER', tr: 'KURUCU' })}</span>
+                    <span className="font-share-tech px-1 py-0" style={{ fontSize: 12, color: '#d4a838', border: '1px solid rgba(212,168,56,0.4)' }}>{text(lang as LangCode, { en: 'FOUNDER', tr: 'KURUCU', de: 'GRÜNDER', fr: 'FONDATEUR', ar: 'مؤسس' })}</span>
                   )}
                   {!isMale && ind.health?.pregnancy && (
-                    <span title={text(lang as LangCode, { en: 'Pregnant', tr: 'Hamile' })} style={{ fontSize: 13, lineHeight: 1 }}>◆</span>
+                    <span title={text(lang as LangCode, { en: 'Pregnant', tr: 'Hamile', de: 'Schwanger', fr: 'Enceinte', ar: 'حامل' })} style={{ fontSize: 13, lineHeight: 1 }}>◆</span>
                   )}
                 </div>
                 <div className="flex items-center gap-1 mt-0.5">
                   <span className="font-share-tech" style={{ fontSize: 12, color: stage.color }}>{stage.label}</span>
                   <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>·</span>
-                  <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>{age.toFixed(0)} {text(lang as LangCode, { en: 'yr', tr: 'yaş' })}</span>
+                  <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>{age.toFixed(0)} {text(lang as LangCode, { en: 'yr', tr: 'yaş', de: 'J.', fr: 'an', ar: 'سنة' })}</span>
                   <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>·</span>
                   <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>
                     {(ind.y ?? 0).toFixed(1)}° {(ind.x ?? 0).toFixed(1)}°
@@ -1079,7 +1055,7 @@ export default function PopulationPanel() {
               </div>
               <button
                 onClick={e => toggleCompare(e, ind)}
-                title={text(lang as LangCode, { en: 'Add to comparison', tr: 'Karşılaştırmaya ekle' })}
+                title={text(lang as LangCode, { en: 'Add to comparison', tr: 'Karşılaştırmaya ekle', de: 'Add to comparison', fr: 'Add to comparison', ar: 'Add to comparison' })}
                 style={{
                   background: compareSet.find(i => i.id === ind.id) ? 'rgba(79,110,247,0.25)' : 'transparent',
                   border: `1px solid ${compareSet.find(i => i.id === ind.id) ? 'rgba(79,110,247,0.7)' : 'rgba(79,110,247,0.2)'}`,
@@ -1099,7 +1075,7 @@ export default function PopulationPanel() {
       {filtered.length > 100 && (
         <div className="text-center py-2">
           <span className="font-share-tech text-sim-muted/40 tracking-widest" style={{ fontSize: 12 }}>
-            +{filtered.length - 100} {text(lang as LangCode, { en: 'more individuals', tr: 'birey daha' })}
+            +{filtered.length - 100} {text(lang as LangCode, { en: 'more individuals', tr: 'birey daha', de: 'more individuals', fr: 'more individuals', ar: 'more individuals' })}
           </span>
         </div>
       )}
@@ -1107,7 +1083,7 @@ export default function PopulationPanel() {
       {filtered.length === 0 && !loading && (
         <div className="flex flex-col items-center py-6 gap-2">
           <Users size={24} className="text-sim-muted/20" />
-          <span className="font-share-tech text-sim-muted/40 tracking-widest" style={{ fontSize: 12 }}>{text(lang as LangCode, { en: 'NO POPULATION', tr: 'NÜFUS YOK' })}</span>
+          <span className="font-share-tech text-sim-muted/40 tracking-widest" style={{ fontSize: 12 }}>{text(lang as LangCode, { en: 'NO POPULATION', tr: 'NÜFUS YOK', de: 'NO POPULATION', fr: 'NO POPULATION', ar: 'NO POPULATION' })}</span>
         </div>
       )}
 
@@ -1119,7 +1095,7 @@ export default function PopulationPanel() {
             className="w-full flex items-center gap-2 px-2 py-1.5"
             style={{ background: 'rgba(160,80,80,0.08)', border: '1px solid rgba(160,80,80,0.25)' }}>
             <span className="font-share-tech tracking-widest flex-1 text-left" style={{ fontSize: 12, color: '#a05050' }}>
-              † {text(lang as LangCode, { en: 'DECEASED', tr: 'HAYATINI KAYBETTİLER' })} ({stats?.deaths ?? deadIndividuals.length ?? 0})
+              † {text(lang as LangCode, { en: 'DECEASED', tr: 'HAYATINI KAYBETTİLER', de: 'DECEASED', fr: 'DECEASED', ar: 'DECEASED' })} ({stats?.deaths ?? deadIndividuals.length ?? 0})
             </span>
             <ChevronDown size={10} style={{ color: '#a05050', transform: deadExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </button>
@@ -1147,7 +1123,7 @@ export default function PopulationPanel() {
                           {causeLabel(ind.death_cause, lang)}
                         </span>
                         <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>·</span>
-                        <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>{age.toFixed(0)} {text(lang as LangCode, { en: 'yr', tr: 'yaş' })}</span>
+                        <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>{age.toFixed(0)} {text(lang as LangCode, { en: 'yr', tr: 'yaş', de: 'yr', fr: 'yr', ar: 'yr' })}</span>
                       </div>
                     </div>
                     <ChevronRight size={10} style={{ color: '#a05050', flexShrink: 0 }} />
@@ -1157,7 +1133,7 @@ export default function PopulationPanel() {
               {deadIndividuals.length > 100 && (
                 <div className="text-center py-1">
                   <span className="font-share-tech" style={{ fontSize: 12, color: '#703030' }}>
-                    +{deadIndividuals.length - 100} {text(lang as LangCode, { en: 'more', tr: 'daha' })}
+                    +{deadIndividuals.length - 100} {text(lang as LangCode, { en: 'more', tr: 'daha', de: 'more', fr: 'more', ar: 'more' })}
                   </span>
                 </div>
               )}
