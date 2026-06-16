@@ -14,12 +14,16 @@ const LANGUAGE_NAMES = {
   ar: 'Arabic',
 };
 
-function normalizeLang(lang) {
+function resolveLangCode(lang) {
   return LANGUAGE_NAMES[lang] ? lang : 'en';
 }
 
+function resolveLanguageName(lang) {
+  return LANGUAGE_NAMES[resolveLangCode(lang)] ?? 'English';
+}
+
 function languageInstruction(lang) {
-  const code = normalizeLang(lang);
+  const code = resolveLangCode(lang);
   const name = LANGUAGE_NAMES[code];
   return `Respond ONLY in ${name}. Do not switch languages. Translate all headings, explanations, findings, warnings, and reasoning into ${name}. Keep IDs, names, gene symbols, numbers, and raw event codes unchanged.`;
 }
@@ -99,16 +103,17 @@ function buildEngineContext(engine) {
 router.post('/:simId', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const { message, lang } = req.body;
-    const activeLang = normalizeLang(lang);
+    const activeLang = resolveLangCode(lang);
     const engine = simulationManager.getEngine(req.params.simId);
     const context = buildEngineContext(engine);
+    const responseLang = resolveLanguageName(lang);
     const response = await geminiChat({
       model: process.env.GEMINI_ANALYSIS_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite',
       max_tokens: 800,
       system: `You are an expert AI assistant analyzing the ANATOLIA-SIM civilization simulation.\n${languageInstruction(activeLang)}\n\n${SIM_ARCHITECTURE}\nCURRENT SIMULATION DATA:\n${context}\n\nBe concise, precise, skeptical, and data-driven.`,
       user: message,
     });
-    res.json({ response });
+    res.json({ response, language: responseLang });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Analysis failed' });
@@ -127,9 +132,10 @@ function wilsonCI(p, n) {
 router.post('/:simId/hypothesis', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const { hypothesis, events: clientEvents, lang } = req.body;
-    const activeLang = normalizeLang(lang);
+    const activeLang = resolveLangCode(lang);
     const engine = simulationManager.getEngine(req.params.simId);
     const context = buildEngineContext(engine);
+    const responseLang = resolveLanguageName(lang);
     const llmText = await geminiChat({
       model: process.env.GEMINI_ANALYSIS_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite',
       max_tokens: 600,
@@ -137,7 +143,9 @@ router.post('/:simId/hypothesis', authenticate, requireSimulationOwner, async (r
       user: `Evaluate: "${hypothesis}"\nRespond JSON only: {"verdict":"supported"|"refuted"|"inconclusive","confidence":0.0-1.0,"n_evidence":integer,"reasoning":"..."}\nThe verdict keys must stay in English; the reasoning value must be in ${LANGUAGE_NAMES[activeLang]}.`,
     });
     const match = llmText.match(/\{[\s\S]*\}/);
-    const json = match ? JSON.parse(match[0]) : { verdict: 'inconclusive', confidence: 0.5, reasoning: activeLang === 'tr' ? 'Yetersiz veri.' : 'Insufficient data.' };
+    const json = match
+      ? JSON.parse(match[0])
+      : { verdict: 'inconclusive', confidence: 0.5, reasoning: responseLang === 'Turkish' ? 'Yetersiz veri.' : 'Insufficient data.' };
     const n = (typeof json.n_evidence === 'number' && json.n_evidence > 0)
       ? json.n_evidence
       : (Array.isArray(clientEvents) ? clientEvents.length : 20);

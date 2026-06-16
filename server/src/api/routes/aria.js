@@ -4,6 +4,30 @@ import { geminiChat } from '../../utils/gemini.js';
 
 const router = Router();
 
+const LANGUAGE_NAMES = {
+  tr: 'Turkish',
+  en: 'English',
+  de: 'German',
+  fr: 'French',
+  ar: 'Arabic',
+};
+
+const LANGUAGE_LOCALES = {
+  tr: 'tr-TR',
+  en: 'en-US',
+  de: 'de-DE',
+  fr: 'fr-FR',
+  ar: 'ar',
+};
+
+function resolveLangCode(lang) {
+  return LANGUAGE_NAMES[lang] ? lang : 'en';
+}
+
+function resolveLanguageName(lang) {
+  return LANGUAGE_NAMES[resolveLangCode(lang)] ?? 'English';
+}
+
 function sanitizeText(s) {
   return String(s ?? '')
     .replace(/\u0000/g, '')
@@ -129,7 +153,8 @@ router.post('/command', authenticate, async (req, res) => {
   try {
     const { message, lang, stats, events, context } = req.body;
     const statsCtx = buildStatsContext(stats, events, context);
-    const respondIn = lang === 'tr' ? 'Turkish' : 'English';
+    const langCode = resolveLangCode(lang);
+    const respondIn = resolveLanguageName(langCode);
 
     const page = context?.page ?? '/';
     const isWizard = !!context?.wizardOpen;
@@ -180,11 +205,11 @@ GLOBAL: navigate_to{"route":"/"}|toggle_lang|set_lang{"lang":"tr/en"}`;
     if (!Array.isArray(parsed.actions)) parsed.actions = [];
     if (parsed.actions.length === 0 || rawLooksLikeReasoning) {
       const fallback = inferFallbackActions(message, context);
-      if (fallback.length > 0) {
-        parsed.actions = fallback;
-        if (!parsed.text) parsed.text = lang === 'tr' ? 'Tamam, komutu uyguluyorum.' : 'Okay, applying command.';
+        if (fallback.length > 0) {
+          parsed.actions = fallback;
+        if (!parsed.text) parsed.text = langCode === 'tr' ? 'Tamam, komutu uyguluyorum.' : 'Okay, applying command.';
+        }
       }
-    }
 
     res.json(parsed);
   } catch (err) {
