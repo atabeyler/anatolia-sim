@@ -5,19 +5,38 @@ import axios from 'axios';
 import { FlaskConical, CheckCircle, XCircle, HelpCircle } from 'lucide-react';
 import { text, type LangCode } from '../../utils/i18n';
 
-const EXAMPLES_EN = [
-  'Technology leads to population growth',
-  'Belief systems emerge under environmental stress',
-  'High inequality (Gini > 0.5) precedes social conflict',
-  'Artistic cultures develop more complex language',
-];
-
-const EXAMPLES_TR = [
-  'Teknoloji nüfus artışına yol açar',
-  'İnanç sistemleri çevre stresi altında ortaya çıkar',
-  'Yüksek eşitsizlik (Gini > 0.5) sosyal çatışmayı önceler',
-  'Sanatsal kültürler daha karmaşık dil geliştirir',
-];
+const EXAMPLES: Record<string, string[]> = {
+  tr: [
+    'Teknoloji nüfus artışına yol açar',
+    'İnanç sistemleri çevre stresi altında ortaya çıkar',
+    'Yüksek eşitsizlik (Gini > 0.5) sosyal çatışmayı önceler',
+    'Sanatsal kültürler daha karmaşık dil geliştirir',
+  ],
+  en: [
+    'Technology leads to population growth',
+    'Belief systems emerge under environmental stress',
+    'High inequality (Gini > 0.5) precedes social conflict',
+    'Artistic cultures develop more complex language',
+  ],
+  de: [
+    'Technologie führt zu Bevölkerungswachstum',
+    'Glaubenssysteme entstehen unter Umweltstress',
+    'Hohe Ungleichheit (Gini > 0.5) geht sozialen Konflikten voraus',
+    'Künstlerische Kulturen entwickeln komplexere Sprache',
+  ],
+  fr: [
+    'La technologie entraîne une croissance démographique',
+    'Les systèmes de croyances émergent sous stress environnemental',
+    'Une forte inégalité (Gini > 0,5) précède les conflits sociaux',
+    'Les cultures artistiques développent un langage plus complexe',
+  ],
+  ar: [
+    'التكنولوجيا تؤدي إلى نمو سكاني',
+    'تنشأ أنظمة المعتقدات تحت الضغط البيئي',
+    'تسبق عدم المساواة العالية (جيني > 0.5) النزاع الاجتماعي',
+    'الثقافات الفنية تطور لغة أكثر تعقيداً',
+  ],
+};
 
 type Result = { verdict: 'supported' | 'refuted' | 'inconclusive'; confidence: number; ci_lower?: number; ci_upper?: number; n_evidence?: number; reasoning: string };
 
@@ -38,7 +57,7 @@ export default function HypothesisPanel() {
     setLoading(false);
   }
 
-  const examples = lang === 'tr' ? EXAMPLES_TR : EXAMPLES_EN;
+  const examples = EXAMPLES[lang] ?? EXAMPLES.en;
 
   const verdictStyle = result ? {
     supported:    { border: 'border-green-500/30',  bg: 'bg-green-500/10',  color: 'text-green-400',  icon: CheckCircle },

@@ -2,46 +2,39 @@ import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { text, type LangCode } from '../../utils/i18n';
 
-const LOCI = [
-  { id: 'HPA_AXIS',       gene: 'COMT',      effect: 'Stress Reactivity', effectTr: 'Stres Tepkisi',       desc: 'Blunted under chronic stress',        descTr: 'Kronik stres altında zayıflar' },
-  { id: 'BDNF_PROMOTER',  gene: 'BDNF',      effect: 'Neuroplasticity',   effectTr: 'Nöroplastisite',      desc: 'Early adversity reduces learning',    descTr: 'Erken zorluk öğrenmeyi azaltır' },
-  { id: 'MAOA_REGULATION',gene: 'MAOA',      effect: 'Aggression',        effectTr: 'Saldırganlık',        desc: 'Early stress → permanent mark',      descTr: 'Erken stres → kalıcı iz' },
-  { id: 'LEPTIN_RESIST',  gene: 'Metabolic', effect: 'Fat Storage',       effectTr: 'Yağ Depolama',        desc: 'Famine triggers metabolic shift',     descTr: 'Kıtlık metabolik kaymayı tetikler' },
-  { id: 'INSULIN_SENS',   gene: 'Metabolik', effect: 'Insulin Sensitivity', effectTr: 'İnsülin Duyarlılığı', desc: 'Nutrition shapes metabolic threshold', descTr: 'Beslenme metabolik eşiği şekillendirir' },
-  { id: 'AVP_REGULATION', gene: 'OXTR',      effect: 'Social Memory',       effectTr: 'Sosyal Bellek',        desc: 'Isolation erodes social recall',      descTr: 'Yalnızlık sosyal belleği aşındırır' },
-  { id: 'OXTR_METHYL',    gene: 'OXTR',      effect: 'Social Bonding',    effectTr: 'Sosyal Bağlanma',     desc: 'Isolation demethylates bonding',      descTr: 'Yalıtım bağlanma izlerini değiştirir' },
-  { id: 'IMMUNE_PRIMING', gene: 'Immune',    effect: 'Pathogen Memory',   effectTr: 'Patojen Belleği',     desc: 'Infection leaves lasting marks',      descTr: 'Enfeksiyon kalıcı izler bırakır' },
+type LM = { tr: string; en: string; de: string; fr: string; ar: string };
+const LOCI: { id: string; gene: string; effect: LM; desc: LM }[] = [
+  { id: 'HPA_AXIS',       gene: 'COMT',      effect: { tr: 'Stres Tepkisi',         en: 'Stress Reactivity',     de: 'Stressreaktivität',       fr: 'Réactivité au stress',     ar: 'رد فعل الإجهاد'       }, desc: { tr: 'Kronik stres altında zayıflar',              en: 'Blunted under chronic stress',          de: 'Abgeschwächt bei chronischem Stress',           fr: 'Atténué sous stress chronique',              ar: 'يضعف تحت الإجهاد المزمن'             } },
+  { id: 'BDNF_PROMOTER',  gene: 'BDNF',      effect: { tr: 'Nöroplastisite',         en: 'Neuroplasticity',       de: 'Neuroplastizität',        fr: 'Neuroplasticité',          ar: 'اللدونة العصبية'       }, desc: { tr: 'Erken zorluk öğrenmeyi azaltır',             en: 'Early adversity reduces learning',       de: 'Frühe Schwierigkeiten verringern das Lernen',   fr: 'L\'adversité précoce réduit l\'apprentissage', ar: 'المحن المبكرة تقلل التعلم'           } },
+  { id: 'MAOA_REGULATION',gene: 'MAOA',      effect: { tr: 'Saldırganlık',           en: 'Aggression',            de: 'Aggression',              fr: 'Agressivité',              ar: 'العدوانية'             }, desc: { tr: 'Erken stres → kalıcı iz',                    en: 'Early stress → permanent mark',         de: 'Früher Stress → bleibende Markierung',          fr: 'Stress précoce → marque permanente',          ar: 'الإجهاد المبكر → أثر دائم'          } },
+  { id: 'LEPTIN_RESIST',  gene: 'Metabolic', effect: { tr: 'Yağ Depolama',           en: 'Fat Storage',           de: 'Fettspeicherung',         fr: 'Stockage des graisses',    ar: 'تخزين الدهون'          }, desc: { tr: 'Kıtlık metabolik kaymayı tetikler',           en: 'Famine triggers metabolic shift',        de: 'Hunger löst Stoffwechselverschiebung aus',      fr: 'La famine déclenche un changement métabolique',ar: 'المجاعة تطلق تحولاً أيضياً'          } },
+  { id: 'INSULIN_SENS',   gene: 'Metabolic', effect: { tr: 'İnsülin Duyarlılığı',    en: 'Insulin Sensitivity',   de: 'Insulinempfindlichkeit',  fr: 'Sensibilité à l\'insuline', ar: 'حساسية الأنسولين'     }, desc: { tr: 'Beslenme metabolik eşiği şekillendirir',      en: 'Nutrition shapes metabolic threshold',   de: 'Ernährung prägt die Stoffwechselschwelle',      fr: 'La nutrition façonne le seuil métabolique',   ar: 'التغذية تشكّل العتبة الأيضية'        } },
+  { id: 'AVP_REGULATION', gene: 'OXTR',      effect: { tr: 'Sosyal Bellek',           en: 'Social Memory',         de: 'Soziales Gedächtnis',     fr: 'Mémoire sociale',          ar: 'الذاكرة الاجتماعية'   }, desc: { tr: 'Yalnızlık sosyal belleği aşındırır',          en: 'Isolation erodes social recall',         de: 'Isolation erodiert das soziale Gedächtnis',     fr: 'L\'isolement érode la mémoire sociale',       ar: 'العزلة تآكل الذاكرة الاجتماعية'     } },
+  { id: 'OXTR_METHYL',    gene: 'OXTR',      effect: { tr: 'Sosyal Bağlanma',         en: 'Social Bonding',        de: 'Soziale Bindung',         fr: 'Lien social',              ar: 'الترابط الاجتماعي'    }, desc: { tr: 'Yalıtım bağlanma izlerini değiştirir',        en: 'Isolation demethylates bonding',         de: 'Isolation demethyliert Bindungsmarken',         fr: 'L\'isolement déméthyle les liens',            ar: 'العزلة تغير علامات الارتباط'         } },
+  { id: 'IMMUNE_PRIMING', gene: 'Immune',    effect: { tr: 'Patojen Belleği',         en: 'Pathogen Memory',       de: 'Pathogengedächtnis',      fr: 'Mémoire pathogène',        ar: 'ذاكرة الممرض'         }, desc: { tr: 'Enfeksiyon kalıcı izler bırakır',             en: 'Infection leaves lasting marks',         de: 'Infektion hinterlässt bleibende Spuren',        fr: 'L\'infection laisse des marques durables',    ar: 'العدوى تترك آثاراً دائمة'            } },
 ];
-
-function t(lang: string, enStr: string, trStr: string) {
-  return lang === 'tr' ? trStr : enStr;
-}
 
 export default function EpigeneticsPanel() {
   const { lang, stats } = useSimStore();
   const epi = (stats as any)?.epigenetics ?? {};
+  const L = lang as LangCode;
 
   return (
-    <DetailPanel panelId="epigenetics" title="Epigenetics" titleTr="Epigenetik">
+    <DetailPanel panelId="epigenetics" title="Epigenetics" titleTr="Epigenetik" titleDe="Epigenetik" titleFr="Épigénétique" titleAr="علم التخلق">
       <div className="bg-sim-surface rounded-lg p-3 mb-3">
         <p className="text-sim-muted text-sm italic">
-          {t(
-            lang,
-            'Experience modifies gene expression without changing DNA sequence. Some marks are heritable across generations.',
-            'Deneyim, DNA dizisini değiştirmeden gen ifadesini değiştirir. Bazı izler nesiller arasında aktarılır.'
-          )}
+          {text(L, { tr: 'Deneyim, DNA dizisini değiştirmeden gen ifadesini değiştirir. Bazı izler nesiller arasında aktarılır.', en: 'Experience modifies gene expression without changing DNA sequence. Some marks are heritable across generations.', de: 'Erfahrung verändert die Genexpression ohne die DNA-Sequenz zu ändern. Einige Markierungen sind generationsübergreifend vererbbar.', fr: 'L\'expérience modifie l\'expression génique sans changer la séquence d\'ADN. Certaines marques sont héritables entre générations.', ar: 'تعدّل التجربة التعبير الجيني دون تغيير تسلسل الحمض النووي. بعض العلامات قابلة للتوارث عبر الأجيال.' })}
         </p>
       </div>
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {t(lang, 'Monitored Loci', 'İzlenen Lokuslar')}
+          {text(L, { tr: 'İzlenen Lokuslar', en: 'Monitored Loci', de: 'Überwachte Loci', fr: 'Loci surveillés', ar: 'المواضع المراقبة' })}
         </h4>
         <div className="space-y-2">
           {LOCI.map(locus => {
             const methylation: number = epi[locus.id] ?? 0.5;
             const pct = Math.round(methylation * 100);
-            // High methylation = more silenced; color shifts from blue→purple
             const barColor = methylation > 0.65
               ? `hsl(${270 - (methylation - 0.65) * 200}, 70%, 60%)`
               : `hsl(${220 + methylation * 50}, 70%, 60%)`;
@@ -49,10 +42,10 @@ export default function EpigeneticsPanel() {
               <div key={locus.id} className="bg-sim-surface/50 rounded p-2">
                 <div className="flex justify-between mb-1">
                   <span className="text-sim-text text-sm font-medium">{locus.gene}</span>
-                  <span className="text-sim-accent text-sm">{t(lang, locus.effect, locus.effectTr)}</span>
+                  <span className="text-sim-accent text-sm">{text(L, locus.effect)}</span>
                 </div>
                 <div className="text-sim-muted text-sm italic mb-1">
-                  {t(lang, locus.desc, locus.descTr)}
+                  {text(L, locus.desc)}
                 </div>
                 <div className="mt-1 h-1.5 bg-sim-border rounded-full overflow-hidden">
                   <div
@@ -61,9 +54,9 @@ export default function EpigeneticsPanel() {
                   />
                 </div>
                 <div className="flex justify-between mt-0.5">
-                  <span className="text-xs text-sim-muted">{t(lang, 'Active', 'Aktif')}</span>
+                  <span className="text-xs text-sim-muted">{text(L, { tr: 'Aktif', en: 'Active', de: 'Aktiv', fr: 'Actif', ar: 'نشط' })}</span>
                   <span className="text-xs text-sim-accent font-mono">{pct}%</span>
-                  <span className="text-xs text-sim-muted">{t(lang, 'Silenced', 'Sessiz')}</span>
+                  <span className="text-xs text-sim-muted">{text(L, { tr: 'Sessiz', en: 'Silenced', de: 'Stumm', fr: 'Silencieux', ar: 'صامت' })}</span>
                 </div>
               </div>
             );
@@ -73,14 +66,14 @@ export default function EpigeneticsPanel() {
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {t(lang, 'Transgenerational Inheritance', 'Nesiller Arası Aktarım')}
+          {text(L, { tr: 'Nesiller Arası Aktarım', en: 'Transgenerational Inheritance', de: 'Transgenerationale Vererbung', fr: 'Héritage transgénérationnel', ar: 'التوارث عبر الأجيال' })}
         </h4>
         <div className="space-y-1">
           {[
-            { label: t(lang, 'Reversible marks', 'Tersine çevrilebilir izler'), heritability: '20-35%' },
-            { label: t(lang, 'Stress marks (MAOA)', 'Stres izleri (MAOA)'), heritability: '40%' },
-            { label: t(lang, 'Immune priming', 'Bağışıklık hazırlığı'), heritability: '60%' },
-            { label: t(lang, 'Metabolic marks', 'Metabolik izler'), heritability: '50%' },
+            { label: text(L, { tr: 'Tersine çevrilebilir izler', en: 'Reversible marks', de: 'Reversible Markierungen', fr: 'Marques réversibles', ar: 'علامات قابلة للعكس' }), heritability: '20-35%' },
+            { label: text(L, { tr: 'Stres izleri (MAOA)', en: 'Stress marks (MAOA)', de: 'Stressmarken (MAOA)', fr: 'Marques de stress (MAOA)', ar: 'علامات الإجهاد (MAOA)' }), heritability: '40%' },
+            { label: text(L, { tr: 'Bağışıklık hazırlığı', en: 'Immune priming', de: 'Immunpriming', fr: 'Amorçage immunitaire', ar: 'تهيئة المناعة' }), heritability: '60%' },
+            { label: text(L, { tr: 'Metabolik izler', en: 'Metabolic marks', de: 'Metabolische Markierungen', fr: 'Marques métaboliques', ar: 'العلامات الأيضية' }), heritability: '50%' },
           ].map(row => (
             <div key={row.label} className="flex justify-between py-0.5 border-b border-sim-border/30 text-sm">
               <span className="text-sim-muted">{row.label}</span>

@@ -4,20 +4,20 @@ import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { text, type LangCode } from '../../utils/i18n';
 
-const GENE_LABELS: Record<string, { en: string; tr: string; phenoKey: string }> = {
-  FOXP2: { en: 'Language (FOXP2)', tr: 'Dil (FOXP2)', phenoKey: 'language_capacity' },
-  OXTR: { en: 'Bonding (OXTR)', tr: 'Bağlanma (OXTR)', phenoKey: 'social_bonding' },
-  DRD4: { en: 'Novelty (DRD4)', tr: 'Yenilik (DRD4)', phenoKey: 'curiosity' },
-  MAOA: { en: 'Impulse (MAOA)', tr: 'Dürtü (MAOA)', phenoKey: 'aggression' },
-  BDNF: { en: 'Plasticity (BDNF)', tr: 'Esneklik (BDNF)', phenoKey: 'learning_rate' },
-  fluid_intelligence: { en: 'Intelligence', tr: 'Zekâ', phenoKey: 'fluid_intelligence' },
-  physical_strength: { en: 'Strength', tr: 'Güç', phenoKey: 'physical_strength' },
-  empathy: { en: 'Empathy', tr: 'Empati', phenoKey: 'empathy' },
-  curiosity: { en: 'Curiosity', tr: 'Merak', phenoKey: 'curiosity' },
-  conscientiousness: { en: 'Conscientiousness', tr: 'Özenlilik', phenoKey: 'conscientiousness' },
-  aggression: { en: 'Aggression', tr: 'Saldırganlık', phenoKey: 'aggression' },
-  immune_strength: { en: 'Immunity', tr: 'Bağışıklık', phenoKey: 'immune_strength' },
-  artistic_sense: { en: 'Art Sense', tr: 'Sanat Duyusu', phenoKey: 'artistic_sense' },
+const GENE_LABELS: Record<string, { tr: string; en: string; de: string; fr: string; ar: string; phenoKey: string }> = {
+  FOXP2:              { tr: 'Dil (FOXP2)',       en: 'Language (FOXP2)',       de: 'Sprache (FOXP2)',       fr: 'Langage (FOXP2)',        ar: 'اللغة (FOXP2)',       phenoKey: 'language_capacity' },
+  OXTR:               { tr: 'Bağlanma (OXTR)',   en: 'Bonding (OXTR)',         de: 'Bindung (OXTR)',        fr: 'Lien (OXTR)',            ar: 'الترابط (OXTR)',      phenoKey: 'social_bonding' },
+  DRD4:               { tr: 'Yenilik (DRD4)',    en: 'Novelty (DRD4)',         de: 'Neuheit (DRD4)',        fr: 'Nouveauté (DRD4)',       ar: 'الجدة (DRD4)',        phenoKey: 'curiosity' },
+  MAOA:               { tr: 'Dürtü (MAOA)',      en: 'Impulse (MAOA)',         de: 'Impuls (MAOA)',         fr: 'Impulsion (MAOA)',       ar: 'الاندفاع (MAOA)',     phenoKey: 'aggression' },
+  BDNF:               { tr: 'Esneklik (BDNF)',   en: 'Plasticity (BDNF)',      de: 'Plastizität (BDNF)',   fr: 'Plasticité (BDNF)',      ar: 'اللدونة (BDNF)',      phenoKey: 'learning_rate' },
+  fluid_intelligence: { tr: 'Zekâ',             en: 'Intelligence',           de: 'Intelligenz',           fr: 'Intelligence',           ar: 'الذكاء',             phenoKey: 'fluid_intelligence' },
+  physical_strength:  { tr: 'Güç',              en: 'Strength',               de: 'Stärke',                fr: 'Force',                  ar: 'القوة',              phenoKey: 'physical_strength' },
+  empathy:            { tr: 'Empati',            en: 'Empathy',                de: 'Empathie',              fr: 'Empathie',               ar: 'التعاطف',            phenoKey: 'empathy' },
+  curiosity:          { tr: 'Merak',             en: 'Curiosity',              de: 'Neugier',               fr: 'Curiosité',              ar: 'الفضول',             phenoKey: 'curiosity' },
+  conscientiousness:  { tr: 'Özenlilik',         en: 'Conscientiousness',      de: 'Gewissenhaftigkeit',   fr: 'Conscience',             ar: 'الضمير',             phenoKey: 'conscientiousness' },
+  aggression:         { tr: 'Saldırganlık',      en: 'Aggression',             de: 'Aggression',            fr: 'Agressivité',            ar: 'العدوانية',           phenoKey: 'aggression' },
+  immune_strength:    { tr: 'Bağışıklık',        en: 'Immunity',               de: 'Immunität',             fr: 'Immunité',               ar: 'المناعة',            phenoKey: 'immune_strength' },
+  artistic_sense:     { tr: 'Sanat Duyusu',      en: 'Art Sense',              de: 'Kunstsinn',             fr: 'Sens artistique',        ar: 'الحس الفني',          phenoKey: 'artistic_sense' },
 };
 
 const HAIR_TR: Record<string, string> = {
@@ -159,7 +159,7 @@ export default function BiologyPanel() {
                     <Mini label={text(lang as LangCode, { en: 'Height', tr: 'Boy' })} value={`${ind.phenotype?.height_cm ?? '-'} cm`} />
                     <Mini label={text(lang as LangCode, { en: 'IQ', tr: 'Zekâ' })} value={`${((ind.phenotype?.fluid_intelligence ?? 0) * 100).toFixed(0)}%`} />
                     <Mini
-                      label={text(lang as LangCode, { en: 'Language', tr: 'Dil' })}
+                      label={text(lang as LangCode, { en: 'Language', tr: 'Dil', de: 'Sprache', fr: 'Langage', ar: 'اللغة' })}
                       value={lang === 'tr' ? (LANG_STAGE_TR[langStage.toLowerCase()] ?? langStage) : langStage.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
                     />
                   </div>

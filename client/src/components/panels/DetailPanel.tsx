@@ -1,18 +1,22 @@
 import { X } from 'lucide-react';
 import { useSimStore } from '../../store/simStore';
+import { text, type LangCode } from '../../utils/i18n';
 
 interface Props {
   panelId: string;
   title: string;
   titleTr: string;
+  titleDe?: string;
+  titleFr?: string;
+  titleAr?: string;
   children: React.ReactNode;
 }
 
-export default function DetailPanel({ panelId, title, titleTr, children }: Props) {
+export default function DetailPanel({ panelId, title, titleTr, titleDe, titleFr, titleAr, children }: Props) {
   const { activePanel, setActivePanel, lang } = useSimStore();
   if (activePanel !== panelId) return null;
 
-  const displayTitle = lang === 'tr' ? titleTr : title;
+  const displayTitle = text(lang as LangCode, { en: title, tr: titleTr, de: titleDe ?? title, fr: titleFr ?? title, ar: titleAr ?? title });
 
   return (
     <>

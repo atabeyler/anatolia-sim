@@ -149,11 +149,11 @@ export default function DashboardPage() {
               className="flex items-center gap-1 sm:gap-1.5 px-2 py-1 text-sim-muted hover:text-red-400 transition-colors"
               style={{ fontFamily:'Share Tech Mono,monospace', fontSize:14, fontWeight:700, letterSpacing:'0.1em' }}>
               <LogOut size={13} />
-              <span className="hidden sm:inline">ÇIKIŞ</span>
+              <span className="hidden sm:inline">{text(lang as LangCode, { tr: 'ÇIKIŞ', en: 'EXIT', de: 'AUSGANG', fr: 'QUITTER', ar: 'خروج' })}</span>
             </button>
             <button onClick={() => setMenuOpen(true)}
               style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid rgba(160,200,176,0.35)', color: '#a0c8b0', background: 'transparent', fontSize: 14, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
-              ☰ MENÜ
+              ☰ {text(lang as LangCode, { tr: 'MENÜ', en: 'MENU', de: 'MENÜ', fr: 'MENU', ar: 'القائمة' })}
             </button>
           </div>
         </div>

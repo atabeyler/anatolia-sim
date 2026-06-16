@@ -44,8 +44,15 @@ export default function ReportPanel() {
     });
 
       const S = r.current_stats ?? {};
-      const TR = lang === 'tr';
-      const now = new Date().toLocaleString(TR ? 'tr-TR' : 'en-US');
+      const localeMap: Record<string, string> = { tr: 'tr-TR', en: 'en-US', de: 'de-DE', fr: 'fr-FR', ar: 'ar-SA' };
+      const now = new Date().toLocaleString(localeMap[lang] ?? 'en-US');
+      const rt = (tr: string, en: string, de?: string, fr?: string, ar?: string) => {
+        if (lang === 'tr') return tr;
+        if (lang === 'de') return de ?? en;
+        if (lang === 'fr') return fr ?? en;
+        if (lang === 'ar') return ar ?? en;
+        return en;
+      };
       const th = (s: string) => `<th style="border:1px solid #bbb;padding:4px 6px;background:#f0f0f0;font-size:11px;text-align:left;">${s}</th>`;
       const td = (s: unknown) => `<td style="border:1px solid #ddd;padding:3px 6px;font-size:11px;">${s != null ? String(s) : '—'}</td>`;
       const tr2 = (...cells: unknown[]) => `<tr>${cells.map(td).join('')}</tr>`;
@@ -67,7 +74,14 @@ export default function ReportPanel() {
       const totalYears = r.simulation?.current_year ?? S.year ?? 0;
       const totalEver  = (r.individuals ?? []).length;
       const peakPop    = (r.population_history ?? []).reduce((mx: number, c: Record<string,unknown>) => Math.max(mx, (c.population as number) ?? 0), 0);
-      const langStageNames = ['dil öncesi', 'jest dili', 'proto-dil', 'sözel dil', 'karmaşık dil', 'sembolik dil'];
+      const langStageNamesMap: Record<string, string[]> = {
+        tr: ['dil öncesi', 'jest dili', 'proto-dil', 'sözel dil', 'karmaşık dil', 'sembolik dil'],
+        en: ['pre-linguistic', 'gestural', 'proto-language', 'verbal', 'complex language', 'symbolic'],
+        de: ['vorsprachlich', 'Gestik', 'Protosprache', 'verbal', 'komplexe Sprache', 'symbolisch'],
+        fr: ['prélinguistique', 'gestuelle', 'proto-langage', 'verbal', 'langage complexe', 'symbolique'],
+        ar: ['ما قبل اللغة', 'إيمائي', 'لغة أولية', 'لفظي', 'لغة معقدة', 'رمزي'],
+      };
+      const langStageNames = langStageNamesMap[lang] ?? langStageNamesMap.en;
       const langStageName  = langStageNames[S.max_language_stage ?? 0] ?? '?';
       const totalMigDist   = (r.migration_history ?? []).reduce((s: number, m: Record<string,unknown>) => s + ((m.distance_km as number) ?? 0), 0);
       const epicCount  = (r.notable_events ?? []).filter((e: Record<string,unknown>) => e.event_type === 'epidemic').length;
@@ -78,13 +92,14 @@ export default function ReportPanel() {
         return Math.round(dead.reduce((s: number, i: Record<string,unknown>) => s + (i.age_at_death as number), 0) / dead.length * 10) / 10;
       })();
 
-      const introTR = `Bu rapor, ANATOLİA-SİM evrimsel medeniyet simülasyonunda "${r.simulation?.name ?? sim.id}" adıyla oluşturulan medeniyetin ${totalYears} yıllık tarihsel kaydını içermektedir. Simülasyon ${r.simulation?.start_latitude ?? '?'}° enlem, ${r.simulation?.start_longitude ?? '?'}° boylamda, ${r.simulation?.biome ?? '?'} biome'unda başlatılmıştır.
-
-Medeniyet tarihi boyunca toplam ${totalEver} birey doğmuş, nüfus en yüksek ${peakPop} kişiye ulaşmıştır. Topluluk ${(r.technology_timeline ?? []).length} teknoloji ve ${(r.belief_timeline ?? []).length} inanç geliştirmiş; dil ${langStageName} aşamasına ilerlemiştir. ${deathTotal} ölümün gerçekleştiği bu süreçte ortalama ölüm yaşı ${deadAvgAge ?? '?'} yıl olarak hesaplanmıştır${epicCount > 0 ? `; ${epicCount} salgın ve ${disCount} doğal afet kaydedilmiştir` : ''}. ${totalMigDist > 0 ? `Bant toplamda yaklaşık ${totalMigDist} km yer değiştirmiştir.` : ''}`;
-
-      const introEN = `This report contains the ${totalYears}-year historical record of the civilization "${r.simulation?.name ?? sim.id}" created in the ANATOLİA-SİM evolutionary civilization simulation. The simulation was initialized at latitude ${r.simulation?.start_latitude ?? '?'}°, longitude ${r.simulation?.start_longitude ?? '?'}° in the ${r.simulation?.biome ?? '?'} biome.
-
-Throughout its history, a total of ${totalEver} individuals were born, with peak population reaching ${peakPop}. The civilization developed ${(r.technology_timeline ?? []).length} technologies and ${(r.belief_timeline ?? []).length} beliefs; language progressed to the ${langStageName} stage. Of the ${deathTotal} deaths recorded, the average age at death was ${deadAvgAge ?? '?'} years${epicCount > 0 ? `; ${epicCount} epidemic(s) and ${disCount} disaster(s) occurred` : ''}. ${totalMigDist > 0 ? `The band migrated approximately ${totalMigDist} km in total.` : ''}`;
+      const introMap: Record<string, string> = {
+        tr: `Bu rapor, ANATOLİA-SİM evrimsel medeniyet simülasyonunda "${r.simulation?.name ?? sim.id}" adıyla oluşturulan medeniyetin ${totalYears} yıllık tarihsel kaydını içermektedir. Simülasyon ${r.simulation?.start_latitude ?? '?'}° enlem, ${r.simulation?.start_longitude ?? '?'}° boylamda, ${r.simulation?.biome ?? '?'} biome'unda başlatılmıştır.\n\nMedeniyet tarihi boyunca toplam ${totalEver} birey doğmuş, nüfus en yüksek ${peakPop} kişiye ulaşmıştır. Topluluk ${(r.technology_timeline ?? []).length} teknoloji ve ${(r.belief_timeline ?? []).length} inanç geliştirmiş; dil ${langStageName} aşamasına ilerlemiştir. ${deathTotal} ölümün gerçekleştiği bu süreçte ortalama ölüm yaşı ${deadAvgAge ?? '?'} yıl olarak hesaplanmıştır${epicCount > 0 ? `; ${epicCount} salgın ve ${disCount} doğal afet kaydedilmiştir` : ''}. ${totalMigDist > 0 ? `Bant toplamda yaklaşık ${totalMigDist} km yer değiştirmiştir.` : ''}`,
+        en: `This report contains the ${totalYears}-year historical record of the civilization "${r.simulation?.name ?? sim.id}" created in the ANATOLİA-SİM evolutionary civilization simulation. The simulation was initialized at latitude ${r.simulation?.start_latitude ?? '?'}°, longitude ${r.simulation?.start_longitude ?? '?'}° in the ${r.simulation?.biome ?? '?'} biome.\n\nThroughout its history, a total of ${totalEver} individuals were born, with peak population reaching ${peakPop}. The civilization developed ${(r.technology_timeline ?? []).length} technologies and ${(r.belief_timeline ?? []).length} beliefs; language progressed to the ${langStageName} stage. Of the ${deathTotal} deaths recorded, the average age at death was ${deadAvgAge ?? '?'} years${epicCount > 0 ? `; ${epicCount} epidemic(s) and ${disCount} disaster(s) occurred` : ''}. ${totalMigDist > 0 ? `The band migrated approximately ${totalMigDist} km in total.` : ''}`,
+        de: `Dieser Bericht enthält die ${totalYears}-jährige historische Aufzeichnung der Zivilisation „${r.simulation?.name ?? sim.id}", die in der ANATOLİA-SİM-Evolutionssimulation erstellt wurde. Die Simulation wurde bei ${r.simulation?.start_latitude ?? '?'}° Breite, ${r.simulation?.start_longitude ?? '?'}° Länge im Biom „${r.simulation?.biome ?? '?'}" gestartet.\n\nInsgesamt wurden ${totalEver} Individuen geboren, die Höchstbevölkerung betrug ${peakPop}. Die Zivilisation entwickelte ${(r.technology_timeline ?? []).length} Technologien und ${(r.belief_timeline ?? []).length} Glaubenssätze; die Sprache erreichte die Stufe ${langStageName}. Von den ${deathTotal} Todesfällen betrug das durchschnittliche Sterbealter ${deadAvgAge ?? '?'} Jahre${epicCount > 0 ? `; ${epicCount} Epidemie(n) und ${disCount} Katastrophe(n) wurden verzeichnet` : ''}. ${totalMigDist > 0 ? `Die Gruppe wanderte insgesamt ca. ${totalMigDist} km.` : ''}`,
+        fr: `Ce rapport contient l'enregistrement historique de ${totalYears} ans de la civilisation « ${r.simulation?.name ?? sim.id} » créée dans la simulation ANATOLİA-SİM. La simulation a été initialisée à ${r.simulation?.start_latitude ?? '?'}° de latitude, ${r.simulation?.start_longitude ?? '?'}° de longitude dans le biome « ${r.simulation?.biome ?? '?'} ».\n\nAu total, ${totalEver} individus sont nés, la population maximale atteignant ${peakPop}. La civilisation a développé ${(r.technology_timeline ?? []).length} technologies et ${(r.belief_timeline ?? []).length} croyances ; le langage a progressé jusqu'au stade ${langStageName}. Sur les ${deathTotal} décès enregistrés, l'âge moyen au décès était de ${deadAvgAge ?? '?'} ans${epicCount > 0 ? ` ; ${epicCount} épidémie(s) et ${disCount} catastrophe(s) ont eu lieu` : ''}. ${totalMigDist > 0 ? `Le groupe a migré d'environ ${totalMigDist} km au total.` : ''}`,
+        ar: `يحتوي هذا التقرير على السجل التاريخي لـ ${totalYears} عامًا من حضارة "${r.simulation?.name ?? sim.id}" التي أُنشئت في محاكاة ANATOLİA-SİM. بدأت المحاكاة عند خط عرض ${r.simulation?.start_latitude ?? '?'}° وخط طول ${r.simulation?.start_longitude ?? '?'}° في منطقة ${r.simulation?.biome ?? '?'}.\n\nوُلد ما مجموعه ${totalEver} فردًا، وبلغ الحد الأقصى للسكان ${peakPop}. طورت الحضارة ${(r.technology_timeline ?? []).length} تقنية و${(r.belief_timeline ?? []).length} معتقدًا؛ وتقدمت اللغة إلى مرحلة ${langStageName}. من أصل ${deathTotal} حالة وفاة مسجلة، كان متوسط العمر عند الوفاة ${deadAvgAge ?? '?'} عامًا${epicCount > 0 ? `؛ جرى تسجيل ${epicCount} وباء و${disCount} كارثة` : ''}. ${totalMigDist > 0 ? `هاجرت المجموعة ما يقارب ${totalMigDist} كم إجمالاً.` : ''}`,
+      };
+      const intro = introMap[lang] ?? introMap.en;
 
       // ── SVG Chart Helpers ──────────────────────────────────────────────────
       const popChartSvg = (() => {
@@ -203,7 +218,7 @@ Throughout its history, a total of ${totalEver} individuals were born, with peak
     </div>
     <div style="font-size:56px;font-weight:900;letter-spacing:3px;line-height:1;color:#f59e0b;margin-bottom:6px;">ANATOLİA</div>
     <div style="font-size:56px;font-weight:900;letter-spacing:3px;line-height:1;color:#fff;margin-bottom:16px;">SİM</div>
-    <div style="font-size:18px;color:#94a3b8;letter-spacing:2px;margin-bottom:40px;">${TR ? 'MEDENİYET RAPORU' : 'CIVILIZATION REPORT'}</div>
+    <div style="font-size:18px;color:#94a3b8;letter-spacing:2px;margin-bottom:40px;">${rt('MEDENİYET RAPORU','CIVILIZATION REPORT')}</div>
     <div style="font-size:30px;font-weight:700;color:#f1f5f9;border-top:1px solid #334155;border-bottom:1px solid #334155;padding:14px 0;margin-bottom:36px;">
       ${r.simulation?.name ?? sim.id}
     </div>
@@ -213,23 +228,23 @@ Throughout its history, a total of ${totalEver} individuals were born, with peak
         <div style="font-size:14px;color:#e2e8f0;font-weight:600;">${r.simulation?.biome ?? '?'}</div>
       </div>
       <div>
-        <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">${TR?'Koordinatlar':'Coordinates'}</div>
+        <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">${rt('Koordinatlar','Coordinates')}</div>
         <div style="font-size:14px;color:#e2e8f0;font-weight:600;">${r.simulation?.start_latitude ?? '?'}°, ${r.simulation?.start_longitude ?? '?'}°</div>
       </div>
       <div>
-        <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">${TR?'Süre':'Duration'}</div>
-        <div style="font-size:14px;color:#e2e8f0;font-weight:600;">${totalYears} ${TR?'yıl':'yr'} · ${r.simulation?.current_day ?? S.day ?? '?'} ${TR?'gün':'days'}</div>
+        <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">${rt('Süre','Duration')}</div>
+        <div style="font-size:14px;color:#e2e8f0;font-weight:600;">${totalYears} ${rt('yıl','yr')} · ${r.simulation?.current_day ?? S.day ?? '?'} ${rt('gün','days')}</div>
       </div>
     </div>
     <div style="display:flex;gap:16px;margin-top:32px;flex-wrap:wrap;">
-      ${statCard(TR?'Zirve Nüfus':'Peak Pop.', String(peakPop), '#f59e0b')}
-      ${statCard(TR?'Toplam Birey':'Total Lived', String(totalEver), '#38bdf8')}
-      ${statCard(TR?'Teknoloji':'Technologies', String((r.technology_timeline ?? []).length), '#34d399')}
-      ${statCard(TR?'Toplam Ölüm':'Total Deaths', String(deathTotal), '#f87171')}
+      ${statCard(rt('Zirve Nüfus','Peak Pop.'), String(peakPop), '#f59e0b')}
+      ${statCard(rt('Toplam Birey','Total Lived'), String(totalEver), '#38bdf8')}
+      ${statCard(rt('Teknoloji','Technologies'), String((r.technology_timeline ?? []).length), '#34d399')}
+      ${statCard(rt('Toplam Ölüm','Total Deaths'), String(deathTotal), '#f87171')}
     </div>
   </div>
   <div style="font-size:10px;color:#475569;border-top:1px solid #1e293b;padding-top:12px;margin-top:40px;">
-    Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. &copy; 2026 &middot; RST Q-Nation 200120401018 &nbsp;&nbsp;|&nbsp;&nbsp; ${TR?'Oluşturuldu':'Generated'}: ${now}
+    Bold Askeri Teknoloji ve Savunma Sanayi A.Ş. &copy; 2026 &middot; RST Q-Nation 200120401018 &nbsp;&nbsp;|&nbsp;&nbsp; ${rt('Oluşturuldu','Generated')}: ${now}
   </div>
 </div>
 
@@ -240,39 +255,37 @@ ${r.simulation?.intervened ? `<!-- MÜDAHALELİ KOŞU UYARISI -->
 <div style="background:#fef3c7;border:2px solid #d97706;border-radius:8px;padding:20px 24px;margin-bottom:28px;display:flex;align-items:flex-start;gap:16px;">
   <div style="font-size:28px;line-height:1;">⚠️</div>
   <div>
-    <div style="font-weight:bold;color:#92400e;font-size:13px;margin-bottom:6px;">${TR ? 'MÜDAHALELİ DENEY KOŞUSU' : 'GOD MODE INTERVENTION DETECTED'}</div>
-    <div style="color:#78350f;font-size:11px;line-height:1.7;">${TR
-      ? 'Bu simülasyonda God Mode müdahalesi kullanılmıştır. Bu koşu doğal hipotez verisi değildir; rapordaki istatistikler deneysel kontrol grubu verisi olarak kullanılmamalıdır.'
-      : 'God Mode interventions were applied during this simulation run. This is not a clean natural-hypothesis dataset; statistics in this report should not be used as experimental control data.'
+    <div style="font-weight:bold;color:#92400e;font-size:13px;margin-bottom:6px;">${rt('MÜDAHALELİ DENEY KOŞUSU','GOD MODE INTERVENTION DETECTED')}</div>
+    <div style="color:#78350f;font-size:11px;line-height:1.7;">${rt('Bu simülasyonda God Mode müdahalesi kullanılmıştır. Bu koşu doğal hipotez verisi değildir; rapordaki istatistikler deneysel kontrol grubu verisi olarak kullanılmamalıdır.','God Mode interventions were applied during this simulation run. This is not a clean natural-hypothesis dataset; statistics in this report should not be used as experimental control data.')
     }</div>
   </div>
 </div>` : ''}
 
 <!-- GİRİŞ -->
-${secColor(TR?'Giriş':'Introduction', '#475569', '📋')}
-<div style="background:#f8fafc;border-radius:8px;padding:18px 22px;font-size:12px;line-height:1.9;color:#374151;white-space:pre-wrap;border:1px solid #e2e8f0;">${TR ? introTR : introEN}</div>
+${secColor(rt('Giriş','Introduction'), '#475569', '📋')}
+<div style="background:#f8fafc;border-radius:8px;padding:18px 22px;font-size:12px;line-height:1.9;color:#374151;white-space:pre-wrap;border:1px solid #e2e8f0;">${intro}</div>
 
 <!-- ANLIK DURUM -->
-${secColor(TR?'Anlık Durum':'Current Snapshot', '#6366f1', '📊')}
+${secColor(rt('Anlık Durum','Current Snapshot'), '#6366f1', '📊')}
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
-  ${statCard(TR?'Nüfus':'Population', String(S.population ?? '—'), '#6366f1')}
-  ${statCard(TR?'Ort. Yaş':'Avg Age', S.avg_age ? S.avg_age + ' yr' : '—', '#8b5cf6')}
-  ${statCard(TR?'Mutluluk':'Happiness', pct(S.happiness_index), '#10b981')}
+  ${statCard(rt('Nüfus','Population'), String(S.population ?? '—'), '#6366f1')}
+  ${statCard(rt('Ort. Yaş','Avg Age'), S.avg_age ? S.avg_age + ' yr' : '—', '#8b5cf6')}
+  ${statCard(rt('Mutluluk','Happiness'), pct(S.happiness_index), '#10b981')}
   ${statCard('Gini', String(S.gini ?? '—'), '#f59e0b')}
-  ${statCard(TR?'Zeka':'Intelligence', pct(S.avg_intelligence), '#3b82f6')}
+  ${statCard(rt('Zeka','Intelligence'), pct(S.avg_intelligence), '#3b82f6')}
   ${statCard('QoL', String(S.qol_index ?? '—'), '#06b6d4')}
 </div>
 ${styledTbl(
-  [TR?'Gösterge':'Metric', TR?'Değer':'Value', TR?'Gösterge':'Metric', TR?'Değer':'Value'],
+  [rt('Gösterge','Metric'), rt('Değer','Value'), rt('Gösterge','Metric'), rt('Değer','Value')],
   (() => {
     const rows2 = [
-      [TR?'Besin Bolluğu':'Food Abundance', pct(S.food_abundance), TR?'Su Bolluğu':'Water Abundance', pct(S.water_abundance)],
-      [TR?'Hastalık Oranı':'Sick Rate', pct(S.sick_rate), TR?'Sıcaklık':'Temperature', S.temperature ? S.temperature + '°C' : '—'],
-      [TR?'Dil Aşaması':'Lang Stage', S.max_language_stage, TR?'Kelime Sayısı':'Word Count', S.word_count],
-      [TR?'Teknoloji':'Technologies', S.technologies, TR?'İnanç':'Beliefs', S.beliefs],
-      [TR?'Sanat':'Art Forms', S.art_forms, TR?'Gruplar':'Groups', S.groups],
-      [TR?'Mevsim':'Season', S.season, TR?'Hava':'Weather', S.weather ?? '—'],
-      [TR?'Toplam Doğum':'Total Births', S.births, TR?'Toplam Ölüm':'Total Deaths', S.deaths],
+      [rt('Besin Bolluğu','Food Abundance'), pct(S.food_abundance), rt('Su Bolluğu','Water Abundance'), pct(S.water_abundance)],
+      [rt('Hastalık Oranı','Sick Rate'), pct(S.sick_rate), rt('Sıcaklık','Temperature'), S.temperature ? S.temperature + '°C' : '—'],
+      [rt('Dil Aşaması','Lang Stage'), S.max_language_stage, rt('Kelime Sayısı','Word Count'), S.word_count],
+      [rt('Teknoloji','Technologies'), S.technologies, rt('İnanç','Beliefs'), S.beliefs],
+      [rt('Sanat','Art Forms'), S.art_forms, rt('Gruplar','Groups'), S.groups],
+      [rt('Mevsim','Season'), S.season, rt('Hava','Weather'), S.weather ?? '—'],
+      [rt('Toplam Doğum','Total Births'), S.births, rt('Toplam Ölüm','Total Deaths'), S.deaths],
     ];
     return rows2.map((r2, i) => stRow(r2, i)).join('');
   })(),
@@ -280,11 +293,11 @@ ${styledTbl(
 )}
 
 <!-- NÜFUS TARİHİ -->
-${secColor(TR?'Nüfus Tarihi':'Population History', '#f59e0b', '📈')}
+${secColor(rt('Nüfus Tarihi','Population History'), '#f59e0b', '📈')}
 <div style="margin-bottom:12px;">${popChartSvg}</div>
 ${styledTbl(
-  [TR?'Yıl':'Year', TR?'Nüfus':'Pop', TR?'Ort.Yaş':'Avg Age', TR?'Mutluluk':'Happiness', 'Gini',
-   TR?'Besin':'Food', TR?'Su':'Water', TR?'Konum':'Location', TR?'Hareket Sebebi':'Move Reason', TR?'Hava':'Weather'],
+  [rt('Yıl','Year'), rt('Nüfus','Pop'), rt('Ort.Yaş','Avg Age'), rt('Mutluluk','Happiness'), 'Gini',
+   rt('Besin','Food'), rt('Su','Water'), rt('Konum','Location'), rt('Hareket Sebebi','Move Reason'), rt('Hava','Weather')],
   popHistory.map((c: Record<string,unknown>, i: number) => stRow([
     c.year, c.population, c.avg_age ? c.avg_age + 'yr' : '—',
     pct(c.happiness_index as number|undefined), c.gini,
@@ -296,12 +309,12 @@ ${styledTbl(
 )}
 
 <!-- TEKNOLOJİ ZAMAN ÇİZELGESİ -->
-${secColor(TR?'Teknoloji Zaman Çizelgesi':'Technology Timeline', '#3b82f6', '⚙️')}
+${secColor(rt('Teknoloji Zaman Çizelgesi','Technology Timeline'), '#3b82f6', '⚙️')}
 <div style="margin-bottom:10px;">
   ${(r.technology_timeline as Record<string,unknown>[] ?? []).map(e => badge(String(e.name ?? '?'), '#3b82f6')).join('')}
 </div>
 ${r.technology_timeline?.length ? styledTbl(
-  [TR?'Yıl':'Year', TR?'Teknoloji':'Technology', TR?'Keşif Sebebi':'Discovery Reason', TR?'Nüfus':'Pop', TR?'Mevsim':'Season', TR?'Hava':'Weather'],
+  [rt('Yıl','Year'), rt('Teknoloji','Technology'), rt('Keşif Sebebi','Discovery Reason'), rt('Nüfus','Pop'), rt('Mevsim','Season'), rt('Hava','Weather')],
   (r.technology_timeline as Record<string,unknown>[]).map((e, i) => stRow([
     e.year, e.name, e.trigger_reason ?? '—', e.population, e.season, e.weather
   ], i)).join(''),
@@ -309,24 +322,24 @@ ${r.technology_timeline?.length ? styledTbl(
 ) : '<p style="color:#9ca3af;font-size:11px;padding:8px;">—</p>'}
 
 <!-- İNANÇ & KÜLTÜR -->
-${secColor(TR?'İnanç & Kültür Zaman Çizelgesi':'Belief & Culture Timeline', '#8b5cf6', '🌀')}
+${secColor(rt('İnanç & Kültür Zaman Çizelgesi','Belief & Culture Timeline'), '#8b5cf6', '🌀')}
 <div style="margin-bottom:10px;">
   ${(r.belief_timeline as Record<string,unknown>[] ?? []).map(e => badge(String(e.name ?? '?'), '#8b5cf6')).join('')}
   ${(r.art_timeline as Record<string,unknown>[] ?? []).map(e => badge(String(e.name ?? '?'), '#ec4899')).join('')}
 </div>
 ${(r.belief_timeline?.length || r.art_timeline?.length) ? styledTbl(
-  [TR?'Yıl':'Year', TR?'Tür':'Type', TR?'İsim':'Name', TR?'Oluşum Sebebi':'Reason', TR?'Nüfus':'Pop', TR?'Mevsim':'Season'],
+  [rt('Yıl','Year'), rt('Tür','Type'), rt('İsim','Name'), rt('Oluşum Sebebi','Reason'), rt('Nüfus','Pop'), rt('Mevsim','Season')],
   [
-    ...(r.belief_timeline as Record<string,unknown>[] ?? []).map((e, i) => stRow([e.year, TR?'İnanç':'Belief', e.name, e.trigger_reason ?? '—', e.population, e.season], i)),
+    ...(r.belief_timeline as Record<string,unknown>[] ?? []).map((e, i) => stRow([e.year, rt('İnanç','Belief'), e.name, e.trigger_reason ?? '—', e.population, e.season], i)),
     ...(r.art_timeline as Record<string,unknown>[] ?? []).map((e, i) => stRow([e.year, e.type, e.name, '—', '—', '—'], i + (r.belief_timeline?.length ?? 0))),
   ].join(''),
   '#7c3aed'
 ) : '<p style="color:#9ca3af;font-size:11px;padding:8px;">—</p>'}
 
 <!-- GÖÇ TARİHİ -->
-${secColor(TR?'Göç Tarihi':'Migration History', '#10b981', '🧭')}
+${secColor(rt('Göç Tarihi','Migration History'), '#10b981', '🧭')}
 ${r.migration_history?.length ? styledTbl(
-  [TR?'Yıl':'Year', TR?'Mesafe':'Distance', TR?'Göç Sebebi':'Reason', TR?'Önceki':'From', TR?'Yeni':'To', TR?'Besin':'Food', TR?'Su':'Water', TR?'Mevsim':'Season'],
+  [rt('Yıl','Year'), rt('Mesafe','Distance'), rt('Göç Sebebi','Reason'), rt('Önceki','From'), rt('Yeni','To'), rt('Besin','Food'), rt('Su','Water'), rt('Mevsim','Season')],
   (r.migration_history as Record<string,unknown>[]).map((e, i) => {
     const from = e.from as Record<string,number>|undefined;
     const to   = e.to   as Record<string,number>|undefined;
@@ -338,49 +351,49 @@ ${r.migration_history?.length ? styledTbl(
     ], i);
   }).join(''),
   '#059669'
-) : `<p style="color:#9ca3af;font-size:11px;padding:8px;">${TR?'Göç kaydı bulunamadı — yeni checkpoint\'lerden itibaren toplanacak.':'No migration records yet — will accumulate from future checkpoints.'}</p>`}
+) : `<p style="color:#9ca3af;font-size:11px;padding:8px;">${rt('Göç kaydı bulunamadı — yeni checkpoint\'lerden itibaren toplanacak.','No migration records yet — will accumulate from future checkpoints.','Keine Migrationsdaten vorhanden.','Aucune donnée de migration.','لا توجد سجلات هجرة بعد.')}</p>`}
 
 <!-- ÖLÜM İSTATİSTİKLERİ -->
-${secColor(TR?'Ölüm İstatistikleri':'Death Statistics', '#ef4444', '💀')}
+${secColor(rt('Ölüm İstatistikleri','Death Statistics'), '#ef4444', '💀')}
 <div style="display:flex;gap:12px;margin-bottom:10px;">
-  ${statCard(TR?'Toplam Ölüm':'Total Deaths', String(deathTotal), '#ef4444')}
-  ${statCard(TR?'Ort. Ölüm Yaşı':'Avg Death Age', deadAvgAge != null ? deadAvgAge + ' yr' : '—', '#f97316')}
-  ${statCard(TR?'Bebek Ölümü':'Infant Deaths', String(deathByAge.infant_0_1 ?? 0), '#fbbf24')}
+  ${statCard(rt('Toplam Ölüm','Total Deaths'), String(deathTotal), '#ef4444')}
+  ${statCard(rt('Ort. Ölüm Yaşı','Avg Death Age'), deadAvgAge != null ? deadAvgAge + ' yr' : '—', '#f97316')}
+  ${statCard(rt('Bebek Ölümü','Infant Deaths'), String(deathByAge.infant_0_1 ?? 0), '#fbbf24')}
 </div>
 <div style="margin-bottom:14px;">${deathCauseChartSvg}</div>
 <div style="display:flex;gap:20px;align-items:flex-start;">
   <div style="flex:2;">
-  <div style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:6px;">${TR?'Nedene Göre':'By Cause'}</div>
+  <div style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:6px;">${rt('Nedene Göre','By Cause')}</div>
   ${styledTbl(
-    [TR?'Sebep':'Cause', TR?'Sayı':'Count', '%'],
+    [rt('Sebep','Cause'), rt('Sayı','Count'), '%'],
     Object.entries(deathByCause).sort(([,a],[,b]) => (b as number) - (a as number))
       .map(([cause, count], i) => stRow([cause.replace(/_/g,' '), count, deathTotal ? Math.round((count as number)/deathTotal*100)+'%' : '—'], i))
-      .join('') || stRow([TR?'Veri yok':'No data','',''], 0),
+      .join('') || stRow([rt('Veri yok','No data'),'',''], 0),
     '#dc2626'
   )}
   </div>
   <div style="flex:1;">
-  <div style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:6px;">${TR?'Yaş Grubuna Göre':'By Age'}</div>
+  <div style="font-size:11px;font-weight:600;color:#6b7280;margin-bottom:6px;">${rt('Yaş Grubuna Göre','By Age')}</div>
   <div>${ageChartSvg}</div>
   </div>
 </div>
 
 <!-- ÖNEMLİ OLAYLAR -->
-${secColor(TR?'Önemli Olaylar (önem ≥ 3)':'Notable Events (importance ≥ 3)', '#f97316', '⚡')}
+${secColor(rt('Önemli Olaylar (önem ≥ 3)','Notable Events (importance ≥ 3)'), '#f97316', '⚡')}
 ${r.notable_events?.length ? styledTbl(
-  [TR?'Yıl':'Year', TR?'Gün':'Day', TR?'Tür':'Type', TR?'Açıklama':'Description'],
+  [rt('Yıl','Year'), rt('Gün','Day'), rt('Tür','Type'), rt('Açıklama','Description')],
   (r.notable_events as Record<string,unknown>[]).map((e, i) => stRow([e.sim_year, e.sim_day, e.event_type, e.description], i)).join(''),
   '#ea580c'
 ) : '<p style="color:#9ca3af;font-size:11px;padding:8px;">—</p>'}
 
 <!-- BİREYLER -->
-${secColor(TR?'Bireyler':'Individuals', '#64748b', '👥')}
+${secColor(rt('Bireyler','Individuals'), '#64748b', '👥')}
 ${r.individuals?.length ? styledTbl(
-  [TR?'İsim':'Name', TR?'Cin.':'Sex', TR?'Kurucu':'Fnd', TR?'Doğum Yılı':'Born', TR?'Ölüm Yılı':'Died', TR?'Ölüm Yaşı':'Age@Death', TR?'Ölüm Sebebi':'Cause', TR?'Zeka':'IQ'],
+  [rt('İsim','Name'), rt('Cin.','Sex'), rt('Kurucu','Fnd'), rt('Doğum Yılı','Born'), rt('Ölüm Yılı','Died'), rt('Ölüm Yaşı','Age@Death'), rt('Ölüm Sebebi','Cause'), rt('Zeka','IQ')],
   (r.individuals as Record<string,unknown>[]).map((ind, i) => stRow([
     ind.name, ind.sex === 'male' ? '♂' : '♀', ind.is_founder ? '★' : '',
     ind.birth_year,
-    ind.is_dead ? ind.death_year : TR?'(yaşıyor)':'(alive)',
+    ind.is_dead ? ind.death_year : rt('(yaşıyor)','(alive)'),
     ind.age_at_death ?? (ind.is_dead ? '—' : ''),
     ind.death_cause ?? (ind.is_dead ? '—' : ''),
     ind.intelligence != null ? Math.round((ind.intelligence as number)*100)+'%' : '—',
