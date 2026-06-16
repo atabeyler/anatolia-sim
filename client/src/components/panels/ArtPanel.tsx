@@ -6,38 +6,35 @@ import { text, translateEventDescription, type LangCode } from '../../utils/i18n
 const ART_CATEGORIES = [
   {
     medium: 'visual',
-    en: 'Visual Art',
-    tr: 'Görsel Sanat',
+    en: 'Visual Art', tr: 'Görsel Sanat', de: 'Visuelle Kunst', fr: 'Art visuel', ar: 'الفن البصري',
     emoji: '🎨',
     items: [
-      { en: 'Cave Painting',      tr: 'Mağara Resmi' },
-      { en: 'Sculpture',          tr: 'Heykelcilik' },
-      { en: 'Pottery Decoration', tr: 'Çömlek Süslemesi' },
-      { en: 'Textile Pattern',    tr: 'Dokuma Deseni' },
-      { en: 'Architecture Art',   tr: 'Mimari Sanatı' },
+      { en: 'Cave Painting',      tr: 'Mağara Resmi',     de: 'Höhlenmalerei',         fr: 'Peinture rupestre',     ar: 'رسم الكهف' },
+      { en: 'Sculpture',          tr: 'Heykelcilik',      de: 'Skulptur',              fr: 'Sculpture',             ar: 'النحت' },
+      { en: 'Pottery Decoration', tr: 'Çömlek Süslemesi', de: 'Töpferdekoration',      fr: 'Décoration de poterie', ar: 'زخرفة الفخار' },
+      { en: 'Textile Pattern',    tr: 'Dokuma Deseni',    de: 'Textilmuster',          fr: 'Motif textile',         ar: 'نمط نسيج' },
+      { en: 'Architecture Art',   tr: 'Mimari Sanatı',   de: 'Architekturkunst',      fr: 'Art architectural',     ar: 'الفن المعماري' },
     ],
   },
   {
     medium: 'music',
-    en: 'Music',
-    tr: 'Müzik',
+    en: 'Music', tr: 'Müzik', de: 'Musik', fr: 'Musique', ar: 'الموسيقى',
     emoji: '🎵',
     items: [
-      { en: 'Rhythmic Percussion', tr: 'Ritimli Vurma' },
-      { en: 'Vocal Melody',        tr: 'Sesli Melodi' },
-      { en: 'Bone Flute',          tr: 'Kemik Flüt' },
-      { en: 'String Instrument',   tr: 'Telli Çalgı' },
+      { en: 'Rhythmic Percussion', tr: 'Ritimli Vurma', de: 'Rhythmisches Schlagzeug', fr: 'Percussion rythmique', ar: 'الإيقاع' },
+      { en: 'Vocal Melody',        tr: 'Sesli Melodi',  de: 'Gesangsmelodie',          fr: 'Mélodie vocale',       ar: 'لحن صوتي' },
+      { en: 'Bone Flute',          tr: 'Kemik Flüt',   de: 'Knochenflöte',            fr: 'Flûte en os',          ar: 'ناي العظم' },
+      { en: 'String Instrument',   tr: 'Telli Çalgı',  de: 'Saiteninstrument',        fr: 'Instrument à cordes',  ar: 'آلة وترية' },
     ],
   },
   {
     medium: 'narrative',
-    en: 'Narrative',
-    tr: 'Anlatı',
+    en: 'Narrative', tr: 'Anlatı', de: 'Erzählung', fr: 'Narration', ar: 'السرد',
     emoji: '📖',
     items: [
-      { en: 'Oral Story',    tr: 'Sözlü Hikâye' },
-      { en: 'Epic Poem',     tr: 'Epik Şiir' },
-      { en: 'Written Story', tr: 'Yazılı Hikâye' },
+      { en: 'Oral Story',    tr: 'Sözlü Hikâye',  de: 'Mündliche Geschichte',  fr: 'Histoire orale',  ar: 'قصة شفهية' },
+      { en: 'Epic Poem',     tr: 'Epik Şiir',     de: 'Epos',                  fr: 'Poème épique',    ar: 'قصيدة ملحمية' },
+      { en: 'Written Story', tr: 'Yazılı Hikâye', de: 'Schriftliche Geschichte',fr: 'Histoire écrite', ar: 'قصة مكتوبة' },
     ],
   },
 ];
@@ -80,7 +77,7 @@ export default function ArtPanel() {
           <div key={cat.medium} className="mb-3">
             <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2 flex items-center gap-1.5">
               <span>{cat.emoji}</span>
-              <span>{text(lang as LangCode, { en: cat.en, tr: cat.tr })}</span>
+              <span>{text(lang as LangCode, { en: cat.en, tr: cat.tr, de: cat.de, fr: cat.fr, ar: cat.ar })}</span>
               <span className="text-sim-muted font-normal normal-case tracking-normal">
                 ({discovered.length}/{cat.items.length})
               </span>

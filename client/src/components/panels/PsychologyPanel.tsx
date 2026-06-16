@@ -2,14 +2,14 @@ import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { text, type LangCode } from '../../utils/i18n';
 
-const MENTAL_STATES: Record<string, { emoji: string; color: string; tr: string }> = {
-  content:   { emoji: '😌', color: 'text-green-400',  tr: 'Memnun' },
-  excited:   { emoji: '😃', color: 'text-yellow-400', tr: 'Heyecanlı' },
-  anxious:   { emoji: '😰', color: 'text-orange-400', tr: 'Kaygılı' },
-  depressed: { emoji: '😞', color: 'text-blue-400',   tr: 'Depresif' },
-  calm:      { emoji: '🧘', color: 'text-teal-400',   tr: 'Sakin' },
-  angry:     { emoji: '😠', color: 'text-red-400',    tr: 'Öfkeli' },
-  grieving:  { emoji: '😢', color: 'text-purple-400', tr: 'Yasında' },
+const MENTAL_STATES: Record<string, { emoji: string; color: string; tr: string; de: string; fr: string; ar: string }> = {
+  content:   { emoji: '😌', color: 'text-green-400',  tr: 'Memnun',    de: 'Zufrieden',  fr: 'Content',     ar: 'مرتاح' },
+  excited:   { emoji: '😃', color: 'text-yellow-400', tr: 'Heyecanlı', de: 'Aufgeregt',  fr: 'Excité',      ar: 'متحمس' },
+  anxious:   { emoji: '😰', color: 'text-orange-400', tr: 'Kaygılı',   de: 'Ängstlich',  fr: 'Anxieux',     ar: 'قلق' },
+  depressed: { emoji: '😞', color: 'text-blue-400',   tr: 'Depresif',  de: 'Deprimiert', fr: 'Déprimé',     ar: 'مكتئب' },
+  calm:      { emoji: '🧘', color: 'text-teal-400',   tr: 'Sakin',     de: 'Ruhig',      fr: 'Calme',       ar: 'هادئ' },
+  angry:     { emoji: '😠', color: 'text-red-400',    tr: 'Öfkeli',    de: 'Wütend',     fr: 'En colère',   ar: 'غاضب' },
+  grieving:  { emoji: '😢', color: 'text-purple-400', tr: 'Yasında',   de: 'Traurig',    fr: 'En deuil',    ar: 'حزين' },
 };
 
 const TOM_LABELS: Record<number, { en: string; tr: string; color: string }> = {
