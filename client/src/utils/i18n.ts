@@ -597,7 +597,10 @@ export function translateEventDescription(desc: string, lang: LangCode, event?: 
       const [, settlement, structure] = settlementMatch;
       return `${settlement} baute ein ${structure}`;
     }
-    if (ritualMatch) return `Ein ${ritualMatch[1]}-Ritual entstand in der Gruppe`;
+    if (ritualMatch) {
+      const key = ritualMatch[1].replace(/_/g, ' ').trim();
+      return `Ein ${BELIEF_TYPE_DE[key] ?? BELIEF_TYPE_DE[ritualMatch[1]] ?? key}-Ritual entstand in der Gruppe`;
+    }
     if (langStageMatch) {
       const [, person, stage] = langStageMatch;
       return `${person} hat die Sprachstufe auf ${stage} vorgerückt`;
@@ -640,7 +643,10 @@ export function translateEventDescription(desc: string, lang: LangCode, event?: 
       const [, settlement, structure] = settlementMatch;
       return `${settlement} a construit un ${structure}`;
     }
-    if (ritualMatch) return `Un rituel ${ritualMatch[1]} est apparu dans le groupe`;
+    if (ritualMatch) {
+      const key = ritualMatch[1].replace(/_/g, ' ').trim();
+      return `Un rituel ${BELIEF_TYPE_FR[key] ?? BELIEF_TYPE_FR[ritualMatch[1]] ?? key} est apparu dans le groupe`;
+    }
     if (langStageMatch) {
       const [, person, stage] = langStageMatch;
       return `${person} a avancé l'étape linguistique à ${stage}`;
@@ -683,7 +689,10 @@ export function translateEventDescription(desc: string, lang: LangCode, event?: 
       const [, settlement, structure] = settlementMatch;
       return `أكمل ${settlement} بناء ${structure}`;
     }
-    if (ritualMatch) return `ظهرت طقوس ${ritualMatch[1]} في المجموعة`;
+    if (ritualMatch) {
+      const key = ritualMatch[1].replace(/_/g, ' ').trim();
+      return `ظهرت طقوس ${BELIEF_TYPE_AR[key] ?? BELIEF_TYPE_AR[ritualMatch[1]] ?? key} في المجموعة`;
+    }
     if (langStageMatch) {
       const [, person, stage] = langStageMatch;
       return `تقدم ${person} في مرحلة اللغة إلى ${stage}`;

@@ -1,6 +1,16 @@
 import { create } from 'zustand';
+import { LANG_CODES, isValidLangCode } from '../utils/i18n';
 
-const LANG_ORDER: Array<'tr' | 'en' | 'de' | 'fr' | 'ar'> = ['tr', 'en', 'de', 'fr', 'ar'];
+const LANG_ORDER = LANG_CODES;
+
+function getSavedLang() {
+  try {
+    const saved = localStorage.getItem('anatolia_lang');
+    return isValidLangCode(saved) ? saved : 'tr';
+  } catch {
+    return 'tr';
+  }
+}
 
 interface WorldState {
   latitude: number;
@@ -199,7 +209,7 @@ export const useSimStore = create<SimStore>((set) => ({
 
   activePanel: null,
   setActivePanel: (panel) => set(s => ({ activePanel: s.activePanel === panel ? null : panel })),
-  lang: (localStorage.getItem('anatolia_lang') as any) || 'tr',
+  lang: getSavedLang(),
   setLang: (l) => { localStorage.setItem('anatolia_lang', l); set({ lang: l }); },
   toggleLang: () => set(s => {
     const currentIndex = LANG_ORDER.indexOf(s.lang);
