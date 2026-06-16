@@ -15,8 +15,26 @@ const SpeechRec: any = typeof window !== 'undefined'
 const PILL_W = 148;
 const PILL_H = 48;
 
+const LANGUAGE_LOCALES: Record<string, string> = {
+  tr: 'tr-TR',
+  en: 'en-US',
+  de: 'de-DE',
+  fr: 'fr-FR',
+  ar: 'ar',
+};
+
+function resolveLocale(lang: string) {
+  return LANGUAGE_LOCALES[lang] ?? 'en-US';
+}
+
 function buildPrompt(stats: any, events: any[], ctx: any, lang: string): string {
-  const respondIn = lang === 'tr' ? 'Turkish' : 'English';
+  const respondIn = {
+    tr: 'Turkish',
+    en: 'English',
+    de: 'German',
+    fr: 'French',
+    ar: 'Arabic',
+  }[lang] ?? 'English';
   const page = ctx?.page ?? '/';
   const isWizard = !!ctx?.wizardOpen;
   const isSim = page.startsWith('/simulation/');
@@ -167,10 +185,11 @@ export default function AriaButton() {
     if (typeof window === 'undefined' || !window.speechSynthesis) { onDone?.(); return; }
     window.speechSynthesis.cancel();
     const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = storeRef.current.lang === 'tr' ? 'tr-TR' : 'en-US';
+    utt.lang = resolveLocale(storeRef.current.lang);
     utt.rate = 0.95;
     const voices = window.speechSynthesis.getVoices();
-    const match = voices.find(v => v.lang.startsWith(storeRef.current.lang === 'tr' ? 'tr' : 'en'));
+    const locale = resolveLocale(storeRef.current.lang);
+    const match = voices.find(v => v.lang.toLowerCase().startsWith(locale.slice(0, 2).toLowerCase()));
     if (match) utt.voice = match;
     speakingRef.current = true;
     utt.onend = () => { speakingRef.current = false; onDone?.(); };
@@ -227,7 +246,7 @@ export default function AriaButton() {
     const rec = new SpeechRec();
     rec.continuous = true;
     rec.interimResults = true;
-    rec.lang = storeRef.current.lang === 'tr' ? 'tr-TR' : 'en-US';
+    rec.lang = resolveLocale(storeRef.current.lang);
     let idx = 0;
     rec.onresult = (e: any) => {
       if (!activeRef.current) return;

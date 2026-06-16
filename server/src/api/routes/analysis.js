@@ -14,12 +14,16 @@ const LANGUAGE_NAMES = {
   ar: 'Arabic',
 };
 
-function normalizeLang(lang) {
+function resolveLangCode(lang) {
   return LANGUAGE_NAMES[lang] ? lang : 'en';
 }
 
+function resolveLanguageName(lang) {
+  return LANGUAGE_NAMES[resolveLangCode(lang)] ?? 'English';
+}
+
 function languageInstruction(lang) {
-  const code = normalizeLang(lang);
+  const code = resolveLangCode(lang);
   const name = LANGUAGE_NAMES[code];
   return `Respond ONLY in ${name}. Do not switch languages. Translate all headings, explanations, findings, warnings, and reasoning into ${name}. Keep IDs, names, gene symbols, numbers, and raw event codes unchanged.`;
 }
@@ -99,13 +103,14 @@ function buildEngineContext(engine) {
 router.post('/:simId', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const { message, lang } = req.body;
-    const activeLang = normalizeLang(lang);
+    const activeLang = resolveLangCode(lang);
     const engine = simulationManager.getEngine(req.params.simId);
     const context = buildEngineContext(engine);
+    const responseLang = resolveLanguageName(activeLang);
     const response = await geminiChat({
       model: process.env.GEMINI_ANALYSIS_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite',
       max_tokens: 800,
-      system: `You are an expert AI assistant analyzing the ANATOLIA-SIM civilization simulation.\n${languageInstruction(activeLang)}\n\n${SIM_ARCHITECTURE}\nCURRENT SIMULATION DATA:\n${context}\n\nBe concise, precise, skeptical, and data-driven.`,
+      system: `You are an expert AI assistant analyzing the ANATOLIA-SIM civilization simulation.\n${languageInstruction(activeLang)}\n\n${SIM_ARCHITECTURE}\nCURRENT SIMULATION DATA:\n${context}\n\nUI LANGUAGE: ${responseLang}\nRespond in ${responseLang}. Be concise, precise, skeptical, and data-driven.`,
       user: message,
     });
     res.json({ response });
@@ -127,17 +132,28 @@ function wilsonCI(p, n) {
 router.post('/:simId/hypothesis', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const { hypothesis, events: clientEvents, lang } = req.body;
-    const activeLang = normalizeLang(lang);
+    const activeLang = resolveLangCode(lang);
     const engine = simulationManager.getEngine(req.params.simId);
     const context = buildEngineContext(engine);
+    const responseLang = resolveLanguageName(activeLang);
     const llmText = await geminiChat({
       model: process.env.GEMINI_ANALYSIS_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite',
       max_tokens: 600,
-      system: `You are a scientist evaluating hypotheses about a civilization simulation.\n${languageInstruction(activeLang)}\n\n${SIM_ARCHITECTURE}\nCURRENT SIMULATION DATA:\n${context}`,
-      user: `Evaluate: "${hypothesis}"\nRespond JSON only: {"verdict":"supported"|"refuted"|"inconclusive","confidence":0.0-1.0,"n_evidence":integer,"reasoning":"..."}\nThe verdict keys must stay in English; the reasoning value must be in ${LANGUAGE_NAMES[activeLang]}.`,
+      system: `You are a scientist evaluating hypotheses about a civilization simulation.\n${languageInstruction(activeLang)}\n\n${SIM_ARCHITECTURE}\nCURRENT SIMULATION DATA:\n${context}\n\nRespond in ${responseLang}. Return JSON only.`,
+      user: `Evaluate: "${hypothesis}"\nRespond JSON only: {"verdict":"supported"|"refuted"|"inconclusive","confidence":0.0-1.0,"n_evidence":integer,"reasoning":"..."}\nThe verdict keys must stay in English; the reasoning value must be in ${responseLang}.`,
     });
     const match = llmText.match(/\{[\s\S]*\}/);
-    const json = match ? JSON.parse(match[0]) : { verdict: 'inconclusive', confidence: 0.5, reasoning: activeLang === 'tr' ? 'Yetersiz veri.' : 'Insufficient data.' };
+    let json = { verdict: 'inconclusive', confidence: 0.5, reasoning: activeLang === 'tr' ? 'Yetersiz veri.' : 'Insufficient data.' };
+    if (match) {
+      try {
+        json = JSON.parse(match[0]);
+      } catch {
+        const fixed = match[0]
+          .replace(/([{,]\s*)'([^']+?)'\s*:/g, '$1"$2":')
+          .replace(/:\s*'([^']*?)'/g, ': "$1"');
+        try { json = JSON.parse(fixed); } catch {}
+      }
+    }
     const n = (typeof json.n_evidence === 'number' && json.n_evidence > 0)
       ? json.n_evidence
       : (Array.isArray(clientEvents) ? clientEvents.length : 20);
