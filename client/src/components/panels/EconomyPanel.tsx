@@ -1,10 +1,11 @@
-import { translateEventDescription, type LangCode } from '../../utils/i18n';
+import { translateEventDescription, text, type LangCode } from '../../utils/i18n';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function EconomyPanel() {
   const { stats, events, lang } = useSimStore();
+  const t = (tr: string, en: string, de = en, fr = en, ar = en) => text(lang as LangCode, { tr, en, de, fr, ar });
 
   const meanWealth = (stats as any)?.mean_wealth ?? 0;
   const gini = (stats as any)?.gini ?? 0;
@@ -24,19 +25,19 @@ export default function EconomyPanel() {
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div className="bg-sim-surface rounded-lg p-2 text-center">
           <div className="text-sim-gold font-bold text-lg">{meanWealth.toFixed(1)}</div>
-          <div className="text-sim-muted text-sm">{lang === 'en' ? 'Mean Wealth' : 'Ort. Servet'}</div>
+          <div className="text-sim-muted text-sm">{t('Ort. Servet', 'Mean Wealth', 'Ø Reichtum', 'Richesse moy.', 'متوسط الثروة')}</div>
         </div>
         <div className="bg-sim-surface rounded-lg p-2 text-center">
           <div className={`font-bold text-lg ${gini > 0.5 ? 'text-red-400' : gini > 0.3 ? 'text-yellow-400' : 'text-green-400'}`}>
             {gini.toFixed(2)}
           </div>
-          <div className="text-sim-muted text-sm">{lang === 'en' ? 'Gini Index' : 'Gini Endeksi'}</div>
+          <div className="text-sim-muted text-sm">{t('Gini Endeksi', 'Gini Index', 'Gini-Index', 'Indice Gini', 'معامل جيني')}</div>
         </div>
       </div>
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Resource Distribution' : 'Kaynak Dağılımı'}
+          {t('Kaynak Dağılımı', 'Resource Distribution', 'Ressourcenverteilung', 'Distribution des ressources', 'توزيع الموارد')}
         </h4>
         <ResponsiveContainer width="100%" height={120}>
           <BarChart data={resourceData} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
@@ -52,22 +53,26 @@ export default function EconomyPanel() {
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Economic Model' : 'Ekonomi Modeli'}
+          {t('Ekonomi Modeli', 'Economic Model', 'Wirtschaftsmodell', 'Modèle économique', 'النموذج الاقتصادي')}
         </h4>
         <p className="text-sim-muted text-sm italic">
-          {lang === 'en'
-            ? 'Barter driven by surplus detection. Altruism gene × cooperation → trade frequency. Gini measures inequality from specialization.'
-            : 'Takasa dayalı takas fazla tespiti ile yönlendirilir. Özgecilik geni × iş birliği → ticaret sıklığı.'}
+          {t(
+            'Takasa dayalı takas fazla tespiti ile yönlendirilir. Özgecilik geni × iş birliği → ticaret sıklığı.',
+            'Barter driven by surplus detection. Altruism gene × cooperation → trade frequency. Gini measures inequality from specialization.',
+            'Tauschhandel durch Überschusserkennung. Altruismus-Gen × Kooperation → Handelsfrequenz.',
+            'Troc piloté par détection des surplus. Gène altruisme × coopération → fréquence commerciale.',
+            'المقايضة مدفوعة باكتشاف الفائض. جين الإيثار × التعاون ← تكرار التبادل.'
+          )}
         </p>
       </div>
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Trade Log' : 'Ticaret Günlüğü'}
+          {t('Ticaret Günlüğü', 'Trade Log', 'Handelsprotokoll', 'Journal de commerce', 'سجل التجارة')}
         </h4>
         {tradeEvents.length === 0 ? (
           <p className="text-sim-muted italic text-sm">
-            {lang === 'en' ? 'No trade events yet.' : 'Henüz ticaret olayı yok.'}
+            {t('Henüz ticaret olayı yok.', 'No trade events yet.', 'Noch keine Handelsereignisse.', 'Pas encore d\'événements commerciaux.', 'لا أحداث تجارية بعد.')}
           </p>
         ) : (
           <div className="space-y-1 max-h-32 overflow-y-auto">

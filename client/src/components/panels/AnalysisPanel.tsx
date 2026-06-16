@@ -3,19 +3,13 @@ import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import axios from 'axios';
 import { Send, Bot } from 'lucide-react';
+import { text, type LangCode } from '../../utils/i18n';
 
-const QUICK_QUESTIONS_EN = [
-  'Why did the population stop growing?',
-  'What triggered the first belief system?',
-  'Is my civilization at risk of collapse?',
-  'What technology should emerge next?',
-];
-
-const QUICK_QUESTIONS_TR = [
-  'Nüfus neden büyümeyi durdurdu?',
-  'İlk inanç sistemi neden ortaya çıktı?',
-  'Medeniyetim çöküş riski altında mı?',
-  'Sıradaki hangi teknoloji ortaya çıkmalı?',
+const QUICK_QUESTIONS: { tr: string; en: string; de: string; fr: string; ar: string }[] = [
+  { tr: 'Nüfus neden büyümeyi durdurdu?', en: 'Why did the population stop growing?', de: 'Warum hörte das Bevölkerungswachstum auf?', fr: 'Pourquoi la population a-t-elle arrêté de croître?', ar: 'لماذا توقف نمو السكان؟' },
+  { tr: 'İlk inanç sistemi neden ortaya çıktı?', en: 'What triggered the first belief system?', de: 'Was löste das erste Glaubenssystem aus?', fr: 'Qu\'est-ce qui a déclenché le premier système de croyances?', ar: 'ما الذي أطلق أول نظام معتقدات؟' },
+  { tr: 'Medeniyetim çöküş riski altında mı?', en: 'Is my civilization at risk of collapse?', de: 'Ist meine Zivilisation einsturz­gefährdet?', fr: 'Ma civilisation risque-t-elle de s\'effondrer?', ar: 'هل حضارتي في خطر الانهيار؟' },
+  { tr: 'Sıradaki hangi teknoloji ortaya çıkmalı?', en: 'What technology should emerge next?', de: 'Welche Technologie sollte als nächstes entstehen?', fr: 'Quelle technologie devrait émerger ensuite?', ar: 'ما التقنية التي يجب أن تظهر بعد ذلك؟' },
 ];
 
 export default function AnalysisPanel() {
@@ -27,23 +21,21 @@ export default function AnalysisPanel() {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
-  async function send(text?: string) {
-    const msg = (text ?? input).trim();
-    if (!msg || !currentSim) return;
+  async function send(msg?: string) {
+    const m = (msg ?? input).trim();
+    if (!m || !currentSim) return;
     setInput('');
-    setMessages(m => [...m, { role: 'user', content: msg }]);
+    setMessages(prev => [...prev, { role: 'user', content: m }]);
     setLoading(true);
     try {
-      const { data } = await axios.post(`/api/analysis/${currentSim.id}`, { message: msg }, { headers: { Authorization: `Bearer ${accessToken}` } });
-      setMessages(m => [...m, { role: 'assistant', content: data.response }]);
+      const { data } = await axios.post(`/api/analysis/${currentSim.id}`, { message: m }, { headers: { Authorization: `Bearer ${accessToken}` } });
+      setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
     } catch (err: any) {
       const detail = err?.response?.data?.error ?? err?.message ?? '';
-      setMessages(m => [...m, { role: 'assistant', content: `Analiz başarısız: ${detail}` }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `Analiz başarısız: ${detail}` }]);
     }
     setLoading(false);
   }
-
-  const quickQ = lang === 'en' ? QUICK_QUESTIONS_EN : QUICK_QUESTIONS_TR;
 
   return (
     <DetailPanel panelId="analysis" title="AI Analysis" titleTr="AI Analiz">
@@ -51,17 +43,19 @@ export default function AnalysisPanel() {
         <div className="bg-sim-accent/10 border border-sim-accent/20 rounded-lg p-2 flex items-center gap-2">
           <Bot size={13} className="text-sim-accent flex-shrink-0" />
           <span className="text-sm text-sim-muted">
-            {lang === 'en' ? 'BOLD analyzes your civilization using live simulation data.' : 'BOLD, canlı simülasyon verilerini kullanarak medeniyetinizi analiz eder.'}
+            {text(lang as LangCode, { tr: 'BOLD, canlı simülasyon verilerini kullanarak medeniyetinizi analiz eder.', en: 'BOLD analyzes your civilization using live simulation data.', de: 'BOLD analysiert Ihre Zivilisation mit Live-Simulationsdaten.', fr: 'BOLD analyse votre civilisation en utilisant des données de simulation en direct.', ar: 'يحلل BOLD حضارتك باستخدام بيانات المحاكاة المباشرة.' })}
           </span>
         </div>
 
         {messages.length === 0 && (
           <div>
-            <div className="text-sm text-sim-muted mb-2">{lang === 'en' ? 'Quick questions:' : 'Hızlı sorular:'}</div>
+            <div className="text-sm text-sim-muted mb-2">
+              {text(lang as LangCode, { tr: 'Hızlı sorular:', en: 'Quick questions:', de: 'Schnelle Fragen:', fr: 'Questions rapides:', ar: 'أسئلة سريعة:' })}
+            </div>
             <div className="space-y-1">
-              {quickQ.map(q => (
-                <button key={q} onClick={() => send(q)} className="w-full text-left text-sm text-sim-muted hover:text-sim-text bg-sim-surface hover:bg-sim-border rounded px-2 py-1 transition-colors">
-                  {q}
+              {QUICK_QUESTIONS.map(q => (
+                <button key={q.en} onClick={() => send(text(lang as LangCode, q))} className="w-full text-left text-sm text-sim-muted hover:text-sim-text bg-sim-surface hover:bg-sim-border rounded px-2 py-1 transition-colors">
+                  {text(lang as LangCode, q)}
                 </button>
               ))}
             </div>
@@ -76,7 +70,7 @@ export default function AnalysisPanel() {
           ))}
           {loading && (
             <div className="text-sm px-3 py-2 rounded-lg bg-sim-surface text-sim-muted mr-2 animate-pulse">
-              {lang === 'en' ? 'Analyzing…' : 'Analiz ediliyor…'}
+              {text(lang as LangCode, { tr: 'Analiz ediliyor…', en: 'Analyzing…', de: 'Analysiere…', fr: 'Analyse en cours…', ar: 'جارٍ التحليل…' })}
             </div>
           )}
           <div ref={bottomRef} />
@@ -87,7 +81,7 @@ export default function AnalysisPanel() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-            placeholder={lang === 'en' ? 'Ask BOLD…' : 'BOLD\'a sor…'}
+            placeholder={text(lang as LangCode, { tr: "BOLD'a sor…", en: 'Ask BOLD…', de: 'BOLD fragen…', fr: 'Demander à BOLD…', ar: 'اسأل BOLD…' })}
             className="flex-1 bg-sim-bg border border-sim-border rounded-lg px-3 py-1.5 text-sm text-sim-text focus:border-sim-accent focus:outline-none"
           />
           <button onClick={() => send()} disabled={loading || !input.trim()} className="p-1.5 bg-sim-accent hover:bg-sim-accent/80 rounded-lg text-white transition-colors disabled:opacity-50 flex-shrink-0">

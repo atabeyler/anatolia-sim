@@ -108,7 +108,7 @@ export default function GenealogyPanel() {
           className="flex-1 bg-sim-bg border border-sim-border rounded px-2 py-1 text-sm text-sim-text focus:border-sim-accent focus:outline-none"
           style={{ fontSize: 12 }}
         >
-          {founders.length === 0 && <option value="">{lang === 'en' ? 'No founders' : 'Kurucu yok'}</option>}
+          {founders.length === 0 && <option value="">{text(lang as LangCode, { tr: 'Kurucu yok', en: 'No founders', de: 'Keine Gründer', fr: 'Pas de fondateurs', ar: 'لا يوجد مؤسسون' })}</option>}
           {founders.map(f => (
             <option key={f.id} value={f.id}>
               {f.phenotype?.name ?? f.id.slice(-8)} ({f.sex === 'male' ? text(lang as LangCode, { tr: 'Erkek', en: 'Male', de: 'Männlich', fr: 'Masculin', ar: 'ذكر' }) : text(lang as LangCode, { tr: 'Kadın', en: 'Female', de: 'Weiblich', fr: 'Féminin', ar: 'أنثى' })})
@@ -131,27 +131,27 @@ export default function GenealogyPanel() {
 
       <div className="bg-sim-surface rounded-lg p-3 mb-3">
         <div className="text-sim-muted text-xs mb-2">
-          {lang === 'en' ? `${population.length} individuals total · ${founders.length} founders` : `Toplam ${population.length} birey · ${founders.length} kurucu`}
+          {text(lang as LangCode, { tr: `Toplam ${population.length} birey · ${founders.length} kurucu`, en: `${population.length} individuals total · ${founders.length} founders`, de: `${population.length} Individuen · ${founders.length} Gründer`, fr: `${population.length} individus · ${founders.length} fondateurs`, ar: `${population.length} فرد · ${founders.length} مؤسس` })}
         </div>
         <div className="flex gap-3 text-xs text-sim-muted">
           <span className="flex items-center gap-1">
             <span className="inline-block w-2 h-2 rounded-sm" style={{ background: '#4f6ef7' }} />
-            {lang === 'en' ? 'Male' : 'Erkek'}
+            {text(lang as LangCode, { tr: 'Erkek', en: 'Male', de: 'Männlich', fr: 'Masculin', ar: 'ذكر' })}
           </span>
           <span className="flex items-center gap-1">
             <span className="inline-block w-2 h-2 rounded-sm" style={{ background: '#f76f9e' }} />
-            {lang === 'en' ? 'Female' : 'Kadın'}
+            {text(lang as LangCode, { tr: 'Kadın', en: 'Female', de: 'Weiblich', fr: 'Féminin', ar: 'أنثى' })}
           </span>
           <span className="flex items-center gap-1 opacity-40">
             <span className="inline-block w-2 h-2 rounded-sm" style={{ background: '#888' }} />
-            {lang === 'en' ? 'Deceased' : 'Ölü'}
+            {text(lang as LangCode, { tr: 'Ölü', en: 'Deceased', de: 'Verstorben', fr: 'Décédé', ar: 'متوفى' })}
           </span>
         </div>
       </div>
 
       {loading ? (
         <div className="text-sim-muted text-sm text-center py-6">
-          {lang === 'en' ? 'Loading…' : 'Yükleniyor…'}
+          {text(lang as LangCode, { tr: 'Yükleniyor…', en: 'Loading…', de: 'Lädt…', fr: 'Chargement…', ar: 'جارٍ التحميل…' })}
         </div>
       ) : rootNode ? (
         <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: 400 }}>
@@ -161,7 +161,7 @@ export default function GenealogyPanel() {
         </div>
       ) : (
         <div className="text-sim-muted text-sm text-center py-6 italic">
-          {lang === 'en' ? 'No lineage data yet.' : 'Henüz soy verisi yok.'}
+          {text(lang as LangCode, { tr: 'Henüz soy verisi yok.', en: 'No lineage data yet.', de: 'Noch keine Abstammungsdaten.', fr: 'Pas encore de données de lignée.', ar: 'لا توجد بيانات نسب بعد.' })}
         </div>
       )}
     </DetailPanel>

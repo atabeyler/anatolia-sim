@@ -1,9 +1,10 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
+import { text, type LangCode } from '../../utils/i18n';
 
-function t(lang: string, en: string, tr: string) {
-  return lang === 'en' ? en : tr;
+function t(lang: string, trStr: string, enStr: string, deStr = enStr, frStr = enStr, arStr = enStr) {
+  return text(lang as LangCode, { tr: trStr, en: enStr, de: deStr, fr: frStr, ar: arStr });
 }
 
 export default function PopulationPyramidPanel() {
@@ -29,9 +30,9 @@ export default function PopulationPyramidPanel() {
       {/* Summary */}
       <div className="grid grid-cols-3 gap-2 mb-4">
         {[
-          { l: t(lang, 'Total', 'Toplam'),  v: total,       c: '#e0e0f0' },
-          { l: t(lang, 'Male', 'Erkek'),    v: totalMale,   c: '#7dd3fc' },
-          { l: t(lang, 'Female', 'Kadın'),  v: totalFemale, c: '#ff8ab0' },
+          { l: t(lang, 'Toplam', 'Total', 'Gesamt', 'Total', 'المجموع'),    v: total,       c: '#e0e0f0' },
+          { l: t(lang, 'Erkek', 'Male', 'Männlich', 'Masculin', 'ذكر'),   v: totalMale,   c: '#7dd3fc' },
+          { l: t(lang, 'Kadın', 'Female', 'Weiblich', 'Féminin', 'أنثى'), v: totalFemale, c: '#ff8ab0' },
         ].map(({ l, v, c }) => (
           <div key={l} className="bg-sim-surface rounded p-2 text-center">
             <div className="text-sim-muted text-sm mb-0.5">{l}</div>
@@ -45,7 +46,7 @@ export default function PopulationPyramidPanel() {
         <div className="mb-4">
           <div className="flex justify-between text-sm text-sim-muted mb-1">
             <span>♂ {((totalMale / total) * 100).toFixed(1)}%</span>
-            <span>{t(lang, 'Sex Ratio', 'Cinsiyet Oranı')}</span>
+            <span>{t(lang, 'Cinsiyet Oranı', 'Sex Ratio', 'Geschlechterverhältnis', 'Rapport des sexes', 'نسبة الجنسين')}</span>
             <span>{((totalFemale / total) * 100).toFixed(1)}% ♀</span>
           </div>
           <div className="h-2 rounded-full overflow-hidden flex">
@@ -58,14 +59,14 @@ export default function PopulationPyramidPanel() {
       {/* Pyramid chart */}
       {data.length === 0 || total === 0 ? (
         <div className="flex items-center justify-center py-12 text-sim-muted italic text-sm">
-          {t(lang, 'No population data yet.', 'Henüz nüfus verisi yok.')}
+          {t(lang, 'Henüz nüfus verisi yok.', 'No population data yet.', 'Noch keine Bevölkerungsdaten.', 'Pas encore de données démographiques.', 'لا توجد بيانات سكانية بعد.')}
         </div>
       ) : (
         <>
           <div className="flex justify-between text-sm mb-1 px-1">
-            <span style={{ color: '#7dd3fc' }}>♂ {t(lang, 'Male', 'Erkek')}</span>
-            <span className="text-sim-muted text-sm">{t(lang, 'Age', 'Yaş')}</span>
-            <span style={{ color: '#ff8ab0' }}>{t(lang, 'Female', 'Kadın')} ♀</span>
+            <span style={{ color: '#7dd3fc' }}>♂ {t(lang, 'Erkek', 'Male', 'Männlich', 'Masculin', 'ذكر')}</span>
+            <span className="text-sim-muted text-sm">{t(lang, 'Yaş', 'Age', 'Alter', 'Âge', 'عمر')}</span>
+            <span style={{ color: '#ff8ab0' }}>{t(lang, 'Kadın', 'Female', 'Weiblich', 'Féminin', 'أنثى')} ♀</span>
           </div>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart
@@ -90,8 +91,8 @@ export default function PopulationPyramidPanel() {
                 formatter={(value: any, name: string) => {
                   const v = Math.abs(value);
                   const label = name === 'male'
-                    ? t(lang, 'Male', 'Erkek')
-                    : t(lang, 'Female', 'Kadın');
+                    ? t(lang, 'Erkek', 'Male', 'Männlich', 'Masculin', 'ذكر')
+                    : t(lang, 'Kadın', 'Female', 'Weiblich', 'Féminin', 'أنثى');
                   const pct = total > 0 ? ((v / total) * 100).toFixed(1) : '0';
                   return [`${v} (${pct}%)`, label];
                 }}
@@ -106,10 +107,10 @@ export default function PopulationPyramidPanel() {
           {/* Age group summary */}
           <div className="mt-3 border-t border-sim-border/30 pt-3">
             {[
-              { l: t(lang, 'Children (0-14)', 'Çocuk (0-14)'),   groups: ['0-4','5-9','10-14'] },
-              { l: t(lang, 'Youth (15-29)', 'Genç (15-29)'),     groups: ['15-19','20-24','25-29'] },
-              { l: t(lang, 'Adults (30-59)', 'Yetişkin (30-59)'),groups: ['30-34','35-39','40-44','45-49','50-54','55-59'] },
-              { l: t(lang, 'Elders (60+)', 'Yaşlı (60+)'),       groups: ['60-64','65+'] },
+              { l: t(lang, 'Çocuk (0-14)', 'Children (0-14)', 'Kinder (0-14)', 'Enfants (0-14)', 'أطفال (0-14)'),           groups: ['0-4','5-9','10-14'] },
+              { l: t(lang, 'Genç (15-29)', 'Youth (15-29)', 'Jugend (15-29)', 'Jeunes (15-29)', 'شباب (15-29)'),           groups: ['15-19','20-24','25-29'] },
+              { l: t(lang, 'Yetişkin (30-59)', 'Adults (30-59)', 'Erwachsene (30-59)', 'Adultes (30-59)', 'بالغون (30-59)'), groups: ['30-34','35-39','40-44','45-49','50-54','55-59'] },
+              { l: t(lang, 'Yaşlı (60+)', 'Elders (60+)', 'Ältere (60+)', 'Aînés (60+)', 'كبار السن (60+)'),               groups: ['60-64','65+'] },
             ].map(({ l, groups }) => {
               const count = pyramid.filter(r => groups.includes(r.group)).reduce((s, r) => s + r.male + r.female, 0);
               const pct = total > 0 ? ((count / total) * 100).toFixed(0) : '0';

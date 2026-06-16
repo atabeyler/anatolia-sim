@@ -12,7 +12,7 @@ export default function DetailPanel({ panelId, title, titleTr, children }: Props
   const { activePanel, setActivePanel, lang } = useSimStore();
   if (activePanel !== panelId) return null;
 
-  const displayTitle = lang === 'en' ? title : titleTr;
+  const displayTitle = lang === 'tr' ? titleTr : title;
 
   return (
     <>

@@ -80,11 +80,11 @@ export default function DashboardPage() {
   }, [navigate]);
 
   async function deleteSim(id: string, name: string) {
-    if (!confirm(lang === 'en' ? `Delete "${name}"? This cannot be undone.` : `"${name}" silinsin mi? Bu işlem geri alınamaz.`)) return;
+    if (!confirm(text(lang as LangCode, { tr: `"${name}" silinsin mi? Bu işlem geri alınamaz.`, en: `Delete "${name}"? This cannot be undone.`, de: `"${name}" löschen? Nicht rückgängig zu machen.`, fr: `Supprimer "${name}"? Irréversible.`, ar: `حذف "${name}"؟ لا يمكن التراجع.` }))) return;
     try {
       await axios.delete(`/api/simulations/${id}`, { headers });
       setSims(s => s.filter(sim => sim.id !== id));
-    } catch { alert(lang === 'en' ? 'Delete failed.' : 'Silme başarısız.'); }
+    } catch { alert(text(lang as LangCode, { tr: 'Silme başarısız.', en: 'Delete failed.', de: 'Löschen fehlgeschlagen.', fr: 'Échec de la suppression.', ar: 'فشل الحذف.' })); }
   }
 
   async function createSim(form: any, founder1: any, founder2: any) {
@@ -140,7 +140,7 @@ export default function DashboardPage() {
                 style={{ background: 'rgba(78,203,113,0.1)', border: '1px solid rgba(78,203,113,0.3)' }}>
                 <div className="w-1.5 h-1.5 rounded-full bg-sim-green pulse-live" />
                 <span className="font-share-tech text-sim-green tracking-widest" style={{ fontSize: 10 }}>
-                  {runningCount} {lang === 'en' ? 'ACTIVE' : 'AKTİF'}
+                  {runningCount} {text(lang as LangCode, { tr: 'AKTİF', en: 'ACTIVE', de: 'AKTIV', fr: 'ACTIF', ar: 'نشط' })}
                 </span>
               </div>
             )}
@@ -176,7 +176,7 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2">
                 <div className="w-1 h-5 bg-sim-accent" style={{ boxShadow: '0 0 8px rgba(79,110,247,0.8)' }} />
                 <h2 className="font-orbitron font-bold tracking-[0.12em] text-sim-text" style={{ fontSize: 'clamp(13px, 3.5vw, 16px)' }}>
-                  {lang === 'en' ? 'SIMULATION REGISTRY' : 'SİMÜLASYON KAYITLARI'}
+                  {text(lang as LangCode, { tr: 'SİMÜLASYON KAYITLARI', en: 'SIMULATION REGISTRY', de: 'SIMULATIONS-REGISTER', fr: 'REGISTRE DES SIMULATIONS', ar: 'سجل المحاكاة' })}
                 </h2>
               </div>
 
@@ -192,8 +192,8 @@ export default function DashboardPage() {
                       clipPath: 'polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px))',
                     }}>
                     <BarChart2 size={13} />
-                    <span className="hidden sm:inline">{lang === 'en' ? 'COMPARE' : 'KARŞILAŞTIR'}</span>
-                    <span className="sm:hidden">{lang === 'en' ? 'CMP' : 'KAR'}</span>
+                    <span className="hidden sm:inline">{text(lang as LangCode, { tr: 'KARŞILAŞTIR', en: 'COMPARE', de: 'VERGLEICHEN', fr: 'COMPARER', ar: 'مقارنة' })}</span>
+                    <span className="sm:hidden">{text(lang as LangCode, { tr: 'KAR', en: 'CMP', de: 'VGL', fr: 'CMP', ar: 'مقا' })}</span>
                   </button>
                 )}
                 <button onClick={() => setShowNew(true)}
@@ -207,8 +207,8 @@ export default function DashboardPage() {
                     boxShadow: '0 0 15px rgba(79,110,247,0.2)',
                   }}>
                   <Plus size={13} />
-                  <span className="hidden sm:inline">{lang === 'en' ? 'NEW SIMULATION' : 'YENİ SİMÜLASYON'}</span>
-                  <span className="sm:hidden">{lang === 'en' ? 'NEW' : 'YENİ'}</span>
+                  <span className="hidden sm:inline">{text(lang as LangCode, { tr: 'YENİ SİMÜLASYON', en: 'NEW SIMULATION', de: 'NEUE SIMULATION', fr: 'NOUVELLE SIMULATION', ar: 'محاكاة جديدة' })}</span>
+                  <span className="sm:hidden">{text(lang as LangCode, { tr: 'YENİ', en: 'NEW', de: 'NEU', fr: 'NOUVEAU', ar: 'جديد' })}</span>
                 </button>
               </div>
             </div>
@@ -221,7 +221,7 @@ export default function DashboardPage() {
                 <div className="px-4 py-2.5 border-b flex items-center gap-2" style={{ borderColor: 'rgba(200,34,34,0.4)' }}>
                   <BarChart2 size={13} className="text-sim-accent" />
                   <span className="font-orbitron text-xs font-semibold tracking-[0.2em] text-sim-accent">
-                    {lang === 'en' ? 'PARALLEL COMPARISON' : 'PARALEL KARŞILAŞTIRMA'}
+                    {text(lang as LangCode, { tr: 'PARALEL KARŞILAŞTIRMA', en: 'PARALLEL COMPARISON', de: 'PARALLELVERGLEICH', fr: 'COMPARAISON PARALLÈLE', ar: 'مقارنة متوازية' })}
                   </span>
                 </div>
                 <div className="p-4 overflow-x-auto">
@@ -229,7 +229,7 @@ export default function DashboardPage() {
                     <thead>
                       <tr>
                         <th className="text-left pb-2 pr-4">
-                          <span className="font-share-tech tracking-widest" style={{ fontSize: 14, color: '#e0e0f0' }}>{lang === 'en' ? 'METRIC' : 'METRİK'}</span>
+                          <span className="font-share-tech tracking-widest" style={{ fontSize: 14, color: '#e0e0f0' }}>{text(lang as LangCode, { tr: 'METRİK', en: 'METRIC', de: 'METRIK', fr: 'MÉTRIQUE', ar: 'مقياس' })}</span>
                         </th>
                         {sims.slice(0, 4).map(s => (
                           <th key={s.id} className="text-left pb-2 pr-4">
@@ -240,9 +240,9 @@ export default function DashboardPage() {
                     </thead>
                     <tbody>
                       {[
-                        { label: lang === 'en' ? 'YEAR' : 'YIL', key: 'current_year' },
-                        { label: lang === 'en' ? 'STATUS' : 'DURUM', key: 'status' },
-                        { label: lang === 'en' ? 'LOCATION' : 'KONUM', key: '_coord' },
+                        { label: text(lang as LangCode, { tr: 'YIL', en: 'YEAR', de: 'JAHR', fr: 'ANNÉE', ar: 'سنة' }), key: 'current_year' },
+                        { label: text(lang as LangCode, { tr: 'DURUM', en: 'STATUS', de: 'STATUS', fr: 'STATUT', ar: 'الحالة' }), key: 'status' },
+                        { label: text(lang as LangCode, { tr: 'KONUM', en: 'LOCATION', de: 'STANDORT', fr: 'EMPLACEMENT', ar: 'الموقع' }), key: '_coord' },
                       ].map(row => (
                         <tr key={row.key} style={{ borderBottom: '1px solid rgba(200,34,34,0.2)' }}>
                           <td className="py-1.5 pr-4">
@@ -288,7 +288,7 @@ export default function DashboardPage() {
                   <Globe size={26} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 8px rgba(79,158,247,0.9)) drop-shadow(0 0 16px rgba(79,158,247,0.5))' }} />
                 </div>
                 <p className="font-share-tech tracking-[0.3em]" style={{ fontSize: 14, color: '#e0e0f0' }}>
-                  {lang === 'en' ? 'NO SIMULATIONS FOUND' : 'SİMÜLASYON BULUNAMADI'}
+                  {text(lang as LangCode, { tr: 'SİMÜLASYON BULUNAMADI', en: 'NO SIMULATIONS FOUND', de: 'KEINE SIMULATIONEN GEFUNDEN', fr: 'AUCUNE SIMULATION TROUVÉE', ar: 'لا توجد محاكاة' })}
                 </p>
               </div>
             ) : (
@@ -319,7 +319,7 @@ export default function DashboardPage() {
                       <p className="font-share-tech mt-0.5 tracking-widest" style={{ fontSize: 14, color: '#e0e0f0' }}>
                         {sim.start_latitude?.toFixed(2)}°N {sim.start_longitude?.toFixed(2)}°E
                         <span className="mx-2" style={{ color: 'rgba(200,34,34,0.4)' }}>·</span>
-                        {lang === 'en' ? 'YEAR' : 'YIL'} <span style={{ color: '#e0e0f0' }}>{sim.current_year}</span>
+                        {text(lang as LangCode, { tr: 'YIL', en: 'YEAR', de: 'JAHR', fr: 'ANNÉE', ar: 'سنة' })} <span style={{ color: '#e0e0f0' }}>{sim.current_year}</span>
                       </p>
                     </div>
 
@@ -335,7 +335,7 @@ export default function DashboardPage() {
                     <button
                       onClick={e => { e.stopPropagation(); deleteSim(sim.id, sim.name); }}
                       className="flex-shrink-0 p-2 transition-all duration-150"
-                      title={lang === 'en' ? 'Delete' : 'Sil'}
+                      title={text(lang as LangCode, { tr: 'Sil', en: 'Delete', de: 'Löschen', fr: 'Supprimer', ar: 'حذف' })}
                       style={{ background: 'transparent', border: '1px solid rgba(224,90,90,0.25)', color: '#7a3030', lineHeight: 0,
                         clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}
                       onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#e05a5a'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(224,90,90,0.6)'; }}

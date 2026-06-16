@@ -38,7 +38,7 @@ export default function HypothesisPanel() {
     setLoading(false);
   }
 
-  const examples = lang === 'en' ? EXAMPLES_EN : EXAMPLES_TR;
+  const examples = lang === 'tr' ? EXAMPLES_TR : EXAMPLES_EN;
 
   const verdictStyle = result ? {
     supported:    { border: 'border-green-500/30',  bg: 'bg-green-500/10',  color: 'text-green-400',  icon: CheckCircle },

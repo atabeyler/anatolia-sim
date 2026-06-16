@@ -14,6 +14,7 @@ const BELIEF_INFO: Record<string, { stage: number; name: string; nameTr: string;
 
 export default function BeliefPanel() {
   const { events, lang } = useSimStore();
+  const t = (tr: string, en: string, de = en, fr = en, ar = en) => text(lang as LangCode, { tr, en, de, fr, ar });
 
   const beliefEvents = events.filter(e => e.event_type === 'belief' || e.event_type === 'ritual');
   const discoveredBeliefs = new Set(
@@ -28,13 +29,13 @@ export default function BeliefPanel() {
         <Flame size={24} className="text-orange-400 mx-auto mb-1" />
         <div className="text-sim-gold font-bold text-lg">{discoveredBeliefs.size}</div>
         <div className="text-sim-muted text-sm">
-          {lang === 'en' ? 'Belief systems emerged' : 'Ortaya çıkan inanç sistemleri'}
+          {t('Ortaya çıkan inanç sistemleri', 'Belief systems emerged', 'Aufgetauchte Glaubenssysteme', 'Systèmes de croyances apparus', 'الأنظمة العقدية الناشئة')}
         </div>
       </div>
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Belief Archetypes' : 'İnanç Arketipleri'}
+          {t('İnanç Arketipleri', 'Belief Archetypes', 'Glaubensarchetypen', 'Archétypes de croyances', 'نماذج المعتقدات')}
         </h4>
         <div className="space-y-1.5">
           {Object.entries(BELIEF_INFO).map(([id, info]) => {
@@ -59,7 +60,7 @@ export default function BeliefPanel() {
                   </span>
                 </div>
                 <div className="text-sm text-sim-muted">
-                  {lang === 'en' ? info.desc : info.descTr}
+                  {t(info.descTr, info.desc)}
                 </div>
               </div>
             );
@@ -69,22 +70,24 @@ export default function BeliefPanel() {
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Emergence Conditions' : 'Ortaya Çıkış Koşulları'}
+          {t('Ortaya Çıkış Koşulları', 'Emergence Conditions', 'Entstehungsbedingungen', 'Conditions d\'émergence', 'شروط الظهور')}
         </h4>
         <p className="text-sim-muted text-sm italic">
-          {lang === 'en'
-            ? 'Belief forms when religiosity gene + anxiety + environmental stress overcome skepticism threshold. Writing unlocks higher stages.'
-            : 'İnanç; dindar gen + kaygı + çevre stresi şüphecilik eşiğini aştığında oluşur. Yazı sistemi yüksek aşamaları açar.'}
+          {t('İnanç; dindar gen + kaygı + çevre stresi şüphecilik eşiğini aştığında oluşur. Yazı sistemi yüksek aşamaları açar.',
+             'Belief forms when religiosity gene + anxiety + environmental stress overcome skepticism threshold. Writing unlocks higher stages.',
+             'Glaube entsteht wenn Religiosität + Angst + Umweltstress den Skeptizismuswert überschreiten.',
+             'La croyance se forme quand gène religiosité + anxiété + stress environnemental dépasse le seuil de scepticisme.',
+             'تتشكل المعتقدات عندما يتجاوز جين التدين + القلق + الضغط البيئي عتبة الشك.')}
         </p>
       </div>
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Ritual Events' : 'Ritüel Olayları'}
+          {t('Ritüel Olayları', 'Ritual Events', 'Ritualereignisse', 'Événements rituels', 'أحداث طقسية')}
         </h4>
         {beliefEvents.length === 0 ? (
           <p className="text-sim-muted italic text-sm">
-            {lang === 'en' ? 'No belief events yet.' : 'Henüz inanç olayı yok.'}
+            {t('Henüz inanç olayı yok.', 'No belief events yet.', 'Noch keine Glaubensereignisse.', 'Pas encore d\'événements de croyance.', 'لا أحداث عقدية بعد.')}
           </p>
         ) : (
           <div className="space-y-1 max-h-40 overflow-y-auto">

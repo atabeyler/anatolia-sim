@@ -4,18 +4,21 @@ import { useSimStore } from '../../store/simStore';
 import { Telescope } from 'lucide-react';
 
 const KNOWLEDGE_ITEMS = [
-  { id: 'lunar_tracking', label: 'Lunar Tracking', labelTr: 'Ay Takibi', icon: '🌙' },
-  { id: 'seasonal_calendar', label: 'Seasonal Calendar', labelTr: 'Mevsimsel Takvim', icon: '📆' },
-  { id: 'star_map', label: 'Star Map', labelTr: 'Yıldız Haritası', icon: '⭐' },
-  { id: 'eclipse_prediction', label: 'Eclipse Prediction', labelTr: 'Tutulma Tahmini', icon: '🌑' },
-  { id: 'planetary_model', label: 'Planetary Model', labelTr: 'Gezegen Modeli', icon: '🪐' },
+  { id: 'lunar_tracking', label: { tr: 'Ay Takibi', en: 'Lunar Tracking', de: 'Mondverfolgung', fr: 'Suivi lunaire', ar: 'تتبع القمر' }, icon: '🌙' },
+  { id: 'seasonal_calendar', label: { tr: 'Mevsimsel Takvim', en: 'Seasonal Calendar', de: 'Saisonkalender', fr: 'Calendrier saisonnier', ar: 'التقويم الموسمي' }, icon: '📆' },
+  { id: 'star_map', label: { tr: 'Yıldız Haritası', en: 'Star Map', de: 'Sternenkarte', fr: 'Carte des étoiles', ar: 'خريطة النجوم' }, icon: '⭐' },
+  { id: 'eclipse_prediction', label: { tr: 'Tutulma Tahmini', en: 'Eclipse Prediction', de: 'Finsternis-Vorhersage', fr: 'Prédiction d\'éclipse', ar: 'التنبؤ بالكسوف' }, icon: '🌑' },
+  { id: 'planetary_model', label: { tr: 'Gezegen Modeli', en: 'Planetary Model', de: 'Planetenmodell', fr: 'Modèle planétaire', ar: 'النموذج الكوكبي' }, icon: '🪐' },
 ];
 
-const OBSERVABLES_TR = ['Ay döngüleri', 'Gündönümleri', 'Ekinokslar', 'Yıldız doğuşları', 'Tutulmalar', 'Kuyruklu yıldızlar'];
-
-function t(lang: string, en: string, tr: string) {
-  return lang === 'en' ? en : tr;
-}
+const OBSERVABLES: { tr: string; en: string; de: string; fr: string; ar: string }[] = [
+  { tr: 'Ay döngüleri', en: 'Lunar cycles', de: 'Mondzyklen', fr: 'Cycles lunaires', ar: 'دورات القمر' },
+  { tr: 'Gündönümleri', en: 'Solstices', de: 'Sonnenwenden', fr: 'Solstices', ar: 'الانقلابات الشمسية' },
+  { tr: 'Ekinokslar', en: 'Equinoxes', de: 'Tagundnachtgleichen', fr: 'Équinoxes', ar: 'الاعتدالات' },
+  { tr: 'Yıldız doğuşları', en: 'Star risings', de: 'Sternaufgänge', fr: 'Levers d\'étoiles', ar: 'شروق النجوم' },
+  { tr: 'Tutulmalar', en: 'Eclipses', de: 'Finsternisse', fr: 'Éclipses', ar: 'الكسوف والخسوف' },
+  { tr: 'Kuyruklu yıldızlar', en: 'Comets', de: 'Kometen', fr: 'Comètes', ar: 'المذنبات' },
+];
 
 export default function AstronomyPanel() {
   const { events, lang } = useSimStore();
@@ -30,14 +33,14 @@ export default function AstronomyPanel() {
         <div>
           <div className="text-blue-400 font-bold text-lg">{discoveries.length}</div>
           <div className="text-sim-muted text-sm">
-            {t(lang, 'Astronomical Discoveries', 'Astronomik Keşifler')}
+            {text(lang as LangCode, { tr: 'Astronomik Keşifler', en: 'Astronomical Discoveries', de: 'Astronomische Entdeckungen', fr: 'Découvertes astronomiques', ar: 'اكتشافات فلكية' })}
           </div>
         </div>
       </div>
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {t(lang, 'Knowledge Tree', 'Bilgi Ağacı')}
+          {text(lang as LangCode, { tr: 'Bilgi Ağacı', en: 'Knowledge Tree', de: 'Wissensbaum', fr: 'Arbre des connaissances', ar: 'شجرة المعرفة' })}
         </h4>
         <div className="space-y-1.5">
           {KNOWLEDGE_ITEMS.map(item => {
@@ -49,7 +52,7 @@ export default function AstronomyPanel() {
               >
                 <span className="text-base">{item.icon}</span>
                 <span className={`text-sm ${discovered ? 'text-sim-text' : 'text-sim-muted'}`}>
-                  {t(lang, item.label, item.labelTr)}
+                  {text(lang as LangCode, item.label)}
                 </span>
               </div>
             );
@@ -59,25 +62,24 @@ export default function AstronomyPanel() {
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {t(lang, 'Observable Events', 'Gözlemlenebilir Olaylar')}
+          {text(lang as LangCode, { tr: 'Gözlemlenebilir Olaylar', en: 'Observable Events', de: 'Beobachtbare Ereignisse', fr: 'Événements observables', ar: 'الأحداث القابلة للرصد' })}
         </h4>
         <div className="grid grid-cols-2 gap-1">
-          {(lang === 'en'
-            ? ['Lunar cycles', 'Solstices', 'Equinoxes', 'Star risings', 'Eclipses', 'Comets']
-            : OBSERVABLES_TR
-          ).map(ev => (
-            <div key={ev} className="text-sm text-sim-muted bg-sim-surface rounded px-2 py-1">{ev}</div>
+          {OBSERVABLES.map(obs => (
+            <div key={obs.en} className="text-sm text-sim-muted bg-sim-surface rounded px-2 py-1">
+              {text(lang as LangCode, obs)}
+            </div>
           ))}
         </div>
       </div>
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {t(lang, 'Observation Log', 'Gözlem Günlüğü')}
+          {text(lang as LangCode, { tr: 'Gözlem Günlüğü', en: 'Observation Log', de: 'Beobachtungsprotokoll', fr: 'Journal d\'observation', ar: 'سجل الرصد' })}
         </h4>
         {astroEvents.length === 0 ? (
           <p className="text-sim-muted italic text-sm">
-            {t(lang, 'No astronomical events recorded.', 'Kayıtlı astronomi olayı yok.')}
+            {text(lang as LangCode, { tr: 'Kayıtlı astronomi olayı yok.', en: 'No astronomical events recorded.', de: 'Keine astronomischen Ereignisse aufgezeichnet.', fr: 'Aucun événement astronomique enregistré.', ar: 'لا توجد أحداث فلكية مسجلة.' })}
           </p>
         ) : (
           <div className="space-y-1 max-h-36 overflow-y-auto">

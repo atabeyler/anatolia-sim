@@ -1,6 +1,6 @@
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
-import { translateEventDescription, type LangCode } from '../../utils/i18n';
+import { translateEventDescription, text, type LangCode } from '../../utils/i18n';
 
 const MEME_STAGES: Record<string, number> = {
   shared_greeting: 1, mourning_ritual: 1, food_sharing_norm: 1,
@@ -44,6 +44,7 @@ function translateDescription(desc: string, lang: string) {
 
 export default function CulturePanel() {
   const { events, lang } = useSimStore();
+  const t = (tr: string, en: string, de = en, fr = en, ar = en) => text(lang as LangCode, { tr, en, de, fr, ar });
 
   const cultureEvents = events.filter(e => e.event_type === 'culture' || e.event_type === 'ritual');
   const artEvents = events.filter(e => e.event_type === 'art');
@@ -56,17 +57,17 @@ export default function CulturePanel() {
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div className="bg-sim-surface rounded-lg p-2 text-center">
           <div className="text-purple-400 font-bold text-lg">{totalMemes}</div>
-          <div className="text-sim-muted text-sm">{lang === 'en' ? 'Cultural Memes' : 'Kültürel Memler'}</div>
+          <div className="text-sim-muted text-sm">{t('Kültürel Memler', 'Cultural Memes', 'Kulturelle Meme', 'Mèmes culturels', 'ميمات ثقافية')}</div>
         </div>
         <div className="bg-sim-surface rounded-lg p-2 text-center">
           <div className="text-pink-400 font-bold text-lg">{totalArts}</div>
-          <div className="text-sim-muted text-sm">{lang === 'en' ? 'Art Forms' : 'Sanat Formları'}</div>
+          <div className="text-sim-muted text-sm">{t('Sanat Formları', 'Art Forms', 'Kunstformen', 'Formes d\'art', 'أشكال فنية')}</div>
         </div>
       </div>
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Meme Stages' : 'Mem Aşamaları'}
+          {t('Mem Aşamaları', 'Meme Stages', 'Mem-Stufen', 'Stades des mèmes', 'مراحل الميمات')}
         </h4>
         {[1, 2, 3, 4, 5].map(stage => {
           const stageMemes = Object.entries(MEME_STAGES).filter(([, s]) => s === stage);
@@ -78,7 +79,7 @@ export default function CulturePanel() {
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STAGE_COLORS[stage] }} />
                 <span className="text-sm text-sim-muted">
-                  {lang === 'en' ? `Stage ${stage}` : `Aşama ${stage}`} ({emerged.length}/{stageMemes.length})
+                  {t(`Aşama ${stage}`, `Stage ${stage}`, `Stufe ${stage}`, `Stade ${stage}`, `مرحلة ${stage}`)} ({emerged.length}/{stageMemes.length})
                 </span>
               </div>
               <div className="h-1.5 bg-sim-border rounded-full overflow-hidden">
@@ -97,11 +98,11 @@ export default function CulturePanel() {
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {lang === 'en' ? 'Culture Events' : 'Kültür Olayları'}
+          {t('Kültür Olayları', 'Culture Events', 'Kulturereignisse', 'Événements culturels', 'أحداث ثقافية')}
         </h4>
         {cultureEvents.length === 0 ? (
           <p className="text-sim-muted italic text-sm">
-            {lang === 'en' ? 'No culture events yet.' : 'Henüz kültür olayı yok.'}
+            {t('Henüz kültür olayı yok.', 'No culture events yet.', 'Noch keine Kulturereignisse.', 'Pas encore d\'événements culturels.', 'لا أحداث ثقافية بعد.')}
           </p>
         ) : (
           <div className="space-y-1 max-h-40 overflow-y-auto">

@@ -3,16 +3,18 @@ import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import axios from 'axios';
 import { Clock, RefreshCw, Save } from 'lucide-react';
+import { text, type LangCode } from '../../utils/i18n';
 
 export default function TimeMachinePanel() {
   const { currentSim, accessToken, lang } = useSimStore();
+  const t = (tr: string, en: string, de = en, fr = en, ar = en) => text(lang as LangCode, { tr, en, de, fr, ar });
   const [checkpoints, setCheckpoints] = useState<any[]>([]);
   const [restoring, setRestoring] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
 
-  function flash(text: string) {
-    setMsg(text);
+  function flash(txt: string) {
+    setMsg(txt);
     setTimeout(() => setMsg(''), 5000);
   }
 
@@ -30,10 +32,10 @@ export default function TimeMachinePanel() {
     setSaving(true);
     try {
       await axios.post(`/api/simulations/${currentSim.id}/checkpoint`, {}, { headers: { Authorization: `Bearer ${accessToken}` } });
-      flash(lang === 'en' ? '✓ Checkpoint saved.' : '✓ Kontrol noktası kaydedildi.');
+      flash(t('✓ Kontrol noktası kaydedildi.', '✓ Checkpoint saved.', '✓ Kontrollpunkt gespeichert.', '✓ Point de contrôle sauvegardé.', '✓ تم حفظ نقطة التحقق.'));
       await loadCheckpoints();
     } catch {
-      flash(lang === 'en' ? '✗ Save failed.' : '✗ Kayıt başarısız.');
+      flash(t('✗ Kayıt başarısız.', '✗ Save failed.', '✗ Speichern fehlgeschlagen.', '✗ Échec de la sauvegarde.', '✗ فشل الحفظ.'));
     }
     setSaving(false);
   }
@@ -43,23 +45,22 @@ export default function TimeMachinePanel() {
     setRestoring(cpId);
     try {
       await axios.post(`/api/simulations/${currentSim.id}/restore/${cpId}`, {}, { headers: { Authorization: `Bearer ${accessToken}` } });
-      flash(lang === 'en' ? '✓ Restored. Reload to continue.' : '✓ Geri yüklendi. Yenileyin.');
+      flash(t('✓ Geri yüklendi. Yenileyin.', '✓ Restored. Reload to continue.', '✓ Wiederhergestellt. Neu laden.', '✓ Restauré. Rechargez.', '✓ تمت الاستعادة. أعد التحميل.'));
     } catch {
-      flash(lang === 'en' ? '✗ Restore failed.' : '✗ Geri yükleme başarısız.');
+      flash(t('✗ Geri yükleme başarısız.', '✗ Restore failed.', '✗ Wiederherstellung fehlgeschlagen.', '✗ Échec de la restauration.', '✗ فشلت الاستعادة.'));
     }
     setRestoring(null);
   }
 
   return (
     <DetailPanel panelId="timemachine" title="Time Machine" titleTr="Zaman Makinesi">
-      {/* Summary row */}
       <div className="bg-sim-surface rounded-lg p-3 mb-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Clock size={24} className="text-sim-accent" />
           <div>
             <div className="text-sim-accent font-bold text-lg">{checkpoints.length}</div>
             <div className="text-sim-muted text-sm">
-              {lang === 'en' ? 'Saved Checkpoints' : 'Kayıtlı Kontrol Noktaları'}
+              {t('Kayıtlı Kontrol Noktaları', 'Saved Checkpoints', 'Gespeicherte Kontrollpunkte', 'Points de contrôle sauvegardés', 'نقاط التحقق المحفوظة')}
             </div>
           </div>
         </div>
@@ -69,14 +70,18 @@ export default function TimeMachinePanel() {
           className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-sim-accent/50 bg-sim-accent/10 hover:bg-sim-accent/25 text-sim-accent transition-colors text-sm font-share-tech"
         >
           <Save size={13} className={saving ? 'animate-pulse' : ''} />
-          {lang === 'en' ? 'Save Now' : 'Şimdi Kaydet'}
+          {t('Şimdi Kaydet', 'Save Now', 'Jetzt speichern', 'Sauvegarder', 'احفظ الآن')}
         </button>
       </div>
 
       <p className="text-sim-muted text-sm italic mb-3">
-        {lang === 'en'
-          ? 'Checkpoints auto-save every 365 days. Restore any past state.'
-          : 'Kontrol noktaları her 365 günde otomatik kaydedilir. Herhangi bir geçmiş duruma geri dönün.'}
+        {t(
+          'Kontrol noktaları her 365 günde otomatik kaydedilir. Herhangi bir geçmiş duruma geri dönün.',
+          'Checkpoints auto-save every 365 days. Restore any past state.',
+          'Kontrollpunkte werden alle 365 Tage automatisch gespeichert.',
+          'Les points de contrôle sont sauvegardés automatiquement tous les 365 jours.',
+          'يتم حفظ نقاط التحقق تلقائياً كل 365 يوم.'
+        )}
       </p>
 
       {msg && (
@@ -89,7 +94,7 @@ export default function TimeMachinePanel() {
         <div className="text-center py-8">
           <Clock size={32} className="text-sim-border mx-auto mb-2" />
           <p className="text-sim-muted italic text-sm">
-            {lang === 'en' ? 'No checkpoints yet. Run the simulation or save manually.' : 'Henüz kontrol noktası yok. Simülasyonu çalıştırın veya manuel kaydedin.'}
+            {t('Henüz kontrol noktası yok. Simülasyonu çalıştırın veya manuel kaydedin.', 'No checkpoints yet. Run the simulation or save manually.', 'Noch keine Kontrollpunkte. Simulation starten oder manuell speichern.', 'Pas encore de points de contrôle.', 'لا نقاط تحقق بعد.')}
           </p>
         </div>
       ) : (
@@ -98,10 +103,10 @@ export default function TimeMachinePanel() {
             <div key={cp.id} className="bg-sim-surface rounded-lg p-3 flex items-center justify-between border border-sim-border hover:border-sim-accent/40 transition-colors">
               <div>
                 <div className="text-sm font-medium text-sim-text">
-                  {lang === 'en' ? 'Year' : 'Yıl'} {cp.sim_year} · {lang === 'en' ? 'Day' : 'Gün'} {cp.sim_day}
+                  {t('Yıl', 'Year', 'Jahr', 'Année', 'سنة')} {cp.sim_year} · {t('Gün', 'Day', 'Tag', 'Jour', 'يوم')} {cp.sim_day}
                 </div>
                 <div className="text-sm text-sim-muted">
-                  {lang === 'en' ? 'Pop:' : 'Nüfus:'} {cp.population_count}
+                  {t('Nüfus:', 'Pop:', 'Bev.:', 'Pop.:', 'سكان:')} {cp.population_count}
                 </div>
               </div>
               <button
@@ -110,7 +115,7 @@ export default function TimeMachinePanel() {
                 className="flex items-center gap-1 px-2 py-1 rounded bg-sim-accent/20 hover:bg-sim-accent/40 text-sim-accent transition-colors text-sm"
               >
                 <RefreshCw size={11} className={restoring === cp.id ? 'animate-spin' : ''} />
-                {lang === 'en' ? 'Restore' : 'Geri Al'}
+                {t('Geri Al', 'Restore', 'Wiederherstellen', 'Restaurer', 'استعادة')}
               </button>
             </div>
           ))}
