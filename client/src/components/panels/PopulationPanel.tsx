@@ -280,7 +280,6 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             </button>
             <button onClick={onClose} className="text-sim-muted hover:text-sim-accent transition-colors"><X size={14} /></button>
           </div>
-          )}
 
           {/* ── Görünüm / Appearance ── */}
           <div>
