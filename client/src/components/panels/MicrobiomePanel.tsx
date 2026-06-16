@@ -1,29 +1,54 @@
-import { translateEventDescription, type LangCode } from '../../utils/i18n';
+import { translateEventDescription, text, type LangCode } from '../../utils/i18n';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { AlertTriangle } from 'lucide-react';
 
-const SEVERITY_TR: Record<string, string> = {
-  Low: 'Düşük', Medium: 'Orta', High: 'Yüksek', Critical: 'Kritik',
+type LMap = { tr: string; en: string; de: string; fr: string; ar: string };
+
+const SEVERITY: Record<string, LMap> = {
+  Low:      { tr: 'Düşük',  en: 'Low',      de: 'Niedrig',   fr: 'Faible',    ar: 'منخفض'  },
+  Medium:   { tr: 'Orta',   en: 'Medium',   de: 'Mittel',    fr: 'Moyen',     ar: 'متوسط'  },
+  High:     { tr: 'Yüksek', en: 'High',     de: 'Hoch',      fr: 'Élevé',     ar: 'مرتفع'  },
+  Critical: { tr: 'Kritik', en: 'Critical', de: 'Kritisch',  fr: 'Critique',  ar: 'حرج'    },
 };
 
-const PATHOGEN_INFO: Record<string, { name: string; nameTr: string; transmission: string; severity: string; color: string; trTransmission: string }> = {
-  intestinal_parasite: { name: 'Intestinal Parasite', nameTr: 'Bağırsak Paraziti',    transmission: 'Fecal-oral', severity: 'Low',      color: 'text-yellow-400', trTransmission: 'Dışkı-ağız' },
-  cholera_like:        { name: 'Cholera Like',         nameTr: 'Kolera Benzeri',        transmission: 'Waterborne', severity: 'High',     color: 'text-red-400',    trTransmission: 'Suyla bulaşan' },
-  respiratory_common:  { name: 'Respiratory Common',   nameTr: 'Solunum Yolu',          transmission: 'Airborne',   severity: 'Low',      color: 'text-yellow-400', trTransmission: 'Hava yoluyla' },
-  pneumonia_like:      { name: 'Pneumonia Like',        nameTr: 'Zatürre Benzeri',       transmission: 'Airborne',   severity: 'Medium',   color: 'text-orange-400', trTransmission: 'Hava yoluyla' },
-  plague_like:         { name: 'Plague Like',           nameTr: 'Veba Benzeri',          transmission: 'Airborne',   severity: 'Critical', color: 'text-red-600',    trTransmission: 'Hava yoluyla' },
-  malaria_like:        { name: 'Malaria Like',          nameTr: 'Sıtma Benzeri',         transmission: 'Vector',     severity: 'Medium',   color: 'text-orange-400', trTransmission: 'Vektör ile' },
-  wound_infection:     { name: 'Wound Infection',       nameTr: 'Yara Enfeksiyonu',      transmission: 'Contact',    severity: 'Medium',   color: 'text-orange-400', trTransmission: 'Temas ile' },
+const PATHOGEN_INFO: Record<string, { name: LMap; transmission: LMap; severity: string; color: string }> = {
+  intestinal_parasite: {
+    name:         { tr: 'Bağırsak Paraziti',  en: 'Intestinal Parasite', de: 'Darmparasit',        fr: 'Parasite intestinal',   ar: 'طفيلي معوي'        },
+    transmission: { tr: 'Dışkı-ağız',         en: 'Fecal-oral',          de: 'Fäkal-oral',         fr: 'Fécal-oral',            ar: 'برازي-فموي'         },
+    severity: 'Low', color: 'text-yellow-400',
+  },
+  cholera_like: {
+    name:         { tr: 'Kolera Benzeri',      en: 'Cholera Like',        de: 'Cholera-ähnlich',    fr: 'Type choléra',          ar: 'شبيه بالكوليرا'     },
+    transmission: { tr: 'Suyla bulaşan',       en: 'Waterborne',          de: 'Wasserübertragen',   fr: 'Hydrique',              ar: 'منقول بالماء'       },
+    severity: 'High', color: 'text-red-400',
+  },
+  respiratory_common: {
+    name:         { tr: 'Solunum Yolu',        en: 'Respiratory Common',  de: 'Atemwegskrankheit',  fr: 'Respiratoire commun',   ar: 'التهاب تنفسي شائع'  },
+    transmission: { tr: 'Hava yoluyla',        en: 'Airborne',            de: 'Luftübertragen',     fr: 'Aérien',                ar: 'محمول جواً'         },
+    severity: 'Low', color: 'text-yellow-400',
+  },
+  pneumonia_like: {
+    name:         { tr: 'Zatürre Benzeri',     en: 'Pneumonia Like',      de: 'Pneumonie-ähnlich',  fr: 'Type pneumonie',        ar: 'شبيه بالالتهاب الرئوي' },
+    transmission: { tr: 'Hava yoluyla',        en: 'Airborne',            de: 'Luftübertragen',     fr: 'Aérien',                ar: 'محمول جواً'         },
+    severity: 'Medium', color: 'text-orange-400',
+  },
+  plague_like: {
+    name:         { tr: 'Veba Benzeri',        en: 'Plague Like',         de: 'Pest-ähnlich',       fr: 'Type peste',            ar: 'شبيه بالطاعون'      },
+    transmission: { tr: 'Hava yoluyla',        en: 'Airborne',            de: 'Luftübertragen',     fr: 'Aérien',                ar: 'محمول جواً'         },
+    severity: 'Critical', color: 'text-red-600',
+  },
+  malaria_like: {
+    name:         { tr: 'Sıtma Benzeri',       en: 'Malaria Like',        de: 'Malaria-ähnlich',    fr: 'Type paludisme',        ar: 'شبيه بالملاريا'     },
+    transmission: { tr: 'Vektör ile',          en: 'Vector',              de: 'Vektorübertragen',   fr: 'Par vecteur',           ar: 'عبر ناقل'           },
+    severity: 'Medium', color: 'text-orange-400',
+  },
+  wound_infection: {
+    name:         { tr: 'Yara Enfeksiyonu',    en: 'Wound Infection',     de: 'Wundinfektion',      fr: 'Infection de plaie',    ar: 'عدوى الجرح'         },
+    transmission: { tr: 'Temas ile',           en: 'Contact',             de: 'Kontakt',            fr: 'Contact',               ar: 'عن طريق اللمس'      },
+    severity: 'Medium', color: 'text-orange-400',
+  },
 };
-
-function t(lang: string, enStr: string, trStr: string, deStr = enStr, frStr = enStr, arStr = enStr) {
-  if (lang === 'tr') return trStr;
-  if (lang === 'de') return deStr;
-  if (lang === 'fr') return frStr;
-  if (lang === 'ar') return arStr;
-  return enStr;
-}
 
 export default function MicrobiomePanel() {
   const { stats, events, lang } = useSimStore();
@@ -39,27 +64,25 @@ export default function MicrobiomePanel() {
           <div className={`font-bold text-lg ${sickRate > 0.3 ? 'text-red-400' : sickRate > 0.1 ? 'text-yellow-400' : 'text-green-400'}`}>
             {(sickRate * 100).toFixed(1)}%
           </div>
-          <div className="text-sim-muted text-sm">{t(lang, 'Population Sick Rate', 'Nüfus Hastalık Oranı')}</div>
+          <div className="text-sim-muted text-sm">
+            {text(lang as LangCode, { tr: 'Nüfus Hastalık Oranı', en: 'Population Sick Rate', de: 'Krankheitsrate', fr: 'Taux de maladie', ar: 'معدل المرض في السكان' })}
+          </div>
         </div>
       </div>
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {t(lang, 'Pathogen Types', 'Patojen Türleri')}
+          {text(lang as LangCode, { tr: 'Patojen Türleri', en: 'Pathogen Types', de: 'Erregerarten', fr: 'Types de pathogènes', ar: 'أنواع مسببات الأمراض' })}
         </h4>
         <div className="space-y-1.5">
           {Object.entries(PATHOGEN_INFO).map(([id, info]) => (
             <div key={id} className="flex items-center gap-2 bg-sim-surface/50 rounded p-1.5">
               <div className="flex-1">
-                <div className="text-sm text-sim-text">
-                  {t(lang, info.name, info.nameTr)}
-                </div>
-                <div className="text-sm text-sim-muted">
-                  {t(lang, info.transmission, info.trTransmission)}
-                </div>
+                <div className="text-sm text-sim-text">{text(lang as LangCode, info.name)}</div>
+                <div className="text-sm text-sim-muted">{text(lang as LangCode, info.transmission)}</div>
               </div>
               <span className={`text-sm font-medium ${info.color}`}>
-                {t(lang, info.severity, SEVERITY_TR[info.severity] ?? info.severity)}
+                {text(lang as LangCode, SEVERITY[info.severity] ?? { tr: info.severity, en: info.severity, de: info.severity, fr: info.severity, ar: info.severity })}
               </span>
             </div>
           ))}
@@ -68,24 +91,26 @@ export default function MicrobiomePanel() {
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {t(lang, 'Gut Microbiome', 'Bağırsak Mikrobiyomu')}
+          {text(lang as LangCode, { tr: 'Bağırsak Mikrobiyomu', en: 'Gut Microbiome', de: 'Darmmikrobiom', fr: 'Microbiome intestinal', ar: 'الميكروبيوم المعوي' })}
         </h4>
         <p className="text-sim-muted text-sm italic">
-          {t(
-            lang,
-            'Diet diversity → microbiome diversity → immune strength. Monoculture diets increase pathogen susceptibility.',
-            'Diyet çeşitliliği → mikrobiyom çeşitliliği → bağışıklık gücü. Tek tip diyetler patojen duyarlılığını artırır.'
-          )}
+          {text(lang as LangCode, {
+            tr: 'Diyet çeşitliliği → mikrobiyom çeşitliliği → bağışıklık gücü. Tek tip diyetler patojen duyarlılığını artırır.',
+            en: 'Diet diversity → microbiome diversity → immune strength. Monoculture diets increase pathogen susceptibility.',
+            de: 'Ernährungsvielfalt → Mikrobiomvielfalt → Immunstärke. Monokulturen erhöhen die Anfälligkeit.',
+            fr: 'Diversité alimentaire → diversité du microbiome → immunité. Les régimes monocultures augmentent la susceptibilité.',
+            ar: 'تنوع النظام الغذائي → تنوع الميكروبيوم → قوة المناعة. الأنظمة الغذائية الأحادية تزيد من قابلية الإصابة بالأمراض.',
+          })}
         </p>
       </div>
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {t(lang, 'Epidemic History', 'Salgın Tarihi')}
+          {text(lang as LangCode, { tr: 'Salgın Tarihi', en: 'Epidemic History', de: 'Epidemiegeschichte', fr: 'Historique épidémique', ar: 'تاريخ الأوبئة' })}
         </h4>
         {epidemicEvents.length === 0 ? (
           <p className="text-sim-muted italic text-sm">
-            {t(lang, 'No epidemics recorded.', 'Kayıtlı salgın yok.')}
+            {text(lang as LangCode, { tr: 'Kayıtlı salgın yok.', en: 'No epidemics recorded.', de: 'Keine Epidemien aufgezeichnet.', fr: 'Aucune épidémie enregistrée.', ar: 'لا توجد أوبئة مسجلة.' })}
           </p>
         ) : (
           <div className="space-y-1 max-h-40 overflow-y-auto">
