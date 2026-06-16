@@ -1,6 +1,6 @@
 import { X } from 'lucide-react';
 import { useSimStore } from '../../store/simStore';
-import { text, type LangCode } from '../../utils/i18n';
+import { text, type LangCode, type TranslationMap } from '../../utils/i18n';
 
 interface Props {
   panelId: string;
@@ -12,11 +12,48 @@ interface Props {
   children: React.ReactNode;
 }
 
+const PANEL_TITLE_FALLBACKS: Record<string, TranslationMap> = {
+  population: { tr: 'Nüfus', en: 'Population', de: 'Bevölkerung', fr: 'Population', ar: 'السكان' },
+  events: { tr: 'Olaylar', en: 'Events', de: 'Ereignisse', fr: 'Événements', ar: 'الأحداث' },
+  language: { tr: 'Dil', en: 'Language', de: 'Sprache', fr: 'Langue', ar: 'اللغة' },
+  history: { tr: 'Geçmiş', en: 'History', de: 'Geschichte', fr: 'Historique', ar: 'التاريخ' },
+  'time machine': { tr: 'Zaman Makinesi', en: 'Time Machine', de: 'Zeitmaschine', fr: 'Machine temporelle', ar: 'آلة الزمن' },
+  analysis: { tr: 'Analiz', en: 'Analysis', de: 'Analyse', fr: 'Analyse', ar: 'التحليل' },
+  hypothesis: { tr: 'Hipotez', en: 'Hypothesis', de: 'Hypothese', fr: 'Hypothèse', ar: 'الفرضية' },
+  pyramid: { tr: 'Piramit', en: 'Pyramid', de: 'Pyramide', fr: 'Pyramide', ar: 'الهرم' },
+  biology: { tr: 'Biyoloji', en: 'Biology', de: 'Biologie', fr: 'Biologie', ar: 'البيولوجيا' },
+  mutation: { tr: 'Mutasyon', en: 'Mutation', de: 'Mutation', fr: 'Mutation', ar: 'الطفرة' },
+  'god mode': { tr: 'Tanrı Modu', en: 'God Mode', de: 'Gottmodus', fr: 'Mode Dieu', ar: 'وضع الإله' },
+  psychology: { tr: 'Psikoloji', en: 'Psychology', de: 'Psychologie', fr: 'Psychologie', ar: 'علم النفس' },
+  mind: { tr: 'Akıl', en: 'Mind', de: 'Geist', fr: 'Esprit', ar: 'العقل' },
+  environment: { tr: 'Çevre', en: 'Environment', de: 'Umwelt', fr: 'Environnement', ar: 'البيئة' },
+  technology: { tr: 'Teknoloji', en: 'Technology', de: 'Technologie', fr: 'Technologie', ar: 'التكنولوجيا' },
+  belief: { tr: 'İnanç', en: 'Belief', de: 'Glaube', fr: 'Croyance', ar: 'المعتقد' },
+  social: { tr: 'Sosyal', en: 'Social', de: 'Sozial', fr: 'Social', ar: 'اجتماعي' },
+  economy: { tr: 'Ekonomi', en: 'Economy', de: 'Wirtschaft', fr: 'Économie', ar: 'الاقتصاد' },
+  culture: { tr: 'Kültür', en: 'Culture', de: 'Kultur', fr: 'Culture', ar: 'الثقافة' },
+  art: { tr: 'Sanat', en: 'Art', de: 'Kunst', fr: 'Art', ar: 'الفن' },
+  astronomy: { tr: 'Astronomi', en: 'Astronomy', de: 'Astronomie', fr: 'Astronomie', ar: 'علم الفلك' },
+  moments: { tr: 'Anlar', en: 'Moments', de: 'Momente', fr: 'Moments', ar: 'اللحظات' },
+  epigenetics: { tr: 'Epigenetik', en: 'Epigenetics', de: 'Epigenetik', fr: 'Épigénétique', ar: 'علم التخلق' },
+  architecture: { tr: 'Mimari', en: 'Architecture', de: 'Architektur', fr: 'Architecture', ar: 'العمارة' },
+  law: { tr: 'Hukuk', en: 'Law', de: 'Recht', fr: 'Droit', ar: 'القانون' },
+  microbiome: { tr: 'Mikrobiyom', en: 'Microbiome', de: 'Mikrobiom', fr: 'Microbiome', ar: 'الميكروبيوم' },
+  genealogy: { tr: 'Soy Ağacı', en: 'Genealogy', de: 'Genealogie', fr: 'Généalogie', ar: 'النسب' },
+  report: { tr: 'Rapor', en: 'Report', de: 'Bericht', fr: 'Rapport', ar: 'تقرير' },
+  stats: { tr: 'İstatistik', en: 'Stats', de: 'Statistik', fr: 'Statistiques', ar: 'إحصاءات' },
+};
+
+function normalizeTitleKey(value?: string): string {
+  return String(value ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
 export default function DetailPanel({ panelId, title, titleTr, titleDe, titleFr, titleAr, children }: Props) {
   const { activePanel, setActivePanel, lang } = useSimStore();
   if (activePanel !== panelId) return null;
 
-  const displayTitle = text(lang as LangCode, { en: title, tr: titleTr, de: titleDe ?? title, fr: titleFr ?? title, ar: titleAr ?? title });
+  const fallbackTitle = PANEL_TITLE_FALLBACKS[normalizeTitleKey(title)] ?? PANEL_TITLE_FALLBACKS[normalizeTitleKey(titleTr)];
+  const displayTitle = text(lang as LangCode, fallbackTitle ?? { en: title, tr: titleTr, de: titleDe ?? title, fr: titleFr ?? title, ar: titleAr ?? title });
   const moduleLabel = text(lang as LangCode, { tr: 'MODÜL', en: 'MODULE', de: 'MODUL', fr: 'MODULE', ar: 'وحدة' });
 
   return (
