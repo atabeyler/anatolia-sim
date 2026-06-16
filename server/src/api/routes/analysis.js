@@ -6,15 +6,31 @@ import { getAge } from '../../engines/biology/individual.js';
 
 const router = Router();
 
+const LANGUAGE_NAMES = {
+  tr: 'Turkish',
+  en: 'English',
+  de: 'German',
+  fr: 'French',
+  ar: 'Arabic',
+};
+
+function normalizeLang(lang) {
+  return LANGUAGE_NAMES[lang] ? lang : 'en';
+}
+
+function languageInstruction(lang) {
+  const code = normalizeLang(lang);
+  const name = LANGUAGE_NAMES[code];
+  return `Respond ONLY in ${name}. Do not switch languages. Translate all headings, explanations, findings, warnings, and reasoning into ${name}. Keep IDs, names, gene symbols, numbers, and raw event codes unchanged.`;
+}
+
 const SIM_ARCHITECTURE = `
-SIMULATION ARCHITECTURE (design decisions — know these precisely):
-- Founders (is_founder=true): Anchored to their starting coordinates. They do NOT move. This is an intentional design decision — they hold the center of the family band.
-- Other individuals: Attracted toward the group centroid; founder positions naturally pull this centroid toward the home point.
-- Movement priorities: Hunger/thirst > band cohesion > mating drive.
-- mating_urge: Accumulates daily; resets on mating; 0 during pregnancy; does not affect movement until basic needs are met.
-- No monogamy. Any nearby compatible individual can mate.
-- Infant mortality: ~8%/year (age 0-1). A protection mechanism is active for small groups.
-- If inbreeding_coeff > 0.25, death risk increases by 50% — close-relative mating is problematic.
+SIMULATION ARCHITECTURE:
+- Founders are fixed reference individuals by design.
+- Non-founder behavior must emerge from inherited traits, environment, observation, and simulation state.
+- Movement prioritizes basic survival, group cohesion, and social needs.
+- Population, technology, belief, culture, health, events, and group data are live simulation outputs.
+- Be skeptical: distinguish engine facts from UI/event-description ambiguity.
 `;
 
 function buildEngineContext(engine) {
@@ -22,114 +38,74 @@ function buildEngineContext(engine) {
 
   const day = engine.currentDay;
   const allInds = [...engine.population.values()];
-  const alive   = allInds.filter(i => !i.is_dead);
-  const dead    = allInds.filter(i => i.is_dead && i.birth_day != null);
-
-  // ── World state ──────────────────────────────────────────────────────────
+  const alive = allInds.filter(i => !i.is_dead);
+  const dead = allInds.filter(i => i.is_dead && i.birth_day != null);
   const ws = engine.worldState ?? {};
-  const worldLine = `World: Biome=${ws.biome}, Season=${ws.season}, ` +
-    `Temperature=${Math.round(ws.temperature ?? 0)}°C, ` +
-    `Food=${((ws.food_abundance ?? 0) * 100).toFixed(0)}%, ` +
-    `Water=${((ws.water_abundance ?? 0) * 100).toFixed(0)}%, ` +
-    `Weather=${ws.current_weather ?? 'clear'} (intensity ${Math.round((ws.weather_intensity ?? 0.5) * 100)}%)`;
 
-  // ── Population summary ────────────────────────────────────────────────────
-  const avgAge = alive.length
-    ? (alive.reduce((s, i) => s + getAge(i, day), 0) / alive.length).toFixed(1)
-    : 0;
-  const popLine = `Population: ${alive.length} alive / ${allInds.length} total born, ` +
-    `Year: ${Math.floor(day / 365)}, Average age: ${avgAge}, ` +
-    `Male: ${alive.filter(i => i.sex === 'male').length}, Female: ${alive.filter(i => i.sex === 'female').length}`;
+  const worldLine = `World: biome=${ws.biome}, season=${ws.season}, temp=${Math.round(ws.temperature ?? 0)}C, food=${((ws.food_abundance ?? 0) * 100).toFixed(0)}%, water=${((ws.water_abundance ?? 0) * 100).toFixed(0)}%, weather=${ws.current_weather ?? 'clear'}`;
 
-  // ── Death statistics ─────────────────────────────────────────────────────
-  let deathLine = 'Deaths: None yet';
+  const avgAge = alive.length ? (alive.reduce((s, i) => s + getAge(i, day), 0) / alive.length).toFixed(1) : 0;
+  const popLine = `Population: alive=${alive.length}, total_born=${allInds.length}, year=${Math.floor(day / 365)}, avg_age=${avgAge}, male=${alive.filter(i => i.sex === 'male').length}, female=${alive.filter(i => i.sex === 'female').length}`;
+
+  let deathLine = 'Deaths: none';
   if (dead.length) {
     const ages = dead.map(i => (i.death_day - i.birth_day) / 365);
-    const avg  = (ages.reduce((a, b) => a + b, 0) / ages.length).toFixed(1);
-    const inf  = ages.filter(a => a < 1).length;
-    const ch   = ages.filter(a => a >= 1 && a < 15).length;
+    const avg = (ages.reduce((a, b) => a + b, 0) / ages.length).toFixed(1);
     const causes = {};
-    for (const i of dead) { const c = i.death_cause ?? i.cause_of_death ?? 'unknown'; causes[c] = (causes[c] ?? 0) + 1; }
-    const topCauses = Object.entries(causes).sort((a, b) => b[1] - a[1]).slice(0, 4)
-      .map(([k, v]) => `${k}:${v}`).join(', ');
-    deathLine = `Deaths: ${dead.length} total, Average age at death: ${avg} years, ` +
-      `Infant (<1 year): ${inf}, Child (1-15 years): ${ch}, Causes: ${topCauses}`;
+    for (const i of dead) {
+      const c = i.death_cause ?? i.cause_of_death ?? 'unknown';
+      causes[c] = (causes[c] ?? 0) + 1;
+    }
+    const topCauses = Object.entries(causes).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([k, v]) => `${k}:${v}`).join(', ');
+    deathLine = `Deaths: count=${dead.length}, avg_age=${avg}, causes=${topCauses}`;
   }
 
-  // ── Founders ─────────────────────────────────────────────────────────────
   const founders = allInds.filter(i => i.is_founder);
   const foundersLine = founders.length
-    ? 'Founders (fixed position, do not move):\n' + founders.map(f => {
+    ? 'Founders:\n' + founders.map(f => {
         const age = Math.round(getAge(f, day));
-        return `  - ${f.sex === 'male' ? 'Male' : 'Female'} founder, age ${age}, ` +
-          `${f.is_dead ? `DEAD (${f.death_cause ?? '?'}, age ${Math.round((f.death_day - f.birth_day) / 365)})` : 'alive'}, ` +
-          `position: (${(f.x ?? 0).toFixed(2)}°, ${(f.y ?? 0).toFixed(2)}°)`;
+        return `  - id=${f.id}, sex=${f.sex}, age=${age}, status=${f.is_dead ? 'dead' : 'alive'}, pos=(${(f.x ?? 0).toFixed(2)},${(f.y ?? 0).toFixed(2)})`;
       }).join('\n')
-    : 'No founders found';
+    : 'Founders: none';
 
-  // ── Individual list ───────────────────────────────────────────────────────
   const MAX_IND = 60;
-  const indsToShow = alive.slice(0, MAX_IND);
-  const indLines = indsToShow.map(i => {
-    const age    = Math.round(getAge(i, day));
-    const name   = i.phenotype?.name ?? `${i.sex === 'male' ? '♂' : '♀'}-${i.id.slice(-4).toUpperCase()}`;
-    const hp     = Math.round((i.health?.hp ?? 1) * 100);
-    const cal    = Math.round((i.health?.calories ?? 1) * 100);
-    const urge   = Math.round((i.mating_urge ?? 0) * 100);
-    const preg   = i.health?.pregnancy ? ' [PREGNANT]' : '';
-    const found  = i.is_founder ? ' [FOUNDER-FIXED]' : '';
-    const grp    = i.group_id ? ` [group:${i.group_id.slice(-4)}]` : '';
-    const stress = Math.min(1, Math.max(0,
-      Math.max((0.45 - (i.health?.calories ?? 0.7)) / 0.45, (0.35 - (i.health?.hydration ?? 0.7)) / 0.35)
-    ));
-    const drive  = stress > 0.4 ? 'seeking food/water' : urge > 65 ? 'seeking mate' : 'in band';
-    return `  ${name} | ${i.sex === 'male' ? 'M' : 'F'} age:${age} hp:${hp}% cal:${cal}% mating-urge:${urge}%${preg}${found}${grp} → ${drive}`;
+  const indLines = alive.slice(0, MAX_IND).map(i => {
+    const age = Math.round(getAge(i, day));
+    const name = i.phenotype?.name ?? `${i.sex === 'male' ? 'M' : 'F'}-${i.id.slice(-4).toUpperCase()}`;
+    const hp = Math.round((i.health?.hp ?? 1) * 100);
+    const cal = Math.round((i.health?.calories ?? 1) * 100);
+    const preg = i.health?.pregnancy ? ' pregnant=true' : '';
+    const found = i.is_founder ? ' founder=true' : '';
+    const grp = i.group_id ? ` group=${i.group_id.slice(-4)}` : '';
+    return `  ${name} | id=${i.id} sex=${i.sex} age=${age} hp=${hp}% calories=${cal}%${preg}${found}${grp}`;
   });
-  const indSection = `Individuals (${alive.length} alive${alive.length > MAX_IND ? `, showing first ${MAX_IND}` : ''}):\n` +
-    indLines.join('\n');
+  const indSection = `Individuals (${alive.length} alive${alive.length > MAX_IND ? `, showing ${MAX_IND}` : ''}):\n${indLines.join('\n')}`;
 
-  // ── Groups ───────────────────────────────────────────────────────────────
-  let groupLine = 'Groups: None yet';
+  let groupLine = 'Groups: none';
   if (engine.groups?.length) {
     groupLine = 'Groups:\n' + engine.groups.map(g => {
       const members = alive.filter(i => g.member_ids?.includes(i.id));
-      return `  - Group ${g.id.slice(-4)}: ${members.length} members, ` +
-        `center (${(g.territory?.x ?? 0).toFixed(1)}°, ${(g.territory?.y ?? 0).toFixed(1)}°)`;
+      return `  - group=${g.id.slice(-4)} members=${members.length}`;
     }).join('\n');
   }
 
-  // ── Technology / belief / art ─────────────────────────────────────────────
-  const techLine  = `Technologies (${engine.discoveredTechs?.size ?? 0}): ${[...(engine.discoveredTechs ?? [])].join(', ') || 'none'}`;
+  const techLine = `Technologies (${engine.discoveredTechs?.size ?? 0}): ${[...(engine.discoveredTechs ?? [])].join(', ') || 'none'}`;
   const beliefLine = `Beliefs (${engine.discoveredBeliefs?.size ?? 0}): ${[...(engine.discoveredBeliefs ?? [])].slice(0, 10).join(', ') || 'none'}`;
+  const recentEvents = (engine.events ?? []).slice(-30).reverse().map(e => `  Y${e.sim_year} [${e.event_type}] ${e.description}`).join('\n');
 
-  // ── Recent events ────────────────────────────────────────────────────────
-  const recentEvents = (engine.events ?? []).slice(-30).reverse()
-    .map(e => `  Y${e.sim_year} [${e.event_type}] ${e.description}`)
-    .join('\n');
-
-  // ── Movement context ─────────────────────────────────────────────────────
-  const cx = alive.reduce((s, i) => s + (i.x ?? 0), 0) / Math.max(1, alive.length);
-  const cy = alive.reduce((s, i) => s + (i.y ?? 0), 0) / Math.max(1, alive.length);
-  const avgCal  = alive.reduce((s, i) => s + (i.health?.calories ?? 0.7), 0) / Math.max(1, alive.length);
-  const avgUrge = alive.reduce((s, i) => s + (i.mating_urge ?? 0), 0) / Math.max(1, alive.length);
-  const dominant = avgCal < 0.38 ? 'foraging' : avgUrge > 0.65 ? 'seeking mate' : 'band cohesion';
-  const moveLine = `Movement: Dominant drive="${dominant}", avg.calories=${(avgCal * 100).toFixed(0)}%, ` +
-    `avg.mating-urge=${(avgUrge * 100).toFixed(0)}%, ` +
-    `band center=(${cx.toFixed(2)}°, ${cy.toFixed(2)}°)`;
-
-  return [worldLine, popLine, deathLine, '', foundersLine, '', indSection, '', groupLine, '',
-    techLine, beliefLine, moveLine, '', 'Last 30 events:', recentEvents].join('\n');
+  return [worldLine, popLine, deathLine, '', foundersLine, '', indSection, '', groupLine, '', techLine, beliefLine, '', 'Last 30 events:', recentEvents].join('\n');
 }
 
 router.post('/:simId', authenticate, requireSimulationOwner, async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, lang } = req.body;
+    const activeLang = normalizeLang(lang);
     const engine = simulationManager.getEngine(req.params.simId);
     const context = buildEngineContext(engine);
     const response = await geminiChat({
       model: process.env.GEMINI_ANALYSIS_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite',
       max_tokens: 800,
-      system: `You are an expert AI assistant analyzing the ANATOLIA-SIM civilization simulation.\n\n${SIM_ARCHITECTURE}\n\nCURRENT SIMULATION DATA:\n${context}\n\nProvide your response in English — concise, precise, and data-driven. You know the architectural design decisions.`,
+      system: `You are an expert AI assistant analyzing the ANATOLIA-SIM civilization simulation.\n${languageInstruction(activeLang)}\n\n${SIM_ARCHITECTURE}\nCURRENT SIMULATION DATA:\n${context}\n\nBe concise, precise, skeptical, and data-driven.`,
       user: message,
     });
     res.json({ response });
@@ -139,7 +115,6 @@ router.post('/:simId', authenticate, requireSimulationOwner, async (req, res) =>
   }
 });
 
-// Wilson score 95% confidence interval for a proportion p observed over n independent events.
 function wilsonCI(p, n) {
   if (n <= 0) return [0, 1];
   const z = 1.96;
@@ -151,20 +126,18 @@ function wilsonCI(p, n) {
 
 router.post('/:simId/hypothesis', authenticate, requireSimulationOwner, async (req, res) => {
   try {
-    const { hypothesis, events: clientEvents } = req.body;
+    const { hypothesis, events: clientEvents, lang } = req.body;
+    const activeLang = normalizeLang(lang);
     const engine = simulationManager.getEngine(req.params.simId);
     const context = buildEngineContext(engine);
-    const text = await geminiChat({
+    const llmText = await geminiChat({
       model: process.env.GEMINI_ANALYSIS_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite',
       max_tokens: 600,
-      system: `You are a scientist evaluating hypotheses about a civilization simulation.\n${SIM_ARCHITECTURE}\n${context}`,
-      user: `Evaluate: "${hypothesis}"\nRespond JSON only: {"verdict":"supported"|"refuted"|"inconclusive","confidence":0.0-1.0,"n_evidence":integer,"reasoning":"..."}`,
+      system: `You are a scientist evaluating hypotheses about a civilization simulation.\n${languageInstruction(activeLang)}\n\n${SIM_ARCHITECTURE}\nCURRENT SIMULATION DATA:\n${context}`,
+      user: `Evaluate: "${hypothesis}"\nRespond JSON only: {"verdict":"supported"|"refuted"|"inconclusive","confidence":0.0-1.0,"n_evidence":integer,"reasoning":"..."}\nThe verdict keys must stay in English; the reasoning value must be in ${LANGUAGE_NAMES[activeLang]}.`,
     });
-    const match = text.match(/\{[\s\S]*\}/);
-    const json = match ? JSON.parse(match[0]) : { verdict: 'inconclusive', confidence: 0.5, reasoning: 'Insufficient data.' };
-    // Compute Wilson score 95% CI from confidence and evidence count.
-    // n_evidence is the number of observed events the LLM considers relevant;
-    // fall back to total events sent if the LLM didn't report it.
+    const match = llmText.match(/\{[\s\S]*\}/);
+    const json = match ? JSON.parse(match[0]) : { verdict: 'inconclusive', confidence: 0.5, reasoning: activeLang === 'tr' ? 'Yetersiz veri.' : 'Insufficient data.' };
     const n = (typeof json.n_evidence === 'number' && json.n_evidence > 0)
       ? json.n_evidence
       : (Array.isArray(clientEvents) ? clientEvents.length : 20);
