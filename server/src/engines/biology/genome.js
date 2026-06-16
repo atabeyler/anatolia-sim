@@ -141,7 +141,8 @@ export function computePhenotype(genome) {
   };
 
   const height_base = (g('HEIGHT_01') + g('HEIGHT_02') + g('HEIGHT_03')) / 3;
-  const language_capacity = g('FOXP2_01') * 0.6 + g('CNTNAP2_01') * 0.4;
+  // FOXP2 should dominate language capacity; CNTNAP2 modulates learning support.
+  const language_capacity = Math.min(1, g('FOXP2_01') * 0.75 + g('CNTNAP2_01') * 0.25);
   const fluid_intelligence = (g('BDNF_01') + g('COMT_01') + g('DTNBP1_01') + g('NRG1_01') + g('DISC1_01')) / 5;
   const consciousness_potential = (g('NRXN1_01') + g('SHANK3_01') + g('RELN_01') + g('FOXP2_01')) / 4;
   const belief_capacity = Math.max(0, (consciousness_potential - 0.1) / 0.9);
