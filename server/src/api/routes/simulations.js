@@ -101,7 +101,8 @@ function agePhysique(age, sex, heightFactor, metabolism) {
 }
 
 function serializeIndividual(ind, currentDay) {
-  const age = Math.max(0, (currentDay - (ind.birth_day ?? 0)) / 365);
+  const ageDay = ind.is_dead && ind.death_day != null ? ind.death_day : currentDay;
+  const age = Math.max(0, (ageDay - (ind.birth_day ?? 0)) / 365);
   const heightFactor = ind.phenotype?.height_factor ?? 0.5;
   const metabolism   = ind.phenotype?.metabolism   ?? 0.5;
   const beliefs = ind.beliefs instanceof Set
