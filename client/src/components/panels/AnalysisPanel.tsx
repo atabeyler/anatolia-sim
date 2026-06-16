@@ -13,7 +13,7 @@ const QUICK_QUESTIONS: { tr: string; en: string; de: string; fr: string; ar: str
 ];
 
 export default function AnalysisPanel() {
-  const { currentSim, accessToken, lang, stats, events } = useSimStore();
+  const { currentSim, accessToken, lang } = useSimStore();
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,17 +22,22 @@ export default function AnalysisPanel() {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
   async function send(msg?: string) {
+    const activeLang = lang as LangCode;
     const m = (msg ?? input).trim();
     if (!m || !currentSim) return;
     setInput('');
     setMessages(prev => [...prev, { role: 'user', content: m }]);
     setLoading(true);
     try {
-      const { data } = await axios.post(`/api/analysis/${currentSim.id}`, { message: m }, { headers: { Authorization: `Bearer ${accessToken}` } });
+      const { data } = await axios.post(
+        `/api/analysis/${currentSim.id}`,
+        { message: m, lang: activeLang },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
       setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
     } catch (err: any) {
       const detail = err?.response?.data?.error ?? err?.message ?? '';
-      setMessages(prev => [...prev, { role: 'assistant', content: `Analiz başarısız: ${detail}` }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `${text(activeLang, { tr: 'Analiz başarısız', en: 'Analysis failed', de: 'Analyse fehlgeschlagen', fr: 'Échec de l’analyse', ar: 'فشل التحليل' })}: ${detail}` }]);
     }
     setLoading(false);
   }
