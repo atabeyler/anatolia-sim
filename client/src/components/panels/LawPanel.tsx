@@ -5,36 +5,56 @@ import { Scale, ShieldCheck } from 'lucide-react';
 
 const NORM_STAGES = [
   {
-    stage: 1, en: 'Spontaneous Norms', tr: 'Kendiliğinden Normlar',
+    stage: 1,
+    en: 'Spontaneous Norms',
+    tr: 'Kendiliğinden Normlar',
+    de: 'Spontane Normen',
+    fr: 'Normes spontanées',
+    ar: 'معايير تلقائية',
     norms: [
-      { en: 'Reciprocity',   tr: 'Karşılıklılık' },
-      { en: 'No Theft',      tr: 'Hırsızlık Yasağı' },
-      { en: 'Incest Taboo',  tr: 'Ensest Tabusu' },
+      { en: 'Reciprocity',   tr: 'Karşılıklılık',    de: 'Gegenseitigkeit', fr: 'Réciprocité',      ar: 'المعاملة بالمثل' },
+      { en: 'No Theft',      tr: 'Hırsızlık Yasağı', de: 'Diebstahlverbot', fr: 'Interdiction du vol', ar: 'منع السرقة' },
+      { en: 'Incest Taboo',  tr: 'Ensest Tabusu',    de: 'Inzesttabu',      fr: 'Tabou de l’inceste', ar: 'تحريم زواج الأقارب' },
     ],
   },
   {
-    stage: 2, en: 'Social Norms', tr: 'Sosyal Normlar',
+    stage: 2,
+    en: 'Social Norms',
+    tr: 'Sosyal Normlar',
+    de: 'Soziale Normen',
+    fr: 'Normes sociales',
+    ar: 'معايير اجتماعية',
     norms: [
-      { en: 'Elder Respect',  tr: 'Yaşlılara Saygı' },
-      { en: 'Hospitality',    tr: 'Misafirperverlik' },
-      { en: 'Blood Feud',     tr: 'Kan Davası' },
-      { en: 'Communal Work',  tr: 'Ortak Çalışma' },
+      { en: 'Elder Respect',  tr: 'Yaşlılara Saygı', de: 'Respekt vor Ältesten', fr: 'Respect des anciens', ar: 'احترام كبار السن' },
+      { en: 'Hospitality',    tr: 'Misafirperverlik', de: 'Gastfreundschaft', fr: 'Hospitalité', ar: 'الضيافة' },
+      { en: 'Blood Feud',     tr: 'Kan Davası',       de: 'Blutrache', fr: 'Vendetta', ar: 'الثأر' },
+      { en: 'Communal Work',  tr: 'Ortak Çalışma',    de: 'Gemeinschaftsarbeit', fr: 'Travail communautaire', ar: 'العمل الجماعي' },
     ],
   },
   {
-    stage: 3, en: 'Proto-Law', tr: 'Proto-Hukuk',
+    stage: 3,
+    en: 'Proto-Law',
+    tr: 'Proto-Hukuk',
+    de: 'Proto-Recht',
+    fr: 'Proto-droit',
+    ar: 'قانون أولي',
     norms: [
-      { en: 'Leader Arbitration', tr: 'Lider Tahkimi' },
-      { en: 'Property Rights',    tr: 'Mülkiyet Hakkı' },
-      { en: 'Exile Punishment',   tr: 'Sürgün Cezası' },
+      { en: 'Leader Arbitration', tr: 'Lider Tahkimi',  de: 'Schlichtung durch Anführer', fr: 'Arbitrage du chef', ar: 'تحكيم القائد' },
+      { en: 'Property Rights',    tr: 'Mülkiyet Hakkı', de: 'Eigentumsrechte', fr: 'Droits de propriété', ar: 'حقوق الملكية' },
+      { en: 'Exile Punishment',   tr: 'Sürgün Cezası',  de: 'Verbannungsstrafe', fr: 'Peine d’exil', ar: 'عقوبة النفي' },
     ],
   },
   {
-    stage: 4, en: 'Formal Law', tr: 'Resmi Hukuk',
+    stage: 4,
+    en: 'Formal Law',
+    tr: 'Resmi Hukuk',
+    de: 'Formales Recht',
+    fr: 'Droit formel',
+    ar: 'قانون رسمي',
     norms: [
-      { en: 'Written Law',   tr: 'Yazılı Hukuk' },
-      { en: 'Tax System',    tr: 'Vergi Sistemi' },
-      { en: 'Contract Law',  tr: 'Sözleşme Hukuku' },
+      { en: 'Written Law',   tr: 'Yazılı Hukuk',    de: 'Geschriebenes Recht', fr: 'Loi écrite', ar: 'قانون مكتوب' },
+      { en: 'Tax System',    tr: 'Vergi Sistemi',   de: 'Steuersystem', fr: 'Système fiscal', ar: 'نظام الضرائب' },
+      { en: 'Contract Law',  tr: 'Sözleşme Hukuku', de: 'Vertragsrecht', fr: 'Droit des contrats', ar: 'قانون العقود' },
     ],
   },
 ];
@@ -52,18 +72,18 @@ export default function LawPanel() {
         <div className="bg-sim-surface rounded-lg p-2 text-center">
           <ShieldCheck size={16} className="text-green-400 mx-auto mb-1" />
           <div className="text-green-400 font-bold text-lg">{normCount}</div>
-          <div className="text-sim-muted text-sm">{text(lang as LangCode, { en: 'Active Norms', tr: 'Aktif Normlar' })}</div>
+          <div className="text-sim-muted text-sm">{text(lang as LangCode, { en: 'Active Norms', tr: 'Aktif Normlar', de: 'Aktive Normen', fr: 'Normes actives', ar: 'معايير نشطة' })}</div>
         </div>
         <div className="bg-sim-surface rounded-lg p-2 text-center">
           <Scale size={16} className="text-yellow-400 mx-auto mb-1" />
           <div className="text-yellow-400 font-bold text-lg">{violationCount}</div>
-          <div className="text-sim-muted text-sm">{text(lang as LangCode, { en: 'Violations', tr: 'İhlaller' })}</div>
+          <div className="text-sim-muted text-sm">{text(lang as LangCode, { en: 'Violations', tr: 'İhlaller', de: 'Verstöße', fr: 'Violations', ar: 'انتهاكات' })}</div>
         </div>
       </div>
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {text(lang as LangCode, { en: 'Norm Progression', tr: 'Norm İlerlemesi' })}
+          {text(lang as LangCode, { en: 'Norm Progression', tr: 'Norm İlerlemesi', de: 'Normentwicklung', fr: 'Progression des normes', ar: 'تطور المعايير' })}
         </h4>
         <div className="space-y-3">
           {NORM_STAGES.map(stage => {
@@ -97,11 +117,11 @@ export default function LawPanel() {
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {text(lang as LangCode, { en: 'Legal Events', tr: 'Hukuki Olaylar' })}
+          {text(lang as LangCode, { en: 'Legal Events', tr: 'Hukuki Olaylar', de: 'Rechtsereignisse', fr: 'Événements juridiques', ar: 'أحداث قانونية' })}
         </h4>
         {lawEvents.length === 0 ? (
           <p className="text-sim-muted italic text-sm">
-            {text(lang as LangCode, { en: 'No legal events yet.', tr: 'Henüz hukuki olay yok.' })}
+            {text(lang as LangCode, { en: 'No legal events yet.', tr: 'Henüz hukuki olay yok.', de: 'Noch keine Rechtsereignisse.', fr: 'Aucun événement juridique pour le moment.', ar: 'لا توجد أحداث قانونية بعد.' })}
           </p>
         ) : (
           <div className="space-y-1 max-h-40 overflow-y-auto">
