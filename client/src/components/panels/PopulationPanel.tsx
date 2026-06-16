@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import axios from 'axios';
 import { useSimStore } from '../../store/simStore';
 import DetailPanel from './DetailPanel';
@@ -889,6 +889,7 @@ export default function PopulationPanel() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [deadExpanded, setDeadExpanded] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const loadingRef = useRef(false);
 
   function toggleCompare(e: React.MouseEvent, ind: any) {
     e.stopPropagation();
@@ -902,6 +903,8 @@ export default function PopulationPanel() {
 
   async function load() {
     if (!currentSim || !accessToken) return;
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     setLoading(true);
     try {
       const headers = { Authorization: `Bearer ${accessToken}` };
@@ -913,22 +916,25 @@ export default function PopulationPanel() {
       setDeadIndividuals(deadRes.data);
     } catch {}
     setLoading(false);
+    loadingRef.current = false;
   }
 
   useEffect(() => {
     load();
-    // List refreshes every 20s; counts come from WebSocket stats (real-time)
-    intervalRef.current = setInterval(load, 3000);
+    // List refreshes more slowly than stats; counts come from WebSocket in real time.
+    intervalRef.current = setInterval(load, 10000);
     return () => clearInterval(intervalRef.current);
   }, [currentSim?.id]);
 
-  const allForLookup = [...individuals, ...deadIndividuals];
-  const filtered = individuals
-    .filter(i => filter === 'all' || i.sex === filter)
-    .sort((a, b) => {
-      const diff = parseFloat(a.age_years ?? 0) - parseFloat(b.age_years ?? 0);
-      return sortDir === 'asc' ? diff : -diff;
-    });
+  const allForLookup = useMemo(() => [...individuals, ...deadIndividuals], [individuals, deadIndividuals]);
+  const filtered = useMemo(() => {
+    return [...individuals]
+      .filter(i => filter === 'all' || i.sex === filter)
+      .sort((a, b) => {
+        const diff = parseFloat(a.age_years ?? 0) - parseFloat(b.age_years ?? 0);
+        return sortDir === 'asc' ? diff : -diff;
+      });
+  }, [individuals, filter, sortDir]);
 
   return (
     <DetailPanel panelId="population" title="Population" titleTr="Nüfus">

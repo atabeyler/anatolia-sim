@@ -7,7 +7,11 @@
   },
   "scripts": {
     "build": "cd client && npm install --include=dev && npm run build && cd ../server && npm install --include=dev",
+    "desktop": "npm run build && electron desktop/main.mjs",
     "start": "cd server && npm start",
     "test": "cd server && npm test && cd ../client && npm test"
+  },
+  "devDependencies": {
+    "electron": "^31.6.0"
   }
 }
