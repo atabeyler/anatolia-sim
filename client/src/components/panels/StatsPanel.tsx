@@ -6,13 +6,13 @@ import { text, type LangCode } from '../../utils/i18n';
 
 type Metric = 'pop' | 'food' | 'water' | 'happiness' | 'consciousness' | 'lang';
 
-const METRICS: { key: Metric; label: string; labelTr: string; color: string }[] = [
-  { key: 'pop',           label: 'Population', labelTr: 'Nüfus',     color: '#4f6ef7' },
-  { key: 'food',          label: 'Food',        labelTr: 'Besin',     color: '#4ecb71' },
-  { key: 'water',         label: 'Water',       labelTr: 'Su',        color: '#7dd3fc' },
-  { key: 'happiness',     label: 'Happiness',   labelTr: 'Mutluluk',  color: '#ff8ab0' },
-  { key: 'consciousness', label: 'Conscious.',  labelTr: 'Bilinç',    color: '#c8b4ff' },
-  { key: 'lang',          label: 'Language',    labelTr: 'Dil',       color: '#00d4ff' },
+const METRICS: { key: Metric; label: string; labelTr: string; labelDe: string; labelFr: string; labelAr: string; color: string }[] = [
+  { key: 'pop',           label: 'Population',   labelTr: 'Nüfus',      labelDe: 'Bevölkerung',      labelFr: 'Population',       labelAr: 'السكان', color: '#4f6ef7' },
+  { key: 'food',          label: 'Food',         labelTr: 'Besin',       labelDe: 'Nahrung',          labelFr: 'Nourriture',       labelAr: 'الغذاء', color: '#4ecb71' },
+  { key: 'water',         label: 'Water',        labelTr: 'Su',          labelDe: 'Wasser',           labelFr: 'Eau',              labelAr: 'الماء', color: '#7dd3fc' },
+  { key: 'happiness',     label: 'Happiness',    labelTr: 'Mutluluk',    labelDe: 'Glück',            labelFr: 'Bonheur',          labelAr: 'السعادة', color: '#ff8ab0' },
+  { key: 'consciousness', label: 'Conscious.',    labelTr: 'Bilinç',      labelDe: 'Bewusstsein',      labelFr: 'Conscience',       labelAr: 'الوعي', color: '#c8b4ff' },
+  { key: 'lang',          label: 'Language',     labelTr: 'Dil',         labelDe: 'Sprache',          labelFr: 'Langue',           labelAr: 'اللغة', color: '#00d4ff' },
 ];
 
 function GaugeBar({ label, value, color }: { label: string; value: number; color: string }) {
@@ -39,7 +39,7 @@ function useDrag(initial: { x: number; y: number }) {
   useEffect(() => {
     function onMove(e: MouseEvent | TouchEvent) {
       if (!dragging.current) return;
-      if ('touches' in e) e.preventDefault(); // prevent page scroll on mobile
+      if ('touches' in e) e.preventDefault();
       const cx = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
       const cy = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
       const dx = cx - origin.current.clientX;
@@ -84,7 +84,6 @@ export default function StatsPanel() {
   const [history, setHistory] = useState<any[]>([]);
   const lastYear = useRef(-1);
 
-  // position: fixed — coords relative to viewport, never clipped by overflow:hidden
   const fab = useDrag({ x: window.innerWidth - 60, y: window.innerHeight - 80 });
   const panel = useDrag({ x: Math.max(16, window.innerWidth - 320), y: Math.max(60, window.innerHeight - 480) });
 
@@ -118,12 +117,10 @@ export default function StatsPanel() {
 
   return (
     <>
-      {/* Click-outside backdrop */}
       {open && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 38 }} onClick={() => setOpen(false)} />
       )}
 
-      {/* Panel — independently draggable */}
       <div
         onClick={e => e.stopPropagation()}
         style={{
@@ -148,7 +145,6 @@ export default function StatsPanel() {
         <span style={{ position: 'absolute', top: -1, left: -1, width: 10, height: 10, borderTop: '2px solid rgba(79,110,247,0.8)', borderLeft: '2px solid rgba(79,110,247,0.8)' }} />
         <span style={{ position: 'absolute', bottom: -1, right: -1, width: 10, height: 10, borderBottom: '2px solid rgba(79,110,247,0.8)', borderRight: '2px solid rgba(79,110,247,0.8)' }} />
 
-        {/* Drag handle header */}
         <div
           onMouseDown={e => panel.startDrag(e.clientX, e.clientY)}
           onTouchStart={e => panel.startDrag(e.touches[0].clientX, e.touches[0].clientY)}
@@ -157,11 +153,13 @@ export default function StatsPanel() {
           <GripHorizontal size={12} style={{ color: '#6a9a80', flexShrink: 0 }} />
           <div style={{ width: 3, height: 14, background: '#4f6ef7', boxShadow: '0 0 6px rgba(79,110,247,0.8)', flexShrink: 0 }} />
           <span style={{ fontSize: 12, color: '#4f6ef7', letterSpacing: '0.22em', fontWeight: 700 }}>
-            {text(lang as LangCode, { tr: 'NÜFUS TELEMETRİSİ', en: 'POPULATION TELEMETRY', de: 'BEVÖLKERUNGSTELEMETRIE', fr: 'TÉLÉMÉTRIE POPULATION', ar: 'قياس السكان' })}
+            {text(lang as LangCode, { tr: 'NÜFUS TELEMETRİSİ', en: 'POPULATION TELEMETRY', de: 'BEVÖLKERUNGSTELEMETRIE', fr: 'TÉLÉMÉTRIE DE LA POPULATION', ar: 'قياس السكان' })}
           </span>
           <div style={{ flex: 1 }} />
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: stats ? '#00e887' : '#a0c8b0', boxShadow: stats ? '0 0 6px #00e887' : 'none', animation: stats ? 'pulse 1.5s infinite' : 'none' }} />
-          <span style={{ fontSize: 12, color: stats ? '#00e887' : '#a0c8b0', letterSpacing: '0.1em' }}>LIVE</span>
+          <span style={{ fontSize: 12, color: stats ? '#00e887' : '#a0c8b0', letterSpacing: '0.1em' }}>
+            {text(lang as LangCode, { tr: 'CANLI', en: 'LIVE', de: 'LIVE', fr: 'EN DIRECT', ar: 'مباشر' })}
+          </span>
           <button
             onClick={e => { e.stopPropagation(); setOpen(false); }}
             style={{ marginLeft: 6, background: 'transparent', border: 'none', color: '#a0c8b0', cursor: 'pointer', lineHeight: 0, padding: 2 }}
@@ -170,7 +168,6 @@ export default function StatsPanel() {
           </button>
         </div>
 
-        {/* Metric toggles — 3-column grid to fit 6 metrics */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4, marginBottom: 8 }}>
           {METRICS.map(m => (
             <button key={m.key} onClick={() => toggleMetric(m.key)}
@@ -182,12 +179,11 @@ export default function StatsPanel() {
                 cursor: 'pointer', borderRadius: 2, letterSpacing: '0.03em', transition: 'all 0.15s',
                 fontFamily: 'Share Tech Mono, monospace',
               }}>
-              {text(lang as LangCode, { tr: m.labelTr, en: m.label, de: m.label, fr: m.label, ar: m.label })}
+              {text(lang as LangCode, { tr: m.labelTr, en: m.label, de: m.labelDe, fr: m.labelFr, ar: m.labelAr })}
             </button>
           ))}
         </div>
 
-        {/* Chart */}
         {history.length > 1 ? (
           <div style={{ marginBottom: 10 }}>
             <ResponsiveContainer width="100%" height={72}>
@@ -199,7 +195,7 @@ export default function StatsPanel() {
                   labelStyle={{ color: '#a0c8b0' }}
                   formatter={(val: any, name: string) => {
                     const m = METRICS.find(x => x.key === name);
-                    return [name === 'pop' ? Number(val).toLocaleString() : `${val}%`, m ? text(lang as LangCode, { tr: m.labelTr, en: m.label, de: m.label, fr: m.label, ar: m.label }) : name];
+                    return [name === 'pop' ? Number(val).toLocaleString() : `${val}%`, m ? text(lang as LangCode, { tr: m.labelTr, en: m.label, de: m.labelDe, fr: m.labelFr, ar: m.labelAr }) : name];
                   }}
                 />
                 {METRICS.filter(m => activeMetrics.has(m.key)).map(m => (
@@ -211,18 +207,17 @@ export default function StatsPanel() {
         ) : (
           <div style={{ height: 72, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
             <span style={{ fontSize: 12, color: 'rgba(160,200,180,0.7)', letterSpacing: '0.1em' }}>
-              {text(lang as LangCode, { tr: 'VERİ BEKLENIYOR…', en: 'AWAITING DATA…', de: 'DATEN WARTEN…', fr: 'EN ATTENTE…', ar: 'في انتظار البيانات…' })}
+              {text(lang as LangCode, { tr: 'VERİ BEKLENİYOR…', en: 'AWAITING DATA…', de: 'DATEN WARTEN…', fr: 'EN ATTENTE…', ar: 'في انتظار البيانات…' })}
             </span>
           </div>
         )}
 
-        {/* Quick stats */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 10 }}>
           {[
-            { l: text(lang as LangCode, { tr: 'NÜFUS', en: 'POP', de: 'BEV.', fr: 'POP.', ar: 'سكان' }),      v: stats ? stats.population.toLocaleString() : '—', c: '#4f6ef7' },
-            { l: text(lang as LangCode, { tr: 'ORT YAŞ', en: 'AGE', de: 'ALTER', fr: 'ÂGE', ar: 'عمر' }),    v: stats ? `${stats.avg_age.toFixed(1)} yr` : '—',   c: '#e0e0f0' },
-            { l: text(lang as LangCode, { tr: 'ZEKA', en: 'INTEL', de: 'INTEL.', fr: 'INTEL.', ar: 'ذكاء' }),      v: stats ? `${(stats.avg_intelligence * 100).toFixed(0)}%` : '—', c: '#d4a838' },
-            { l: text(lang as LangCode, { tr: 'TEKNOLOJİ', en: 'TECH', de: 'TECH.', fr: 'TECH.', ar: 'تقنية' }), v: stats?.technologies ?? '—', c: '#4ecb71' },
+            { l: text(lang as LangCode, { tr: 'NÜFUS', en: 'POP', de: 'BEV.', fr: 'POP.', ar: 'السكان' }),      v: stats ? stats.population.toLocaleString() : '—', c: '#4f6ef7' },
+            { l: text(lang as LangCode, { tr: 'ORT YAŞ', en: 'AGE', de: 'ALTER', fr: 'ÂGE', ar: 'العمر' }),    v: stats ? `${stats.avg_age.toFixed(1)} yr` : '—',   c: '#e0e0f0' },
+            { l: text(lang as LangCode, { tr: 'ZEKA', en: 'INTEL', de: 'INTEL.', fr: 'INTEL.', ar: 'الذكاء' }), v: stats ? `${(stats.avg_intelligence * 100).toFixed(0)}%` : '—', c: '#d4a838' },
+            { l: text(lang as LangCode, { tr: 'TEKNOLOJİ', en: 'TECH', de: 'TECH.', fr: 'TECH.', ar: 'التقنية' }), v: stats?.technologies ?? '—', c: '#4ecb71' },
           ].map(({ l, v, c }) => (
             <div key={l} style={{ background: 'rgba(4,4,15,0.8)', border: '1px solid rgba(255,255,255,0.07)', padding: '5px 8px', borderRadius: 2 }}>
               <div style={{ fontSize: 12, color: '#a0c8b0', letterSpacing: '0.1em', marginBottom: 2 }}>{l}</div>
@@ -231,15 +226,13 @@ export default function StatsPanel() {
           ))}
         </div>
 
-        {/* Gauge bars */}
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 8 }}>
-          <GaugeBar label={text(lang as LangCode, { tr: 'BESİN', en: 'FOOD', de: 'NAHRUNG', fr: 'NOURRITURE', ar: 'غذاء' })} value={stats?.food_abundance ?? 0} color="#4ecb71" />
-          <GaugeBar label={text(lang as LangCode, { tr: 'SU', en: 'WATER', de: 'WASSER', fr: 'EAU', ar: 'ماء' })} value={stats?.water_abundance ?? 0} color="#7dd3fc" />
-          <GaugeBar label={text(lang as LangCode, { tr: 'MUTLULUK', en: 'HAPPINESS', de: 'GLÜCK', fr: 'BONHEUR', ar: 'سعادة' })} value={(stats as any)?.happiness_index ?? 0} color="#ff8ab0" />
+          <GaugeBar label={text(lang as LangCode, { tr: 'BESİN', en: 'FOOD', de: 'NAHRUNG', fr: 'NOURRITURE', ar: 'الغذاء' })} value={stats?.food_abundance ?? 0} color="#4ecb71" />
+          <GaugeBar label={text(lang as LangCode, { tr: 'SU', en: 'WATER', de: 'WASSER', fr: 'EAU', ar: 'الماء' })} value={stats?.water_abundance ?? 0} color="#7dd3fc" />
+          <GaugeBar label={text(lang as LangCode, { tr: 'MUTLULUK', en: 'HAPPINESS', de: 'GLÜCK', fr: 'BONHEUR', ar: 'السعادة' })} value={(stats as any)?.happiness_index ?? 0} color="#ff8ab0" />
         </div>
       </div>
 
-      {/* FAB — independently draggable */}
       <button
         onMouseDown={e => fab.startDrag(e.clientX, e.clientY)}
         onTouchStart={e => fab.startDrag(e.touches[0].clientX, e.touches[0].clientY)}
@@ -260,7 +253,7 @@ export default function StatsPanel() {
           transition: 'background 0.2s, border-color 0.2s, box-shadow 0.2s',
           backdropFilter: 'blur(8px)',
         }}
-        title={text(lang as LangCode, { tr: 'Nüfus Telemetrisi', en: 'Population Telemetry', de: 'Bevölkerungstelemetrie', fr: 'Télémétrie Population', ar: 'قياس السكان' })}
+        title={text(lang as LangCode, { tr: 'Nüfus Telemetrisi', en: 'Population Telemetry', de: 'Bevölkerungstelemetrie', fr: 'Télémétrie de la population', ar: 'قياس السكان' })}
       >
         {open ? <X size={18} /> : <BarChart2 size={18} />}
       </button>
