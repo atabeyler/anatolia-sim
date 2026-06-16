@@ -6,8 +6,13 @@ import { resolve } from 'node:path';
 const PORT = Number(process.env.PORT ?? 3001);
 const LOCAL_URL = `http://127.0.0.1:${PORT}`;
 const APP_ROOT = app.getAppPath();
-const SERVER_ENTRY = resolve(APP_ROOT, 'server/src/index.js');
-const CLIENT_INDEX = resolve(APP_ROOT, 'client/dist/index.html');
+const APP_SERVER_ROOT = resolve(APP_ROOT, 'server');
+const RESOURCE_SERVER_ROOT = resolve(process.resourcesPath, 'server');
+const SERVER_ROOT = existsSync(resolve(APP_SERVER_ROOT, 'src/index.js')) ? APP_SERVER_ROOT : RESOURCE_SERVER_ROOT;
+const SERVER_ENTRY = resolve(SERVER_ROOT, 'src/index.js');
+const CLIENT_INDEX = existsSync(resolve(APP_ROOT, 'client/dist/index.html'))
+  ? resolve(APP_ROOT, 'client/dist/index.html')
+  : resolve(process.resourcesPath, 'client/dist/index.html');
 
 let mainWindow = null;
 let serverProcess = null;
@@ -41,7 +46,7 @@ async function ensureLocalServer() {
   }
 
   serverProcess = spawn(process.execPath, [SERVER_ENTRY], {
-    cwd: APP_ROOT,
+    cwd: SERVER_ROOT,
     env: {
       ...process.env,
       ELECTRON_RUN_AS_NODE: '1',

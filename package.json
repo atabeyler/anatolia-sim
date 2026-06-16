@@ -2,16 +2,24 @@
   "name": "anatolia-sim",
   "version": "1.0.0",
   "private": true,
+  "main": "desktop/main.mjs",
   "engines": {
     "node": ">=18"
   },
   "scripts": {
     "build": "cd client && npm install --include=dev && npm run build && cd ../server && npm install --include=dev",
     "desktop": "npm run build && electron desktop/main.mjs",
+    "portable": "node desktop/package-portable.mjs",
+    "dist": "npm run build && npm run portable",
     "start": "cd server && npm start",
     "test": "cd server && npm test && cd ../client && npm test"
   },
   "devDependencies": {
-    "electron": "^31.6.0"
+    "electron": "^31.6.0",
+    "electron-packager": "^17.1.2"
+  },
+  "build": {
+    "appId": "com.atabeyler.anatoliasim",
+    "productName": "Anatolia Sim"
   }
 }
