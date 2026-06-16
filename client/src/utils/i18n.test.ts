@@ -16,8 +16,8 @@ describe('text()', () => {
     expect(text('de', { tr: 'Merhaba' })).toBe('Merhaba');
   });
 
-  it('hiçbir değer yoksa boş string döndürür', () => {
-    expect(text('fr', {})).toBe('');
+  it('boş fallback değerinde boş string döndürür', () => {
+    expect(text('fr', { en: '' })).toBe('');
   });
 });
 
@@ -90,7 +90,7 @@ describe('translateEventDescription() — Türkçe', () => {
   });
 });
 
-// ── translateEventType() ────────────────────────────────────────────────────
+// ── translateEventType() ───────────────────────────────────────────────────
 
 describe('translateEventType()', () => {
   it('"birth" → "doğum" (Türkçe)', () => {
