@@ -51,7 +51,7 @@ export default function HypothesisPanel() {
     setLoading(true);
     setResult(null);
     try {
-      const { data } = await axios.post(`/api/analysis/${currentSim.id}/hypothesis`, { hypothesis, stats, events: events.slice(0, 50) }, { headers: { Authorization: `Bearer ${accessToken}` } });
+      const { data } = await axios.post(`/api/analysis/${currentSim.id}/hypothesis`, { hypothesis, lang, stats, events: events.slice(0, 50) }, { headers: { Authorization: `Bearer ${accessToken}` } });
       setResult(data);
     } catch { setResult({ verdict: 'inconclusive', confidence: 0, reasoning: text(lang as LangCode, { en: 'Test failed.', tr: 'Test başarısız.' }) }); }
     setLoading(false);
