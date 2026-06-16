@@ -17,6 +17,7 @@ export default function DetailPanel({ panelId, title, titleTr, titleDe, titleFr,
   if (activePanel !== panelId) return null;
 
   const displayTitle = text(lang as LangCode, { en: title, tr: titleTr, de: titleDe ?? title, fr: titleFr ?? title, ar: titleAr ?? title });
+  const moduleLabel = text(lang as LangCode, { tr: 'MODÜL', en: 'MODULE', de: 'MODUL', fr: 'MODULE', ar: 'وحدة' });
 
   return (
     <>
@@ -70,7 +71,7 @@ export default function DetailPanel({ panelId, title, titleTr, titleDe, titleFr,
       <div className="px-3 py-1 flex-shrink-0"
         style={{ borderTop: '1px solid #cc2222', background: 'rgba(0,8,4,0.9)' }}>
         <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 12, color: '#6a4040', letterSpacing: '0.15em' }}>
-          MODULE/{displayTitle.toUpperCase().replace(/ /g, '_')}
+          {moduleLabel}/{displayTitle.toUpperCase().replace(/ /g, '_')}
         </span>
       </div>
     </div>
