@@ -645,7 +645,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
       case 'appearance': return t('DIŞ GÖRÜNÜŞ', 'APPEARANCE');
       case 'trait': {
         const tr = ALL_TRAITS[meta.idx];
-        return (({ tr, en, de, fr, ar } as any)[lang] ?? tr.en).toUpperCase();
+        return (lang === 'tr' ? tr.tr : tr.en).toUpperCase();
       }
       case 'summary': return t('ÖZET', 'SUMMARY');
     }
