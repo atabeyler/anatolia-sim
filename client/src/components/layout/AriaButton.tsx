@@ -445,8 +445,14 @@ export default function AriaButton() {
   const COLORS: Record<AriaState, string> = { idle: '#00e887', listening: '#f97316', processing: '#a855f7' };
   const color = COLORS[uiState];
   const Icon = uiState === 'processing' ? Loader2 : uiState === 'listening' ? Mic : MicOff;
-  const langKey = store.lang === 'tr' ? 'tr' : 'en';
-  const label = { tr: { idle: 'ASİSTAN', listening: 'DİNLİYOR…', processing: 'İŞLENİYOR…' }, en: { idle: 'ASSISTANT', listening: 'LISTENING…', processing: 'PROCESSING…' } }[langKey][uiState];
+  const ARIA_LABELS: Record<string, Record<string, string>> = {
+    tr: { idle: 'ASİSTAN', listening: 'DİNLİYOR…', processing: 'İŞLENİYOR…' },
+    en: { idle: 'ASSISTANT', listening: 'LISTENING…', processing: 'PROCESSING…' },
+    de: { idle: 'ASSISTENT', listening: 'HÖRT ZU…', processing: 'VERARBEITET…' },
+    fr: { idle: 'ASSISTANT', listening: 'ÉCOUTE…', processing: 'TRAITEMENT…' },
+    ar: { idle: 'مساعد', listening: 'يستمع…', processing: 'يعالج…' },
+  };
+  const label = (ARIA_LABELS[store.lang] ?? ARIA_LABELS.en)[uiState];
   const hasOverlay = uiState !== 'idle' && (transcript || ariaText);
 
   return (

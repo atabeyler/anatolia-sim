@@ -133,7 +133,7 @@ export default function GodPanel() {
               ? <option value="">{text(lang as LangCode, { en: 'No population', tr: 'Nüfus yok' })}</option>
               : population.map(ind => (
                 <option key={ind.id} value={ind.id}>
-                  {ind.name ?? ind.id.slice(0, 8)} · {lang === 'tr' ? (ind.sex === 'M' ? 'E' : 'K') : ind.sex} · {Math.floor((ind.age ?? 0) / 365)}y
+                  {ind.name ?? ind.id.slice(0, 8)} · {ind.sex === 'M' ? ({'tr':'E','en':'M','de':'M','fr':'M','ar':'ذ'} as any)[lang] ?? 'M' : ({'tr':'K','en':'F','de':'W','fr':'F','ar':'أ'} as any)[lang] ?? 'F'} · {Math.floor((ind.age ?? 0) / 365)}y
                 </option>
               ))}
           </select>

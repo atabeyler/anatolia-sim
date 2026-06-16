@@ -22,7 +22,7 @@ const TIER_LABEL = ['Natural', 'Simple', 'Permanent', 'Urban'];
 const TIER_LABEL_TR = ['Doğal', 'Basit', 'Kalıcı', 'Kentsel'];
 
 function t(lang: string, en: string, tr: string) {
-  return lang === 'en' ? en : tr;
+  return lang === 'tr' ? tr : en;
 }
 
 export default function ArchitecturePanel() {

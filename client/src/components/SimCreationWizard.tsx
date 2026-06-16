@@ -529,7 +529,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
 
   const next = () => setStep(s => Math.min(s + 1, TOTAL - 1));
   const back = () => setStep(s => Math.max(s - 1, 0));
-  const t    = (tr: string, en: string) => lang === 'tr' ? tr : en;
+  const t    = (tr: string, en: string, de = en, fr = en, ar = en) => ({ tr, en, de, fr, ar } as any)[lang] ?? en;
 
   const stepRef = useRef(step);
   stepRef.current = step;
@@ -645,7 +645,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
       case 'appearance': return t('DIŞ GÖRÜNÜŞ', 'APPEARANCE');
       case 'trait': {
         const tr = ALL_TRAITS[meta.idx];
-        return lang === 'tr' ? tr.tr.toUpperCase() : tr.en.toUpperCase();
+        return (({ tr, en, de, fr, ar } as any)[lang] ?? tr.en).toUpperCase();
       }
       case 'summary': return t('ÖZET', 'SUMMARY');
     }
@@ -654,7 +654,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
   function stepSubtitle(): string | null {
     if (meta.type === 'trait') {
       const tr = ALL_TRAITS[meta.idx];
-      return lang === 'tr' ? tr.gTr : tr.gEn;
+      return (lang === 'tr' ? tr.gTr : tr.gEn);
     }
     return null;
   }

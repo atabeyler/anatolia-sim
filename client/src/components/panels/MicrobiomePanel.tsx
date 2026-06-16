@@ -18,7 +18,7 @@ const PATHOGEN_INFO: Record<string, { name: string; nameTr: string; transmission
 };
 
 function t(lang: string, en: string, tr: string) {
-  return lang === 'en' ? en : tr;
+  return lang === 'tr' ? tr : en;
 }
 
 export default function MicrobiomePanel() {

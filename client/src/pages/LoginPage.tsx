@@ -517,7 +517,7 @@ export default function LoginPage() {
             }}
           >
             <ScrambleText
-              text={text(lang as LangCode, { tr: 'MEDENİYET', en: 'CIVILIZATION' })}
+              text={text(lang as LangCode, { tr: 'MEDENİYET', en: 'CIVILIZATION', de: 'ZIVILISATION', fr: 'CIVILISATION', ar: 'الحضارة' })}
               active={scrambling}
               delay={900}
             />
@@ -548,7 +548,7 @@ export default function LoginPage() {
             <div className="bg-[#030310] px-3 flex items-center gap-2">
               <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
               <span className="font-share-tech text-sim-accent tracking-[0.1em] sm:tracking-[0.3em]" style={{ fontSize: 'clamp(12px, 3.8vw, 18px)' }}>
-                {mode === 'login' ? text(lang as LangCode, { tr: 'KİMLİK DOĞRULAMA', en: 'IDENTITY VERIFICATION' }) : text(lang as LangCode, { tr: 'HESAP OLUŞTURMA', en: 'ACCOUNT CREATION' })}
+                {mode === 'login' ? text(lang as LangCode, { tr: 'KİMLİK DOĞRULAMA', en: 'IDENTITY VERIFICATION', de: 'IDENTITÄTSVERIFIZIERUNG', fr: "VÉRIFICATION D'IDENTITÉ", ar: 'التحقق من الهوية' }) : text(lang as LangCode, { tr: 'HESAP OLUŞTURMA', en: 'ACCOUNT CREATION', de: 'KONTOERSTELLUNG', fr: 'CRÉATION DE COMPTE', ar: 'إنشاء حساب' })}
               </span>
               <div className="w-1 h-1 rounded-full bg-sim-accent pulse-live" />
             </div>
