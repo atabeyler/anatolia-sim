@@ -52,15 +52,12 @@ function showSetupWindow() {
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,
-        preload: join(__dirname, 'preload.mjs'),
+        preload: join(__dirname, 'preload.cjs'),
       },
     });
 
-    const setupHtml = isPackaged
-      ? join(process.resourcesPath, 'app', 'desktop', 'setup.html')
-      : join(__dirname, 'setup.html');
-
-    setupWin.loadFile(setupHtml);
+    // __dirname inside asar already resolves correctly in both dev and packaged
+    setupWin.loadFile(join(__dirname, 'setup.html'));
 
     ipcMain.once('setup-save', (_event, config) => {
       saveConfig(config);
