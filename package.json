@@ -9,17 +9,71 @@
   "scripts": {
     "build": "cd client && npm install --include=dev && npm run build && cd ../server && npm install --include=dev",
     "desktop": "npm run build && electron desktop/main.mjs",
-    "portable": "node desktop/package-portable.mjs",
-    "dist": "npm run build && npm run portable",
+    "dist": "npm run build && electron-builder --win nsis",
+    "dist:mac": "npm run build && electron-builder --mac dmg",
+    "dist:linux": "npm run build && electron-builder --linux AppImage",
     "start": "cd server && npm start",
     "test": "cd server && npm test && cd ../client && npm test"
   },
   "devDependencies": {
     "electron": "^31.6.0",
-    "electron-packager": "^17.1.2"
+    "electron-builder": "^25.1.8"
   },
   "build": {
-    "appId": "com.atabeyler.anatoliasim",
-    "productName": "Anatolia Sim"
+    "appId": "com.atabeylers.anatoliasim",
+    "productName": "Anatolia Sim",
+    "copyright": "Copyright © 2024 Atabeyler",
+    "files": [
+      "desktop/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "client/dist",
+        "to": "client/dist"
+      },
+      {
+        "from": "server/src",
+        "to": "server/src"
+      },
+      {
+        "from": "server/node_modules",
+        "to": "server/node_modules"
+      },
+      {
+        "from": "server/package.json",
+        "to": "server/package.json"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Anatolia Sim",
+      "deleteAppDataOnUninstall": false,
+      "license": "LICENSE.txt"
+    },
+    "mac": {
+      "target": [{"target": "dmg", "arch": ["x64", "arm64"]}],
+      "category": "public.app-category.education"
+    },
+    "linux": {
+      "target": [{"target": "AppImage", "arch": ["x64"]}],
+      "category": "Education"
+    },
+    "directories": {
+      "output": "release/installer",
+      "buildResources": "desktop/build-assets"
+    }
   }
 }

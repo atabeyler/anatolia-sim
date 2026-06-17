@@ -1,0 +1,6 @@
+Anatolia Sim
+Copyright (c) 2024 Atabeylers
+
+Bu yazılım özel kullanım içindir. Tüm hakları saklıdır.
+Kaynak kodunun kopyalanması, dağıtılması veya değiştirilmesi
+yazılı izin olmaksızın yasaktır.
