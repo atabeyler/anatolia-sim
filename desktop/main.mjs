@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, shell } from 'electron';
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, mkdirSync } from 'node:fs';
+import { resolve, join } from 'node:path';
 
 const PORT = Number(process.env.PORT ?? 3001);
 const LOCAL_URL = `http://127.0.0.1:${PORT}`;
@@ -52,6 +52,8 @@ async function ensureLocalServer() {
       ELECTRON_RUN_AS_NODE: '1',
       PORT: String(PORT),
       CLIENT_URL: LOCAL_URL,
+      DESKTOP_LOCAL_DB: '1',
+      PGLITE_DATA_DIR: join(app.getPath('userData'), 'db'),
     },
     stdio: 'inherit',
     windowsHide: true,
@@ -142,6 +144,7 @@ if (!gotLock) {
   });
 
   app.whenReady().then(() => {
+    mkdirSync(join(app.getPath('userData'), 'db'), { recursive: true });
     boot().catch(err => {
       console.error('[desktop] boot failed:', err);
       dialog.showErrorBox('Anatolia-Sim Desktop', err?.message ?? String(err));
