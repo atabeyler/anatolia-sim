@@ -9,7 +9,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT ?? 3001);
 const LOCAL_URL = `http://127.0.0.1:${PORT}`;
 
-// Paths — work both in dev (source tree) and packaged (resourcesPath)
 const isPackaged = app.isPackaged;
 const RESOURCES = isPackaged ? process.resourcesPath : resolve(__dirname, '..');
 const SERVER_ROOT = resolve(RESOURCES, 'server');
@@ -30,12 +29,72 @@ function loadConfig() {
     if (existsSync(CONFIG_PATH)) {
       return JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
     }
-  } catch { /* corrupt config → re-setup */ }
+  } catch {}
   return null;
 }
 
 function saveConfig(cfg) {
   writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2), 'utf8');
+}
+
+// ─── Auto Updater ──────────────────────────────────────────────────────────────
+
+async function setupAutoUpdater() {
+  if (!isPackaged) return; // Geliştirme ortamında çalıştırma
+
+  try {
+    const { autoUpdater } = await import('electron-updater');
+
+    autoUpdater.autoDownload = false;
+    autoUpdater.autoInstallOnAppQuit = true;
+
+    autoUpdater.on('update-available', async (info) => {
+      const { response } = await dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: 'Güncelleme Mevcut',
+        message: `Anatolia Sim ${info.version} sürümü mevcut!`,
+        detail: 'Arka planda indireyim mi? İndirme tamamlanınca size haber veririm.',
+        buttons: ['Evet, İndir', 'Sonra Hatırlat'],
+        defaultId: 0,
+      });
+
+      if (response === 0) {
+        autoUpdater.downloadUpdate();
+        dialog.showMessageBox(mainWindow, {
+          type: 'info',
+          title: 'İndiriliyor...',
+          message: 'Güncelleme arka planda indiriliyor.',
+          detail: 'İndirme tamamlanınca yeniden başlatma seçeneği sunulacak.',
+          buttons: ['Tamam'],
+        });
+      }
+    });
+
+    autoUpdater.on('update-downloaded', async () => {
+      const { response } = await dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: 'Güncelleme Hazır',
+        message: 'Güncelleme indirildi!',
+        detail: 'Uygulamayı şimdi yeniden başlatıp güncellemek ister misiniz?',
+        buttons: ['Şimdi Yeniden Başlat', 'Sonra'],
+        defaultId: 0,
+      });
+
+      if (response === 0) {
+        app.isQuiting = true;
+        autoUpdater.quitAndInstall();
+      }
+    });
+
+    autoUpdater.on('error', (err) => {
+      console.error('[updater] hata:', err?.message);
+    });
+
+    // Ana pencere yüklendikten 5 saniye sonra kontrol et
+    setTimeout(() => autoUpdater.checkForUpdates(), 5000);
+  } catch (err) {
+    console.error('[updater] başlatılamadı:', err?.message);
+  }
 }
 
 // ─── Setup window ──────────────────────────────────────────────────────────────
@@ -56,7 +115,6 @@ function showSetupWindow() {
       },
     });
 
-    // __dirname inside asar already resolves correctly in both dev and packaged
     setupWin.loadFile(join(__dirname, 'setup.html'));
 
     ipcMain.once('setup-save', (_event, config) => {
@@ -103,7 +161,6 @@ function buildServerEnv(cfg) {
     env.DATABASE_URL = cfg.DATABASE_URL;
   }
 
-  // JWT secrets: use config values or generate stable ones stored in userData
   const secretsPath = join(app.getPath('userData'), 'secrets.json');
   let secrets = {};
   try { secrets = JSON.parse(readFileSync(secretsPath, 'utf8')); } catch {}
@@ -193,26 +250,17 @@ function startVersionWatcher() {
 
 async function boot() {
   if (!existsSync(CLIENT_INDEX)) {
-    await dialog.showErrorBox(
-      'Anatolia Sim',
-      'Client build bulunamadı. Kurulum bozulmuş olabilir.'
-    );
+    await dialog.showErrorBox('Anatolia Sim', 'Client build bulunamadı. Kurulum bozulmuş olabilir.');
     app.quit();
     return;
   }
 
-  // First-run setup if no config exists
   let cfg = loadConfig();
   if (!cfg) {
     cfg = await showSetupWindow();
-    if (!cfg) {
-      // User closed setup window without saving
-      app.quit();
-      return;
-    }
+    if (!cfg) { app.quit(); return; }
   }
 
-  // Ensure local DB dir if offline mode
   if (cfg.DESKTOP_LOCAL_DB === '1' || !cfg.DATABASE_URL) {
     mkdirSync(join(app.getPath('userData'), 'db'), { recursive: true });
   }
@@ -221,6 +269,7 @@ async function boot() {
   createMainWindow();
   await mainWindow.loadURL(LOCAL_URL);
   startVersionWatcher();
+  setupAutoUpdater();
 }
 
 // ─── App lifecycle ─────────────────────────────────────────────────────────────
