@@ -35,8 +35,12 @@ jobs:
       - name: Root bağımlılıklarını yükle
         run: npm ci
 
-      # electron-builder publish: exe + latest.yml GitHub Release'a yüklenir
-      # latest.yml olmadan auto-updater çalışmaz
+      # DATABASE_URL'yi exe'ye göm — kodda görünmez, sadece build sırasında yazılır
+      - name: Uygulama config dosyasını oluştur
+        shell: bash
+        run: |
+          echo '{"DATABASE_URL":"${{ secrets.DATABASE_URL }}"}' > desktop/bundled-config.json
+
       - name: Windows installer oluştur ve yayınla
         run: npx electron-builder --win nsis --x64 --publish always
         env:

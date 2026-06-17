@@ -16,6 +16,8 @@ const SERVER_ENTRY = resolve(SERVER_ROOT, 'src/index.js');
 const CLIENT_DIST = resolve(RESOURCES, 'client/dist');
 const CLIENT_INDEX = resolve(CLIENT_DIST, 'index.html');
 const CONFIG_PATH = join(app.getPath('userData'), 'config.json');
+// Bundled config: yazılan DATABASE_URL, build sırasında eklenir (kaynak kodda yok)
+const BUNDLED_CONFIG_PATH = join(__dirname, 'bundled-config.json');
 
 let mainWindow = null;
 let serverProcess = null;
@@ -25,9 +27,16 @@ let knownVersion = null;
 // ─── Config ────────────────────────────────────────────────────────────────────
 
 function loadConfig() {
+  // Önce kullanıcının kaydettiği config'e bak
   try {
     if (existsSync(CONFIG_PATH)) {
       return JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
+    }
+  } catch {}
+  // Sonra exe'ye gömülü config'e bak (setup ekranı gösterilmez)
+  try {
+    if (existsSync(BUNDLED_CONFIG_PATH)) {
+      return JSON.parse(readFileSync(BUNDLED_CONFIG_PATH, 'utf8'));
     }
   } catch {}
   return null;
