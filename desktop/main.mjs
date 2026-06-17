@@ -158,6 +158,7 @@ function buildServerEnv(cfg) {
   const useLocalDb = cfg?.DESKTOP_LOCAL_DB === '1' || !cfg?.DATABASE_URL;
   const env = {
     ...process.env,
+    ELECTRON_RUN_AS_NODE: '1',
     PORT: String(PORT),
     CLIENT_URL: LOCAL_URL,
     NODE_ENV: 'production',
