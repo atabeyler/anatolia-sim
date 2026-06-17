@@ -1,0 +1,62 @@
+name: Windows Installer Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Build Windows NSIS Installer
+    runs-on: windows-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Client build
+      - name: Client bağımlılıklarını yükle
+        working-directory: client
+        run: npm ci
+
+      - name: Client build
+        working-directory: client
+        run: npm run build
+
+      # Server bağımlılıkları (node_modules installer'a paketlenir)
+      - name: Server bağımlılıklarını yükle
+        working-directory: server
+        run: npm ci --omit=dev
+
+      # Root bağımlılıkları (electron-builder burada)
+      - name: Root bağımlılıklarını yükle
+        run: npm ci
+
+      # electron-builder ile NSIS .exe üret
+      - name: Windows installer oluştur
+        run: npx electron-builder --win nsis --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Üretilen .exe dosyasını GitHub Release olarak yayınla
+      - name: Release oluştur / güncelle
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-build
+          name: Anatolia Sim — Son Build
+          body: |
+            `main` branch'inin son kararlı build'i.
+
+            **Kurulum:** `Anatolia Sim Setup 1.0.0.exe` dosyasını indirip çalıştırın.
+            İlk açılışta Render PostgreSQL bağlantı adresinizi (DATABASE_URL) gireceksiniz.
+          prerelease: true
+          make_latest: true
+          files: release/installer/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

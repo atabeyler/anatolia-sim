@@ -74,6 +74,11 @@
     "directories": {
       "output": "release/installer",
       "buildResources": "desktop/build-assets"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "atabeyler",
+      "repo": "anatolia-sim"
     }
   }
 }
