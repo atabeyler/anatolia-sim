@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anatolia Sim — İlk Kurulum</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #040412;
+      color: #e2e8f0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: #0d0d2b;
+      border: 1px solid #1e2a4a;
+      border-radius: 12px;
+      padding: 40px;
+      width: 520px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+    h1 { font-size: 22px; font-weight: 700; color: #7c3aed; margin-bottom: 8px; }
+    .subtitle { font-size: 13px; color: #64748b; margin-bottom: 32px; }
+    label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+    input, textarea {
+      width: 100%;
+      background: #060618;
+      border: 1px solid #1e2a4a;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 13px;
+      font-family: 'Consolas', monospace;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus { border-color: #7c3aed; }
+    textarea { height: 80px; resize: none; }
+    .field { margin-bottom: 20px; }
+    .hint { font-size: 11px; color: #475569; margin-top: 6px; }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #7c3aed; color: white; }
+    .btn-secondary { background: #1e2a4a; color: #94a3b8; margin-top: 8px; }
+    .error { color: #f87171; font-size: 12px; margin-top: 12px; display: none; }
+    .divider { border: none; border-top: 1px solid #1e2a4a; margin: 24px 0; }
+    .offline-note { font-size: 12px; color: #475569; text-align: center; }
+    .tag { display: inline-block; background: #1e2a4a; color: #7c3aed; font-size: 10px; padding: 2px 8px; border-radius: 4px; vertical-align: middle; margin-left: 6px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🌍 Anatolia Sim <span class="tag">İlk Kurulum</span></h1>
+    <p class="subtitle">Bulut veritabanı bağlantısını ayarlayın. Simülasyon hesaplamaları her zaman bu bilgisayarda çalışır.</p>
+
+    <div class="field">
+      <label>Render PostgreSQL — DATABASE_URL</label>
+      <textarea id="dbUrl" placeholder="postgresql://user:pass@hostname/dbname?sslmode=require"></textarea>
+      <p class="hint">Render → Postgres → Connection String → External URL</p>
+    </div>
+
+    <div class="field">
+      <label>JWT Secret (isteğe bağlı)</label>
+      <input id="jwtSecret" type="text" placeholder="Boş bırakırsanız otomatik üretilir" />
+    </div>
+
+    <div class="field">
+      <label>JWT Refresh Secret (isteğe bağlı)</label>
+      <input id="jwtRefresh" type="text" placeholder="Boş bırakırsanız otomatik üretilir" />
+    </div>
+
+    <div class="field">
+      <label>Anthropic API Key (isteğe bağlı)</label>
+      <input id="anthropicKey" type="password" placeholder="sk-ant-..." />
+      <p class="hint">ARIA asistan özelliği için gerekli</p>
+    </div>
+
+    <p class="error" id="errMsg"></p>
+
+    <button class="btn btn-primary" onclick="saveConfig()">Kaydet ve Başlat</button>
+
+    <hr class="divider" />
+    <p class="offline-note">DATABASE_URL olmadan da kullanabilirsiniz — veriler bu bilgisayarda saklanır.</p>
+    <button class="btn btn-secondary" onclick="useOffline()">Çevrimdışı / Yerel Mod</button>
+  </div>
+
+  <script>
+    function saveConfig() {
+      const dbUrl = document.getElementById('dbUrl').value.trim();
+      if (!dbUrl) {
+        showError('Lütfen DATABASE_URL girin ya da Yerel Mod seçin.');
+        return;
+      }
+      const config = {
+        DATABASE_URL: dbUrl,
+        JWT_SECRET: document.getElementById('jwtSecret').value.trim() || undefined,
+        JWT_REFRESH_SECRET: document.getElementById('jwtRefresh').value.trim() || undefined,
+        ANTHROPIC_API_KEY: document.getElementById('anthropicKey').value.trim() || undefined,
+      };
+      Object.keys(config).forEach(k => config[k] === undefined && delete config[k]);
+      window.electronSetup.save(config);
+    }
+
+    function useOffline() {
+      window.electronSetup.save({ DESKTOP_LOCAL_DB: '1' });
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errMsg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
