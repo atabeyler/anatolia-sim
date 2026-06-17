@@ -161,6 +161,7 @@ export class SimulationEngine {
     this._consecutiveErrors = (this._consecutiveErrors ?? 0);
     this._todayBirths = 0;
     this._todayDeaths = 0;
+    this._newDeadThisTick = [];
     const day = this.currentDay;
     const alive = [...this._aliveIds].map(id => this.population.get(id)).filter(Boolean);
     for (const ind of alive) {
@@ -464,6 +465,7 @@ export class SimulationEngine {
       // Log death event for newborns lost to birth complications
       if (nb.is_dead) {
         nb._death_logged = true;
+        this._newDeadThisTick.push(nb);
         this._todayDeaths++;
         this.totalDeaths++;
         this.logEvent(day, 'death', `${nbLabel} died: birth_complications`, { individual_id: nb.id, cause: 'birth_complications', name: nbLabel }, 1);
@@ -494,6 +496,7 @@ export class SimulationEngine {
         ind.death_day = day;
         ind.death_cause = cause;
         this._aliveIds.delete(ind.id);
+        this._newDeadThisTick.push(ind);
         this._todayDeaths++;
         this.totalDeaths++;
         // Grief event — sent separately to each group member and close relative
@@ -523,6 +526,7 @@ export class SimulationEngine {
       if (ind.is_dead && !ind._death_logged) {
         ind._death_logged = true;
         ind.death_day = ind.death_day ?? day;
+        this._newDeadThisTick.push(ind);
         this._todayDeaths++;
         this.totalDeaths++;
         const deadName2 = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
@@ -580,10 +584,14 @@ export class SimulationEngine {
     this.processFamilyLearning(alive, day, tickEvents);
 
     // 12c. FOXP2 expression — grows through social language use (developmental plasticity)
+    const _groupSizeMap = new Map();
     for (const ind of alive) {
-      const groupSize = ind.group_id
-        ? alive.filter(o => o.group_id === ind.group_id && o.id !== ind.id).length
-        : 0;
+      if (ind.group_id && !_groupSizeMap.has(ind.group_id)) {
+        _groupSizeMap.set(ind.group_id, alive.filter(o => o.group_id === ind.group_id).length);
+      }
+    }
+    for (const ind of alive) {
+      const groupSize = ind.group_id ? Math.max(0, (_groupSizeMap.get(ind.group_id) ?? 1) - 1) : 0;
       updateFoxp2Expression(ind, groupSize);
     }
 
@@ -1356,12 +1364,18 @@ export class SimulationEngine {
   }
 
   estimateGenerations() {
+    // Cached — only recompute every 365 days
+    if (this._genCacheDay !== undefined && this.currentDay - this._genCacheDay < 365) {
+      return this._genCache ?? 0;
+    }
     let oldest = 0;
     for (const ind of this.population.values()) {
       const age = this.currentDay - (ind.birth_day ?? 0);
       if (age > oldest) oldest = age;
     }
-    return Math.floor(oldest / (25 * 365));
+    this._genCache = Math.floor(oldest / (25 * 365));
+    this._genCacheDay = this.currentDay;
+    return this._genCache;
   }
 
   getCulturalState(alive) {
@@ -1442,18 +1456,23 @@ export class SimulationEngine {
         return bands.map(b => ({ group: b, male: counts[b].male, female: counts[b].female }));
       })(),
       death_stats: (() => {
-        const dead = [...this.population.values()].filter(i => i.is_dead && i.death_day != null && i.birth_day != null);
-        if (!dead.length) return { count: 0, avg_age: null, infant_deaths: 0, child_deaths: 0, causes: {} };
-        const deathAges = dead.map(i => (i.death_day - i.birth_day) / 365);
-        const avgDeathAge = deathAges.reduce((a, b) => a + b, 0) / dead.length;
-        const infantDeaths = deathAges.filter(a => a < 1).length;
-        const childDeaths  = deathAges.filter(a => a >= 1 && a < 15).length;
-        const causes = {};
-        for (const i of dead) {
-          const c = i.death_cause ?? i.cause_of_death ?? 'unknown';
-          causes[c] = (causes[c] ?? 0) + 1;
+        // Incrementally maintained — avoids scanning all-time population every tick
+        if (!this._deathStats) {
+          this._deathStats = { count: 0, ageSum: 0, infant_deaths: 0, child_deaths: 0, causes: {} };
         }
-        return { count: dead.length, avg_age: Math.round(avgDeathAge * 10) / 10, infant_deaths: infantDeaths, child_deaths: childDeaths, causes };
+        const ds = this._deathStats;
+        for (const ind of (this._newDeadThisTick ?? [])) {
+          if (ind.death_day == null || ind.birth_day == null) continue;
+          const age = (ind.death_day - ind.birth_day) / 365;
+          ds.count++;
+          ds.ageSum += age;
+          if (age < 1) ds.infant_deaths++;
+          if (age >= 1 && age < 15) ds.child_deaths++;
+          const c = ind.death_cause ?? ind.cause_of_death ?? 'unknown';
+          ds.causes[c] = (ds.causes[c] ?? 0) + 1;
+        }
+        const avgDeathAge = ds.count ? Math.round((ds.ageSum / ds.count) * 10) / 10 : null;
+        return { count: ds.count, avg_age: avgDeathAge, infant_deaths: ds.infant_deaths, child_deaths: ds.child_deaths, causes: { ...ds.causes } };
       })(),
       founders: (() => {
         const all = [...this.population.values()].filter(i => i.is_founder);

@@ -39,6 +39,55 @@ export default function App() {
       .finally(() => setAuthChecked(true));
   }, [setUser]);
 
+  // Proactive token refresh every 14 minutes (access token expires in 15 min)
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      axios.post('/api/auth/refresh')
+        .then(({ data }) => setUser(data.user, data.access_token))
+        .catch(() => {});
+    }, 14 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [user, setUser]);
+
+  // Axios interceptor: on 401, try refresh once then retry original request
+  useEffect(() => {
+    let isRefreshing = false;
+    const queue: Array<(token: string) => void> = [];
+
+    const interceptor = axios.interceptors.response.use(
+      res => res,
+      async (err) => {
+        const original = err.config;
+        if (err.response?.status !== 401 || original._retry) return Promise.reject(err);
+        if ((original.url as string)?.includes('/api/auth/')) return Promise.reject(err);
+        if (isRefreshing) {
+          return new Promise((resolve) => {
+            queue.push((token) => {
+              original.headers['Authorization'] = `Bearer ${token}`;
+              resolve(axios(original));
+            });
+          });
+        }
+        original._retry = true;
+        isRefreshing = true;
+        try {
+          const { data } = await axios.post('/api/auth/refresh');
+          setUser(data.user, data.access_token);
+          queue.forEach(cb => cb(data.access_token));
+          original.headers['Authorization'] = `Bearer ${data.access_token}`;
+          return axios(original);
+        } catch {
+          return Promise.reject(err);
+        } finally {
+          isRefreshing = false;
+          queue.length = 0;
+        }
+      }
+    );
+    return () => axios.interceptors.response.eject(interceptor);
+  }, [setUser]);
+
   useEffect(() => {
     let lastTap = 0;
     function onTouchEnd(e: TouchEvent) {
