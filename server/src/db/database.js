@@ -12,16 +12,9 @@ let desktopDbInitPromise = null;
 let desktopDb = null;
 
 function normalizeQueryResult(result) {
-  if (!result || typeof result !== 'object') {
-    return result;
-  }
-  if ('rowCount' in result) {
-    return result;
-  }
-  return {
-    ...result,
-    rowCount: result.affectedRows ?? 0,
-  };
+  if (!result || typeof result !== 'object') return result;
+  if ('rowCount' in result) return result;
+  return { ...result, rowCount: result.affectedRows ?? 0 };
 }
 
 async function getDesktopDb() {
@@ -35,7 +28,6 @@ async function getDesktopDb() {
       const dataDir = resolve(
         process.env.PGLITE_DATA_DIR || join(process.cwd(), '.anatolia-sim', 'pgdata')
       );
-
       mkdirSync(dataDir, { recursive: true });
 
       const db = await PGlite.create(dataDir, {
@@ -81,7 +73,6 @@ let pool;
 if (useDesktopLocalDb) {
   pool = createDesktopPoolAdapter();
 } else {
-  // Use SSL for any non-localhost connection (Render, cloud databases, etc.)
   const isRemoteDb = process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost') && !process.env.DATABASE_URL.includes('127.0.0.1');
 
   pool = new Pool({
@@ -90,7 +81,6 @@ if (useDesktopLocalDb) {
     max: 5,
     idleTimeoutMillis: 60000,
     connectionTimeoutMillis: 15000,
-    // Set search_path at connection level so it's always active
     options: '-c search_path=antsim,public',
   });
 
@@ -107,7 +97,6 @@ export async function migrate() {
   } else {
     await pool.query(schemaSql);
   }
-
   console.log('✅ Database schema migrated');
 }
 

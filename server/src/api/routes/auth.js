@@ -21,8 +21,11 @@ const registerLimiter = rateLimit({
   message: { error: 'Too many registration attempts. Please try again in 1 hour.' },
 });
 
+const isDesktopLocalDb = process.env.DESKTOP_LOCAL_DB === '1' || process.env.DESKTOP_LOCAL_DB === 'true';
+
 function generateApprovalToken(userId) {
-  return jwt.sign({ action: 'approve', userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  const secret = process.env.JWT_SECRET || 'anatolia-sim-local-approval-secret';
+  return jwt.sign({ action: 'approve', userId }, secret, { expiresIn: '7d' });
 }
 
 const router = Router();
@@ -60,16 +63,22 @@ router.post('/register', registerLimiter, async (req, res) => {
     if (pwErr) return res.status(400).json({ error: pwErr });
 
     const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const isApproved = isDesktopLocalDb;
+    const role = isDesktopLocalDb ? 'user' : 'pending';
 
     const { rows } = await query(
       `INSERT INTO users (first_name, last_name, tc_no, email, password_hash, user_code, username, role, is_approved)
-       VALUES ($1,$2,$3,$4,$5,$6,$6,'pending',false) RETURNING id, first_name, last_name, email, user_code`,
-      [first_name.trim(), last_name.trim(), tc_no.trim(), email.toLowerCase().trim(), hash, code]
+       VALUES ($1,$2,$3,$4,$5,$6,$6,$7,$8) RETURNING id, first_name, last_name, email, user_code`,
+      [first_name.trim(), last_name.trim(), tc_no.trim(), email.toLowerCase().trim(), hash, code, role, isApproved]
     );
 
-    const approvalToken = generateApprovalToken(rows[0].id);
-    await sendAdminRegistrationNotification({ first_name, last_name, tc_no, email, user_code_temp: code, approvalToken });
-    res.status(201).json({ message: 'Your registration request has been received. Awaiting admin approval.' });
+    if (!isDesktopLocalDb) {
+      const approvalToken = generateApprovalToken(rows[0].id);
+      await sendAdminRegistrationNotification({ first_name, last_name, tc_no, email, user_code_temp: code, approvalToken });
+      return res.status(201).json({ message: 'Your registration request has been received. Awaiting admin approval.' });
+    }
+
+    res.status(201).json({ message: 'Registration complete. You can sign in now.' });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'This email, national ID, or user code is already registered.' });
     console.error(err);
@@ -87,14 +96,16 @@ router.post('/login', loginLimiter, async (req, res) => {
 
     if (!user || !(await bcrypt.compare(password, user.password_hash)))
       return res.status(401).json({ error: 'Invalid user code or password.' });
-    if (!user.is_approved)
+    if (!user.is_approved && !isDesktopLocalDb)
       return res.status(403).json({ error: 'Your account has not been approved yet. Please wait for admin approval.' });
     if (user.is_banned)
       return res.status(403).json({ error: `Your account has been banned.${user.ban_reason ? ' Reason: ' + user.ban_reason : ''}` });
 
     const payload = { id: user.id, username: user.user_code, email: user.email, role: user.role };
-    const accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '30d' });
+    const accessSecret = process.env.JWT_SECRET || 'anatolia-sim-local-access-secret';
+    const refreshSecret = process.env.JWT_REFRESH_SECRET || 'anatolia-sim-local-refresh-secret';
+    const accessToken = jwt.sign(payload, accessSecret, { expiresIn: '15m' });
+    const refreshToken = jwt.sign({ id: user.id }, refreshSecret, { expiresIn: '30d' });
     const isProd = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
@@ -116,13 +127,13 @@ router.post('/refresh', async (req, res) => {
   try {
     const token = req.cookies?.refresh_token;
     if (!token) return res.status(401).json({ error: 'Session expired.' });
-    const payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+    const payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET || 'anatolia-sim-local-refresh-secret');
     const { rows } = await query('SELECT id, user_code, email, role, first_name, last_name, is_banned, is_approved FROM users WHERE id = $1', [payload.id]);
     const user = rows[0];
     if (!user || user.is_banned || !user.is_approved) return res.status(401).json({ error: 'Invalid session.' });
     const accessToken = jwt.sign(
       { id: user.id, username: user.user_code, email: user.email, role: user.role },
-      process.env.JWT_SECRET, { expiresIn: '15m' }
+      process.env.JWT_SECRET || 'anatolia-sim-local-access-secret', { expiresIn: '15m' }
     );
     res.json({ access_token: accessToken, user: { id: user.id, username: user.user_code, email: user.email, role: user.role, first_name: user.first_name, last_name: user.last_name } });
   } catch {
