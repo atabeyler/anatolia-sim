@@ -1,6 +1,6 @@
 {
   "name": "anatolia-sim",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "private": true,
   "main": "desktop/main.mjs",
   "engines": {
@@ -25,7 +25,8 @@
     "copyright": "Copyright © 2024 Atabeyler",
     "files": [
       "desktop/**/*",
-      "package.json"
+      "package.json",
+      "node_modules/**/*"
     ],
     "extraResources": [
       {
