@@ -297,7 +297,8 @@ export default function LoginPage() {
   const [menuPage, setMenuPage] = useState<'language' | 'guide' | 'about' | 'mission' | 'contact' | null>(null);
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('anatolia_remember') === '1');
-  const [form, setForm] = useState({ user_code: '', reg_user_code: '', first_name: '', last_name: '', tc_no: '', email: '', password: '' });
+  const savedCode = rememberMe ? (localStorage.getItem('anatolia_saved_code') ?? '') : '';
+  const [form, setForm] = useState({ user_code: savedCode, reg_user_code: '', first_name: '', last_name: '', tc_no: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -379,10 +380,12 @@ export default function LoginPage() {
         if (rememberMe) {
           localStorage.setItem('anatolia_session_active', '1');
           localStorage.setItem('anatolia_remember', '1');
+          localStorage.setItem('anatolia_saved_code', form.user_code);
         } else {
           sessionStorage.setItem('anatolia_session_active', '1');
           localStorage.removeItem('anatolia_remember');
           localStorage.removeItem('anatolia_session_active');
+          localStorage.removeItem('anatolia_saved_code');
         }
         navigate(data.user.role === 'admin' ? '/admin' : '/');
       }
