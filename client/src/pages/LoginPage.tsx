@@ -338,7 +338,7 @@ export default function LoginPage() {
       );
     }
 
-    // Fall back to IP-based geolocation after 4.5 s if still unresolved
+    // Fall back to IP-based geolocation after 6 s if permission denied / timed out
     const timer = setTimeout(async () => {
       if (resolved) return;
       try {
@@ -346,7 +346,7 @@ export default function LoginPage() {
         const d = await res.json();
         if (d.latitude != null && d.longitude != null) fmt(d.latitude, d.longitude);
       } catch {}
-    }, 4500);
+    }, 6000);
 
     return () => clearTimeout(timer);
   }, []);
