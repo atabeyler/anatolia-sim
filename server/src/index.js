@@ -35,11 +35,11 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc:  ["'self'", "'unsafe-inline'"],   // Vite build inline chunks
-      styleSrc:   ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      styleSrc:   ["'self'", "'unsafe-inline'"],
       connectSrc: ["'self'", "wss:", "ws:",
                    "https://generativelanguage.googleapis.com"], // Gemini API
       imgSrc:     ["'self'", "data:", "blob:", "https://raw.githubusercontent.com"],
-      fontSrc:    ["'self'", "data:", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
+      fontSrc:    ["'self'", "data:"],
       workerSrc:  ["'self'", "blob:"],              // Three.js workers
       objectSrc:  ["'none'"],
     },
