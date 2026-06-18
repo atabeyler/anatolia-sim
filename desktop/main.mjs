@@ -70,6 +70,8 @@ async function setupAutoUpdater() {
 
       if (response === 0) {
         autoUpdater.downloadUpdate();
+        mainWindow.setProgressBar(0.01); // Görev çubuğunda hemen göster
+        try { mainWindow.webContents.send('update-download-progress', { percent: 1 }); } catch {}
       }
     });
 

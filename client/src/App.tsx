@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useSimStore } from './store/simStore';
+import UpdateBanner from './components/layout/UpdateBanner';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import SimulationPage from './pages/SimulationPage';
@@ -21,7 +22,16 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const { user, setUser } = useSimStore();
+  const { user, setUser, setUpdatePercent, setUpdateReady } = useSimStore();
+
+  // Electron auto-update IPC — global listener (tüm sayfalarda çalışır)
+  useEffect(() => {
+    const eu = (window as any).electronUpdater;
+    if (!eu) return;
+    const off1 = eu.onDownloadProgress((d: { percent: number }) => setUpdatePercent(Math.round(d.percent)));
+    const off2 = eu.onUpdateDownloaded((d: { version?: string }) => { setUpdatePercent(null); setUpdateReady(d); });
+    return () => { off1?.(); off2?.(); };
+  }, [setUpdatePercent, setUpdateReady]);
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
@@ -111,6 +121,7 @@ export default function App() {
   return (
     <BrowserRouter>
       {user && <AriaButton />}
+      <UpdateBanner />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />

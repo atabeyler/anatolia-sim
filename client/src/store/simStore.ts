@@ -149,6 +149,12 @@ interface SimStore {
   setSpeed: (speed: number) => void;
   sidebarExpanded: boolean;
   toggleSidebar: () => void;
+
+  // Desktop auto-update
+  updatePercent: number | null;
+  updateReady: { version?: string } | null;
+  setUpdatePercent: (p: number | null) => void;
+  setUpdateReady: (info: { version?: string } | null) => void;
 }
 
 function normalizeEventKey(event: SimEvent) {
@@ -223,4 +229,9 @@ export const useSimStore = create<SimStore>((set) => ({
   setSpeed: (speed) => set({ speedMultiplier: speed }),
   sidebarExpanded: typeof window !== 'undefined' ? window.innerWidth >= 768 : true,
   toggleSidebar: () => set(s => ({ sidebarExpanded: !s.sidebarExpanded })),
+
+  updatePercent: null,
+  updateReady: null,
+  setUpdatePercent: (p) => set({ updatePercent: p }),
+  setUpdateReady: (info) => set({ updateReady: info }),
 }));

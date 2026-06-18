@@ -305,8 +305,6 @@ export default function LoginPage() {
   const [sysStatus, setSysStatus] = useState<SysStatus | null>(null);
   const [pendingCode, setPendingCode] = useState('');
   const [coords, setCoords] = useState<{ lat: string; lon: string } | null>(null);
-  const [updateProgress, setUpdateProgress] = useState<number | null>(null);
-  const [updateReady, setUpdateReady] = useState<{ version?: string } | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const f = (k: string) => (e: any) => setForm(p => ({ ...p, [k]: e.target.value }));
 
@@ -355,14 +353,6 @@ export default function LoginPage() {
   useEffect(() => {
     document.body.classList.add('login-page-active');
     return () => document.body.classList.remove('login-page-active');
-  }, []);
-
-  useEffect(() => {
-    const eu = (window as any).electronUpdater;
-    if (!eu) return;
-    const off1 = eu.onDownloadProgress((data: { percent: number }) => setUpdateProgress(data.percent));
-    const off2 = eu.onUpdateDownloaded((data: { version?: string }) => { setUpdateProgress(null); setUpdateReady(data); });
-    return () => { off1?.(); off2?.(); };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -647,57 +637,6 @@ export default function LoginPage() {
         <FooterBar mode="inline" className="mt-6 mb-2 px-4" />
       </div>
 
-      {/* ── Electron update banner ──────────────────────────────── */}
-      {updateProgress !== null && (
-        <div className="fixed bottom-0 left-0 right-0 z-50" style={{ background: 'rgba(4,4,18,0.96)', borderTop: '1px solid rgba(79,110,247,0.4)', padding: '10px 20px' }}>
-          <div className="flex items-center gap-3 max-w-xl mx-auto">
-            <svg className="animate-spin w-4 h-4 flex-shrink-0 text-sim-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-            </svg>
-            <div className="flex-1">
-              <div className="flex justify-between mb-1">
-                <span className="font-share-tech text-sim-accent tracking-wider" style={{ fontSize: 13 }}>
-                  {lang === 'tr' ? 'GÜNCELLEME İNDİRİLİYOR' : 'DOWNLOADING UPDATE'}
-                </span>
-                <span className="font-share-tech text-sim-green" style={{ fontSize: 13 }}>{updateProgress}%</span>
-              </div>
-              <div className="w-full h-1.5 rounded-full" style={{ background: 'rgba(79,110,247,0.2)' }}>
-                <div
-                  className="h-full rounded-full transition-all duration-300"
-                  style={{ width: `${updateProgress}%`, background: 'linear-gradient(90deg, #4f6ef7, #00e887)' }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {updateReady && (
-        <div className="fixed bottom-0 left-0 right-0 z-50" style={{ background: 'rgba(4,4,18,0.96)', borderTop: '1px solid rgba(0,232,135,0.5)', padding: '10px 20px' }}>
-          <div className="flex items-center gap-3 max-w-xl mx-auto">
-            <div className="w-2 h-2 rounded-full bg-sim-green flex-shrink-0 pulse-live" />
-            <span className="font-share-tech text-sim-green tracking-wider flex-1" style={{ fontSize: 13 }}>
-              {updateReady.version
-                ? (lang === 'tr' ? `v${updateReady.version} İNDİRİLDİ — YENİDEN BAŞLATMAK İÇİN TIKLAYIN` : `v${updateReady.version} READY — CLICK TO RESTART`)
-                : (lang === 'tr' ? 'GÜNCELLEME HAZIR — YENİDEN BAŞLATMAK İÇİN TIKLAYIN' : 'UPDATE READY — CLICK TO RESTART')}
-            </span>
-            <button
-              onClick={() => (window as any).electronUpdater?.install()}
-              className="font-share-tech tracking-widest px-4 py-1.5 text-white transition-all"
-              style={{ fontSize: 13, background: 'rgba(0,232,135,0.2)', border: '1px solid rgba(0,232,135,0.6)' }}
-            >
-              {lang === 'tr' ? 'YÜKLE' : 'INSTALL'}
-            </button>
-            <button
-              onClick={() => setUpdateReady(null)}
-              className="font-share-tech text-sim-muted hover:text-sim-text"
-              style={{ fontSize: 13 }}
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
