@@ -52,7 +52,8 @@ async function setupAutoUpdater() {
   if (!isPackaged) return; // Geliştirme ortamında çalıştırma
 
   try {
-    const { autoUpdater } = await import('electron-updater');
+    const updaterModule = await import('electron-updater');
+    const autoUpdater = updaterModule.autoUpdater ?? updaterModule.default?.autoUpdater ?? updaterModule.default;
 
     autoUpdater.autoDownload = false;
     autoUpdater.autoInstallOnAppQuit = true;
