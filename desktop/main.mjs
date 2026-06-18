@@ -138,7 +138,7 @@ function showSetupWindow() {
       resizable: false,
       backgroundColor: '#040412',
       autoHideMenuBar: true,
-      title: 'Anatolia Sim — Kurulum',
+      title: 'Anatolia Sim — Setup',
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,

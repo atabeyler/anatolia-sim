@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Anatolia Sim — İlk Kurulum</title>
+  <title>Anatolia Sim — Setup</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -64,8 +64,8 @@
 </head>
 <body>
   <div class="card">
-    <h1>🌍 Anatolia Sim <span class="tag">İlk Kurulum</span></h1>
-    <p class="subtitle">Bulut veritabanı bağlantısını ayarlayın. Simülasyon hesaplamaları her zaman bu bilgisayarda çalışır.</p>
+    <h1>🌍 Anatolia Sim <span class="tag">Setup</span></h1>
+    <p class="subtitle">Configure your cloud database connection. Simulation calculations always run on this computer.</p>
 
     <div class="field">
       <label>Render PostgreSQL — DATABASE_URL</label>
@@ -74,35 +74,35 @@
     </div>
 
     <div class="field">
-      <label>JWT Secret (isteğe bağlı)</label>
-      <input id="jwtSecret" type="text" placeholder="Boş bırakırsanız otomatik üretilir" />
+      <label>JWT Secret (optional)</label>
+      <input id="jwtSecret" type="text" placeholder="Leave blank to auto-generate" />
     </div>
 
     <div class="field">
-      <label>JWT Refresh Secret (isteğe bağlı)</label>
-      <input id="jwtRefresh" type="text" placeholder="Boş bırakırsanız otomatik üretilir" />
+      <label>JWT Refresh Secret (optional)</label>
+      <input id="jwtRefresh" type="text" placeholder="Leave blank to auto-generate" />
     </div>
 
     <div class="field">
-      <label>Anthropic API Key (isteğe bağlı)</label>
+      <label>Anthropic API Key (optional)</label>
       <input id="anthropicKey" type="password" placeholder="sk-ant-..." />
-      <p class="hint">ARIA asistan özelliği için gerekli</p>
+      <p class="hint">Required for the ARIA assistant feature</p>
     </div>
 
     <p class="error" id="errMsg"></p>
 
-    <button class="btn btn-primary" onclick="saveConfig()">Kaydet ve Başlat</button>
+    <button class="btn btn-primary" onclick="saveConfig()">Save & Launch</button>
 
     <hr class="divider" />
-    <p class="offline-note">DATABASE_URL olmadan da kullanabilirsiniz — veriler bu bilgisayarda saklanır.</p>
-    <button class="btn btn-secondary" onclick="useOffline()">Çevrimdışı / Yerel Mod</button>
+    <p class="offline-note">You can also use the app without DATABASE_URL — data will be stored locally on this computer.</p>
+    <button class="btn btn-secondary" onclick="useOffline()">Offline / Local Mode</button>
   </div>
 
   <script>
     function saveConfig() {
       const dbUrl = document.getElementById('dbUrl').value.trim();
       if (!dbUrl) {
-        showError('Lütfen DATABASE_URL girin ya da Yerel Mod seçin.');
+        showError('Please enter a DATABASE_URL or choose Local Mode.');
         return;
       }
       const config = {
