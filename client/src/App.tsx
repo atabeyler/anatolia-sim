@@ -20,47 +20,8 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-const LANG_OPTIONS = [
-  { code: 'tr', label: 'Türkçe', flag: '🇹🇷' },
-  { code: 'en', label: 'English', flag: '🇬🇧' },
-  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
-  { code: 'fr', label: 'Français', flag: '🇫🇷' },
-  { code: 'ar', label: 'العربية', flag: '🇸🇦' },
-] as const;
-
-function LangSelectScreen({ onSelect }: { onSelect: (l: 'tr' | 'en' | 'de' | 'fr' | 'ar') => void }) {
-  return (
-    <div style={{
-      width: '100vw', height: '100vh', background: '#040412',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Share Tech Mono, monospace', gap: 32,
-    }}>
-      <div style={{ color: '#a0b4ff', fontSize: 13, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>
-        Select Language / Dil Seçin
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 260 }}>
-        {LANG_OPTIONS.map(l => (
-          <button key={l.code} onClick={() => onSelect(l.code)} style={{
-            background: 'rgba(79,110,247,0.08)', border: '1px solid rgba(79,110,247,0.35)',
-            color: '#c8d4ff', padding: '14px 24px', cursor: 'pointer',
-            fontFamily: 'Share Tech Mono, monospace', fontSize: 16, letterSpacing: '0.1em',
-            display: 'flex', alignItems: 'center', gap: 14,
-            transition: 'all 0.2s',
-          }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(79,110,247,0.25)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(79,110,247,0.08)')}
-          >
-            <span style={{ fontSize: 22 }}>{l.flag}</span>
-            <span>{l.label}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function App() {
-  const { user, setUser, lang, setLang } = useSimStore();
+  const { user, setUser } = useSimStore();
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
@@ -146,8 +107,6 @@ export default function App() {
   }, []);
 
   if (!authChecked) return <div className="w-screen h-screen bg-sim-bg" />;
-
-  if (!lang) return <LangSelectScreen onSelect={setLang} />;
 
   return (
     <BrowserRouter>
