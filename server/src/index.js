@@ -80,6 +80,7 @@ app.use('/api/aria', ariaRouter);
 app.use('/api/admin', adminRouter);
 const BUILD_VERSION = process.env.RENDER_GIT_COMMIT ?? process.env.BUILD_VERSION ?? Date.now().toString();
 app.get('/api/health', (_, res) => res.json({ status: 'ok', version: BUILD_VERSION }));
+app.get('/', (_, res) => res.json({ status: 'ok' }));
 
 // Public system status — no auth required; consumed by the login page status panel
 app.get('/api/system/status', async (_, res) => {
