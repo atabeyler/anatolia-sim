@@ -528,9 +528,9 @@ function buildPositions(individuals: { x?: number; y?: number }[], r: number): T
     const lat = ((ind.y ?? 0) * Math.PI) / 180;
     const lon = ((ind.x ?? 0) * Math.PI) / 180;
     positions.push(
-      r * Math.cos(lat) * Math.sin(lon),
-      r * Math.sin(lat),
       r * Math.cos(lat) * Math.cos(lon),
+      r * Math.sin(lat),
+      -r * Math.cos(lat) * Math.sin(lon),
     );
   }
   const g = new THREE.BufferGeometry();
@@ -571,9 +571,9 @@ function PopulationDots({
     individuals.forEach((ind, i) => {
       const lat = ((ind.y ?? 0) * Math.PI) / 180;
       const lon = ((ind.x ?? 0) * Math.PI) / 180;
-      const px = r * Math.cos(lat) * Math.sin(lon);
+      const px = r * Math.cos(lat) * Math.cos(lon);
       const py = r * Math.sin(lat);
-      const pz = r * Math.cos(lat) * Math.cos(lon);
+      const pz = -r * Math.cos(lat) * Math.sin(lon);
       const wx = px * Math.cos(ry) + pz * Math.sin(ry);
       const wz = -px * Math.sin(ry) + pz * Math.cos(ry);
       const d = Math.hypot(wx - e.point.x, py - e.point.y, wz - e.point.z);
@@ -634,7 +634,7 @@ function GlobeClickCatcher({
         const local = groupRef.current.worldToLocal(e.point.clone());
         const r = local.length();
         const lat = (Math.asin(local.y / r) * 180) / Math.PI;
-        const lon = (Math.atan2(local.x, local.z) * 180) / Math.PI;
+        const lon = (Math.atan2(-local.z, local.x) * 180) / Math.PI;
         onGlobeClick(Math.round(lat * 1000) / 1000, Math.round(lon * 1000) / 1000);
       }}
     >
@@ -664,9 +664,9 @@ function PopClickCatcher({
         individuals.forEach((ind, i) => {
           const lat = ((ind.y ?? 0) * Math.PI) / 180;
           const lon = ((ind.x ?? 0) * Math.PI) / 180;
-          const px = r * Math.cos(lat) * Math.sin(lon);
+          const px = r * Math.cos(lat) * Math.cos(lon);
           const py = r * Math.sin(lat);
-          const pz = r * Math.cos(lat) * Math.cos(lon);
+          const pz = -r * Math.cos(lat) * Math.sin(lon);
           const wx = px * Math.cos(ry) + pz * Math.sin(ry);
           const wz = -px * Math.sin(ry) + pz * Math.cos(ry);
           const d = Math.hypot(wx - e.point.x, py - e.point.y, wz - e.point.z);
