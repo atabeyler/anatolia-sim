@@ -76,29 +76,21 @@ async function setupAutoUpdater() {
     autoUpdater.on('download-progress', (progress) => {
       const pct = Math.round(progress.percent ?? 0);
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.setTitle(`Anatolia Sim — Downloading update ${pct}%`);
         mainWindow.setProgressBar(pct / 100);
+        try { mainWindow.webContents.send('update-download-progress', { percent: pct }); } catch {}
       }
     });
 
-    autoUpdater.on('update-downloaded', async () => {
+    autoUpdater.on('update-downloaded', (info) => {
       if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.setTitle('Anatolia Sim');
         mainWindow.setProgressBar(-1);
+        try { mainWindow.webContents.send('update-downloaded', { version: info?.version }); } catch {}
       }
-      const { response } = await dialog.showMessageBox(mainWindow, {
-        type: 'info',
-        title: 'Update Ready',
-        message: 'Update downloaded!',
-        detail: 'Restart now to install the update?',
-        buttons: ['Restart Now', 'Later'],
-        defaultId: 0,
-      });
+    });
 
-      if (response === 0) {
-        app.isQuiting = true;
-        autoUpdater.quitAndInstall(true, true);
-      }
+    ipcMain.on('update-install', () => {
+      app.isQuiting = true;
+      autoUpdater.quitAndInstall(true, true);
     });
 
     autoUpdater.on('update-not-available', () => {
@@ -261,6 +253,7 @@ function createMainWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      preload: join(__dirname, 'preload.cjs'),
     },
   });
 
