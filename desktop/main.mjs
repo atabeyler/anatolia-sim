@@ -94,12 +94,7 @@ async function setupAutoUpdater() {
     });
 
     autoUpdater.on('update-not-available', () => {
-      dialog.showMessageBox(mainWindow, {
-        type: 'info',
-        title: 'No Updates',
-        message: 'You are running the latest version.',
-        buttons: ['OK'],
-      });
+      // Otomatik kontrol sessiz geçer; sadece manuel kontrol dialog gösterir
     });
 
     autoUpdater.on('error', (err) => {
