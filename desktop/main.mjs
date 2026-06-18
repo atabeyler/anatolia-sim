@@ -61,71 +61,80 @@ async function setupAutoUpdater() {
     autoUpdater.on('update-available', async (info) => {
       const { response } = await dialog.showMessageBox(mainWindow, {
         type: 'info',
-        title: 'Güncelleme Mevcut',
-        message: `Anatolia Sim ${info.version} sürümü mevcut!`,
-        detail: 'Arka planda indireyim mi? İndirme tamamlanınca size haber veririm.',
-        buttons: ['Evet, İndir', 'Sonra Hatırlat'],
+        title: 'Update Available',
+        message: `Anatolia Sim ${info.version} is available!`,
+        detail: 'Download in the background? You will be notified when it is ready.',
+        buttons: ['Yes, Download', 'Remind Me Later'],
         defaultId: 0,
       });
 
       if (response === 0) {
         autoUpdater.downloadUpdate();
-        dialog.showMessageBox(mainWindow, {
-          type: 'info',
-          title: 'İndiriliyor...',
-          message: 'Güncelleme arka planda indiriliyor.',
-          detail: 'İndirme tamamlanınca yeniden başlatma seçeneği sunulacak.',
-          buttons: ['Tamam'],
-        });
+      }
+    });
+
+    autoUpdater.on('download-progress', (progress) => {
+      const pct = Math.round(progress.percent ?? 0);
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setTitle(`Anatolia Sim — Downloading update ${pct}%`);
+        mainWindow.setProgressBar(pct / 100);
       }
     });
 
     autoUpdater.on('update-downloaded', async () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setTitle('Anatolia Sim');
+        mainWindow.setProgressBar(-1);
+      }
       const { response } = await dialog.showMessageBox(mainWindow, {
         type: 'info',
-        title: 'Güncelleme Hazır',
-        message: 'Güncelleme indirildi!',
-        detail: 'Uygulamayı şimdi yeniden başlatıp güncellemek ister misiniz?',
-        buttons: ['Şimdi Yeniden Başlat', 'Sonra'],
+        title: 'Update Ready',
+        message: 'Update downloaded!',
+        detail: 'Restart now to install the update?',
+        buttons: ['Restart Now', 'Later'],
         defaultId: 0,
       });
 
       if (response === 0) {
         app.isQuiting = true;
-        autoUpdater.quitAndInstall();
+        autoUpdater.quitAndInstall(true, true);
       }
     });
 
     autoUpdater.on('update-not-available', () => {
       dialog.showMessageBox(mainWindow, {
         type: 'info',
-        title: 'Güncelleme Yok',
-        message: 'Uygulamanın en güncel sürümünü kullanıyorsunuz.',
-        buttons: ['Tamam'],
+        title: 'No Updates',
+        message: 'You are running the latest version.',
+        buttons: ['OK'],
       });
     });
 
     autoUpdater.on('error', (err) => {
-      console.error('[updater] hata:', err?.message);
+      console.error('[updater] error:', err?.message);
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setTitle('Anatolia Sim');
+        mainWindow.setProgressBar(-1);
+      }
       dialog.showMessageBox(mainWindow, {
         type: 'error',
-        title: 'Güncelleme Hatası',
-        message: 'Güncelleme kontrol edilemedi:',
+        title: 'Update Error',
+        message: 'Could not check for updates:',
         detail: err?.message ?? String(err),
-        buttons: ['Tamam'],
+        buttons: ['OK'],
       });
     });
 
     // Ana pencere yüklendikten 5 saniye sonra kontrol et
     setTimeout(() => autoUpdater.checkForUpdates(), 5000);
   } catch (err) {
-    console.error('[updater] başlatılamadı:', err?.message);
+    console.error('[updater] failed to start:', err?.message);
     dialog.showMessageBox(mainWindow, {
       type: 'error',
-      title: 'Güncelleme Başlatılamadı',
-      message: 'Auto-updater yüklenemedi:',
+      title: 'Updater Failed',
+      message: 'Auto-updater could not be loaded:',
       detail: err?.message ?? String(err),
-      buttons: ['Tamam'],
+      buttons: ['OK'],
     }).catch(() => {});
   }
 }
