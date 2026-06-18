@@ -64,7 +64,8 @@
       "createStartMenuShortcut": true,
       "shortcutName": "Anatolia Sim",
       "deleteAppDataOnUninstall": false,
-      "license": "LICENSE.txt"
+      "license": "LICENSE.txt",
+      "language": "1033"
     },
     "mac": {
       "target": [

@@ -6,9 +6,9 @@ const LANG_ORDER = LANG_CODES;
 function getSavedLang() {
   try {
     const saved = localStorage.getItem('anatolia_lang');
-    return isValidLangCode(saved) ? saved : 'tr';
+    return isValidLangCode(saved) ? saved : null;
   } catch {
-    return 'tr';
+    return null;
   }
 }
 
@@ -140,7 +140,7 @@ interface SimStore {
   // UI state
   activePanel: string | null;
   setActivePanel: (panel: string | null) => void;
-  lang: 'en' | 'tr' | 'de' | 'fr' | 'ar';
+  lang: 'en' | 'tr' | 'de' | 'fr' | 'ar' | null;
   setLang: (l: 'en' | 'tr' | 'de' | 'fr' | 'ar') => void;
   toggleLang: () => void;
   theme: 'dark' | 'light';
