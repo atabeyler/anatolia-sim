@@ -500,14 +500,14 @@ function GridLines() {
       const phi = (lat * Math.PI) / 180;
       for (let i = 0; i <= 128; i++) {
         const lon = (i / 128) * 2 * Math.PI;
-        pts.push(r * Math.cos(phi) * Math.sin(lon), r * Math.sin(phi), r * Math.cos(phi) * Math.cos(lon));
+        pts.push(r * Math.cos(phi) * Math.cos(lon), r * Math.sin(phi), -r * Math.cos(phi) * Math.sin(lon));
       }
     }
     for (let lon = 0; lon < 360; lon += 30) {
       const theta = (lon * Math.PI) / 180;
       for (let i = 0; i <= 64; i++) {
         const phi = ((i / 64) * 180 - 90) * (Math.PI / 180);
-        pts.push(r * Math.cos(phi) * Math.sin(theta), r * Math.sin(phi), r * Math.cos(phi) * Math.cos(theta));
+        pts.push(r * Math.cos(phi) * Math.cos(theta), r * Math.sin(phi), -r * Math.cos(phi) * Math.sin(theta));
       }
     }
     const g = new THREE.BufferGeometry();
