@@ -15,10 +15,11 @@ interface FooterBarProps {
 }
 
 export default function FooterBar({ mode = 'fixed', className = '', style }: FooterBarProps) {
-  const { lang } = useSimStore();
+  const { lang, updatePercent, updateReady } = useSimStore();
+  const bannerVisible = updatePercent !== null || updateReady !== null;
   const wrapperStyle: React.CSSProperties =
     mode === 'fixed'
-      ? { ...WRAPPER_BASE, position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, padding: '5px 12px', display: 'flex', justifyContent: 'center', alignItems: 'center' }
+      ? { ...WRAPPER_BASE, position: 'fixed', bottom: bannerVisible ? 44 : 0, left: 0, right: 0, zIndex: 50, padding: '5px 12px', display: 'flex', justifyContent: 'center', alignItems: 'center', transition: 'bottom 0.2s ease' }
       : mode === 'flow'
       ? { ...WRAPPER_BASE, flexShrink: 0, padding: '4px 10px', display: 'flex', justifyContent: 'center', alignItems: 'center' }
       : { padding: '0', background: 'transparent', border: 'none' };
