@@ -323,32 +323,15 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
-    const fmt = (lat: number, lon: number) => setCoords({
-      lat: `${Math.abs(lat).toFixed(4)}°${lat >= 0 ? 'N' : 'S'}`,
-      lon: `${Math.abs(lon).toFixed(4)}°${lon >= 0 ? 'E' : 'W'}`,
-    });
-
-    // Browser geolocation (works in web browsers with OS location services)
-    let resolved = false;
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        pos => { resolved = true; fmt(pos.coords.latitude, pos.coords.longitude); },
-        () => {},
-        { timeout: 5000 }
-      );
-    }
-
-    // IP-based fallback — fires after 5.5 s if browser geolocation didn't resolve
-    const timer = setTimeout(async () => {
-      if (resolved) return;
-      try {
-        const res = await fetch('https://ipapi.co/json/');
-        const d = await res.json();
-        if (d.latitude != null && d.longitude != null) fmt(d.latitude, d.longitude);
-      } catch {}
-    }, 5500);
-
-    return () => clearTimeout(timer);
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      pos => setCoords({
+        lat: `${Math.abs(pos.coords.latitude).toFixed(4)}°${pos.coords.latitude >= 0 ? 'N' : 'S'}`,
+        lon: `${Math.abs(pos.coords.longitude).toFixed(4)}°${pos.coords.longitude >= 0 ? 'E' : 'W'}`,
+      }),
+      () => {},
+      { timeout: 5000 }
+    );
   }, []);
 
   useEffect(() => {
