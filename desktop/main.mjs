@@ -95,8 +95,24 @@ async function setupAutoUpdater() {
       }
     });
 
+    autoUpdater.on('update-not-available', () => {
+      dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        title: 'Güncelleme Yok',
+        message: 'Uygulamanın en güncel sürümünü kullanıyorsunuz.',
+        buttons: ['Tamam'],
+      });
+    });
+
     autoUpdater.on('error', (err) => {
       console.error('[updater] hata:', err?.message);
+      dialog.showMessageBox(mainWindow, {
+        type: 'error',
+        title: 'Güncelleme Hatası',
+        message: 'Güncelleme kontrol edilemedi:',
+        detail: err?.message ?? String(err),
+        buttons: ['Tamam'],
+      });
     });
 
     // Ana pencere yüklendikten 5 saniye sonra kontrol et
