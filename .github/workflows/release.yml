@@ -2,8 +2,7 @@ name: Windows Installer Build
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -42,7 +41,24 @@ jobs:
         run: |
           echo '{"DATABASE_URL":"${{ secrets.DATABASE_URL }}"}' > desktop/bundled-config.json
 
+      - name: Versiyon kontrolü — zaten yayınlandıysa atla
+        id: check
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          if gh release view "v$VERSION" --repo $GITHUB_REPOSITORY > /dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "v$VERSION zaten yayınlanmış, publish atlanıyor."
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "v$VERSION yeni, publish yapılacak."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Windows installer oluştur ve yayınla
+        if: steps.check.outputs.exists == 'false'
         run: npx electron-builder --win nsis --x64 --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
