@@ -212,7 +212,7 @@ export const useSimStore = create<SimStore>((set) => ({
   lang: getSavedLang(),
   setLang: (l) => { localStorage.setItem('anatolia_lang', l); set({ lang: l }); },
   toggleLang: () => set(s => {
-    const currentIndex = LANG_ORDER.indexOf(s.lang);
+    const currentIndex = LANG_ORDER.indexOf((s.lang ?? 'en') as typeof LANG_ORDER[number]);
     const nextLang = LANG_ORDER[(currentIndex + 1) % LANG_ORDER.length] ?? 'en';
     localStorage.setItem('anatolia_lang', nextLang);
     return { lang: nextLang };
