@@ -17,3 +17,7 @@ contextBridge.exposeInMainWorld('electronUpdater', {
   },
   install: () => ipcRenderer.send('update-install'),
 });
+
+contextBridge.exposeInMainWorld('electronLocation', {
+  getCoords: () => ipcRenderer.invoke('get-location'),
+});

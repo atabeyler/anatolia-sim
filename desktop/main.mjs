@@ -1,5 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
-import { spawn } from 'node:child_process';
+import { spawn, execFile } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -158,6 +158,59 @@ function showSetupWindow() {
   });
 }
 
+// ─── Location ──────────────────────────────────────────────────────────────────
+
+ipcMain.handle('get-location', () => new Promise(resolve => {
+  if (process.platform === 'win32') {
+    const ps = `
+      try {
+        Add-Type -AssemblyName System.Device
+        $w = New-Object System.Device.Location.GeoCoordinateWatcher([System.Device.Location.GeoPositionAccuracy]::High)
+        $w.Start()
+        $end = (Get-Date).AddSeconds(8)
+        while ((Get-Date) -lt $end -and $w.Status -ne 'Ready') { Start-Sleep -Milliseconds 200 }
+        if ($w.Position.Location.IsUnknown) { Write-Output 'null' }
+        else { Write-Output "$($w.Position.Location.Latitude),$($w.Position.Location.Longitude)" }
+        $w.Stop()
+      } catch { Write-Output 'null' }
+    `;
+    execFile('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { timeout: 12000 }, (err, stdout) => {
+      if (err || !stdout) { resolve(null); return; }
+      const parts = stdout.trim().split(',');
+      if (parts.length === 2) {
+        const lat = parseFloat(parts[0]), lon = parseFloat(parts[1]);
+        resolve(isNaN(lat) || isNaN(lon) ? null : { lat, lon });
+      } else { resolve(null); }
+    });
+  } else if (process.platform === 'darwin') {
+    // macOS: CoreLocation via Swift one-liner
+    const swift = `
+import CoreLocation
+class D: NSObject, CLLocationManagerDelegate {
+  let m = CLLocationManager()
+  override init() { super.init(); m.delegate = self; m.requestWhenInUseAuthorization(); m.startUpdatingLocation() }
+  func locationManager(_ m: CLLocationManager, didUpdateLocations l: [CLLocation]) {
+    print("\\(l[0].coordinate.latitude),\\(l[0].coordinate.longitude)"); exit(0)
+  }
+  func locationManager(_ m: CLLocationManager, didFailWithError e: Error) { print("null"); exit(1) }
+}
+let d = D(); RunLoop.main.run()
+    `;
+    const tmp = join(app.getPath('temp'), 'loc.swift');
+    writeFileSync(tmp, swift, 'utf8');
+    execFile('swift', [tmp], { timeout: 12000 }, (err, stdout) => {
+      if (err || !stdout) { resolve(null); return; }
+      const parts = stdout.trim().split(',');
+      if (parts.length === 2) {
+        const lat = parseFloat(parts[0]), lon = parseFloat(parts[1]);
+        resolve(isNaN(lat) || isNaN(lon) ? null : { lat, lon });
+      } else { resolve(null); }
+    });
+  } else {
+    resolve(null);
+  }
+}));
+
 // ─── Server ────────────────────────────────────────────────────────────────────
 
 function sleep(ms) {
@@ -257,12 +310,6 @@ function createMainWindow() {
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url).catch(() => {});
     return { action: 'deny' };
-  });
-
-  // Forward geolocation permission to Electron's Chromium — actual location
-  // is provided by the OS (Windows Location Services / macOS Core Location).
-  mainWindow.webContents.session.setPermissionRequestHandler((_wc, permission, callback) => {
-    callback(permission === 'geolocation');
   });
 
   mainWindow.on('closed', () => { mainWindow = null; });

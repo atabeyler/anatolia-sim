@@ -323,15 +323,25 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      pos => setCoords({
-        lat: `${Math.abs(pos.coords.latitude).toFixed(4)}°${pos.coords.latitude >= 0 ? 'N' : 'S'}`,
-        lon: `${Math.abs(pos.coords.longitude).toFixed(4)}°${pos.coords.longitude >= 0 ? 'E' : 'W'}`,
-      }),
-      () => {},
-      { timeout: 10000, enableHighAccuracy: true }
-    );
+    const fmt = (lat: number, lon: number) => setCoords({
+      lat: `${Math.abs(lat).toFixed(4)}°${lat >= 0 ? 'N' : 'S'}`,
+      lon: `${Math.abs(lon).toFixed(4)}°${lon >= 0 ? 'E' : 'W'}`,
+    });
+
+    const el = (window as any).electronLocation;
+    if (el) {
+      // Electron: use OS location API via main process (Windows / macOS)
+      el.getCoords().then((c: { lat: number; lon: number } | null) => {
+        if (c) fmt(c.lat, c.lon);
+      }).catch(() => {});
+    } else if (navigator.geolocation) {
+      // Web browser: standard Geolocation API
+      navigator.geolocation.getCurrentPosition(
+        pos => fmt(pos.coords.latitude, pos.coords.longitude),
+        () => {},
+        { timeout: 10000, enableHighAccuracy: true }
+      );
+    }
   }, []);
 
   useEffect(() => {
