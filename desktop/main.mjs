@@ -259,6 +259,11 @@ function createMainWindow() {
     return { action: 'deny' };
   });
 
+  // Geolocation permission — grant automatically so login screen shows real coordinates
+  mainWindow.webContents.session.setPermissionRequestHandler((_wc, permission, callback) => {
+    callback(permission === 'geolocation');
+  });
+
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
