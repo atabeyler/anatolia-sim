@@ -259,20 +259,6 @@ function createMainWindow() {
     return { action: 'deny' };
   });
 
-  // Geolocation permission — show a native dialog so user consciously grants access
-  mainWindow.webContents.session.setPermissionRequestHandler((_wc, permission, callback) => {
-    if (permission !== 'geolocation') { callback(false); return; }
-    dialog.showMessageBox(mainWindow, {
-      type: 'question',
-      title: 'Location Access',
-      message: 'Anatolia Sim wants to access your location.',
-      detail: 'Your coordinates will be displayed on the login screen. No data is stored or transmitted.',
-      buttons: ['Allow', 'Deny'],
-      defaultId: 0,
-      cancelId: 1,
-    }).then(({ response }) => callback(response === 0)).catch(() => callback(false));
-  });
-
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 

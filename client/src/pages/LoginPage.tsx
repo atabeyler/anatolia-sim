@@ -328,17 +328,17 @@ export default function LoginPage() {
       lon: `${Math.abs(lon).toFixed(4)}°${lon >= 0 ? 'E' : 'W'}`,
     });
 
-    // Try browser geolocation first (works on web / when OS location is on)
+    // Browser geolocation (works in web browsers with OS location services)
     let resolved = false;
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         pos => { resolved = true; fmt(pos.coords.latitude, pos.coords.longitude); },
         () => {},
-        { timeout: 4000 }
+        { timeout: 5000 }
       );
     }
 
-    // Fall back to IP-based geolocation after 6 s if permission denied / timed out
+    // IP-based fallback — fires after 5.5 s if browser geolocation didn't resolve
     const timer = setTimeout(async () => {
       if (resolved) return;
       try {
@@ -346,7 +346,7 @@ export default function LoginPage() {
         const d = await res.json();
         if (d.latitude != null && d.longitude != null) fmt(d.latitude, d.longitude);
       } catch {}
-    }, 6000);
+    }, 5500);
 
     return () => clearTimeout(timer);
   }, []);

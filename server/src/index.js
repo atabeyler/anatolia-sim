@@ -37,7 +37,8 @@ app.use(helmet({
       scriptSrc:  ["'self'", "'unsafe-inline'"],   // Vite build inline chunks
       styleSrc:   ["'self'", "'unsafe-inline'"],
       connectSrc: ["'self'", "wss:", "ws:",
-                   "https://generativelanguage.googleapis.com"], // Gemini API
+                   "https://generativelanguage.googleapis.com", // Gemini API
+                   "https://ipapi.co"],                          // IP geolocation (login screen)
       imgSrc:     ["'self'", "data:", "blob:", "https://raw.githubusercontent.com"],
       fontSrc:    ["'self'", "data:"],
       workerSrc:  ["'self'", "blob:"],              // Three.js workers
