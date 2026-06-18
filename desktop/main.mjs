@@ -119,6 +119,13 @@ async function setupAutoUpdater() {
     setTimeout(() => autoUpdater.checkForUpdates(), 5000);
   } catch (err) {
     console.error('[updater] başlatılamadı:', err?.message);
+    dialog.showMessageBox(mainWindow, {
+      type: 'error',
+      title: 'Güncelleme Başlatılamadı',
+      message: 'Auto-updater yüklenemedi:',
+      detail: err?.message ?? String(err),
+      buttons: ['Tamam'],
+    }).catch(() => {});
   }
 }
 
