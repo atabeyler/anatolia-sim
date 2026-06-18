@@ -330,7 +330,7 @@ export default function LoginPage() {
         lon: `${Math.abs(pos.coords.longitude).toFixed(4)}°${pos.coords.longitude >= 0 ? 'E' : 'W'}`,
       }),
       () => {},
-      { timeout: 5000 }
+      { timeout: 10000, enableHighAccuracy: true }
     );
   }, []);
 

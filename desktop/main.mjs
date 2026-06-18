@@ -259,6 +259,12 @@ function createMainWindow() {
     return { action: 'deny' };
   });
 
+  // Forward geolocation permission to Electron's Chromium — actual location
+  // is provided by the OS (Windows Location Services / macOS Core Location).
+  mainWindow.webContents.session.setPermissionRequestHandler((_wc, permission, callback) => {
+    callback(permission === 'geolocation');
+  });
+
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
