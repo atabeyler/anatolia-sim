@@ -472,7 +472,7 @@ export default function LoginPage() {
                 LAT: {coords?.lat ?? '39.9334°N'} · LON: {coords?.lon ?? '32.8597°E'}
               </div>
               <div style={{ marginTop: 1, whiteSpace: 'normal', overflowWrap: 'anywhere', lineHeight: 1.25 }}>
-                SYS: ANATOLİA-SİM v1.0 · BUILD 2026
+                SYS: ANATOLİA-SİM v{__APP_VERSION__} · BUILD 2026
               </div>
             </div>
           </div>
