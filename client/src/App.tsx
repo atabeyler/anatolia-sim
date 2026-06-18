@@ -35,7 +35,9 @@ export default function App() {
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    const sessionActive = sessionStorage.getItem('anatolia_session_active') === '1';
+    const sessionActive =
+      localStorage.getItem('anatolia_session_active') === '1' ||
+      sessionStorage.getItem('anatolia_session_active') === '1';
     if (!sessionActive) {
       setAuthChecked(true);
       return;
@@ -43,7 +45,12 @@ export default function App() {
     axios.post('/api/auth/refresh')
       .then(({ data }) => {
         setUser(data.user, data.access_token);
-        sessionStorage.setItem('anatolia_session_active', '1');
+        // Hangisi aktifse onu yenile
+        if (localStorage.getItem('anatolia_session_active') === '1') {
+          localStorage.setItem('anatolia_session_active', '1');
+        } else {
+          sessionStorage.setItem('anatolia_session_active', '1');
+        }
       })
       .catch(() => {})
       .finally(() => setAuthChecked(true));

@@ -296,6 +296,7 @@ export default function LoginPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPage, setMenuPage] = useState<'language' | 'guide' | 'about' | 'mission' | 'contact' | null>(null);
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('anatolia_remember') === '1');
   const [form, setForm] = useState({ user_code: '', reg_user_code: '', first_name: '', last_name: '', tc_no: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -375,7 +376,14 @@ export default function LoginPage() {
       } else {
         const { data } = await axios.post('/api/auth/login', { user_code: form.user_code, password: form.password });
         setUser(data.user, data.access_token);
-        sessionStorage.setItem('anatolia_session_active', '1');
+        if (rememberMe) {
+          localStorage.setItem('anatolia_session_active', '1');
+          localStorage.setItem('anatolia_remember', '1');
+        } else {
+          sessionStorage.setItem('anatolia_session_active', '1');
+          localStorage.removeItem('anatolia_remember');
+          localStorage.removeItem('anatolia_session_active');
+        }
         navigate(data.user.role === 'admin' ? '/admin' : '/');
       }
     } catch (err: any) {
@@ -610,6 +618,24 @@ export default function LoginPage() {
               <div className="mb-3 px-3 py-2 border-l-2 border-sim-green bg-sim-green/10 font-share-tech text-sim-green tracking-wide" style={{ fontSize: 'clamp(13px, 1.15vw, 14px)' }}>
                 ✓ {success}
               </div>
+            )}
+
+            {mode === 'login' && (
+              <label className="flex items-center gap-2 mb-3 cursor-pointer select-none" style={{ marginTop: 4 }}>
+                <div
+                  onClick={() => setRememberMe(v => !v)}
+                  className="w-4 h-4 flex-shrink-0 flex items-center justify-center transition-all"
+                  style={{ border: `1px solid ${rememberMe ? '#4f6ef7' : '#3a4a6a'}`, background: rememberMe ? 'rgba(79,110,247,0.25)' : 'transparent', cursor: 'pointer' }}
+                >
+                  {rememberMe && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#4f6ef7" strokeWidth="1.5" strokeLinecap="round"/></svg>}
+                </div>
+                <span
+                  onClick={() => setRememberMe(v => !v)}
+                  style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 13, color: rememberMe ? '#c0c8e8' : '#6a8a9a', letterSpacing: '0.06em' }}
+                >
+                  {lang === 'tr' ? 'Beni hatırla' : 'Remember me'}
+                </span>
+              </label>
             )}
 
             <button type="submit" disabled={loading}
