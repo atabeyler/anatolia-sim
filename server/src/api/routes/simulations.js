@@ -286,6 +286,23 @@ router.get('/:id/population', authenticate, requireSimulationOwner, async (req, 
   } catch { res.status(500).json({ error: 'Failed to fetch population' }); }
 });
 
+router.get('/:id/population/:individualId', authenticate, requireSimulationOwner, async (req, res) => {
+  try {
+    const engine = simulationManager.getEngine(req.params.id);
+    if (engine) {
+      const ind = engine.population.get(req.params.individualId);
+      if (!ind) return res.status(404).json({ error: 'Individual not found' });
+      return res.json(serializeIndividual(ind, engine.currentDay));
+    }
+    const { rows } = await query(
+      'SELECT id, sex, birth_day, death_day, alive, x, y, genome, phenotype, health, mind, social, skills, beliefs, language, parent_1_id, parent_2_id, death_cause FROM individuals WHERE simulation_id = $1 AND id = $2',
+      [req.params.id, req.params.individualId]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: 'Individual not found' });
+    res.json(serializeIndividual({ ...rows[0], is_dead: rows[0].alive === false }, req.simulation.current_day ?? 0));
+  } catch { res.status(500).json({ error: 'Failed to fetch individual' }); }
+});
+
 router.get('/:id/events', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const { limit = 50, importance, types, offset = 0 } = req.query;
