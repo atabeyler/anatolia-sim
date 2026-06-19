@@ -21,7 +21,7 @@ export class WorkerPool {
       w.on('error', err => console.error(`[worker ${i}] error:`, err));
       this._workers.push(w);
     }
-    console.log(`[WorkerPool] ${this.size} workers started (${this.size} cores)`);
+    // Workers started: this.size = cpus().length;
   }
 
   // Dispatch `individuals` across all available workers in parallel.
@@ -46,8 +46,10 @@ export class WorkerPool {
 
       promises.push(new Promise((resolve, reject) => {
         const w = this._workers[i];
-        w.once('message', resolve);
-        w.once('error', reject);
+        const onMsg = (data) => { w.off('error', onErr); resolve(data); };
+        const onErr = (err)  => { w.off('message', onMsg); reject(err); };
+        w.once('message', onMsg);
+        w.once('error', onErr);
         w.postMessage({ individuals: serialized, worldState, discoveredTechs: [...discoveredTechs], day });
       }));
     }

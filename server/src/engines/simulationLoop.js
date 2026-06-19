@@ -260,18 +260,54 @@ export class SimulationEngine {
     }
     {
       const adults = alive.filter(i => (i.age ?? 0) / 365 >= 2);
-      const { deltas, events: workerEvents } = await this._pool.run(
-        adults, this.worldState, this.discoveredTechs, day
-      );
-      // Apply worker results back onto the shared individual objects in-place
-      for (const delta of deltas) {
-        const ind = this.population.get(delta.id);
-        if (!ind) continue;
-        delta.beliefs     = new Set(delta.beliefs     ?? []);
-        delta.known_techs = new Set(delta.known_techs ?? []);
-        Object.assign(ind, delta);
+      // Use worker pool only when population is large enough for parallelism to pay off.
+      // Below the threshold, IPC serialization overhead exceeds the compute gain.
+      const WORKER_THRESHOLD = 20;
+      if (adults.length >= WORKER_THRESHOLD) {
+        let poolResult;
+        try {
+          poolResult = await this._pool.run(adults, this.worldState, this.discoveredTechs, day);
+        } catch (poolErr) {
+          console.error(`[WorkerPool] day=${day} error:`, poolErr?.message ?? poolErr);
+          throw poolErr;
+        }
+        for (const delta of poolResult.deltas) {
+          const ind = this.population.get(delta.id);
+          if (!ind) continue;
+          delta.beliefs     = new Set(delta.beliefs     ?? []);
+          delta.known_techs = new Set(delta.known_techs ?? []);
+          Object.assign(ind, delta);
+        }
+        tickEvents.push(...poolResult.events);
+      } else {
+        // Main-thread path for small populations (avoids IPC overhead)
+        for (const ind of adults) {
+          ind._currentAction = selectAction(ind, this.worldState);
+          if (!ind._behaviorCounts) ind._behaviorCounts = {};
+          ind._behaviorCounts[ind._currentAction] = (ind._behaviorCounts[ind._currentAction] ?? 0) + 1;
+          updateEpigenome(ind, this.worldState, day);
+          updateGutMicrobiome(ind, this.worldState);
+          const gathered = gatherResources(ind, this.worldState, this.discoveredTechs);
+          for (const [res, qty] of Object.entries(gathered)) {
+            ind.inventory[res] = (ind.inventory[res] ?? 0) + qty;
+          }
+          const { satiation, inv } = consumeResources(ind);
+          ind.inventory = inv;
+          ind.satiation = satiation;
+          if (ind.health) {
+            ind.health.calories  = (ind.health.calories  ?? 1) * 0.97 + Math.min(1, satiation * 1.3) * 0.03;
+            ind.health.hydration = (ind.health.hydration ?? 1) * 0.97 + Math.min(1, (inv.water ?? 0) > 0.5 ? 0.95 : 0.4) * 0.03;
+          }
+          const { produced, inv: prodInv } = produceGoods(ind, this.discoveredTechs);
+          ind.inventory = prodInv;
+          for (const [good, qty] of Object.entries(produced)) {
+            ind.inventory[good] = (ind.inventory[good] ?? 0) + qty;
+          }
+          updateMentalState(ind, tickEvents, this.worldState, day);
+          updateConsciousness(ind);
+          accumulateExperience(ind, this.worldState);
+        }
       }
-      tickEvents.push(...workerEvents);
     }
 
     // 3b. Infant economy — breastfeeding reads the mother's inventory; must stay on main thread.
