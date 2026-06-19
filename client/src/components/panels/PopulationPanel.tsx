@@ -280,6 +280,10 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             </button>
             <button onClick={onClose} className="text-sim-muted hover:text-sim-accent transition-colors"><X size={14} /></button>
           </div>
+        </div>
+
+        {/* ── Scrollable content ── */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
 
           {/* ── Görünüm / Appearance ── */}
           <div>
@@ -518,33 +522,34 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             </div>
           )}
 
-          {treeOpen && (
-            <FamilyTreeModal
-              ind={ind}
-              allIndividuals={allIndividuals}
-              lang={lang}
-              onClose={() => setTreeOpen(false)}
-            />
-          )}
+        </div>{/* end scrollable content */}
+      </div>{/* end modal box */}
 
-          {archiveOpen && (
-            <JournalArchiveModal
-              name={name}
-              entries={archivedJournal}
-              typeIcon={TYPE_ICON}
-              lang={lang}
-              onClear={() => {
-                try { localStorage.removeItem(`journal_${ind.id}`); } catch {}
-                setArchivedJournal([]);
-                setArchiveOpen(false);
-              }}
-              onClose={() => setArchiveOpen(false)}
-            />
-          )}
+      {treeOpen && (
+        <FamilyTreeModal
+          ind={ind}
+          allIndividuals={allIndividuals}
+          lang={lang}
+          onClose={() => setTreeOpen(false)}
+        />
+      )}
 
-        </div>
-      </div>
-    </div>
+      {archiveOpen && (
+        <JournalArchiveModal
+          name={name}
+          entries={archivedJournal}
+          typeIcon={TYPE_ICON}
+          lang={lang}
+          onClear={() => {
+            try { localStorage.removeItem(`journal_${ind.id}`); } catch {}
+            setArchivedJournal([]);
+            setArchiveOpen(false);
+          }}
+          onClose={() => setArchiveOpen(false)}
+        />
+      )}
+
+    </div>{/* end overlay */}
   );
 }
 
