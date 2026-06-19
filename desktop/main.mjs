@@ -318,6 +318,23 @@ function createMainWindow() {
     },
   });
 
+  // Allow Google Fonts and other external style/font sources
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "default-src 'self'; " +
+          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+          "font-src 'self' https://fonts.gstatic.com; " +
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+          "img-src 'self' data: blob:; " +
+          "connect-src 'self' http://127.0.0.1:3001 ws://127.0.0.1:3001;"
+        ],
+      },
+    });
+  });
+
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url).catch(() => {});
     return { action: 'deny' };
@@ -370,6 +387,10 @@ async function boot() {
 }
 
 // ─── App lifecycle ─────────────────────────────────────────────────────────────
+
+// Prevent WebGL context from being lost under memory pressure
+app.commandLine.appendSwitch('disable-gpu-process-crash-limit');
+app.commandLine.appendSwitch('enable-unsafe-webgpu');
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
