@@ -833,7 +833,15 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
   /* ── render ──────────────────────────────────────────────────────────── */
   const subtitle = stepSubtitle();
   return (
-    <div style={{ width:'min(580px, 92vw)', height:'min(80vh, 720px)', margin:'0 auto', background:'rgba(4,4,15,0.97)',
+    <div
+      onKeyDown={e => {
+        if (e.key !== 'Enter') return;
+        const tag = (e.target as HTMLElement).tagName;
+        if (tag === 'TEXTAREA') return; // allow newline in textareas
+        if (isSummary) { if (!loading) setConfirmOpen(true); return; }
+        if (canNext) next();
+      }}
+      style={{ width:'min(580px, 92vw)', height:'min(80vh, 720px)', margin:'0 auto', background:'rgba(4,4,15,0.97)',
       border:'1px solid rgba(79,110,247,0.4)', animation:'boot-in 0.3s ease-out both', display:'flex', flexDirection:'column', overflow:'hidden' }}>
 
       {/* Progress */}
