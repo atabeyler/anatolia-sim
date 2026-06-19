@@ -328,7 +328,7 @@ function createMainWindow() {
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
           "font-src 'self' https://fonts.gstatic.com; " +
           "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-          "img-src 'self' data: blob:; " +
+          "img-src 'self' data: blob: https://raw.githubusercontent.com; " +
           "connect-src 'self' http://127.0.0.1:3001 ws://127.0.0.1:3001;"
         ],
       },
