@@ -190,6 +190,13 @@ export class SimulationEngine {
     const tickEvents = [];
     // Built once per tick; used by tech observation, language learning, and social interactions.
     const spatialGrid = buildSpatialGrid(alive);
+    // Group membership index — O(1) lookup: group_id → alive members
+    const groupMembersMap = new Map();
+    for (const ind of alive) {
+      if (!ind.group_id) continue;
+      if (!groupMembersMap.has(ind.group_id)) groupMembersMap.set(ind.group_id, []);
+      groupMembersMap.get(ind.group_id).push(ind);
+    }
 
     // 0. Each individual selects their action for this tick based on their own needs.
     // _behaviorCounts accumulates lifetime action history — used by assignGroupRoles
@@ -422,9 +429,10 @@ export class SimulationEngine {
     const socialEvents = processGroupDynamics(alive, this.groups, day);
     tickEvents.push(...socialEvents);
 
-    // Assign roles in each group
+    // Assign roles in each group — use Set for O(1) membership test
     for (const group of this.groups) {
-      const members = alive.filter(i => group.member_ids.includes(i.id));
+      const memberIdSet = new Set(group.member_ids);
+      const members = alive.filter(i => memberIdSet.has(i.id));
       assignGroupRoles(members, group);
     }
 
@@ -499,9 +507,14 @@ export class SimulationEngine {
         this._newDeadThisTick.push(ind);
         this._todayDeaths++;
         this.totalDeaths++;
-        // Grief event — sent separately to each group member and close relative
-        // (psychologyEngine only processes events that carry its own individual_id)
-        for (const survivor of alive) {
+        // Grief event — sent to group members, kin, and nearby survivors
+        // Use spatialGrid for proximity; skip full alive scan
+        const griefNearby = getNeighbours(ind, spatialGrid);
+        const griefCandidates = new Set([
+          ...griefNearby,
+          ...(ind.group_id ? (groupMembersMap.get(ind.group_id) ?? []) : []),
+        ]);
+        for (const survivor of griefCandidates) {
           if (survivor.is_dead || survivor.id === ind.id) continue;
           const sameGroup = survivor.group_id && survivor.group_id === ind.group_id;
           const isKin = survivor.parent_1_id === ind.id || survivor.parent_2_id === ind.id
@@ -586,9 +599,7 @@ export class SimulationEngine {
     // 12c. FOXP2 expression — grows through social language use (developmental plasticity)
     const _groupSizeMap = new Map();
     for (const ind of alive) {
-      if (ind.group_id && !_groupSizeMap.has(ind.group_id)) {
-        _groupSizeMap.set(ind.group_id, alive.filter(o => o.group_id === ind.group_id).length);
-      }
+      if (ind.group_id) _groupSizeMap.set(ind.group_id, (_groupSizeMap.get(ind.group_id) ?? 0) + 1);
     }
     for (const ind of alive) {
       const groupSize = ind.group_id ? Math.max(0, (_groupSizeMap.get(ind.group_id) ?? 1) - 1) : 0;
@@ -687,7 +698,8 @@ export class SimulationEngine {
       this.logEvent(day, 'art', ev.description, ev, ev.importance === 'high' ? 4 : 2);
     }
     for (const ind of alive) {
-      applyArtEffects(ind, this.groups.find(g => g.member_ids?.includes(ind.id)), this.discoveredArts);
+      const indGroup = ind.group_id ? this.groups.find(g => g.id === ind.group_id) : undefined;
+      applyArtEffects(ind, indGroup, this.discoveredArts);
     }
 
     // 17. Architecture
@@ -697,7 +709,7 @@ export class SimulationEngine {
         tickEvents.push(ev);
         this.logEvent(day, 'architecture', ev.description, ev, ev.importance === 'high' ? 4 : 2);
       }
-      const groupSize = alive.filter(i => i.group_id === settlement.group_id).length;
+      const groupSize = (groupMembersMap.get(settlement.group_id) ?? []).length;
       const crowdEv = checkSettlementOvercrowding(settlement, groupSize, day);
       if (crowdEv && (!settlement._last_crowd_log || day - settlement._last_crowd_log >= 30)) {
         settlement._last_crowd_log = day;
@@ -827,8 +839,7 @@ export class SimulationEngine {
       if (Math.random() > 0.03) continue;
       if ((ind.language?.stage ?? 0) < 1) continue;
 
-      const groupMembers = alive.filter(o =>
-        o.id !== ind.id &&
+      const groupMembers = getNeighbours(ind, spatialGrid).filter(o =>
         o.group_id === ind.group_id &&
         Math.hypot((o.x ?? 0) - (ind.x ?? 0), (o.y ?? 0) - (ind.y ?? 0)) < 2
       );
