@@ -1,5 +1,6 @@
 // Main Simulation Loop — each tick = 1 simulation day
 
+import { WorkerPool } from './workerPool.mjs';
 import { rollDeath } from './biology/mortality.js';
 import { checkReproduction } from './biology/reproduction.js';
 import { computeInbreedingCoefficient } from './biology/genome.js';
@@ -85,6 +86,14 @@ export class SimulationEngine {
     // Build phonological profile once — unique to this civilization's geography
     const ws = simulation.world_state ?? {};
     this.phonology = buildPhonology(ws.phonology_seed ?? 0, ws.biome ?? 'mediterranean');
+    // Worker pool — persists across ticks; one per SimulationEngine instance
+    this._pool = new WorkerPool();
+  }
+
+  destroy() {
+    this.running = false;
+    this._pool?.terminate();
+    this._pool = null;
   }
 
   load(individuals) {
@@ -198,15 +207,6 @@ export class SimulationEngine {
       groupMembersMap.get(ind.group_id).push(ind);
     }
 
-    // 0. Each individual selects their action for this tick based on their own needs.
-    // _behaviorCounts accumulates lifetime action history — used by assignGroupRoles
-    // to infer social roles from what an individual actually does (Cardinal Rule).
-    for (const ind of alive) {
-      ind._currentAction = selectAction(ind, this.worldState);
-      if (!ind._behaviorCounts) ind._behaviorCounts = {};
-      ind._behaviorCounts[ind._currentAction] = (ind._behaviorCounts[ind._currentAction] ?? 0) + 1;
-    }
-
     // 0b. Set age & life_stage on every individual (required by all engines)
     for (const ind of alive) {
       ind.age = day - (ind.birth_day ?? 0);
@@ -241,11 +241,7 @@ export class SimulationEngine {
       this.worldState.recent_disaster = null;
     }
 
-    // 2. Epigenetics & microbiome daily update
-    for (const ind of alive) {
-      updateEpigenome(ind, this.worldState, day);
-      updateGutMicrobiome(ind, this.worldState);
-    }
+    // 2. Epigenetics & microbiome — handled by worker pool (below)
 
     // 2b. Apply astronomy bonuses to world state (farming efficiency, navigation)
     const astroBonus = getAstronomyBonus(this.astronomyKnowledge);
@@ -256,60 +252,53 @@ export class SimulationEngine {
     const avgMBDiv = alive.reduce((s, i) => s + (i.microbiome?.diversity ?? 0.5), 0) / Math.max(1, alive.length);
     this.worldState.soil_health = 0.3 + avgMBDiv * 0.7;
 
-    // 3. Economy — gather resources, consume, produce goods
+    // 3 + 0 + 2 + 5 + 5b + 13 — dispatch independent per-individual work to worker pool.
+    // Steps that are purely per-individual (no cross-individual reads/writes) run in parallel
+    // across all CPU cores. Adults only; infant economy requires the mother reference (below).
     for (const ind of alive) {
-      const ageYears = ind.age / 365;
       if (!ind.inventory) ind.inventory = initializeInventory();
-
-      // Infants (< 2 yr) are breastfed — they don't forage independently.
-      // Food is transferred from mother's inventory each tick.
-      if (ageYears < 2) {
-        const INFANT_DAILY_NEED = 0.3;
-        const WATER_DAILY_NEED  = 0.15;
-        const mother = this.population.get(ind.parent_1_id ?? ind.parent_2_id);
-        const feeder = (mother && !mother.is_dead) ? mother
-          : (() => {
-              const p2 = this.population.get(ind.parent_2_id ?? ind.parent_1_id);
-              return (p2 && !p2.is_dead) ? p2 : null;
-            })();
-        if (feeder?.inventory) {
-          const fed  = Math.min(feeder.inventory.food  ?? 0, INFANT_DAILY_NEED);
-          const watered = Math.min(feeder.inventory.water ?? 0, WATER_DAILY_NEED);
-          feeder.inventory.food  = Math.max(0, (feeder.inventory.food  ?? 0) - fed);
-          feeder.inventory.water = Math.max(0, (feeder.inventory.water ?? 0) - watered);
-          ind.inventory.food  = (ind.inventory.food  ?? 0) + fed;
-          ind.inventory.water = (ind.inventory.water ?? 0) + watered;
-        }
-        const { satiation, inv } = consumeResources(ind);
-        ind.inventory = inv;
-        ind.satiation = satiation;
-        if (ind.health) {
-          ind.health.calories  = (ind.health.calories  ?? 1) * 0.97 + Math.min(1, satiation * 1.3) * 0.03;
-          ind.health.hydration = (ind.health.hydration ?? 1) * 0.97 + ((inv.water ?? 0) > 0.15 ? 0.95 : 0.4) * 0.03;
-        }
-        continue;
+    }
+    {
+      const adults = alive.filter(i => (i.age ?? 0) / 365 >= 2);
+      const { deltas, events: workerEvents } = await this._pool.run(
+        adults, this.worldState, this.discoveredTechs, day
+      );
+      // Apply worker results back onto the shared individual objects in-place
+      for (const delta of deltas) {
+        const ind = this.population.get(delta.id);
+        if (!ind) continue;
+        delta.beliefs     = new Set(delta.beliefs     ?? []);
+        delta.known_techs = new Set(delta.known_techs ?? []);
+        Object.assign(ind, delta);
       }
+      tickEvents.push(...workerEvents);
+    }
 
-      const gathered = gatherResources(ind, this.worldState, this.discoveredTechs);
-      for (const [res, qty] of Object.entries(gathered)) {
-        ind.inventory[res] = (ind.inventory[res] ?? 0) + qty;
+    // 3b. Infant economy — breastfeeding reads the mother's inventory; must stay on main thread.
+    for (const ind of alive) {
+      if ((ind.age ?? 0) / 365 >= 2) continue;
+      const INFANT_DAILY_NEED = 0.3;
+      const WATER_DAILY_NEED  = 0.15;
+      const mother = this.population.get(ind.parent_1_id ?? ind.parent_2_id);
+      const feeder = (mother && !mother.is_dead) ? mother
+        : (() => {
+            const p2 = this.population.get(ind.parent_2_id ?? ind.parent_1_id);
+            return (p2 && !p2.is_dead) ? p2 : null;
+          })();
+      if (feeder?.inventory) {
+        const fed     = Math.min(feeder.inventory.food  ?? 0, INFANT_DAILY_NEED);
+        const watered = Math.min(feeder.inventory.water ?? 0, WATER_DAILY_NEED);
+        feeder.inventory.food  = Math.max(0, (feeder.inventory.food  ?? 0) - fed);
+        feeder.inventory.water = Math.max(0, (feeder.inventory.water ?? 0) - watered);
+        ind.inventory.food  = (ind.inventory.food  ?? 0) + fed;
+        ind.inventory.water = (ind.inventory.water ?? 0) + watered;
       }
       const { satiation, inv } = consumeResources(ind);
       ind.inventory = inv;
       ind.satiation = satiation;
-
-      // Wire satiation → health.calories / hydration (gradual, not instant collapse)
       if (ind.health) {
-        const targetCal  = Math.min(1, satiation * 1.3);
-        const targetHyd  = Math.min(1, ((inv.water ?? 0) > 0.5 ? 0.95 : 0.4));
-        ind.health.calories   = (ind.health.calories   ?? 1) * 0.97 + targetCal * 0.03;
-        ind.health.hydration  = (ind.health.hydration  ?? 1) * 0.97 + targetHyd * 0.03;
-      }
-
-      const { produced, inv: prodInv } = produceGoods(ind, this.discoveredTechs);
-      ind.inventory = prodInv;
-      for (const [good, qty] of Object.entries(produced)) {
-        ind.inventory[good] = (ind.inventory[good] ?? 0) + qty;
+        ind.health.calories  = (ind.health.calories  ?? 1) * 0.97 + Math.min(1, satiation * 1.3) * 0.03;
+        ind.health.hydration = (ind.health.hydration ?? 1) * 0.97 + ((inv.water ?? 0) > 0.15 ? 0.95 : 0.4) * 0.03;
       }
     }
 
@@ -415,15 +404,7 @@ export class SimulationEngine {
       ind._wasInWater = ind._inWater;
     }
 
-    // 5. Psychology — mental state
-    for (const ind of alive) {
-      updateMentalState(ind, tickEvents, this.worldState, day);
-    }
-
-    // 5b. Consciousness update — see engines/consciousness/consciousnessEngine.js
-    for (const ind of alive) {
-      updateConsciousness(ind);
-    }
+    // 5 + 5b. Psychology & consciousness — handled by worker pool (above)
 
     // 6. Social groups
     const socialEvents = processGroupDynamics(alive, this.groups, day);
@@ -615,9 +596,8 @@ export class SimulationEngine {
       tryAcquireWordFromEnvironment(ind, concept, ind.group_id ?? 'global');
     }
 
-    // 13. Technology emergence — accumulate physical experience, then check deterministic thresholds
+    // 13. Technology emergence — experience already accumulated in worker pool; check thresholds here
     for (const ind of alive) {
-      accumulateExperience(ind, this.worldState);
       const emerged = checkTechEmergence(ind, this.discoveredTechs);
       for (const techId of emerged) {
         const techTrigger = this.worldState.food_abundance < 0.3 ? 'food scarcity'
