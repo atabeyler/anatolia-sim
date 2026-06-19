@@ -238,7 +238,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
       <div className="relative flex flex-col" style={{ width: 420, maxHeight: '88vh', background: 'rgba(4,4,18,0.98)', border: '1px solid rgba(79,110,247,0.4)', backdropFilter: 'blur(20px)', boxShadow: '0 16px 60px rgba(0,0,0,0.8)' }}>
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="flex items-center gap-2 px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid rgba(79,110,247,0.2)' }}>
           <div className="flex flex-col flex-1">
             <div className="flex items-center gap-2">
@@ -257,7 +257,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => setTreeOpen(true)}
-              title={text(lang as LangCode, { en: 'View family tree', tr: 'Soy ağacını görüntüle', de: 'Stammbaum anzeigen', fr: 'Voir l’arbre généalogique', ar: 'عرض شجرة العائلة' })}
+              title={text(lang as LangCode, { en: 'View family tree', tr: 'Soy ağacını görüntüle', de: 'Stammbaum anzeigen', fr: 'Voir l\'arbre généalogique', ar: 'عرض شجرة العائلة' })}
               style={{
                 background: 'transparent',
                 border: '1px solid rgba(160,200,176,0.3)',
@@ -549,7 +549,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
         />
       )}
 
-    </div>{/* end overlay */}
+    </div>
   );
 }
 
