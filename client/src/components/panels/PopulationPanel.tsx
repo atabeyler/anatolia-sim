@@ -238,7 +238,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
       <div className="relative flex flex-col" style={{ width: 420, maxHeight: '88vh', background: 'rgba(4,4,18,0.98)', border: '1px solid rgba(79,110,247,0.4)', backdropFilter: 'blur(20px)', boxShadow: '0 16px 60px rgba(0,0,0,0.8)' }}>
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="flex items-center gap-2 px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid rgba(79,110,247,0.2)' }}>
           <div className="flex flex-col flex-1">
             <div className="flex items-center gap-2">
@@ -257,7 +257,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => setTreeOpen(true)}
-              title={text(lang as LangCode, { en: 'View family tree', tr: 'Soy ağacını görüntüle', de: 'Stammbaum anzeigen', fr: 'Voir l’arbre généalogique', ar: 'عرض شجرة العائلة' })}
+              title={text(lang as LangCode, { en: 'View family tree', tr: 'Soy ağacını görüntüle', de: 'Stammbaum anzeigen', fr: 'Voir l\'arbre généalogique', ar: 'عرض شجرة العائلة' })}
               style={{
                 background: 'transparent',
                 border: '1px solid rgba(160,200,176,0.3)',
@@ -282,10 +282,10 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
           </div>
         </div>
 
-        {/* ── Scrollable content ── */}
+        {/* -- Scrollable content -- */}
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
 
-          {/* ── Görünüm / Appearance ── */}
+          {/* -- Görünüm / Appearance -- */}
           <div>
             <SectionHeader label={tr('GÖRÜNÜM', 'APPEARANCE')} />
             <div className="space-y-2">
@@ -315,7 +315,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             </div>
           </div>
 
-          {/* ── Fiziksel / Physical ── */}
+          {/* -- Fiziksel / Physical -- */}
           <div>
             <SectionHeader label={tr('FİZİKSEL', 'PHYSICAL')} />
             <div className="space-y-1.5">
@@ -330,7 +330,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             </div>
           </div>
 
-          {/* ── Bilişsel / Cognitive ── */}
+          {/* -- Bilişsel / Cognitive -- */}
           <div>
             <SectionHeader label={tr('BİLİŞSEL', 'COGNITIVE')} />
             <div className="space-y-1.5">
@@ -344,7 +344,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             </div>
           </div>
 
-          {/* ── Kişilik / Personality ── */}
+          {/* -- Kişilik / Personality -- */}
           <div>
             <SectionHeader label={tr('KİŞİLİK', 'PERSONALITY')} />
             <div className="space-y-1.5">
@@ -361,7 +361,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             </div>
           </div>
 
-          {/* ── Bilinç & Ruh Hali / Consciousness ── */}
+          {/* -- Bilinç & Ruh Hali / Consciousness -- */}
           <div>
             <SectionHeader label={tr('BİLİNÇ & RUH HALİ', 'CONSCIOUSNESS')} />
             <div className="space-y-1.5">
@@ -376,7 +376,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             </div>
           </div>
 
-          {/* ── Dil / Language ── */}
+          {/* -- Dil / Language -- */}
           <div>
             <SectionHeader label={tr('DİL', 'LANGUAGE')} />
             <div className="space-y-1.5">
@@ -386,7 +386,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             </div>
           </div>
 
-          {/* ── Sağlık / Health ── */}
+          {/* -- Sağlık / Health -- */}
           {!isDead && (
             <div>
               <SectionHeader label={tr('SAĞLIK', 'HEALTH')} />
@@ -405,7 +405,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             </div>
           )}
 
-          {/* ── Sosyal / Social ── */}
+          {/* -- Sosyal / Social -- */}
           {!isDead && (
             <div>
               <SectionHeader label={tr('SOSYAL', 'SOCIAL')} />
@@ -421,7 +421,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             </div>
           )}
 
-          {/* ── Soyağacı / Family Tree ── */}
+          {/* -- Soyağacı / Family Tree -- */}
           <div>
             <SectionHeader label={tr('SOYAĞACI', 'FAMILY TREE')} />
 
@@ -484,7 +484,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             )}
           </div>
 
-          {/* ── Hayat Hikâyesi / Life Journal ── */}
+          {/* -- Hayat Hikâyesi / Life Journal -- */}
           {(liveJournalEvents.length > 0 || archivedJournal.length > 0) && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -549,7 +549,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
         />
       )}
 
-    </div>{/* end overlay */}
+    </div>
   );
 }
 
