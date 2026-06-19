@@ -758,7 +758,7 @@ export class SimulationEngine {
     }
 
     // 19b. Social narrative events (communication, activity, sleep)
-    const narrativeEvents = this.processSocialNarrative(alive, day);
+    const narrativeEvents = this.processSocialNarrative(alive, day, spatialGrid);
     for (const ev of narrativeEvents) {
       this.logEvent(day, ev.type, ev.description, ev.data ?? {}, ev.importance ?? 1);
     }
@@ -837,7 +837,7 @@ export class SimulationEngine {
   }
 
   // Generate narrative social events: communication, inner activity, sleep
-  processSocialNarrative(alive, day) {
+  processSocialNarrative(alive, day, spatialGrid) {
     const events = [];
     const pName = ind => ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
     const CONCEPT_TR = {
