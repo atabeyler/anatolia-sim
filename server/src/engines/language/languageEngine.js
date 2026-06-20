@@ -61,9 +61,12 @@ export function tryAcquireWordFromEnvironment(individual, concept, groupId) {
 }
 
 export function learnFromTeacher(learner, teacher) {
-  const teacherWords = Object.keys(teacher.language.vocabulary ?? {});
+  if (!teacher.language?.vocabulary) return;
+  const teacherWords = Object.keys(teacher.language.vocabulary);
   if (teacherWords.length === 0) return;
-  const maxLearn = Math.floor(learner.phenotype.fluid_intelligence * 3);
+  if (!learner.language) return;
+  if (!learner.language.vocabulary) learner.language.vocabulary = {};
+  const maxLearn = Math.floor((learner.phenotype?.fluid_intelligence ?? 0.5) * 3);
   for (const word of teacherWords.slice(0, maxLearn)) {
     if (!learner.language.vocabulary[word]) learner.language.vocabulary[word] = teacher.language.vocabulary[word];
   }

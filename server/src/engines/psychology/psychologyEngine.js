@@ -81,7 +81,7 @@ export function updateMentalState(individual, events, worldState, simDay) {
   const _ls2 = individual.language?.stage ?? 0;
   const _c2  = individual.mind?.consciousness ?? 0;
   const _obs = individual._socialObservations ?? 0;
-  const tomFactor = Math.max(_qi * _emp, 0.1);
+  const tomFactor = Math.max(_qi * _emp, 0.3);
   if (_tom < 1 && _ls2 >= 1 && _qi > 0.3 && _obs >= 150  / tomFactor) ps.theory_of_mind = 1;
   if (_tom < 2 && _ls2 >= 2 && _c2 > 0.02 && _qi > 0.4  && _obs >= 450  / tomFactor) ps.theory_of_mind = 2;
   if (_tom < 3 && _ls2 >= 3 && _c2 > 0.1  && _qi > 0.55 && _obs >= 1125 / tomFactor) ps.theory_of_mind = 3;
