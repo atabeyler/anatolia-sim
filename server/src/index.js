@@ -63,7 +63,9 @@ app.use(cors({
 }));
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 500,
+  max: 2000,
+  // Desktop app runs entirely on localhost — skip rate limiting for loopback requests.
+  skip: (req) => req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1',
   handler: (req, res) => {
     console.warn('Rate limit hit:', req.ip, req.path);
     res.status(429).json({ text: 'Rate limit (900s)', actions: [], retry_after: 900 });
