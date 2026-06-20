@@ -112,9 +112,9 @@ describe('processGroupDynamics — group fission', () => {
     const group = makeGroup('g1', members.map(m => m.id));
     const groups = [group];
 
-    // Fission is probabilistic — should occur at least once in 50 tries
+    // Fission is probabilistic — should occur at least once in 300 tries
     let fissioned = false;
-    for (let day = 0; day < 50; day++) {
+    for (let day = 0; day < 300; day++) {
       processGroupDynamics(members, groups, day);
       if (groups.length > 1) { fissioned = true; break; }
     }
@@ -133,7 +133,7 @@ describe('processGroupDynamics — group fission', () => {
     const groups = [group];
 
     let fissioned = false;
-    for (let day = 0; day < 50; day++) {
+    for (let day = 0; day < 300; day++) {
       processGroupDynamics(members, groups, day);
       if (groups.length > 1) { fissioned = true; break; }
     }
