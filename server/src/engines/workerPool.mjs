@@ -38,29 +38,30 @@ export class WorkerPool {
   }
 
   // Serialize Sets to arrays (structured clone cannot transfer Set objects).
-  // Cache result on the individual object; invalidated when the Set changes size.
+  // Only the Set→Array conversions are cached (Sets grow monotonically).
+  // The full object spread is always fresh — caching it causes stale inventory/health
+  // references after Object.assign(ind, delta) replaces those sub-objects each tick.
   _serializeInd(ind) {
     const beliefs     = ind.beliefs     instanceof Set ? ind.beliefs     : null;
     const known_techs = ind.known_techs instanceof Set ? ind.known_techs : null;
     const cached = this._serialized.get(ind);
-    if (
-      cached &&
-      cached.beliefsSize     === (beliefs     ? beliefs.size     : -1) &&
-      cached.known_techsSize === (known_techs ? known_techs.size : -1)
-    ) {
-      return cached.result;
-    }
-    const result = {
-      ...ind,
-      beliefs:     beliefs     ? [...beliefs]     : (ind.beliefs     ?? []),
-      known_techs: known_techs ? [...known_techs] : (ind.known_techs ?? []),
-    };
+
+    const beliefsArr = (cached && cached.beliefsSize === (beliefs?.size ?? -1))
+      ? cached.beliefsArr
+      : (beliefs ? [...beliefs] : (ind.beliefs ?? []));
+
+    const known_techsArr = (cached && cached.known_techsSize === (known_techs?.size ?? -1))
+      ? cached.known_techsArr
+      : (known_techs ? [...known_techs] : (ind.known_techs ?? []));
+
     this._serialized.set(ind, {
-      beliefsSize:     beliefs     ? beliefs.size     : -1,
-      known_techsSize: known_techs ? known_techs.size : -1,
-      result,
+      beliefsSize:     beliefs?.size     ?? -1,
+      known_techsSize: known_techs?.size ?? -1,
+      beliefsArr,
+      known_techsArr,
     });
-    return result;
+
+    return { ...ind, beliefs: beliefsArr, known_techs: known_techsArr };
   }
 
   // Dispatch `individuals` across all available workers in parallel.
