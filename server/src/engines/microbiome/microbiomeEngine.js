@@ -88,11 +88,12 @@ function envExposureProb(ind,path,sm,density){
   }
 }
 
-export function spreadInfection(infected,susceptible,pathId,simDay){
+export function spreadInfection(infected,susceptible,pathId,simDay,aliveCount=50){
   if(!infected.infections?.some(i=>i.pathogen_id===pathId)||susceptible.immunities?.[pathId]>simDay)return false;
   const path=PATHOGEN_TYPES[pathId];
   if(!path)return false;
-  const tr=path.transmission==='airborne'?0.3:path.transmission==='contact'?0.2:0.15;
+  const groupScale=Math.min(1.0,Math.max(0.3,aliveCount/30));
+  const tr=(path.transmission==='airborne'?0.3:path.transmission==='contact'?0.2:0.15)*groupScale;
   if(Math.random()<tr*(1-(susceptible.phenotype?.immune_strength??0.5)*0.5)){
     if(!susceptible.infections)susceptible.infections=[];
     susceptible.infections.push({pathogen_id:pathId,days_remaining:path.duration_days,infected_day:simDay});

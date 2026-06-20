@@ -56,7 +56,7 @@ export function computeDailyDeathRisk(individual, currentDay, environment) {
     baseRisk += (environment.predator_risk  ?? 0) * 0.0002;
     baseRisk += (environment.disease_pressure ?? 0) * 0.0003;
   }
-  if ((individual.inbreeding_coeff ?? 0) > 0.35) baseRisk *= 1.5;
+  if ((individual.inbreeding_coeff ?? 0) > 0.50) baseRisk *= 1.25;
   return Math.min(baseRisk, 0.99);
 }
 

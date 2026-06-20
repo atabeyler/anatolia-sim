@@ -1335,7 +1335,7 @@ export class SimulationEngine {
         // Disease spread
         if (ind.infections?.length && !other.infections?.length) {
           for (const inf of ind.infections) {
-            spreadInfection(ind, other, inf.pathogen_id, day);
+            spreadInfection(ind, other, inf.pathogen_id, day, alive.length);
           }
         }
       }
