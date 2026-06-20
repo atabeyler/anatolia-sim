@@ -65,6 +65,7 @@ export function processGroupDynamics(population, groups, simDay) {
   }
   for (const group of groups) {
     const members = group.member_ids.map(id => popMap.get(id)).filter(Boolean);
+    group.member_ids = members.map(m => m.id);
     if (members.length < 2) continue;
     const currentLeader = members.find(m => m.id === group.leader_id);
     const challenger = findChallenger(members, currentLeader, group);

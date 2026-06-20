@@ -40,8 +40,9 @@ export function useSimWebSocket(simId: string | null) {
             // Server tells us the real engine state on connect.
             if (typeof data.is_warping === 'boolean') setIsWarping(data.is_warping);
             if ('fast_forward_target' in data) setFastForwardTarget(data.fast_forward_target ?? null);
-            // If engine is not running but sim appears running, auto-trigger start.
-            if (data.engine_running === false) {
+            // Auto-trigger start only on fresh connect (reconnectDelay reset = first connect),
+            // not on every status message — prevents restart loop when user intentionally pauses.
+            if (data.engine_running === false && reconnectDelay.current <= 3000) {
               const { currentSim, accessToken: tok } = useSimStore.getState();
               if (currentSim?.status === 'running' && tok) {
                 fetch(`/api/simulations/${currentSim.id}/start`, {

@@ -106,7 +106,7 @@ export function updateBeliefSpread(population, existingBeliefs, groups, simDay) 
       const sus = ind.phenotype.religiosity ?? ((ind.phenotype.anxiety + ind.phenotype.curiosity) / 2);
       if (!ind._beliefExposure) ind._beliefExposure = {};
       ind._beliefExposure[belief] = (ind._beliefExposure[belief] ?? 0) + 1;
-      if (ind._beliefExposure[belief] < 200 / Math.max(sus, 0.1)) continue;
+      if (ind._beliefExposure[belief] < 80 / Math.max(sus, 0.2)) continue;
       delete ind._beliefExposure[belief];
       ind.beliefs.add(belief);
       const group = groups.find(g => g.member_ids?.includes(ind.id));
