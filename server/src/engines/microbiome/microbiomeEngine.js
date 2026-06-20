@@ -27,7 +27,7 @@ export function processMicrobiomeTick(population,worldState,simDay){
     for(const ind of alive){
       if(ind.infections?.some(i=>i.pathogen_id===pathId))continue;
       if(ind.immunities?.[pathId]>simDay)continue;
-      if(Math.random()<envExposureProb(ind,path,sm)){
+      if(Math.random()<envExposureProb(ind,path,sm,density)){
         if(!ind.infections)ind.infections=[];
         ind.infections.push({pathogen_id:pathId,days_remaining:path.duration_days,infected_day:simDay});
         newCases++;
@@ -63,8 +63,10 @@ export function processMicrobiomeTick(population,worldState,simDay){
 
 // Per-individual environmental exposure probability, weighted by personal vulnerability
 // to each transmission route. No central selection — the environment finds its victims.
-function envExposureProb(ind,path,sm){
-  const base=0.00008*sm;
+// Scale by population size: small isolated groups have lower pathogen reservoir pressure.
+function envExposureProb(ind,path,sm,density){
+  const populationScale=Math.min(1.0,Math.max(0.2,density/25));
+  const base=0.00008*sm*populationScale;
   switch(path.transmission){
     case 'water':
       // Thirsty individuals drink more, risking contaminated sources

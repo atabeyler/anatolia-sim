@@ -63,7 +63,7 @@ export function createFounder(params = {}) {
     birth_day: -(params.ageYears ?? 20) * 365,
     death_day: null, alive: true, sex,
     x: params.x ?? 0, y: params.y ?? 0,
-    _waterFear: 0.35, // adults have lived near water — moderate inherited caution
+    _waterFear: 0.55, // founders need stronger caution to avoid early drowning deaths
     genome, phenotype, epigenome: {},
     health: createInitialHealth(phenotype),
     mind: createInitialMind(phenotype),
