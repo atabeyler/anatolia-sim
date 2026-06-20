@@ -151,6 +151,9 @@ class SimulationManager {
     const engine = this.engines.get(simId);
     if (!engine) return false;
     engine._fastForwardTarget = targetDay;
+    // Immediately notify connected clients that warp has started — tick broadcasts are
+    // suppressed during warp so the client would otherwise see silence and think the sim froze.
+    this.broadcast(simId, { type: 'tick', day: engine.currentDay, is_warping: true, fast_forward_target: targetDay });
     if (!engine.running) engine.start().catch(console.error);
     return true;
   }

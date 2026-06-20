@@ -171,7 +171,9 @@ export class SimulationEngine {
       if (this._fastForwardTarget !== null) {
         if (this.currentDay >= this._fastForwardTarget) {
           this._fastForwardTarget = null;
-          this._broadcastThisTick = true; // force one broadcast when warp ends
+          // Reset counter so next iteration sets _broadcastThisTick = true (0 % n === 0).
+          // Don't use _broadcastThisTick = true here — it gets overwritten at the top of the loop.
+          ticksSinceBroadcast = 0;
         }
         await new Promise(resolve => setImmediate(resolve));
         continue;
@@ -893,13 +895,22 @@ export class SimulationEngine {
       }
     }
 
-    // 23. Broadcast (throttled at high speeds; in warp mode suppress until target reached)
-    if (this.onTick && this._broadcastThisTick !== false && this._fastForwardTarget === null) {
-      this.onTick({
-        day, stats,
-        events: this.events.slice(-20),
-        centroid_trail: this._centroidTrail,  // Feature 1
-      });
+    // 23. Broadcast
+    // During warp: send lightweight progress every 100 days (no stats to keep it fast).
+    // Not-warping: send full stats at the configured broadcast rate.
+    if (this.onTick) {
+      const isWarpingNow = this._fastForwardTarget !== null;
+      if (isWarpingNow && day % 100 === 0) {
+        this.onTick({ day, is_warping: true, fast_forward_target: this._fastForwardTarget });
+      } else if (!isWarpingNow && this._broadcastThisTick !== false) {
+        this.onTick({
+          day, stats,
+          events: this.events.slice(-20),
+          centroid_trail: this._centroidTrail,
+          is_warping: false,
+          fast_forward_target: null,
+        });
+      }
     }
 
     this._consecutiveErrors = 0;
