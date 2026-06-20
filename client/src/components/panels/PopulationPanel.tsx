@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useSimStore } from '../../store/simStore';
 import DetailPanel from './DetailPanel';
 import { Users, MapPin, ChevronRight, X, ChevronDown } from 'lucide-react';
-import { text, type LangCode } from '../../utils/i18n';
+import { text, type LangCode, translateEventDescription, translateStageName } from '../../utils/i18n';
 
 // Anatolian-inspired procedural name generation
 const MALE_NAMES = ['Arak','Katan','Talur','Muran','Dalan','Korun','Baran','Tekum','Yaran','Atuk',
@@ -390,7 +390,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
           <div>
             <SectionHeader label={tr('DİL', 'LANGUAGE')} />
             <div className="space-y-1.5">
-              <StatRow label={tr('Aşama', 'Stage')} value={lang_.stage_name ?? text(lang as LangCode, { en: 'pre-linguistic', tr: 'dil öncesi', de: 'pre-linguistic', fr: 'pre-linguistic', ar: 'pre-linguistic' })} color="#00d4ff" />
+              <StatRow label={tr('Aşama', 'Stage')} value={translateStageName(lang_.stage_name, lang)} color="#00d4ff" />
               <StatRow label={tr('Kelime Sayısı', 'Vocabulary')} value={`${wordCount} ${tr('kelime', 'words')}`} color="#7dd3fc" />
               <TraitRow label="FOXP2" value={lang_.foxp2_expression ?? (ph.language_capacity ?? 0) * 0.1} color="#00e887" />
             </div>
@@ -524,7 +524,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
                     </span>
                     <span style={{ fontSize: 10, flexShrink: 0 }}>{TYPE_ICON[ev.event_type] ?? '·'}</span>
                     <span style={{ fontSize: 11, color: '#a0b4ff', lineHeight: 1.4, fontFamily: 'Share Tech Mono, monospace' }}>
-                      {ev.description?.length > 70 ? ev.description.slice(0, 70) + '…' : ev.description}
+                      {(() => { const d = translateEventDescription(ev.description ?? '', lang as LangCode, ev); return d.length > 70 ? d.slice(0, 70) + '…' : d; })()}
                     </span>
                   </div>
                 ))}
@@ -767,7 +767,7 @@ function JournalArchiveModal({ name, entries, typeIcon, lang, onClear, onClose }
                   </span>
                   <span style={{ fontSize: 10, flexShrink: 0 }}>{typeIcon[ev.event_type] ?? '·'}</span>
                   <span style={{ fontSize: 11, color: '#8898c8', lineHeight: 1.45, fontFamily: 'Share Tech Mono, monospace' }}>
-                    {ev.description ?? ev.event_type}
+                    {translateEventDescription(ev.description ?? ev.event_type ?? '', lang as LangCode, ev)}
                   </span>
                 </div>
               ))}
@@ -853,7 +853,7 @@ function CompareModal({ indA, indB, onClose }: { indA: any; indB: any; onClose: 
 
         <SectionHeader label={tr('DİL', 'LANGUAGE')} />
         <div style={{ marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <StatRow label={tr('Aşama', 'Stage')} value={lang_.stage_name ?? 'pre-linguistic'} color="#00d4ff" />
+          <StatRow label={tr('Aşama', 'Stage')} value={translateStageName(lang_.stage_name, lang)} color="#00d4ff" />
           <StatRow label={tr('Kelime', 'Words')} value={wordCount} color="#7dd3fc" />
         </div>
 

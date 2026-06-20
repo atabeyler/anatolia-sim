@@ -493,6 +493,65 @@ function replaceByMap(source: string, map: Record<string, string>) {
   return out;
 }
 
+
+// Stage name translations
+const STAGE_NAME_TR: Record<string, string> = {
+  'pre-linguistic':   'dil öncesi',
+  'gestural':         'jest aşaması',
+  'emotional-sounds': 'duygusal sesler',
+  'proto-words':      'proto kelimeler',
+  'syntax':           'sözdizimi',
+  'abstract':         'soyut dil',
+  'writing':          'yazı sistemi',
+};
+const STAGE_NAME_DE: Record<string, string> = {
+  'pre-linguistic':   'Vorsprachlich', 'gestural': 'Gestural', 'emotional-sounds': 'Emotionale Laute',
+  'proto-words': 'Protowörter', 'syntax': 'Syntax', 'abstract': 'Abstrakt', 'writing': 'Schrift',
+};
+const STAGE_NAME_FR: Record<string, string> = {
+  'pre-linguistic':   'Prélinguistique', 'gestural': 'Gestuel', 'emotional-sounds': 'Sons émotionnels',
+  'proto-words': 'Proto-mots', 'syntax': 'Syntaxe', 'abstract': 'Abstrait', 'writing': 'Écriture',
+};
+const STAGE_NAME_AR: Record<string, string> = {
+  'pre-linguistic': 'ما قبل اللغة', 'gestural': 'إيمائي', 'emotional-sounds': 'أصوات عاطفية',
+  'proto-words': 'كلمات أولى', 'syntax': 'نحو', 'abstract': 'مجرد', 'writing': 'كتابة',
+};
+
+export function translateStageName(stageName: string | null | undefined, lang: LangCode): string {
+  if (!stageName) return text(lang, { tr: 'dil öncesi', en: 'pre-linguistic', de: 'Vorsprachlich', fr: 'Prélinguistique', ar: 'ما قبل اللغة' });
+  if (lang === 'tr') return STAGE_NAME_TR[stageName] ?? stageName;
+  if (lang === 'de') return STAGE_NAME_DE[stageName] ?? stageName;
+  if (lang === 'fr') return STAGE_NAME_FR[stageName] ?? stageName;
+  if (lang === 'ar') return STAGE_NAME_AR[stageName] ?? stageName;
+  return stageName;
+}
+
+// Communication concept translations for event descriptions
+const CONCEPT_TR_CLIENT: Record<string, string> = {
+  danger: 'tehlike', food: 'yiyecek', water: 'su', fire: 'ateş',
+  here: 'burası', there: 'orası', me: 'ben', you: 'sen', us: 'biz', them: 'onlar',
+  good: 'iyi', bad: 'kötü', hunt: 'avlan', eat: 'ye', sleep: 'uyu',
+  death: 'ölüm', birth: 'doğum', run: 'koş', sun: 'güneş', moon: 'ay',
+  rain: 'yağmur', dark: 'karanlık', light: 'ışık', god: 'tanrı', spirit: 'ruh',
+  sky: 'gökyüzü', earth: 'dünya', time: 'zaman',
+};
+const MOOD_TR: Record<string, string> = {
+  calm: 'sakin', excited: 'heyecanlı', grieving: 'yasını tutan', content: 'mutlu',
+  stressed: 'stresli', alert: 'tetikte', hungry: 'aç', thirsty: 'susuz',
+  curious: 'meraklı', anxious: 'endişeli', happy: 'neşeli', sad: 'üzgün', angry: 'öfkeli',
+};
+const ACTIVITY_TR: Record<string, string> = {
+  'energetic and active': 'enerjik ve aktif',
+  'searching for food': 'yiyecek arıyor',
+  'searching for water': 'su arıyor',
+  'preparing for birth': 'doğuma hazırlanıyor',
+  'grieving': 'yas tutuyor',
+  'seeking a mate': 'eş arıyor',
+  'moving eastward': 'doğuya ilerliyor',
+  'moving westward': 'batıya ilerliyor',
+  'moving around the area': 'alanda geziniyor',
+};
+
 export function translateEventDescription(desc: string, lang: LangCode, event?: any): string {
   if (!desc) return '';
   if (lang === 'en') return desc;
@@ -551,8 +610,6 @@ export function translateEventDescription(desc: string, lang: LangCode, event?: 
       const key = belief.replace(/_/g, ' ').trim();
       return `Grupta ${BELIEF_TYPE_TR[key] ?? BELIEF_TYPE_TR[belief] ?? key} ritüeli ortaya çıktı`;
     })
-    .replace(/(.+) language stage advanced to (.+)/, (_: string, person: string, stage: string) =>
-      `${person} dil aşamasını ${stage} seviyesine ilerletti`)
     .replace(/^Culture event: (.+)$/,      (_: string, v: string) => `Kültür olayı: ${v.replace(/_/g, ' ')}`)
     .replace(/^Art event: (.+)$/,          (_: string, v: string) => `Sanat olayı: ${v.replace(/_/g, ' ')}`)
     .replace(/^Astronomy event: (.+)$/,    (_: string, v: string) => `Astronomi olayı: ${v.replace(/_/g, ' ')}`)
@@ -566,7 +623,22 @@ export function translateEventDescription(desc: string, lang: LangCode, event?: 
     .replace(/^(.+) is (searching for food|looking for water|resting)$/, (_: string, name: string, action: string) => {
       const map: Record<string, string> = { 'searching for food': 'yiyecek arıyor', 'looking for water': 'su arıyor', 'resting': 'dinleniyor' };
       return `${name} ${map[action] ?? action}`;
-    });
+    })
+    .replace(/^(.+) \((\d+) yrs?, (\w+)\): (.+)$/, (_: string, name: string, age: string, mood: string, activity: string) =>
+      `${name} (${age} yaş, ${MOOD_TR[mood] ?? mood}): ${ACTIVITY_TR[activity] ?? activity}`
+    )
+    .replace(/^(.+) (said|gestured) ["'](.+)["'] to (.+) — (.+)$/, (_: string, name: string, verb: string, word: string, target: string, concept: string) => {
+      const verbTr = verb === 'said' ? 'dedi' : 'jest yaptı';
+      return `${name}, ${target}'a "${word}" ${verbTr} — ${CONCEPT_TR_CLIENT[concept] ?? concept}`;
+    })
+    .replace(/^(.+) made a sound at (.+)$/, (_: string, name: string, target: string) => `${name}, ${target}'a ses çıkardı`)
+    .replace(/^(.+) pointed at (.+)$/, (_: string, name: string, target: string) => `${name}, ${target}'ı işaret etti`)
+    .replace(/^(.+) was exhausted and fell asleep \(energy: (\d+)%\)$/, (_: string, name: string, pct: string) =>
+      `${name} tükendi ve uyuyakaldı (enerji: ${pct}%)`
+    )
+    .replace(/(.+) language stage advanced to (.+)/, (_: string, person: string, stage: string) =>
+      `${person} dil aşamasını ${STAGE_NAME_TR[stage] ?? stage} seviyesine ilerletti`
+    );
   }
 
   if (lang === 'de') {
@@ -603,7 +675,11 @@ export function translateEventDescription(desc: string, lang: LangCode, event?: 
     }
     if (langStageMatch) {
       const [, person, stage] = langStageMatch;
-      return `${person} hat die Sprachstufe auf ${stage} vorgerückt`;
+      return `${person} hat die Sprachstufe auf ${STAGE_NAME_DE[stage] ?? stage} vorgerückt`;
+    }
+    if (desc.match(/^(.+) \((\d+) yrs?, (\w+)\): (.+)$/)) {
+      const [, name, age, mood, activity] = desc.match(/^(.+) \((\d+) yrs?, (\w+)\): (.+)$/)!;
+      return `${name} (${age} J., ${mood}): ${activity}`;
     }
     return desc
       .replace('Culture event:', 'Kulturereignis:')
@@ -649,7 +725,7 @@ export function translateEventDescription(desc: string, lang: LangCode, event?: 
     }
     if (langStageMatch) {
       const [, person, stage] = langStageMatch;
-      return `${person} a avancé l'étape linguistique à ${stage}`;
+      return `${person} a avancé l'étape linguistique à ${STAGE_NAME_FR[stage] ?? stage}`;
     }
     return desc
       .replace('Culture event:', 'Événement culturel:')
@@ -695,7 +771,7 @@ export function translateEventDescription(desc: string, lang: LangCode, event?: 
     }
     if (langStageMatch) {
       const [, person, stage] = langStageMatch;
-      return `تقدم ${person} في مرحلة اللغة إلى ${stage}`;
+      return `تقدم ${person} في مرحلة اللغة إلى ${STAGE_NAME_AR[stage] ?? stage}`;
     }
     return desc
       .replace('Culture event:', 'حدث ثقافي:')
