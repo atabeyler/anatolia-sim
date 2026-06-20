@@ -11,8 +11,10 @@ const WORKER_TIMEOUT_MS = 30000; // BUG-06: 30s timeout — prevents infinite ha
 
 export class WorkerPool {
   constructor() {
-    this.size = cpus().length;
+    // Use physical core count — hyperthreaded logical cores hurt CPU-bound work
+    this.size = Math.max(1, Math.ceil(cpus().length / 2));
     this._workers = [];
+    this._serialized = new WeakMap(); // cache: individual → {beliefs, known_techs arrays}
     this._init();
   }
 
@@ -35,6 +37,32 @@ export class WorkerPool {
     }
   }
 
+  // Serialize Sets to arrays (structured clone cannot transfer Set objects).
+  // Cache result on the individual object; invalidated when the Set changes size.
+  _serializeInd(ind) {
+    const beliefs     = ind.beliefs     instanceof Set ? ind.beliefs     : null;
+    const known_techs = ind.known_techs instanceof Set ? ind.known_techs : null;
+    const cached = this._serialized.get(ind);
+    if (
+      cached &&
+      cached.beliefsSize     === (beliefs     ? beliefs.size     : -1) &&
+      cached.known_techsSize === (known_techs ? known_techs.size : -1)
+    ) {
+      return cached.result;
+    }
+    const result = {
+      ...ind,
+      beliefs:     beliefs     ? [...beliefs]     : (ind.beliefs     ?? []),
+      known_techs: known_techs ? [...known_techs] : (ind.known_techs ?? []),
+    };
+    this._serialized.set(ind, {
+      beliefsSize:     beliefs     ? beliefs.size     : -1,
+      known_techsSize: known_techs ? known_techs.size : -1,
+      result,
+    });
+    return result;
+  }
+
   // Dispatch `individuals` across all available workers in parallel.
   // Returns merged { deltas, events } once every worker finishes.
   async run(individuals, worldState, discoveredTechs, day) {
@@ -48,12 +76,7 @@ export class WorkerPool {
       const chunk = individuals.slice(i * chunkSize, (i + 1) * chunkSize);
       if (chunk.length === 0) continue;
 
-      // Serialize Sets to arrays (structured clone cannot transfer Set objects)
-      const serialized = chunk.map(ind => ({
-        ...ind,
-        beliefs:     [...(ind.beliefs     instanceof Set ? ind.beliefs     : (ind.beliefs     ?? []))],
-        known_techs: [...(ind.known_techs instanceof Set ? ind.known_techs : (ind.known_techs ?? []))],
-      }));
+      const serialized = chunk.map(ind => this._serializeInd(ind));
 
       const workerIdx = i;
       promises.push(new Promise((resolve, reject) => {
