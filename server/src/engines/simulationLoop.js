@@ -83,11 +83,28 @@ export class SimulationEngine {
     this.onTick = null;
     this.onEvent = null;
     this.onCheckpoint = null;
+    this.onEnded = null;
     // Build phonological profile once — unique to this civilization's geography
     const ws = simulation.world_state ?? {};
     this.phonology = buildPhonology(ws.phonology_seed ?? 0, ws.biome ?? 'mediterranean');
     // Worker pool — persists across ticks; one per SimulationEngine instance
     this._pool = new WorkerPool();
+
+    // Feature 5: fast-forward / warp mode — set by fast-forward API endpoint
+    this._fastForwardTarget = null;
+
+    // Feature 11: milestone tracking — prevents duplicate milestone events
+    this._milestones = new Set();
+
+    // Feature 14: tick performance metrics — rolling window of last 120 ticks
+    this._tickHistory = [];
+
+    // Feature 1 + migration detection: centroid trail (last 20 checkpoint positions)
+    this._centroidTrail = [];
+
+    // BUG-05: cached word count — expensive O(n×v) calc, updated only at checkpoints
+    this._wordCountCache = 0;
+    this._wordCountCacheDay = -1;
   }
 
   destroy() {
@@ -146,6 +163,20 @@ export class SimulationEngine {
       await this.tick();
       const tickMs = Date.now() - tickStart;
 
+      // Feature 14: record tick timing (rolling window, last 120 ticks)
+      this._tickHistory.push(tickMs);
+      if (this._tickHistory.length > 120) this._tickHistory.shift();
+
+      // Feature 5: in fast-forward/warp mode, skip sleep entirely until target reached
+      if (this._fastForwardTarget !== null) {
+        if (this.currentDay >= this._fastForwardTarget) {
+          this._fastForwardTarget = null;
+          this._broadcastThisTick = true; // force one broadcast when warp ends
+        }
+        await new Promise(resolve => setImmediate(resolve));
+        continue;
+      }
+
       // Fixed-rate loop: subtract tick duration from sleep so effective ticks/sec
       // stays constant even as population grows and ticks take longer.
       if (spd < 100) {
@@ -197,8 +228,8 @@ export class SimulationEngine {
     }
     await new Promise(resolve => setImmediate(resolve));
     const tickEvents = [];
-    // Built once per tick; used by tech observation, language learning, and social interactions.
-    const spatialGrid = buildSpatialGrid(alive);
+    // Built once per tick; rebuilt after deaths so post-death steps don't see dead neighbors (BUG-02).
+    let spatialGrid = buildSpatialGrid(alive);
     // Group membership index — O(1) lookup: group_id → alive members
     const groupMembersMap = new Map();
     for (const ind of alive) {
@@ -456,9 +487,10 @@ export class SimulationEngine {
     // 7. Social interactions, mating, bonding, disease spread
     this.processSocialInteractions(alive, day, tickEvents, spatialGrid);
 
-    // 8. Reproduction — pass community lang stage + phonology for era-appropriate naming
+    // 8. Reproduction — BUG-01: pass spatial grid callback for O(n) male lookup
     const communityLangStage = alive.length ? Math.max(...alive.map(i => i.language?.stage ?? 0)) : 0;
-    const newborns = checkReproduction(this.population, day, this.simId, communityLangStage, this.phonology);
+    const _repNearbyMalesFn = (female) => getNeighbours(female, spatialGrid);
+    const newborns = checkReproduction(this.population, day, this.simId, communityLangStage, this.phonology, _repNearbyMalesFn);
     for (const nb of newborns) {
       nb.inventory = initializeInventory();
       nb.beliefs = new Set(); // must be Set in-memory
@@ -521,6 +553,11 @@ export class SimulationEngine {
         ind.death_day = day;
         ind.death_cause = cause;
         this._aliveIds.delete(ind.id);
+        // BUG-03: remove from group member_ids immediately so group size stays accurate
+        if (ind.group_id) {
+          const grp = this.groups.find(g => g.id === ind.group_id);
+          if (grp) grp.member_ids = grp.member_ids.filter(id => id !== ind.id);
+        }
         this._newDeadThisTick.push(ind);
         this._todayDeaths++;
         this.totalDeaths++;
@@ -556,6 +593,11 @@ export class SimulationEngine {
       if (ind.is_dead && !ind._death_logged) {
         ind._death_logged = true;
         ind.death_day = ind.death_day ?? day;
+        // BUG-03: remove from group too
+        if (ind.group_id) {
+          const grp = this.groups.find(g => g.id === ind.group_id);
+          if (grp) grp.member_ids = grp.member_ids.filter(id => id !== ind.id);
+        }
         this._newDeadThisTick.push(ind);
         this._todayDeaths++;
         this.totalDeaths++;
@@ -563,6 +605,13 @@ export class SimulationEngine {
         this.logEvent(day, 'death', `${deadName2} died: ${ind.death_cause ?? ind.cause_of_death ?? 'unknown'}`, { individual_id: ind.id, cause: ind.death_cause ?? ind.cause_of_death ?? 'unknown', name: deadName2 }, 1);
       }
     }
+
+    // BUG-02: rebuild spatial grid after deaths — post-death steps (language, tech obs, social narrative)
+    // must not return dead individuals as neighbors
+    spatialGrid = buildSpatialGrid(alive.filter(i => !i.is_dead));
+
+    // Feature 11: milestone detection
+    this._checkMilestones(alive, day, tickEvents);
 
     // 11. Weather event logging — log when weather type changes
     if (this.worldState.current_weather !== this._lastLoggedWeather) {
@@ -771,7 +820,8 @@ export class SimulationEngine {
     const stats = this.computeStats(day, currentAlive);
 
     // 22. Checkpoint (fire-and-forget — never block the simulation loop)
-    if (day % CHECKPOINT_INTERVAL === 0 && this.onCheckpoint) {
+    // BUG-08: skip day 0 — would checkpoint only 2 founders with no history yet
+    if (day > 0 && day % CHECKPOINT_INTERVAL === 0 && this.onCheckpoint) {
       this.onCheckpoint({
         sim_day: day,
         sim_year: Math.floor(day / 365),
@@ -789,6 +839,32 @@ export class SimulationEngine {
         })),
         stats,
       }).catch(err => console.error('[SimulationEngine] checkpoint error:', err));
+
+      // BUG-05: update word_count cache at checkpoint (expensive O(n×vocab) calc)
+      this._wordCountCache = new Set(currentAlive.flatMap(i => Object.keys(i.language?.vocabulary ?? {}))).size;
+      this._wordCountCacheDay = day;
+
+      // Feature 1: update centroid trail (last 20 checkpoint positions for globe migration overlay)
+      if (this._bandCentroid) {
+        this._centroidTrail = [...this._centroidTrail, {
+          x: Math.round(this._bandCentroid.x * 10000) / 10000,
+          y: Math.round(this._bandCentroid.y * 10000) / 10000,
+          day,
+        }].slice(-20);
+      }
+
+      // Feature 15: allele frequency snapshot — population averages per locus, stored in stats
+      const alleleFreqs = {};
+      if (currentAlive.length > 0) {
+        const lociKeys = Object.keys(currentAlive[0]?.genome ?? {});
+        for (const locus of lociKeys) {
+          const vals = currentAlive
+            .map(i => ((i.genome?.[locus]?.allele1?.value ?? 0.5) + (i.genome?.[locus]?.allele2?.value ?? 0.5)) / 2)
+            .filter(v => !isNaN(v));
+          if (vals.length > 0) alleleFreqs[locus] = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 1000) / 1000;
+        }
+      }
+      stats.allele_frequencies = alleleFreqs;
 
       // Migration detection — compare centroid every checkpoint
       if (this._bandCentroid) {
@@ -817,9 +893,13 @@ export class SimulationEngine {
       }
     }
 
-    // 23. Broadcast (throttled at high speeds)
-    if (this.onTick && this._broadcastThisTick !== false) {
-      this.onTick({ day, stats, events: this.events.slice(-20) });
+    // 23. Broadcast (throttled at high speeds; in warp mode suppress until target reached)
+    if (this.onTick && this._broadcastThisTick !== false && this._fastForwardTarget === null) {
+      this.onTick({
+        day, stats,
+        events: this.events.slice(-20),
+        centroid_trail: this._centroidTrail,  // Feature 1
+      });
     }
 
     this._consecutiveErrors = 0;
@@ -1446,7 +1526,8 @@ export class SimulationEngine {
       weather_intensity: Math.round((this.worldState.weather_intensity ?? 0.5) * 100) / 100,
       births: this.totalBirths,
       deaths: this.totalDeaths,
-      word_count: new Set(alive.flatMap(i => Object.keys(i.language?.vocabulary ?? {}))).size,
+      // BUG-05: use cached word count (updated at each checkpoint) to avoid O(n×vocab) every tick
+      word_count: this._wordCountCache,
       max_language_stage: Math.max(0, ...alive.map(i => i.language?.stage ?? 0)),
       avg_consciousness: Math.round(alive.reduce((s, i) => s + (i.mind?.consciousness ?? 0), 0) / Math.max(1, alive.length) * 1000) / 1000,
       max_tom_stage: Math.max(0, ...alive.map(i => i.psychology?.theory_of_mind ?? 0)),
@@ -1550,6 +1631,63 @@ export class SimulationEngine {
         console.error('[SimulationEngine] event persist error:', err);
       });
     }
+  }
+
+  // Feature 11: milestone detection — emits high-importance events for civilization firsts
+  _checkMilestones(alive, day, tickEvents) {
+    const pop = alive.filter(i => !i.is_dead).length;
+    const milestones = [
+      { key: 'pop_10',  cond: pop >= 10,  desc: 'Population reached 10 individuals', icon: '👥' },
+      { key: 'pop_25',  cond: pop >= 25,  desc: 'Population reached 25 individuals', icon: '👥' },
+      { key: 'pop_50',  cond: pop >= 50,  desc: 'Population reached 50 individuals', icon: '👥' },
+      { key: 'pop_100', cond: pop >= 100, desc: 'Population milestone: 100 individuals', icon: '👥' },
+      { key: 'pop_250', cond: pop >= 250, desc: 'Population milestone: 250 individuals', icon: '👥' },
+      { key: 'pop_500', cond: pop >= 500, desc: 'Population milestone: 500 individuals', icon: '👥' },
+      { key: 'tech_5',  cond: this.discoveredTechs.size >= 5,  desc: '5 technologies discovered', icon: '⚙️' },
+      { key: 'tech_10', cond: this.discoveredTechs.size >= 10, desc: '10 technologies discovered', icon: '⚙️' },
+      { key: 'tech_15', cond: this.discoveredTechs.size >= 15, desc: '15 technologies discovered', icon: '⚙️' },
+      { key: 'belief_first', cond: this.discoveredBeliefs.size >= 1, desc: 'First belief system emerged', icon: '☽' },
+      { key: 'belief_5',     cond: this.discoveredBeliefs.size >= 5, desc: '5 belief systems recorded', icon: '☽' },
+      { key: 'art_first',    cond: this.discoveredArts.size >= 1,    desc: 'First art form created', icon: '🎨' },
+      { key: 'lang_stage2',  cond: alive.some(i => (i.language?.stage ?? 0) >= 2), desc: 'First phonemic language stage reached', icon: '🔤' },
+      { key: 'lang_stage3',  cond: alive.some(i => (i.language?.stage ?? 0) >= 3), desc: 'Morphemic grammar emerged in the community', icon: '🔤' },
+      { key: 'lang_stage4',  cond: alive.some(i => (i.language?.stage ?? 0) >= 4), desc: 'Complex syntax achieved — full language capacity', icon: '🔤' },
+      { key: 'lang_stage5',  cond: alive.some(i => (i.language?.stage ?? 0) >= 5), desc: 'Writing system invented', icon: '📜' },
+      { key: 'lang_stage6',  cond: alive.some(i => (i.language?.stage ?? 0) >= 6), desc: 'Literature era begins', icon: '📖' },
+      { key: 'year_10',   cond: day >= 10  * 365, desc: 'Civilization survived 10 years',  icon: '⏳' },
+      { key: 'year_100',  cond: day >= 100 * 365, desc: 'Civilization survived 100 years', icon: '⏳' },
+      { key: 'year_500',  cond: day >= 500 * 365, desc: 'Civilization survived 500 years', icon: '⏳' },
+      { key: 'year_1000', cond: day >= 1000 * 365, desc: 'Civilization survived 1000 years', icon: '⏳' },
+    ];
+    for (const m of milestones) {
+      if (!m.cond || this._milestones.has(m.key)) continue;
+      this._milestones.add(m.key);
+      tickEvents.push({ type: 'milestone', key: m.key, description: m.desc, icon: m.icon, day, importance: 'high' });
+      this.logEvent(day, 'milestone', m.desc, { key: m.key, icon: m.icon }, 5);
+    }
+  }
+
+  // Feature 14: return performance metrics for the metrics API endpoint
+  getMetrics() {
+    const hist = this._tickHistory;
+    const avg = hist.length ? hist.reduce((a, b) => a + b, 0) / hist.length : 0;
+    const max = hist.length ? Math.max(...hist) : 0;
+    const min = hist.length ? Math.min(...hist) : 0;
+    return {
+      tick_avg_ms: Math.round(avg * 10) / 10,
+      tick_max_ms: max,
+      tick_min_ms: min,
+      tick_samples: hist.length,
+      ticks_per_second: avg > 0 ? Math.round(1000 / avg * 10) / 10 : 0,
+      speed_multiplier: this.speedMultiplier,
+      population: this._aliveIds.size,
+      total_ever: this.population.size,
+      current_day: this.currentDay,
+      milestones_reached: [...this._milestones],
+      centroid_trail: this._centroidTrail,
+      fast_forward_target: this._fastForwardTarget,
+      is_warping: this._fastForwardTarget !== null,
+    };
   }
 }
 

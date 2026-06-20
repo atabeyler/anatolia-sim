@@ -2,6 +2,7 @@ import { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import * as THREE from 'three';
+import { useSimStore, type CentroidPoint } from '../../store/simStore';
 
 const EARTH_MAP  = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/textures/planets/earth_atmos_2048.jpg';
 const EARTH_BUMP = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/textures/planets/earth_normal_2048.jpg';
@@ -683,6 +684,53 @@ function PopClickCatcher({
 
 const TRAIL_DEPTH = 6;
 
+function latLonToVec3(x: number, y: number, r: number): [number, number, number] {
+  const lat = (y * Math.PI) / 180;
+  const lon = (x * Math.PI) / 180;
+  return [r * Math.cos(lat) * Math.cos(lon), r * Math.sin(lat), -r * Math.cos(lat) * Math.sin(lon)];
+}
+
+function CentroidTrailLine({ trail }: { trail: CentroidPoint[] }) {
+  const line = useMemo(() => {
+    if (trail.length < 2) return null;
+    const r = 2.032;
+    const pts: number[] = [];
+    for (const pt of trail) {
+      const [x, y, z] = latLonToVec3(pt.x, pt.y, r);
+      pts.push(x, y, z);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    const mat = new THREE.LineBasicMaterial({ color: '#fbbf24', transparent: true, opacity: 0.7, linewidth: 2 });
+    return new THREE.Line(geo, mat);
+  }, [trail]);
+
+  const dots = useMemo(() => {
+    if (trail.length === 0) return null;
+    const r = 2.034;
+    const pts: number[] = [];
+    for (const pt of trail) {
+      const [x, y, z] = latLonToVec3(pt.x, pt.y, r);
+      pts.push(x, y, z);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    return geo;
+  }, [trail]);
+
+  if (!line && !dots) return null;
+  return (
+    <>
+      {line && <primitive object={line} />}
+      {dots && (
+        <points geometry={dots}>
+          <pointsMaterial size={0.06} color="#fbbf24" sizeAttenuation transparent opacity={0.9} depthWrite={false} />
+        </points>
+      )}
+    </>
+  );
+}
+
 function RotatingGroup({
   individuals,
   onSelect,
@@ -693,6 +741,7 @@ function RotatingGroup({
   onGlobeClick?: (lat: number, lon: number) => void;
 }) {
   const groupRef = useRef<THREE.Group>(null);
+  const centroidTrail = useSimStore(s => s.centroidTrail);
   useFrame((_, delta) => {
     if (groupRef.current) groupRef.current.rotation.y += delta * 0.025;
   });
@@ -713,6 +762,7 @@ function RotatingGroup({
     <group ref={groupRef}>
       <GlobeMesh />
       <GridLines />
+      {centroidTrail.length > 1 && <CentroidTrailLine trail={centroidTrail} />}
       {onGlobeClick && <GlobeClickCatcher groupRef={groupRef} onGlobeClick={onGlobeClick} />}
       {individuals.length > 0 && (
         <>

@@ -2,8 +2,9 @@ import { useEffect, useState, useRef, type CSSProperties } from 'react';
 import FooterBar from '../components/layout/FooterBar';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Play, Pause, LogOut, ChevronLeft, ChevronRight, Users, Globe, Zap, Shield, Flame, Heart, Trash2, Sparkles, BookOpen, CircleSlash2 } from 'lucide-react';
+import { Play, Pause, LogOut, ChevronLeft, ChevronRight, Users, Globe, Zap, Shield, Flame, Heart, Trash2, Sparkles, BookOpen, CircleSlash2, FastForward, X } from 'lucide-react';
 import { useSimStore } from '../store/simStore';
+import PerformancePanel from '../components/panels/PerformancePanel';
 import { useSimWebSocket } from '../hooks/useSimWebSocket';
 import SimMenuOverlay from '../components/layout/SimMenuOverlay';
 import WorldGlobe from '../components/simulation/WorldGlobe';
@@ -247,7 +248,7 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
 export default function SimulationPage() {
   const { simId } = useParams<{ simId: string }>();
   const navigate = useNavigate();
-  const { user, accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, speedMultiplier, setSpeed, resetLiveState, setEvents, simulationEnded, clearSimulationEnded } = useSimStore();
+  const { user, accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, speedMultiplier, setSpeed, resetLiveState, setEvents, simulationEnded, clearSimulationEnded, isWarping, fastForwardTarget } = useSimStore();
   const [individuals, setIndividuals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'harita' | 'durum'>('harita');
@@ -263,6 +264,7 @@ export default function SimulationPage() {
   const [actionBusy, setActionBusy] = useState(false);
   const [speedBusy, setSpeedBusy] = useState(false);
   const [endModal, setEndModal] = useState<{ mode: 'natural' | 'manual'; reason?: string } | null>(null);
+  const [ffTarget, setFfTarget] = useState('');
 
   // Show end modal when simulation ends naturally
   useEffect(() => {
@@ -401,6 +403,18 @@ export default function SimulationPage() {
   function applyCustomSpeed() {
     const v = parseInt(customSpeed);
     if (v >= 1 && v <= 1000) { changeSpeed(v); setCustomSpeed(''); }
+  }
+
+  async function startFastForward() {
+    const yr = parseInt(ffTarget);
+    if (!yr || yr < 1 || !currentSim || !accessToken) return;
+    setFfTarget('');
+    await axios.post(`/api/simulations/${currentSim.id}/fast-forward`, { target_year: yr }, { headers: { Authorization: `Bearer ${accessToken}` } }).catch(() => {});
+  }
+
+  async function cancelFastForward() {
+    if (!currentSim || !accessToken) return;
+    await axios.post(`/api/simulations/${currentSim.id}/fast-forward/cancel`, {}, { headers: { Authorization: `Bearer ${accessToken}` } }).catch(() => {});
   }
 
   function terminateSim() {
@@ -545,6 +559,7 @@ export default function SimulationPage() {
                 { key: 'sea',  label: text(lang as LangCode, { tr: 'MEVSİM',    en: 'SEASON', de: 'SAISON', fr: 'SAISON', ar: 'موسم'   }), value: seasonLabel,                 color: '#a0b4ff' },
                 { key: 'temp', label: text(lang as LangCode, { tr: 'SICAKLIK',  en: 'TEMP',   de: 'TEMP.',  fr: 'TEMP.',  ar: 'حرارة'  }), value: stats?.temperature !== undefined ? `${stats.temperature}°` : '—', color: stats?.temperature !== undefined ? (stats.temperature > 30 ? '#e05a5a' : '#7dd3fc') : '#a0b4ff' },
                 { key: 'wthr', label: text(lang as LangCode, { tr: 'HAVA',      en: 'WTHR.',  de: 'WETTER', fr: 'MÉTÉO',  ar: 'طقس'    }), value: (() => { const icons: Record<string,string> = { clear: '☀️', rain: '🌧', heavy_rain: '⛈', snow: '❄️', blizzard: '🌨', storm: '🌩', heat_wave: '🔥', drought: '🏜' }; return icons[(stats as any)?.weather] ?? '☀️'; })(), color: '#e0d080' },
+                ...(isWarping ? [{ key: 'warp', label: text(lang as LangCode, { tr: 'WARP', en: 'WARP', de: 'WARP', fr: 'WARP', ar: 'وارب' }), value: `→Y${fastForwardTarget ? Math.floor(fastForwardTarget / 365) : '?'}`, color: '#d4a838' }] : []),
               ].map(({ key, label, value, color }) => (
               <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: isMobile ? '2px 7px' : '2px 10px', borderRight: '1px solid #4a1a1a', flexShrink: 0, minWidth: isMobile ? 42 : 52 }}>
                 <span style={{ fontSize: 14, color: '#a0c8b0', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{label}</span>
@@ -961,6 +976,60 @@ export default function SimulationPage() {
                 </div>
               )}
 
+              {/* Fast-forward / warp */}
+              {rightPanelExpanded && (
+                <div style={{ padding: '6px 8px', borderBottom: '1px solid #4a1a1a' }}>
+                  <div style={{ fontSize: 10, color: '#a0c8b0', letterSpacing: '0.12em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <FastForward size={10} />
+                    {text(lang as LangCode, { tr: 'IŞINIL GİT', en: 'WARP TO', de: 'WARP ZU', fr: 'WARP VERS', ar: 'قفز إلى' })}
+                  </div>
+                  {isWarping ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div style={{ fontSize: 10, color: '#d4a838', letterSpacing: '0.06em', animation: 'pulse 1s infinite' }}>
+                        ⚡ {text(lang as LangCode, { tr: 'WARP AKTİF', en: 'WARPING', de: 'WARP AKTIV', fr: 'EN WARP', ar: 'وارب نشط' })}
+                        {fastForwardTarget && ` → Y${Math.floor(fastForwardTarget / 365)}`}
+                      </div>
+                      <button onClick={cancelFastForward} style={{ width: '100%', padding: '3px 0', fontSize: 11, border: '1px solid rgba(224,90,90,0.5)', color: '#e05a5a', background: 'rgba(224,90,90,0.08)', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                        <X size={10} /> {text(lang as LangCode, { tr: 'DURDUR', en: 'CANCEL', de: 'STOPP', fr: 'ANNULER', ar: 'إلغاء' })}
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <input
+                        type="number" min={1}
+                        value={ffTarget}
+                        onChange={e => setFfTarget(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') startFastForward(); }}
+                        placeholder={text(lang as LangCode, { tr: 'Yıl', en: 'Year', de: 'Jahr', fr: 'Année', ar: 'سنة' })}
+                        style={{ flex: 1, fontSize: 11, padding: '3px 4px', background: 'transparent', border: '1px solid rgba(160,200,176,0.3)', color: '#a0c8b0', fontFamily: 'Share Tech Mono, monospace', outline: 'none', minWidth: 0 }}
+                      />
+                      <button onClick={startFastForward} style={{ padding: '3px 6px', fontSize: 11, border: '1px solid rgba(212,168,56,0.5)', color: '#d4a838', background: 'rgba(212,168,56,0.08)', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
+                        ⚡
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Performance panel button */}
+              <button
+                onClick={() => setActivePanel(activePanel === 'performance' ? null : 'performance')}
+                title={text(lang as LangCode, { tr: 'PERFORMANS', en: 'PERF.', de: 'LEIST.', fr: 'PERF.', ar: 'الأداء' })}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: rightPanelExpanded ? 'flex-start' : 'center',
+                  gap: rightPanelExpanded ? 7 : 0,
+                  width: '100%', padding: rightPanelExpanded ? '6px 12px' : '7px 0',
+                  fontSize: 14, fontFamily: 'Share Tech Mono, monospace',
+                  background: activePanel === 'performance' ? 'rgba(79,110,247,0.12)' : 'transparent',
+                  borderLeft: `2px solid ${activePanel === 'performance' ? '#4f6ef7' : 'transparent'}`,
+                  borderTop: 'none', borderRight: 'none', borderBottom: '1px solid #4a1a1a',
+                  color: activePanel === 'performance' ? '#4f6ef7' : '#8abda0',
+                  cursor: 'pointer', whiteSpace: 'nowrap', boxSizing: 'border-box',
+                }}>
+                <span style={{ fontSize: 16, flexShrink: 0 }}>📈</span>
+                {rightPanelExpanded && <span>{text(lang as LangCode, { tr: 'PERFORMANS', en: 'PERF.', de: 'LEIST.', fr: 'PERF.', ar: 'الأداء' })}</span>}
+              </button>
+
             </div>
 
             {/* Toggle */}
@@ -1038,6 +1107,7 @@ export default function SimulationPage() {
       <ReportPanel />
       <MomentsPanel />
       <WitnessPanel />
+      <PerformancePanel />
       <MilestoneToast />
 
       {/* ═══ END MODAL ═══ */}

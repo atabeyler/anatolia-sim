@@ -6,7 +6,7 @@ export function useSimWebSocket(simId: string | null) {
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectDelay = useRef(3000);
   const unmounted = useRef(false);
-  const { accessToken, setStats, addEvent } = useSimStore();
+  const { accessToken, setStats, addEvent, setCentroidTrail, addMilestone, setIsWarping, setFastForwardTarget } = useSimStore();
 
   useEffect(() => {
     if (!simId || !accessToken) return;
@@ -31,8 +31,15 @@ export function useSimWebSocket(simId: string | null) {
           if (data.type === 'tick') {
             if (data.stats) setStats(data.stats);
             if (data.events) data.events.forEach(addEvent);
+            if (data.centroid_trail) setCentroidTrail(data.centroid_trail);
+            if (typeof data.is_warping === 'boolean') setIsWarping(data.is_warping);
+            if ('fast_forward_target' in data) setFastForwardTarget(data.fast_forward_target ?? null);
+          } else if (data.type === 'milestone') {
+            addMilestone({ key: data.key, description: data.description, icon: data.icon ?? '🏆', day: data.day });
           } else if (data.type === 'status') {
             // Server tells us the real engine state on connect.
+            if (typeof data.is_warping === 'boolean') setIsWarping(data.is_warping);
+            if ('fast_forward_target' in data) setFastForwardTarget(data.fast_forward_target ?? null);
             // If engine is not running but sim appears running, auto-trigger start.
             if (data.engine_running === false) {
               const { currentSim, accessToken: tok } = useSimStore.getState();

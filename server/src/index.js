@@ -127,9 +127,17 @@ wss.on('connection', (ws, req) => {
       const { rows } = await query('SELECT id FROM simulations WHERE id = $1 AND user_id = $2', [simId, user.id]);
       if (!rows[0]) return ws.close(1008, 'Simulation not found');
       simulationManager.registerWs(simId, ws);
-      // Tell the client the actual engine state so it can auto-recover after a server restart.
+      // BUG-11: Tell the client the actual engine state so it can auto-recover after restart.
+      // Also include is_warping so the UI can show fast-forward progress.
       const eng = simulationManager.getEngine(simId);
-      try { ws.send(JSON.stringify({ type: 'status', engine_running: eng?.running === true })); } catch {}
+      const statusPayload = {
+        type: 'status',
+        engine_running: eng?.running === true,
+        is_warping: eng?._fastForwardTarget != null,
+        fast_forward_target: eng?._fastForwardTarget ?? null,
+        current_day: eng?.currentDay ?? null,
+      };
+      try { ws.send(JSON.stringify(statusPayload)); } catch {}
     } catch {
       ws.close(1008, 'Invalid token');
     }

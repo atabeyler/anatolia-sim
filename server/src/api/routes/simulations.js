@@ -759,4 +759,34 @@ router.get('/:id/report', authenticate, requireSimulationOwner, async (req, res)
   } catch (err) { console.error(err); res.status(500).json({ error: 'Report generation failed' }); }
 });
 
+// Feature 5: fast-forward — warp engine to target year without UI blocking
+router.post('/:id/fast-forward', authenticate, requireSimulationOwner, async (req, res) => {
+  try {
+    const { target_year } = req.body;
+    const targetYear = parseInt(target_year, 10);
+    if (isNaN(targetYear) || targetYear < 1) return res.status(400).json({ error: 'target_year must be a positive integer' });
+    const engine = simulationManager.getEngine(req.params.id);
+    if (!engine) return res.status(400).json({ error: 'Simulation engine not loaded — start simulation first' });
+    const currentYear = Math.floor(engine.currentDay / 365);
+    if (targetYear <= currentYear) return res.status(400).json({ error: `Already past year ${targetYear} (current: ${currentYear})` });
+    const targetDay = targetYear * 365;
+    simulationManager.fastForward(req.params.id, targetDay);
+    res.json({ message: `Fast-forwarding to year ${targetYear} (day ${targetDay})`, current_year: currentYear, target_year: targetYear });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Fast-forward failed' }); }
+});
+
+router.post('/:id/fast-forward/cancel', authenticate, requireSimulationOwner, async (req, res) => {
+  simulationManager.cancelFastForward(req.params.id);
+  res.json({ message: 'Fast-forward cancelled' });
+});
+
+// Feature 14: performance metrics endpoint
+router.get('/:id/metrics', authenticate, requireSimulationOwner, async (req, res) => {
+  try {
+    const engine = simulationManager.getEngine(req.params.id);
+    if (!engine) return res.status(404).json({ error: 'Engine not running' });
+    res.json(engine.getMetrics());
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Metrics fetch failed' }); }
+});
+
 export default router;

@@ -68,6 +68,34 @@ interface SimStats {
   astronomy_knowledge?: number;
   weather?: string;
   total_techs?: number;
+  allele_frequencies?: Record<string, number>;
+}
+
+// Feature 1: centroid trail point
+export interface CentroidPoint { x: number; y: number; day: number; }
+
+// Feature 11: milestone event
+export interface MilestoneEvent {
+  key: string;
+  description: string;
+  icon: string;
+  day: number;
+}
+
+// Feature 14: engine performance metrics
+export interface EngineMetrics {
+  tick_avg_ms: number;
+  tick_max_ms: number;
+  tick_min_ms: number;
+  ticks_per_second: number;
+  speed_multiplier: number;
+  population: number;
+  total_ever: number;
+  current_day: number;
+  milestones_reached: string[];
+  centroid_trail: CentroidPoint[];
+  fast_forward_target: number | null;
+  is_warping: boolean;
 }
 
 interface SimEvent {
@@ -150,6 +178,25 @@ interface SimStore {
   sidebarExpanded: boolean;
   toggleSidebar: () => void;
 
+  // Fast-forward / warp mode (Feature 5)
+  isWarping: boolean;
+  fastForwardTarget: number | null;
+  setIsWarping: (w: boolean) => void;
+  setFastForwardTarget: (t: number | null) => void;
+
+  // Centroid migration trail (Feature 1)
+  centroidTrail: CentroidPoint[];
+  setCentroidTrail: (trail: CentroidPoint[]) => void;
+
+  // Milestone events (Feature 11)
+  milestones: MilestoneEvent[];
+  addMilestone: (m: MilestoneEvent) => void;
+  clearMilestones: () => void;
+
+  // Engine performance metrics (Feature 14)
+  engineMetrics: EngineMetrics | null;
+  setEngineMetrics: (m: EngineMetrics | null) => void;
+
   // Desktop auto-update
   updatePercent: number | null;
   updateReady: { version?: string } | null;
@@ -198,7 +245,7 @@ export const useSimStore = create<SimStore>((set) => ({
     });
     set({ events: deduped });
   },
-  resetLiveState: () => set({ stats: null, events: [], simulationEnded: null }),
+  resetLiveState: () => set({ stats: null, events: [], simulationEnded: null, milestones: [], centroidTrail: [], isWarping: false, fastForwardTarget: null, engineMetrics: null }),
 
   simulationEnded: null,
   setSimulationEnded: (reason) => set({ simulationEnded: reason }),
@@ -230,6 +277,21 @@ export const useSimStore = create<SimStore>((set) => ({
   setSpeed: (speed) => set({ speedMultiplier: speed }),
   sidebarExpanded: typeof window !== 'undefined' ? window.innerWidth >= 768 : true,
   toggleSidebar: () => set(s => ({ sidebarExpanded: !s.sidebarExpanded })),
+
+  isWarping: false,
+  fastForwardTarget: null,
+  setIsWarping: (w) => set({ isWarping: w }),
+  setFastForwardTarget: (t) => set({ fastForwardTarget: t }),
+
+  centroidTrail: [],
+  setCentroidTrail: (trail) => set({ centroidTrail: trail }),
+
+  milestones: [],
+  addMilestone: (m) => set(s => ({ milestones: [m, ...s.milestones].slice(0, 50) })),
+  clearMilestones: () => set({ milestones: [] }),
+
+  engineMetrics: null,
+  setEngineMetrics: (m) => set({ engineMetrics: m }),
 
   updatePercent: null,
   updateReady: null,

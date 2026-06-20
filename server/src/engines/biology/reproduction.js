@@ -1,25 +1,29 @@
 import { isFertile, getAge, createChild } from './individual.js';
-import { generateName } from '../language/nameEngine.js';
 
 const PREGNANCY_MIN = 266;
-const PREGNANCY_MAX = 280;
 const MATING_RADIUS  = 2; // degrees (~220 km) — matches SOCIAL_INTERACTION_RADIUS
 
-export function checkReproduction(population, currentDay, simulationId, communityLangStage = 0, phonology = null) {
+// BUG-01: accepts optional nearbyMalesFn callback for O(n) spatial lookup from simulationLoop
+export function checkReproduction(population, currentDay, simulationId, communityLangStage = 0, phonology = null, nearbyMalesFn = null) {
   const newborns = [];
 
-  // Proximity-based mating — no permanent pair bond required
-  const fertileMales = [...population.values()].filter(i =>
+  // Only build the O(n) full scan when no spatial grid callback is provided (fallback)
+  const fertileMales = nearbyMalesFn ? null : [...population.values()].filter(i =>
     i.alive && i.sex === 'male' && isFertile(i, currentDay)
   );
+
   const females = [...population.values()].filter(i =>
     i.alive && i.sex === 'female' && isFertile(i, currentDay) && !(i.health?.pregnancy)
   );
 
   for (const female of females) {
-    const nearbyMales = fertileMales.filter(m =>
-      Math.hypot((m.x ?? 0) - (female.x ?? 0), (m.y ?? 0) - (female.y ?? 0)) < MATING_RADIUS
-    );
+    // BUG-01: use spatial grid callback when available, else fall back to full scan
+    const nearbyMales = nearbyMalesFn
+      ? nearbyMalesFn(female).filter(m => !m.is_dead && m.sex === 'male' && isFertile(m, currentDay))
+      : fertileMales.filter(m =>
+          Math.hypot((m.x ?? 0) - (female.x ?? 0), (m.y ?? 0) - (female.y ?? 0)) < MATING_RADIUS
+        );
+
     if (nearbyMales.length === 0) continue;
     const male = nearbyMales[Math.floor(Math.random() * nearbyMales.length)];
     const p = conceptionProbability(female, male, currentDay);
@@ -29,7 +33,6 @@ export function checkReproduction(population, currentDay, simulationId, communit
         father_id: male.id, conception_day: currentDay,
         due_day: currentDay + PREGNANCY_MIN + Math.floor(Math.random() * 14),
       };
-      // Mating urge resets — biological satisfaction
       female.mating_urge = 0;
       male.mating_urge = Math.max(0, (male.mating_urge ?? 0) - 0.7);
     }
@@ -44,7 +47,12 @@ export function checkReproduction(population, currentDay, simulationId, communit
         if (!female.social.children_ids) female.social.children_ids = [];
         const { children, motherSurvives } = deliverBirth(female, father, currentDay, simulationId, communityLangStage, phonology);
         newborns.push(...children);
-        if (!motherSurvives) { female.alive = false; female.is_dead = true; female.death_day = currentDay; female.death_cause = 'birth_complications'; }
+        if (!motherSurvives) {
+          female.alive = false;
+          female.is_dead = true;
+          female.death_day = currentDay;
+          female.death_cause = 'birth_complications';
+        }
       }
       female.health.pregnancy = null;
     }
@@ -59,17 +67,13 @@ function conceptionProbability(female, male, currentDay) {
   else if (age > 35)  ageFactor = 0.6;
   else if (age < 18)  ageFactor = 0.3;
   else if (age < 20)  ageFactor = 0.7;
-  // MHC diversity: average across both alleles of both immune loci
   const fI1 = ((female.genome?.IMMUNE_01?.allele1?.value ?? 0.5) + (female.genome?.IMMUNE_01?.allele2?.value ?? 0.5)) / 2;
   const fI2 = ((female.genome?.IMMUNE_02?.allele1?.value ?? 0.5) + (female.genome?.IMMUNE_02?.allele2?.value ?? 0.5)) / 2;
   const mI1 = ((male.genome?.IMMUNE_01?.allele1?.value ?? 0.5) + (male.genome?.IMMUNE_01?.allele2?.value ?? 0.5)) / 2;
   const mI2 = ((male.genome?.IMMUNE_02?.allele1?.value ?? 0.5) + (male.genome?.IMMUNE_02?.allele2?.value ?? 0.5)) / 2;
   const mhcBonus = ((Math.abs(fI1 - mI1) + Math.abs(fI2 - mI2)) / 2) * 0.2;
   const inbreedPenalty = Math.max(female.inbreeding_coeff ?? 0, male.inbreeding_coeff ?? 0);
-  // Mating urge affects conception probability (multiplier between 0.6–1.0)
   const urgeFactor = 0.6 + (female.mating_urge ?? 0.5) * 0.4;
-  // Base rate 0.07/day — high conception probability; effective IBI is bounded
-  // by pregnancy duration (~273 d) since re-conception during pregnancy is blocked.
   const p = ((female.phenotype?.fertility ?? 0.5) * ageFactor + mhcBonus - inbreedPenalty * 0.5) * 0.07 * urgeFactor;
   return Math.max(0, p);
 }
@@ -82,26 +86,35 @@ function deliverBirth(mother, father, birthDay, simulationId, communityLangStage
   const motherSurvives = Math.random() > motherRisk;
   const children = [];
 
+  // BUG-12: tag each child with whether the father was alive at birth (for accurate birth event display)
+  const fatherAliveAtBirth = !father.is_dead;
+
   const first = createChild(mother, father, birthDay, simulationId, communityLangStage, phonology);
-  if (Math.random() < neonatalRisk) { first.alive = false; first.is_dead = true; first.death_day = birthDay; first.death_cause = 'birth_complications'; }
+  first._fatherAliveAtBirth = fatherAliveAtBirth;
+  if (Math.random() < neonatalRisk) {
+    first.alive = false; first.is_dead = true; first.death_day = birthDay; first.death_cause = 'birth_complications';
+  }
   children.push(first);
 
-  // Twin chance is linked to the FSHR_01 (follicle-stimulating hormone receptor) gene:
-  // low fertility ~0%, medium ~1.7%, high ~4.5%
   const fshr = mother.phenotype?.fertility ?? 0.5;
   const twinChance = Math.max(0, 0.003 + (fshr - 0.3) * 0.07);
 
   if (Math.random() < twinChance) {
     const twin = createChild(mother, father, birthDay, simulationId, communityLangStage, phonology);
     twin.is_twin = true;
-    if (Math.random() < neonatalRisk * 2.5) { twin.alive = false; twin.is_dead = true; twin.death_day = birthDay; twin.death_cause = 'birth_complications'; }
+    twin._fatherAliveAtBirth = fatherAliveAtBirth;
+    if (Math.random() < neonatalRisk * 2.5) {
+      twin.alive = false; twin.is_dead = true; twin.death_day = birthDay; twin.death_cause = 'birth_complications';
+    }
     children.push(twin);
 
-    // Triplets: ~10% of the twin chance
     if (Math.random() < twinChance * 0.1) {
       const triplet = createChild(mother, father, birthDay, simulationId, communityLangStage, phonology);
       triplet.is_twin = true;
-      if (Math.random() < neonatalRisk * 4) { triplet.alive = false; triplet.is_dead = true; triplet.death_day = birthDay; triplet.death_cause = 'birth_complications'; }
+      triplet._fatherAliveAtBirth = fatherAliveAtBirth;
+      if (Math.random() < neonatalRisk * 4) {
+        triplet.alive = false; triplet.is_dead = true; triplet.death_day = birthDay; triplet.death_cause = 'birth_complications';
+      }
       children.push(triplet);
     }
   }

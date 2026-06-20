@@ -66,7 +66,7 @@ function translateSkin(value: any, lang: string): string {
 
 
 export default function BiologyPanel() {
-  const { stats, lang, currentSim, accessToken } = useSimStore();
+  const { stats, lang, currentSim, accessToken, milestones } = useSimStore();
   const [individuals, setIndividuals] = useState<any[]>([]);
   const [loadError, setLoadError] = useState(false);
 
@@ -187,6 +187,49 @@ export default function BiologyPanel() {
           ));
         })()}
       </Section>
+
+      {/* Feature 15: Allele Frequency Snapshot */}
+      {stats?.allele_frequencies && Object.keys(stats.allele_frequencies).length > 0 && (
+        <Section title={text(lang as LangCode, { en: 'Allele Frequencies', tr: 'Alel Frekansları', de: 'Allelfrequenzen', fr: 'Fréquences Alléliques', ar: 'ترددات الأليل' })}>
+          <p style={{ fontSize: 11, color: '#6090a0', marginBottom: 8, lineHeight: 1.4 }}>
+            {text(lang as LangCode, { en: 'Population-wide mean phenotype per locus (checkpoint snapshot)', tr: 'Lokus başına popülasyon ortalaması (kontrol noktası anlık görüntüsü)', de: 'Bevölkerungsweiter Phänotyp-Mittelwert je Locus', fr: 'Moyenne phénotypique par locus (instantané checkpoint)', ar: 'متوسط الفينوتيب للسكان لكل موضع (لقطة نقطة التفتيش)' })}
+          </p>
+          {Object.entries(stats.allele_frequencies)
+            .sort(([, a], [, b]) => b - a)
+            .map(([locus, freq]) => {
+              const label = GENE_LABELS[locus];
+              const displayName = label ? text(lang as LangCode, label) : locus.replace(/_/g, ' ');
+              const pct = Math.round(freq * 100);
+              const color = freq > 0.7 ? '#4ecb71' : freq > 0.4 ? '#d4a838' : '#e05a5a';
+              return (
+                <div key={locus} style={{ marginBottom: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2, fontSize: 11 }}>
+                    <span style={{ color: '#8abda0', maxWidth: '70%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</span>
+                    <span style={{ color, fontFamily: 'Orbitron, monospace', fontSize: 10 }}>{pct}%</span>
+                  </div>
+                  <div style={{ height: 3, background: 'rgba(255,255,255,0.07)', borderRadius: 2, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, background: color, transition: 'width 1s ease' }} />
+                  </div>
+                </div>
+              );
+            })}
+        </Section>
+      )}
+
+      {/* Genetic Milestone Log */}
+      {milestones.length > 0 && (
+        <Section title={text(lang as LangCode, { en: 'Genetic Milestones', tr: 'Genetik Kilometre Taşları', de: 'Genetische Meilensteine', fr: 'Jalons Génétiques', ar: 'المعالم الجينية' })}>
+          <div style={{ maxHeight: 160, overflowY: 'auto' }}>
+            {milestones.filter(m => m.key.startsWith('pop') || m.key.startsWith('gen') || m.key.startsWith('allele')).slice(0, 10).map(m => (
+              <div key={`${m.key}-${m.day}`} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 0', borderBottom: '1px solid rgba(160,200,176,0.08)', fontSize: 11 }}>
+                <span>{m.icon}</span>
+                <span style={{ color: '#8abda0', flex: 1 }}>{m.description}</span>
+                <span style={{ color: '#6090a0', flexShrink: 0 }}>G{m.day}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
     </DetailPanel>
   );
 }
