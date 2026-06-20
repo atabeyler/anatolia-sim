@@ -84,6 +84,7 @@ export class SimulationEngine {
     this.onEvent = null;
     this.onCheckpoint = null;
     this.onEnded = null;
+    this.onDeath = null;
     // Build phonological profile once — unique to this civilization's geography
     const ws = simulation.world_state ?? {};
     this.phonology = buildPhonology(ws.phonology_seed ?? 0, ws.biome ?? 'mediterranean');
@@ -606,6 +607,11 @@ export class SimulationEngine {
         const deadName2 = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
         this.logEvent(day, 'death', `${deadName2} died: ${ind.death_cause ?? ind.cause_of_death ?? 'unknown'}`, { individual_id: ind.id, cause: ind.death_cause ?? ind.cause_of_death ?? 'unknown', name: deadName2 }, 1);
       }
+    }
+
+    // Notify manager of deaths this tick so it can persist alive=false immediately (no waiting for checkpoint)
+    if (this._newDeadThisTick.length > 0 && this.onDeath) {
+      this.onDeath(this._newDeadThisTick);
     }
 
     // BUG-02: rebuild spatial grid after deaths — post-death steps (language, tech obs, social narrative)

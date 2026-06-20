@@ -114,31 +114,52 @@ export default function WitnessPanel() {
   const [ind, setInd] = useState<any>(null);
   const drag = useDrag({ x: 16, y: 120 });
 
+  const confirmedDeadRef = useRef(false);
+  useEffect(() => { confirmedDeadRef.current = false; }, [watchedIndividualId]);
+
   useEffect(() => {
     if (!watchedIndividualId || !currentSim || !accessToken) { setInd(null); return; }
+    // Stop polling once we confirmed the individual is dead — no need to keep fetching
+    if (confirmedDeadRef.current) return;
     let cancelled = false;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
     async function fetch_() {
+      if (confirmedDeadRef.current) return;
       try {
         const res = await axios.get(
           `/api/simulations/${currentSim!.id}/population/${watchedIndividualId}`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
-        if (!cancelled) setInd(res.data);
+        if (!cancelled) {
+          setInd(res.data);
+          if (res.data.alive === false) {
+            confirmedDeadRef.current = true;
+            if (intervalId) clearInterval(intervalId);
+          }
+        }
       } catch {
-        // fallback: try the population list
+        // fallback: try the population list (alive=true only — if not found, individual is dead)
         try {
           const res = await axios.get(
             `/api/simulations/${currentSim!.id}/population?alive=true&limit=200`,
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
           const found = (res.data as any[]).find((i: any) => i.id === watchedIndividualId);
-          if (!cancelled && found) setInd(found);
+          if (!cancelled) {
+            if (found) setInd(found);
+            else if (ind) {
+              // Not in alive list — mark as dead using last known data
+              confirmedDeadRef.current = true;
+              if (intervalId) clearInterval(intervalId);
+              setInd({ ...ind, alive: false });
+            }
+          }
         } catch {}
       }
     }
     fetch_();
-    const id = setInterval(fetch_, 8000);
-    return () => { cancelled = true; clearInterval(id); };
+    intervalId = setInterval(fetch_, 8000);
+    return () => { cancelled = true; if (intervalId) clearInterval(intervalId); };
   }, [watchedIndividualId, currentSim?.id, stats?.day]);
 
   if (!watchedIndividualId) return null;

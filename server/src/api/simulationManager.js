@@ -104,6 +104,20 @@ class SimulationManager {
       else if (!flushTimer) { flushTimer = setTimeout(flushEvents, 5000); }
     };
 
+    // Persist deaths immediately so WitnessPanel shows correct dead state without waiting for checkpoint.
+    // Fire-and-forget batch UPDATE — non-critical if it fails (checkpoint will catch up).
+    engine.onDeath = (dead) => {
+      if (dead.length === 0) return;
+      const values = dead.flatMap(d => [d.id, d.death_day ?? null, d.death_cause ?? null]);
+      const rows = dead.map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`).join(', ');
+      query(
+        `UPDATE individuals SET alive = false, death_day = v.dd, death_cause = v.dc
+         FROM (VALUES ${rows}) AS v(id, dd, dc)
+         WHERE individuals.id = v.id::uuid`,
+        values
+      ).catch(err => console.warn('[onDeath] persist error:', err.message));
+    };
+
     engine.onCheckpoint = async (cp) => {
       // Skip if a checkpoint is already in progress for this simulation
       if (this._checkpointLocks.get(simulation.id)) return;
