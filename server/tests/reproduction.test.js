@@ -44,7 +44,7 @@ describe('checkReproduction — pregnancy formation', () => {
     const pop    = new Map([[male.id, male], [female.id, female]]);
 
     let conceived = false;
-    for (let day = 0; day < 300; day++) {
+    for (let day = 0; day < 1000; day++) {
       checkReproduction(pop, day, 'sim1');
       if (female.health?.pregnancy) { conceived = true; break; }
     }

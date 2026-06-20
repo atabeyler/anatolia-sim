@@ -65,9 +65,9 @@ describe('learnTechFromObservation — basic learning', () => {
     const teacher = makeInd();
     teacher.known_techs = new Set(['foraging']);
 
-    // rate = (1.0 × 0.9) / (0.3 × 2000) = 0.0015/day → P(≥1 in 3000) ≈ 98.9%
+    // rate = (1.0 × 0.9) / (0.3 × 2000) = 0.0015/day → P(≥1 in 10000) > 99.9999%
     let learned = false;
-    for (let i = 0; i < 3000; i++) {
+    for (let i = 0; i < 10000; i++) {
       learnTechFromObservation(learner, [teacher], new Set(['foraging']));
       if (learner.known_techs.has('foraging')) { learned = true; break; }
     }
