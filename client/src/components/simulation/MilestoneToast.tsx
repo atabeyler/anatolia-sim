@@ -46,7 +46,7 @@ const POP_MILESTONES = [10, 25, 50, 100, 250, 500, 1000];
 const TOAST_DURATION = 5000;
 
 export default function MilestoneToast() {
-  const { stats, events, lang, addMoment, currentSim } = useSimStore();
+  const { stats, events, lang, addMoment, currentSim, milestones } = useSimStore();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const fired = useRef<Set<string>>(new Set());
   const prevEventCount = useRef(-1); // -1 = initial load not yet seen
@@ -86,6 +86,17 @@ export default function MilestoneToast() {
   }
 
   const t = (tr: string, en: string, de = en, fr = en, ar = en) => text(lang as LangCode, { tr, en, de, fr, ar });
+
+  // Backend milestone events (from WebSocket milestone messages)
+  const prevMilestoneCount = useRef(0);
+  useEffect(() => {
+    if (milestones.length <= prevMilestoneCount.current) { prevMilestoneCount.current = milestones.length; return; }
+    const newest = milestones[0]; // addMilestone prepends
+    prevMilestoneCount.current = milestones.length;
+    if (!newest || fired.current.has(`backend_${newest.key}_${newest.day}`)) return;
+    fired.current.add(`backend_${newest.key}_${newest.day}`);
+    push({ icon: newest.icon, color: '#fbbf24', message: newest.description }, newest.description);
+  }, [milestones.length]);
 
   // Population milestones
   useEffect(() => {

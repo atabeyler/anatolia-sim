@@ -79,15 +79,24 @@ class SimulationManager {
     };
 
     // Batch event inserts — flush every 50 events or 5 seconds, whichever comes first
+    // BUG-09: _isFlushing flag prevents overlapping concurrent DB writes
     const eventBuffer = [];
     let flushTimer = null;
+    let _isFlushing = false;
     const flushEvents = async () => {
       if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
-      if (eventBuffer.length === 0) return;
+      if (eventBuffer.length === 0 || _isFlushing) return;
+      _isFlushing = true;
       const batch = eventBuffer.splice(0);
-      const placeholders = batch.map((_, i) => `($${i*8+1},$${i*8+2},$${i*8+3},$${i*8+4},$${i*8+5},$${i*8+6},$${i*8+7},$${i*8+8})`).join(',');
-      const values = batch.flatMap(e => [e.simulation_id, e.sim_day, e.sim_year, e.event_type, e.description, JSON.stringify(e.data ?? {}), e.importance ?? 1, e.created_at ?? new Date().toISOString()]);
-      withRetry(() => query(`INSERT INTO simulation_events (simulation_id,sim_day,sim_year,event_type,description,data,importance,created_at) VALUES ${placeholders}`, values)).catch(() => {});
+      try {
+        const placeholders = batch.map((_, i) => `($${i*8+1},$${i*8+2},$${i*8+3},$${i*8+4},$${i*8+5},$${i*8+6},$${i*8+7},$${i*8+8})`).join(',');
+        const values = batch.flatMap(e => [e.simulation_id, e.sim_day, e.sim_year, e.event_type, e.description, JSON.stringify(e.data ?? {}), e.importance ?? 1, e.created_at ?? new Date().toISOString()]);
+        await withRetry(() => query(`INSERT INTO simulation_events (simulation_id,sim_day,sim_year,event_type,description,data,importance,created_at) VALUES ${placeholders}`, values));
+      } catch { /* non-critical — events lost on persistent DB failure */ } finally {
+        _isFlushing = false;
+        // flush again if events arrived while we were writing
+        if (eventBuffer.length >= 50) flushEvents();
+      }
     };
     engine.onEvent = (event) => {
       eventBuffer.push(event);
@@ -136,6 +145,20 @@ class SimulationManager {
   getEngine(simId) { return this.engines.get(simId); }
   removeEngine(simId) { this.engines.get(simId)?.pause(); this.engines.delete(simId); this.wsClients.delete(simId); }
   setSpeed(simId, speed) { const engine = this.engines.get(simId); if (engine) engine.speedMultiplier = speed; }
+
+  // Feature 5: fast-forward — set engine warp target; engine skips sleep until day reached
+  fastForward(simId, targetDay) {
+    const engine = this.engines.get(simId);
+    if (!engine) return false;
+    engine._fastForwardTarget = targetDay;
+    if (!engine.running) engine.start().catch(console.error);
+    return true;
+  }
+
+  cancelFastForward(simId) {
+    const engine = this.engines.get(simId);
+    if (engine) engine._fastForwardTarget = null;
+  }
 
   async persistState(simId, engine = this.engines.get(simId)) {
     if (!engine) return;

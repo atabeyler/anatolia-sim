@@ -124,6 +124,89 @@ router.post('/:simId/intervene', authenticate, requireSimulationOwner, async (re
         }
         break;
       }
+
+      // Feature 10: new god-mode interventions ──────────────────────────────────
+
+      case 'resource_boost': {
+        // Inject food/water abundance at a location, simulating a discovered cache
+        const { food = 0, water = 0, lat = 0, lon = 0, radius = 300 } = params;
+        const radiusDeg = radius / 111;
+        engine.worldState.food_abundance = Math.min(1, (engine.worldState.food_abundance ?? 0.5) + food * 0.1);
+        engine.worldState.water_abundance = Math.min(1, (engine.worldState.water_abundance ?? 0.7) + water * 0.1);
+        for (const ind of alive) {
+          const dist = Math.hypot(ind.x - lon, ind.y - lat);
+          if (dist < radiusDeg) {
+            if (!ind.inventory) ind.inventory = {};
+            ind.inventory.food  = Math.min(10, (ind.inventory.food  ?? 0) + food);
+            ind.inventory.water = Math.min(10, (ind.inventory.water ?? 0) + water);
+            affected++;
+          }
+        }
+        break;
+      }
+
+      case 'inject_pathogen': {
+        // Inject a specific pathogen into a target individual or random subset
+        const { individual_id, spread_rate = 0.3, pathogen_id = 'hemorrhagic_fever', severity = 0.6 } = params;
+        const targets = individual_id
+          ? alive.filter(i => i.id === individual_id)
+          : alive.filter(() => Math.random() < spread_rate);
+        for (const ind of targets) {
+          if (!ind.infections) ind.infections = [];
+          if (!ind.infections.some(x => x.pathogen_id === pathogen_id)) {
+            ind.infections.push({ pathogen_id, days_remaining: Math.round(14 + severity * 21), infected_day: engine.currentDay, severity });
+          }
+          affected++;
+        }
+        break;
+      }
+
+      case 'shield_individual': {
+        // Mark individual as temporarily shielded from death rolls (divine protection)
+        const { individual_id, duration_days = 365 } = params;
+        const ind = engine.population.get(individual_id);
+        if (ind && !ind.is_dead) {
+          ind._shielded_until = engine.currentDay + duration_days;
+          affected = 1;
+        }
+        break;
+      }
+
+      case 'weather_override': {
+        // Force a specific weather condition for N days
+        const { weather = 'clear', duration_days = 30, intensity = 0.5 } = params;
+        engine.worldState.current_weather = weather;
+        engine.worldState.weather_intensity = Math.max(0, Math.min(1, intensity));
+        engine.worldState.weather_days_remaining = duration_days;
+        engine.worldState._weather_override = true;
+        affected = alive.length;
+        break;
+      }
+
+      case 'climate_boost': {
+        // Improve environmental conditions across the board
+        const { food_boost = 0.2, temp_adjust = 0 } = params;
+        engine.worldState.food_abundance = Math.min(1, (engine.worldState.food_abundance ?? 0.5) + food_boost);
+        engine.worldState.temperature = (engine.worldState.temperature ?? 20) + temp_adjust;
+        affected = alive.length;
+        break;
+      }
+
+      case 'inspire_individual': {
+        // Boost a non-founder individual's consciousness and lang stage experience
+        // Does NOT directly set consciousness (Cardinal Rule) — only adds environmental stimulus
+        const { individual_id } = params;
+        const ind = engine.population.get(individual_id);
+        if (ind && !ind.is_dead && !ind.is_founder) {
+          // Simulate a profound experience: add consciousness-boosting memories
+          if (!ind.memory) ind.memory = { social: [], events: [], knowledge: [] };
+          ind.memory.events = [{ type: 'divine_vision', day: engine.currentDay, impact: 'transformative' }, ...(ind.memory.events ?? [])].slice(0, 20);
+          // Boost FOXP2 expression (language development, not a genetic trait — epigenetic response)
+          if (ind.language) ind.language._foxp2_expression = Math.min(1, (ind.language._foxp2_expression ?? 0) + 0.05);
+          affected = 1;
+        }
+        break;
+      }
     }
     await query(`INSERT INTO god_interventions (simulation_id,sim_day,sim_year,type,params,affected_individuals,deaths,user_note) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
       [simId, engine.currentDay, Math.floor(engine.currentDay/365), type, JSON.stringify(params), affected, deaths, user_note]);
