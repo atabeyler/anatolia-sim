@@ -46,6 +46,8 @@ export function createFounder(params = {}) {
     // Physical survival
     STRENGTH_01: { a1: 0.78, a2: 0.75 },
     ACTN3_01:    { a1: 0.76, a2: 0.74 },
+    // Reproduction — without a default, FSHR_01 was random 0.1–0.9, causing high variance in early growth
+    FSHR_01:    { a1: 0.70, a2: 0.68 },
   };
   const genome = createGenome({ ...founderGenomeDefaults, ...(params.genome ?? {}) });
   const phenotype = computePhenotype(genome);

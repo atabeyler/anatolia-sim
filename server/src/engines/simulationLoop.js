@@ -1263,8 +1263,12 @@ export class SimulationEngine {
     // Pre-puberty or very old — no urge
     if (ageYears < 13 || ageYears > 72) { ind.mating_urge = 0; return; }
 
-    // Zero during pregnancy
-    if (ind.health?.pregnancy) { ind.mating_urge = 0; return; }
+    // Suppress mating drive during pregnancy but let it slowly build so the female
+    // is ready sooner after birth (avoids a ~50-day dead zone post-partum)
+    if (ind.health?.pregnancy) {
+      ind.mating_urge = Math.min(0.5, (ind.mating_urge ?? 0) + 0.001);
+      return;
+    }
 
     if (ind.mating_urge === undefined) ind.mating_urge = Math.random() * 0.4;
 

@@ -74,7 +74,7 @@ function conceptionProbability(female, male, currentDay) {
   const mhcBonus = ((Math.abs(fI1 - mI1) + Math.abs(fI2 - mI2)) / 2) * 0.2;
   const inbreedPenalty = Math.max(female.inbreeding_coeff ?? 0, male.inbreeding_coeff ?? 0);
   const urgeFactor = 0.6 + (female.mating_urge ?? 0.5) * 0.4;
-  const p = ((female.phenotype?.fertility ?? 0.5) * ageFactor + mhcBonus - inbreedPenalty * 0.5) * 0.07 * urgeFactor;
+  const p = ((female.phenotype?.fertility ?? 0.5) * ageFactor + mhcBonus - inbreedPenalty * 0.5) * 0.09 * urgeFactor;
   return Math.max(0, p);
 }
 
