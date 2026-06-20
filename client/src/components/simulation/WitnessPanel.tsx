@@ -109,6 +109,35 @@ const STAGE_NAMES: Record<number, { tr: string; en: string; de: string; fr: stri
   6: { tr: 'Yazı',          en: 'Writing',           de: 'Schrift',          fr: 'Écriture',         ar: 'كتابة'          },
 };
 
+const DEATH_CAUSE_I18N: Record<string, { tr: string; en: string; de: string; fr: string; ar: string }> = {
+  starvation:                  { tr: 'Açlık',                    en: 'Starvation',             de: 'Verhungern',                       fr: 'Famine',                        ar: 'الجوع'                   },
+  dehydration:                 { tr: 'Susuzluk',                 en: 'Dehydration',            de: 'Dehydrierung',                     fr: 'Déshydratation',               ar: 'الجفاف'                  },
+  old_age:                     { tr: 'Yaşlılık',                 en: 'Old age',                de: 'Altersschwäche',                  fr: 'Vieillesse',                    ar: 'الشيخوخة'                },
+  predator:                    { tr: 'Yırtıcı hayvan',           en: 'Predator',               de: 'Raubtier',                         fr: 'Prédateur',                    ar: 'مفترس'                   },
+  genetic_disease:             { tr: 'Genetik hastalık',         en: 'Genetic disease',        de: 'Erbkrankheit',                     fr: 'Maladie génétique',           ar: 'مرض وراثي'               },
+  infection:                   { tr: 'Enfeksiyon',               en: 'Infection',              de: 'Infektion',                        fr: 'Infection',                     ar: 'عدوى'                    },
+  trauma:                      { tr: 'Travma',                   en: 'Trauma',                 de: 'Trauma',                           fr: 'Traumatisme',                   ar: 'صدمة'                    },
+  birth_complications:         { tr: 'Doğum komplikasyonu',      en: 'Birth complications',    de: 'Geburtskomplikationen',            fr: 'Complications à la naissance',  ar: 'مضاعفات الولادة'         },
+  conflict:                    { tr: 'Çatışma',                  en: 'Conflict',               de: 'Konflikt',                         fr: 'Conflit',                       ar: 'صراع'                    },
+  drowning:                    { tr: 'Boğulma',                  en: 'Drowning',               de: 'Ertrinken',                        fr: 'Noyade',                        ar: 'الغرق'                   },
+  disease_intestinal_parasite: { tr: 'Bağırsak paraziti',        en: 'Intestinal parasite',    de: 'Darmparasit',                      fr: 'Parasite intestinal',           ar: 'طفيل معوي'               },
+  disease_cholera_like:        { tr: 'Kolera benzeri hastalık',  en: 'Cholera-like disease',   de: 'Choleraähnliche Krankheit',        fr: 'Maladie type choléra',          ar: 'مرض شبيه بالكوليرا'      },
+  disease_respiratory_common:  { tr: 'Solunum yolu hastalığı',   en: 'Respiratory illness',    de: 'Atemwegserkrankung',               fr: 'Maladie respiratoire',          ar: 'مرض تنفسي'               },
+  disease_pneumonia_like:      { tr: 'Zatürre benzeri hastalık', en: 'Pneumonia-like illness', de: 'Lungenentzündungsähnliche Erkrankung', fr: 'Maladie type pneumonie',     ar: 'مرض شبيه بالالتهاب الرئوي' },
+  disease_plague_like:         { tr: 'Veba benzeri salgın',      en: 'Plague-like epidemic',   de: 'Pestähnliche Epidemie',            fr: 'Épidémie type peste',           ar: 'وباء شبيه بالطاعون'      },
+  disease_malaria_like:        { tr: 'Sıtma benzeri hastalık',   en: 'Malaria-like disease',   de: 'Malariaähnliche Krankheit',        fr: 'Maladie type paludisme',        ar: 'مرض شبيه بالملاريا'      },
+  disease_fever_tick:          { tr: 'Kene ateşi',               en: 'Tick fever',             de: 'Zeckenfieber',                     fr: 'Fièvre à tiques',               ar: 'حمى القراد'              },
+  disease_wound_infection:     { tr: 'Yara enfeksiyonu',         en: 'Wound infection',        de: 'Wundinfektion',                    fr: 'Infection de plaie',            ar: 'عدوى الجرح'              },
+  disease_fungal_skin:         { tr: 'Mantar enfeksiyonu',       en: 'Fungal skin infection',  de: 'Pilzinfektion der Haut',           fr: 'Infection fongique cutanée',    ar: 'عدوى فطرية جلدية'       },
+};
+
+function deathCauseLabel(cause: string | null | undefined, lang: string): string {
+  if (!cause) return text(lang as LangCode, { tr: 'Bilinmeyen', en: 'Unknown', de: 'Unbekannt', fr: 'Inconnue', ar: 'غير معروف' });
+  const entry = DEATH_CAUSE_I18N[cause];
+  if (entry) return text(lang as LangCode, entry);
+  return cause.replace(/_/g, ' ');
+}
+
 export default function WitnessPanel() {
   const { watchedIndividualId, setWatchedIndividual, currentSim, accessToken, lang, stats } = useSimStore();
   const [ind, setInd] = useState<any>(null);
@@ -166,7 +195,7 @@ export default function WitnessPanel() {
 
   const name = ind ? (ind.phenotype?.name ?? ind.name ?? `ID:${watchedIndividualId.slice(-6)}`) : '…';
   const age = ind ? Math.floor(ind.age_years ?? (ind.age ?? 0) / 365) : null;
-  const isDead = ind && (ind.is_dead || ind.alive === false);
+  const isDead = ind && (ind.is_dead || ind.alive === false || !!ind.death_cause);
   const stage = ind?.language?.stage ?? 0;
   const narration = ind && !isDead ? generateNarration(ind, lang) : [];
 
@@ -221,7 +250,12 @@ export default function WitnessPanel() {
         )}
         {isDead && (
           <div style={{ fontSize: 11, color: '#a05050' }}>
-            † {text(lang as LangCode, { tr: 'Bu birey hayatını kaybetti.', en: 'This individual has died.', de: 'Dieses Individuum ist gestorben.', fr: 'Cet individu est décédé.', ar: 'لقي هذا الفرد حتفه.' })}
+            <div>† {text(lang as LangCode, { tr: 'Bu birey hayatini kaybetti.', en: 'This individual has died.', de: 'Dieses Individuum ist gestorben.', fr: 'Cet individu est decede.', ar: 'لقي هذا الفرد حتفه.' })}</div>
+            {ind.death_cause && (
+              <div style={{ marginTop: 3, color: '#c06060', fontSize: 10 }}>
+                {text(lang as LangCode, { tr: 'Sebep:', en: 'Cause:', de: 'Ursache:', fr: 'Cause:', ar: 'السبب:' })} {deathCauseLabel(ind.death_cause, lang)}
+              </div>
+            )}
           </div>
         )}
         {narration.map((line, i) => (

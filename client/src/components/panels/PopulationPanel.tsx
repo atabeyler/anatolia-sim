@@ -14,16 +14,26 @@ const FEMALE_NAMES = ['Ela','Sera','Kaya','Mara','Sina','Tala','Nura','Bera','Ar
   'Esma','Ferda','Gülün','Hara','İlara','Kiran','Liran','Miran','Niran','Orana'];
 
 const CAUSE_I18N: Record<string, { tr: string; en: string; de: string; fr: string; ar: string }> = {
-  starvation:           { tr: 'Açlık',                  en: 'Starvation',          de: 'Verhungern',         fr: 'Famine',               ar: 'مجاعة'           },
-  dehydration:          { tr: 'Susuzluk',               en: 'Dehydration',         de: 'Austrocknung',       fr: 'Déshydratation',       ar: 'جفاف'            },
-  old_age:              { tr: 'Yaşlılık',               en: 'Old age',             de: 'Alter',              fr: 'Vieillesse',           ar: 'الشيخوخة'        },
-  predator:             { tr: 'Yırtıcı hayvan',         en: 'Predator',            de: 'Raubtier',           fr: 'Prédateur',            ar: 'حيوان مفترس'     },
-  genetic_disease:      { tr: 'Genetik hastalık',       en: 'Genetic disease',     de: 'Erbkrankheit',       fr: 'Maladie génétique',    ar: 'مرض وراثي'       },
-  infection:            { tr: 'Enfeksiyon',             en: 'Infection',           de: 'Infektion',          fr: 'Infection',            ar: 'عدوى'            },
-  trauma:               { tr: 'Travma',                 en: 'Trauma',              de: 'Trauma',             fr: 'Traumatisme',          ar: 'صدمة'            },
-  birth_complications:  { tr: 'Doğum komplikasyonu',   en: 'Birth complications', de: 'Geburtskomplikation',fr: 'Complications accouchement', ar: 'مضاعفات الولادة' },
-  conflict:             { tr: 'Çatışma',                en: 'Conflict',            de: 'Konflikt',           fr: 'Conflit',              ar: 'صراع'            },
-  unknown:              { tr: 'Bilinmeyen',             en: 'Unknown',             de: 'Unbekannt',          fr: 'Inconnu',              ar: 'مجهول'           },
+  starvation:                  { tr: 'Açlık',                    en: 'Starvation',             de: 'Verhungern',              fr: 'Famine',                      ar: 'مجاعة'             },
+  dehydration:                 { tr: 'Susuzluk',                 en: 'Dehydration',            de: 'Austrocknung',            fr: 'Déshydratation',              ar: 'جفاف'              },
+  old_age:                     { tr: 'Yaşlılık',                 en: 'Old age',                de: 'Alter',                   fr: 'Vieillesse',                  ar: 'الشيخوخة'          },
+  predator:                    { tr: 'Yırtıcı hayvan',           en: 'Predator',               de: 'Raubtier',                fr: 'Prédateur',                   ar: 'حيوان مفترس'       },
+  genetic_disease:             { tr: 'Genetik hastalık',         en: 'Genetic disease',        de: 'Erbkrankheit',            fr: 'Maladie génétique',           ar: 'مرض وراثي'         },
+  infection:                   { tr: 'Enfeksiyon',               en: 'Infection',              de: 'Infektion',               fr: 'Infection',                   ar: 'عدوى'              },
+  trauma:                      { tr: 'Travma',                   en: 'Trauma',                 de: 'Trauma',                  fr: 'Traumatisme',                 ar: 'صدمة'              },
+  birth_complications:         { tr: 'Doğum komplikasyonu',      en: 'Birth complications',    de: 'Geburtskomplikation',     fr: 'Complications accouchement',  ar: 'مضاعفات الولادة'   },
+  conflict:                    { tr: 'Çatışma',                  en: 'Conflict',               de: 'Konflikt',                fr: 'Conflit',                     ar: 'صراع'              },
+  drowning:                    { tr: 'Boğulma',                  en: 'Drowning',               de: 'Ertrinken',               fr: 'Noyade',                      ar: 'غرق'               },
+  unknown:                     { tr: 'Bilinmeyen',               en: 'Unknown',                de: 'Unbekannt',               fr: 'Inconnu',                     ar: 'مجهول'             },
+  disease_intestinal_parasite: { tr: 'Bağırsak paraziti',        en: 'Intestinal parasite',    de: 'Darmparasit',             fr: 'Parasite intestinal',         ar: 'طفيليات معوية'     },
+  disease_cholera_like:        { tr: 'Kolera benzeri hastalık',  en: 'Cholera-like disease',   de: 'Cholera-ähnl. Krkh.',     fr: 'Maladie cholériforme',        ar: 'مرض شبيه بالكوليرا' },
+  disease_respiratory_common:  { tr: 'Solunum yolu hastalığı',   en: 'Respiratory illness',    de: 'Atemwegserkrankung',      fr: 'Maladie respiratoire',        ar: 'مرض تنفسي'         },
+  disease_pneumonia_like:      { tr: 'Zatürre benzeri hastalık', en: 'Pneumonia-like illness', de: 'Pneumonie-ähnl. Krkh.',   fr: 'Maladie pneumonique',         ar: 'مرض شبيه بالالتهاب الرئوي' },
+  disease_plague_like:         { tr: 'Veba benzeri salgın',      en: 'Plague-like epidemic',   de: 'Pestartige Seuche',       fr: 'Épidémie pestilentielle',     ar: 'وباء شبيه بالطاعون' },
+  disease_malaria_like:        { tr: 'Sıtma benzeri hastalık',   en: 'Malaria-like disease',   de: 'Malaria-ähnl. Krkh.',     fr: 'Maladie palustre',            ar: 'مرض شبيه بالملاريا' },
+  disease_fever_tick:          { tr: 'Kene ateşi',               en: 'Tick fever',             de: 'Zeckenfieber',            fr: 'Fièvre à tiques',             ar: 'حمى القراد'        },
+  disease_wound_infection:     { tr: 'Yara enfeksiyonu',         en: 'Wound infection',        de: 'Wundinfektion',           fr: 'Infection de plaie',          ar: 'عدوى الجرح'        },
+  disease_fungal_skin:         { tr: 'Mantar enfeksiyonu',       en: 'Fungal skin infection',  de: 'Pilzinfektion',           fr: 'Infection fongique cutanée',  ar: 'عدوى فطرية جلدية'  },
 };
 
 function causeLabel(cause: string | null | undefined, lang: string): string {

@@ -595,7 +595,9 @@ export class SimulationEngine {
     for (const ind of alive) {
       if (ind.is_dead && !ind._death_logged) {
         ind._death_logged = true;
+        ind.alive = false;
         ind.death_day = ind.death_day ?? day;
+        this._aliveIds.delete(ind.id);
         // BUG-03: remove from group too
         if (ind.group_id) {
           const grp = this.groups.find(g => g.id === ind.group_id);
@@ -605,7 +607,9 @@ export class SimulationEngine {
         this._todayDeaths++;
         this.totalDeaths++;
         const deadName2 = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
-        this.logEvent(day, 'death', `${deadName2} died: ${ind.death_cause ?? ind.cause_of_death ?? 'unknown'}`, { individual_id: ind.id, cause: ind.death_cause ?? ind.cause_of_death ?? 'unknown', name: deadName2 }, 1);
+        const cause2 = ind.death_cause ?? ind.cause_of_death ?? 'unknown';
+        this.logEvent(day, 'death', `${deadName2} died: ${cause2}`, { individual_id: ind.id, cause: cause2, name: deadName2 }, 1);
+        this._applyDeathWitnessFear(ind, cause2, alive);
       }
     }
 
