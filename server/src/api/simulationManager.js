@@ -245,6 +245,8 @@ class SimulationManager {
            psychology=EXCLUDED.psychology, inventory=EXCLUDED.inventory`,
         params
       );
+      // Yield to event loop between batches so health checks can respond
+      await new Promise(resolve => setImmediate(resolve));
     }
   }
 

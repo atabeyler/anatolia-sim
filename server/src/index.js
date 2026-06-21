@@ -1,6 +1,14 @@
 import 'dotenv/config';
 import dns from 'dns';
 dns.setDefaultResultOrder('ipv4first');
+
+process.on('uncaughtException', (err) => {
+  console.error('[FATAL] uncaughtException:', err);
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[FATAL] unhandledRejection:', reason);
+});
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
