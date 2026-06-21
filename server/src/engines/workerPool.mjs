@@ -13,8 +13,8 @@ export class WorkerPool {
   constructor() {
     const requestedMax = Number(process.env.MAX_WORKERS ?? 2);
     const maxWorkers = Number.isFinite(requestedMax) && requestedMax > 0 ? Math.floor(requestedMax) : 2;
-    // Cap worker count so hosted and desktop builds can keep RAM/CPU predictable.
-    this.size = Math.min(maxWorkers, Math.max(1, Math.ceil(cpus().length / 2)));
+    // MAX_WORKERS controls how many logical cores the simulation may use.
+    this.size = Math.min(maxWorkers, Math.max(1, cpus().length));
     this._workers = [];
     this._serialized = new WeakMap(); // cache: individual → {beliefs, known_techs arrays}
     this._init();
