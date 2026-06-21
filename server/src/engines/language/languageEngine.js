@@ -40,6 +40,7 @@ export function updateLanguageStage(individual, groupSize, generationCount, grou
 // drives actual expression. Founders start at 70% of their cap (already adults);
 // newborns start at 10% and grow through group interaction.
 export function updateFoxp2Expression(individual, groupMemberCount = 0) {
+  if (!individual?.phenotype || !individual?.language) return;
   const geneticCap = individual.phenotype.language_capacity;
   const current = individual.language.foxp2_expression ?? geneticCap * 0.1;
   const socialGain = Math.min(groupMemberCount, 10) * 0.000015;

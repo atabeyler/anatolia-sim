@@ -642,6 +642,10 @@ export class SimulationEngine {
       this.onDeath(this._newDeadThisTick);
     }
 
+    // Re-filter alive after onDeath — onDeath nulls fields on dead individuals,
+    // subsequent steps must not see them in the alive array.
+    alive = alive.filter(i => !i.is_dead);
+
     // BUG-02: rebuild spatial grid after deaths — post-death steps (language, tech obs, social narrative)
     // must not return dead individuals as neighbors
     spatialGrid = buildSpatialGrid(alive.filter(i => !i.is_dead));
