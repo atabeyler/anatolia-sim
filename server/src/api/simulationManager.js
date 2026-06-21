@@ -118,6 +118,22 @@ class SimulationManager {
          WHERE individuals.id = v.id::uuid`,
         values
       ).catch(err => console.warn('[onDeath] persist error:', err.message));
+      // Free large heap objects from dead individuals — they stay in population Map
+      // for parent-id lookups but no longer need their full state in memory.
+      for (const ind of dead) {
+        ind.genome = null;
+        ind.phenotype = null;
+        ind.epigenome = null;
+        ind.mind = null;
+        ind.social = null;
+        ind.memory = null;
+        ind.psychology = null;
+        ind.inventory = null;
+        ind.beliefs = null;
+        ind.language = null;
+        ind.skills = null;
+        ind.health = null;
+      }
     };
 
     engine.onCheckpoint = async (cp) => {
