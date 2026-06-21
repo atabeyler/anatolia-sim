@@ -1,41 +1,43 @@
-import { useEffect, useState, useRef, type CSSProperties } from 'react';
+import { useEffect, useState, useRef, lazy, Suspense, type CSSProperties } from 'react';
 import FooterBar from '../components/layout/FooterBar';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Play, Pause, LogOut, ChevronLeft, ChevronRight, Users, Globe, Zap, Shield, Flame, Heart, Trash2, Sparkles, BookOpen, CircleSlash2, FastForward, X } from 'lucide-react';
 import { useSimStore } from '../store/simStore';
-import PerformancePanel from '../components/panels/PerformancePanel';
 import { useSimWebSocket } from '../hooks/useSimWebSocket';
 import SimMenuOverlay from '../components/layout/SimMenuOverlay';
 import WorldGlobe from '../components/simulation/WorldGlobe';
-import PopulationPanel from '../components/panels/PopulationPanel';
-import BiologyPanel from '../components/panels/BiologyPanel';
-import EnvironmentPanel from '../components/panels/EnvironmentPanel';
-import AstronomyPanel from '../components/panels/AstronomyPanel';
-import CulturePanel from '../components/panels/CulturePanel';
-import LanguagePanel from '../components/panels/LanguagePanel';
-import TechnologyPanel from '../components/panels/TechnologyPanel';
-import BeliefPanel from '../components/panels/BeliefPanel';
-import SocialPanel from '../components/panels/SocialPanel';
-import EconomyPanel from '../components/panels/EconomyPanel';
-import ArtPanel from '../components/panels/ArtPanel';
-import ArchitecturePanel from '../components/panels/ArchitecturePanel';
-import LawPanel from '../components/panels/LawPanel';
-import MicrobiomePanel from '../components/panels/MicrobiomePanel';
-import PsychologyPanel from '../components/panels/PsychologyPanel';
-import EpigeneticsPanel from '../components/panels/EpigeneticsPanel';
-import GodPanel from '../components/panels/GodPanel';
-import GenealogyPanel from '../components/panels/GenealogyPanel';
-import TimeMachinePanel from '../components/panels/TimeMachinePanel';
-import AnalysisPanel from '../components/panels/AnalysisPanel';
-import HypothesisPanel from '../components/panels/HypothesisPanel';
 import StatsPanel from '../components/panels/StatsPanel';
-import MomentsPanel from '../components/panels/MomentsPanel';
 import MilestoneToast from '../components/simulation/MilestoneToast';
-import WitnessPanel from '../components/simulation/WitnessPanel';
-import PopulationPyramidPanel from '../components/panels/PopulationPyramidPanel';
-import ReportPanel from '../components/panels/ReportPanel';
-import EventsPanel from '../components/panels/EventsPanel';
+
+// Panel chunks are loaded on first open — not at page load — to reduce initial bundle size
+const PerformancePanel = lazy(() => import('../components/panels/PerformancePanel'));
+const PopulationPanel = lazy(() => import('../components/panels/PopulationPanel'));
+const BiologyPanel = lazy(() => import('../components/panels/BiologyPanel'));
+const EnvironmentPanel = lazy(() => import('../components/panels/EnvironmentPanel'));
+const AstronomyPanel = lazy(() => import('../components/panels/AstronomyPanel'));
+const CulturePanel = lazy(() => import('../components/panels/CulturePanel'));
+const LanguagePanel = lazy(() => import('../components/panels/LanguagePanel'));
+const TechnologyPanel = lazy(() => import('../components/panels/TechnologyPanel'));
+const BeliefPanel = lazy(() => import('../components/panels/BeliefPanel'));
+const SocialPanel = lazy(() => import('../components/panels/SocialPanel'));
+const EconomyPanel = lazy(() => import('../components/panels/EconomyPanel'));
+const ArtPanel = lazy(() => import('../components/panels/ArtPanel'));
+const ArchitecturePanel = lazy(() => import('../components/panels/ArchitecturePanel'));
+const LawPanel = lazy(() => import('../components/panels/LawPanel'));
+const MicrobiomePanel = lazy(() => import('../components/panels/MicrobiomePanel'));
+const PsychologyPanel = lazy(() => import('../components/panels/PsychologyPanel'));
+const EpigeneticsPanel = lazy(() => import('../components/panels/EpigeneticsPanel'));
+const GodPanel = lazy(() => import('../components/panels/GodPanel'));
+const GenealogyPanel = lazy(() => import('../components/panels/GenealogyPanel'));
+const TimeMachinePanel = lazy(() => import('../components/panels/TimeMachinePanel'));
+const AnalysisPanel = lazy(() => import('../components/panels/AnalysisPanel'));
+const HypothesisPanel = lazy(() => import('../components/panels/HypothesisPanel'));
+const MomentsPanel = lazy(() => import('../components/panels/MomentsPanel'));
+const WitnessPanel = lazy(() => import('../components/simulation/WitnessPanel'));
+const PopulationPyramidPanel = lazy(() => import('../components/panels/PopulationPyramidPanel'));
+const ReportPanel = lazy(() => import('../components/panels/ReportPanel'));
+const EventsPanel = lazy(() => import('../components/panels/EventsPanel'));
 import { translateEventDescription, translateSeason, text, type LangCode } from '../utils/i18n';
 
 const SPEEDS = [1, 5, 20, 100];
@@ -248,7 +250,7 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
 export default function SimulationPage() {
   const { simId } = useParams<{ simId: string }>();
   const navigate = useNavigate();
-  const { user, accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, speedMultiplier, setSpeed, resetLiveState, setEvents, simulationEnded, clearSimulationEnded, isWarping, fastForwardTarget } = useSimStore();
+  const { user, accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, speedMultiplier, setSpeed, resetLiveState, setEvents, simulationEnded, clearSimulationEnded, isWarping, fastForwardTarget, watchedIndividualId } = useSimStore();
   const [individuals, setIndividuals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'harita' | 'durum'>('harita');
@@ -265,6 +267,8 @@ export default function SimulationPage() {
   const [speedBusy, setSpeedBusy] = useState(false);
   const [endModal, setEndModal] = useState<{ mode: 'natural' | 'manual'; reason?: string } | null>(null);
   const [ffTarget, setFfTarget] = useState('');
+  // Tracks which panel chunks have been mounted at least once (keeps state alive after close)
+  const [mountedPanels, setMountedPanels] = useState<Set<string>>(() => new Set());
 
   // Show end modal when simulation ends naturally
   useEffect(() => {
@@ -321,6 +325,14 @@ export default function SimulationPage() {
     window.addEventListener('aria-simulation', onAriaSimulation);
     return () => window.removeEventListener('aria-simulation', onAriaSimulation);
   }, [navigate]);
+  // Mount panel chunk on first open; keep mounted after close to preserve internal state
+  useEffect(() => {
+    if (activePanel) setMountedPanels(prev => { if (prev.has(activePanel)) return prev; const s = new Set(prev); s.add(activePanel); return s; });
+  }, [activePanel]);
+  useEffect(() => {
+    if (watchedIndividualId) setMountedPanels(prev => { if (prev.has('_witness')) return prev; const s = new Set(prev); s.add('_witness'); return s; });
+  }, [watchedIndividualId]);
+
   useSimWebSocket(simId ?? null);
 
   // Real clock
@@ -1081,33 +1093,34 @@ export default function SimulationPage() {
       />
 
       {/* ═══ OVERLAY PANELS ═══ */}
-      <EventsPanel />
-      <PopulationPanel />
-      <BiologyPanel />
-      <EnvironmentPanel />
-      <AstronomyPanel />
-      <CulturePanel />
-      <LanguagePanel />
-      <TechnologyPanel />
-      <BeliefPanel />
-      <SocialPanel />
-      <EconomyPanel />
-      <ArtPanel />
-      <ArchitecturePanel />
-      <LawPanel />
-      <MicrobiomePanel />
-      <PsychologyPanel />
-      <EpigeneticsPanel />
-      <GenealogyPanel />
-      <GodPanel />
-      <TimeMachinePanel />
-      <AnalysisPanel />
-      <HypothesisPanel />
-      <PopulationPyramidPanel />
-      <ReportPanel />
-      <MomentsPanel />
-      <WitnessPanel />
-      <PerformancePanel />
+      {/* Panels are lazy-loaded: chunk downloads only on first open, stays mounted after close */}
+      {mountedPanels.has('olaylar')      && <Suspense fallback={null}><EventsPanel /></Suspense>}
+      {mountedPanels.has('population')   && <Suspense fallback={null}><PopulationPanel /></Suspense>}
+      {mountedPanels.has('biology')      && <Suspense fallback={null}><BiologyPanel /></Suspense>}
+      {mountedPanels.has('environment')  && <Suspense fallback={null}><EnvironmentPanel /></Suspense>}
+      {mountedPanels.has('astronomy')    && <Suspense fallback={null}><AstronomyPanel /></Suspense>}
+      {mountedPanels.has('culture')      && <Suspense fallback={null}><CulturePanel /></Suspense>}
+      {mountedPanels.has('language')     && <Suspense fallback={null}><LanguagePanel /></Suspense>}
+      {mountedPanels.has('technology')   && <Suspense fallback={null}><TechnologyPanel /></Suspense>}
+      {mountedPanels.has('belief')       && <Suspense fallback={null}><BeliefPanel /></Suspense>}
+      {mountedPanels.has('social')       && <Suspense fallback={null}><SocialPanel /></Suspense>}
+      {mountedPanels.has('economy')      && <Suspense fallback={null}><EconomyPanel /></Suspense>}
+      {mountedPanels.has('art')          && <Suspense fallback={null}><ArtPanel /></Suspense>}
+      {mountedPanels.has('architecture') && <Suspense fallback={null}><ArchitecturePanel /></Suspense>}
+      {mountedPanels.has('law')          && <Suspense fallback={null}><LawPanel /></Suspense>}
+      {mountedPanels.has('microbiome')   && <Suspense fallback={null}><MicrobiomePanel /></Suspense>}
+      {mountedPanels.has('psychology')   && <Suspense fallback={null}><PsychologyPanel /></Suspense>}
+      {mountedPanels.has('epigenetics')  && <Suspense fallback={null}><EpigeneticsPanel /></Suspense>}
+      {mountedPanels.has('genealogy')    && <Suspense fallback={null}><GenealogyPanel /></Suspense>}
+      {mountedPanels.has('god')          && <Suspense fallback={null}><GodPanel /></Suspense>}
+      {mountedPanels.has('timemachine')  && <Suspense fallback={null}><TimeMachinePanel /></Suspense>}
+      {mountedPanels.has('analysis')     && <Suspense fallback={null}><AnalysisPanel /></Suspense>}
+      {mountedPanels.has('hypothesis')   && <Suspense fallback={null}><HypothesisPanel /></Suspense>}
+      {mountedPanels.has('pyramid')      && <Suspense fallback={null}><PopulationPyramidPanel /></Suspense>}
+      {mountedPanels.has('report')       && <Suspense fallback={null}><ReportPanel /></Suspense>}
+      {mountedPanels.has('moments')      && <Suspense fallback={null}><MomentsPanel /></Suspense>}
+      {mountedPanels.has('_witness')     && <Suspense fallback={null}><WitnessPanel /></Suspense>}
+      {mountedPanels.has('performance')  && <Suspense fallback={null}><PerformancePanel /></Suspense>}
       <MilestoneToast />
 
       {/* ═══ END MODAL ═══ */}
