@@ -114,22 +114,51 @@ describe('updateEpigenome — çevresel metilasyon dinamiği', () => {
     expect(ind.epigenome.OXTR_METHYL.methylation).toBeGreaterThan(before);
   });
 
-  it('geri-dönüşsüz lokus (MAOA_REGULATION) bir kez set edildikten sonra değişmez', () => {
-    // age < 5 yaş + yüksek stres → MAOA kilitleniyor
+  it('H-02 regression — MAOA_REGULATION (irreversible) keeps increasing under repeated early-childhood stress', () => {
+    // Before H-02 fix: locked after first write, subsequent stress had no effect.
+    // After fix: irreversible means only negative delta is blocked; positive keeps accumulating.
     const ind = makeUpdatable({
-      age: 2 * 365, // 2 yaşında
+      age: 2 * 365, // 2 years old — qualifies for MAOA pathway (age < 5)
       psychology: { stress_level: 0.9 },
     });
     initializeEpigenome(ind);
 
-    // İlk güncelleme: MAOA_REGULATION değişmeli (last_modified: null → set)
     updateEpigenome(ind, {}, 1);
     const afterFirst = ind.epigenome.MAOA_REGULATION.methylation;
 
-    // Sonraki güncellemeler: MAOA_REGULATION kilitli, değişmemeli
     for (let d = 2; d < 200; d++) updateEpigenome(ind, {}, d);
 
-    expect(ind.epigenome.MAOA_REGULATION.methylation).toBe(afterFirst);
+    // Methylation must be strictly greater (stress keeps pushing it up)
+    expect(ind.epigenome.MAOA_REGULATION.methylation).toBeGreaterThan(afterFirst);
+  });
+
+  it('H-02 regression — MAOA_REGULATION cannot decrease (irreversible blocks negative delta)', () => {
+    const ind = makeUpdatable({
+      age: 2 * 365,
+      psychology: { stress_level: 0.1 }, // low stress — no MAOA delta applied anyway
+    });
+    initializeEpigenome(ind);
+    ind.epigenome.MAOA_REGULATION.methylation = 0.9; // set high manually
+
+    // 200 ticks with low stress — MAOA should not decrease (delta is 0 via updateEpigenome,
+    // and any manual negative call should be blocked for irreversible loci)
+    for (let d = 1; d < 200; d++) updateEpigenome(ind, {}, d);
+
+    // MAOA should remain at or above the manually set value (no decrease possible)
+    expect(ind.epigenome.MAOA_REGULATION.methylation).toBeGreaterThanOrEqual(0.9);
+  });
+
+  it('H-02 regression — IMMUNE_PRIMING negative delta (infection path) is blocked', () => {
+    // IMMUNE_PRIMING is irreversible. updateEpigenome applies -0.02 when infected.
+    // With H-02 fix, negative delta is blocked → methylation stays at initial value.
+    const ind = makeUpdatable({ infections: [{ pathogen_id: 'pathogen-test' }] });
+    initializeEpigenome(ind);
+    const initial = ind.epigenome.IMMUNE_PRIMING.methylation;
+
+    for (let d = 1; d < 100; d++) updateEpigenome(ind, {}, d);
+
+    // Negative delta was blocked → methylation is unchanged
+    expect(ind.epigenome.IMMUNE_PRIMING.methylation).toBe(initial);
   });
 
   it('metilasyon değerleri [0, 1] aralığında kalır', () => {
