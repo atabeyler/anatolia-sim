@@ -89,7 +89,8 @@ export class SimulationEngine {
     const ws = simulation.world_state ?? {};
     this.phonology = buildPhonology(ws.phonology_seed ?? 0, ws.biome ?? 'mediterranean');
     // Worker pool — persists across ticks; one per SimulationEngine instance
-    this._pool = new WorkerPool();
+    // Skip spawning workers entirely when disabled to avoid RAM overhead on hosted envs
+    this._pool = process.env.DISABLE_WORKERS === 'true' ? null : new WorkerPool();
 
     // Feature 5: fast-forward / warp mode — set by fast-forward API endpoint
     this._fastForwardTarget = null;
