@@ -253,7 +253,7 @@ async function waitForServer(timeoutMs = 90000) {
 function buildServerEnv(cfg) {
   const useLocalDb = cfg?.DESKTOP_LOCAL_DB === '1' || !cfg?.DATABASE_URL;
   const desktopHeapMb = String(cfg?.DESKTOP_SERVER_HEAP_MB || process.env.DESKTOP_SERVER_HEAP_MB || 768);
-  const defaultDesktopWorkers = Math.min(4, Math.max(1, Math.floor(cpus().length / 2)));
+  const defaultDesktopWorkers = Math.max(1, cpus().length);
   const desktopMaxWorkers = String(cfg?.MAX_WORKERS || process.env.DESKTOP_MAX_WORKERS || defaultDesktopWorkers);
   const env = {
     ...process.env,
