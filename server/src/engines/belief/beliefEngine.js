@@ -86,10 +86,19 @@ export function tryFormBelief(individual, existingBeliefs, discoveredTechs, worl
 export function updateBeliefSpread(population, existingBeliefs, groups, simDay) {
   if (existingBeliefs.size === 0) return [];
   const events = [];
+
+  // Cache group lookup by individual id — avoids O(groups × members) inside hot loop
+  const groupById = new Map(groups.map(g => [g.id, g]));
+  const indGroupMap = new Map();
+  for (const ind of population) {
+    if (ind.group_id) indGroupMap.set(ind.id, groupById.get(ind.group_id) ?? null);
+  }
+
   const holdersByBelief = new Map();
   for (const belief of existingBeliefs) {
     holdersByBelief.set(belief, population.filter(p => p.beliefs instanceof Set && p.beliefs.has(belief)));
   }
+
   for (const ind of population) {
     if (!(ind.beliefs instanceof Set)) ind.beliefs = new Set(Array.isArray(ind.beliefs) ? ind.beliefs : []);
     for (const belief of existingBeliefs) {
@@ -109,7 +118,7 @@ export function updateBeliefSpread(population, existingBeliefs, groups, simDay) 
       if (ind._beliefExposure[belief] < 80 / Math.max(sus, 0.2)) continue;
       delete ind._beliefExposure[belief];
       ind.beliefs.add(belief);
-      const group = groups.find(g => g.member_ids?.includes(ind.id));
+      const group = indGroupMap.get(ind.id) ?? null;
       if (group) group.internal_tension = Math.max(0, (group.internal_tension ?? 0.5) - 0.05);
       events.push({
         type: 'belief_spread',

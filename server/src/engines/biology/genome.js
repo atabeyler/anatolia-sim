@@ -161,7 +161,7 @@ export function computePhenotype(genome) {
     language_capacity,
     language_learning:    g('CNTNAP2_01'),
     social_bonding:       g('OXTR_01'),
-    social_drive:         g('OXTR_01'),
+    social_drive:         Math.min(1, g('DRD2_01') * 0.5 + g('OXTR_01') * 0.5),
     oxytocin_sensitivity: g('OXTR_01'),
     empathy:              (g('OXTR_01') + g('RELN_01')) / 2,
     cooperation:          Math.min(1, g('AVPR1A_01') * 0.5 + g('OXTR_01') * 0.35 + (1 - g('MAOA_01')) * 0.15),

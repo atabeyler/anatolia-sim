@@ -50,7 +50,7 @@ export function processGroupDynamics(population, groups, simDay) {
       if (ind.social) ind.social.group_id = nearbyGroup.id;
       nearbyGroup.member_ids.push(ind.id);
       events.push({ type: 'group_join', individual_id: ind.id, group_id: nearbyGroup.id, day: simDay });
-    } else if (population.filter(i => !i.group_id).length >= 2) {
+    } else if (ungrouped.length >= 2) {
       const partner = ungrouped.find(o => o.id !== ind.id && !o.group_id);
       if (partner) {
         const newGroup = createGroup(ind, partner, simDay);
@@ -132,12 +132,15 @@ function findNearbyGroup(ind, groups, r) {
   return groups.find(g => {
     const dx = ind.x - (g.territory?.x ?? 0);
     const dy = ind.y - (g.territory?.y ?? 0);
-    return Math.sqrt(dx * dx + dy * dy) < (g.territory?.radius ?? r);
+    const rad = g.territory?.radius ?? r;
+    return dx * dx + dy * dy < rad * rad;
   });
 }
 
 function canJoinGroup(ind, group) {
-  return Math.random() > ((ind.phenotype?.xenophobia ?? 0.5) + 0.5) / 2 * 0.8;
+  // xenophobia=0 → %95 katılma şansı; xenophobia=1 → %5 şans
+  const xeno = ind.phenotype?.xenophobia ?? 0.5;
+  return Math.random() > Math.min(0.95, xeno * 0.90 + 0.05);
 }
 
 function findChallenger(members, leader, group) {

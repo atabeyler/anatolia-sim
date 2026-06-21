@@ -6,12 +6,14 @@ export function useSimWebSocket(simId: string | null) {
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectDelay = useRef(3000);
   const unmounted = useRef(false);
+  const isFirstConnect = useRef(true);
   const { accessToken, setStats, addEvent, setCentroidTrail, addMilestone, setIsWarping, setFastForwardTarget } = useSimStore();
 
   useEffect(() => {
     if (!simId || !accessToken) return;
     unmounted.current = false;
     reconnectDelay.current = 3000;
+    isFirstConnect.current = true;
 
     function connect() {
       if (unmounted.current) return;
@@ -40,9 +42,9 @@ export function useSimWebSocket(simId: string | null) {
             // Server tells us the real engine state on connect.
             if (typeof data.is_warping === 'boolean') setIsWarping(data.is_warping);
             if ('fast_forward_target' in data) setFastForwardTarget(data.fast_forward_target ?? null);
-            // Auto-trigger start only on fresh connect (reconnectDelay reset = first connect),
-            // not on every status message — prevents restart loop when user intentionally pauses.
-            if (data.engine_running === false && reconnectDelay.current <= 3000) {
+            // Auto-trigger start only on the first connection per session,
+            // not on reconnects — prevents restart loop when user intentionally pauses.
+            if (data.engine_running === false && isFirstConnect.current) {
               const { currentSim, accessToken: tok } = useSimStore.getState();
               if (currentSim?.status === 'running' && tok) {
                 fetch(`/api/simulations/${currentSim.id}/start`, {
@@ -56,12 +58,13 @@ export function useSimWebSocket(simId: string | null) {
           } else if (data.type === 'error') {
             console.error('[WS]', data.error);
           }
-        } catch {}
+        } catch (err) { console.debug('[WS] message parse error:', err); }
       };
 
-      socket.onerror = () => {};
+      socket.onerror = (err) => { console.debug('[WS] socket error:', err); };
 
       socket.onclose = () => {
+        isFirstConnect.current = false;
         if (unmounted.current) return;
         // Reconnect with capped exponential backoff (3s → 6s → 12s → 30s max)
         const delay = reconnectDelay.current;

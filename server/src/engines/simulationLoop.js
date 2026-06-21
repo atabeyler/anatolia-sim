@@ -147,6 +147,21 @@ export class SimulationEngine {
     // Restore counters from loaded state — otherwise resumed simulations show 0.
     this.totalDeaths = this.population.size - this._aliveIds.size;
     this.totalBirths = [...this.population.values()].filter(i => !i.is_founder).length;
+
+    // Rebuild _deathStats from all dead individuals so resumed simulations show
+    // correct historical death counts, not the 0 a cold-start initialises.
+    const ds = { count: 0, ageSum: 0, infant_deaths: 0, child_deaths: 0, causes: {} };
+    for (const ind of this.population.values()) {
+      if (!ind.is_dead || ind.death_day == null || ind.birth_day == null) continue;
+      const age = (ind.death_day - ind.birth_day) / 365;
+      ds.count++;
+      ds.ageSum += age;
+      if (age < 1) ds.infant_deaths++;
+      if (age >= 1 && age < 15) ds.child_deaths++;
+      const c = ind.death_cause ?? 'unknown';
+      ds.causes[c] = (ds.causes[c] ?? 0) + 1;
+    }
+    this._deathStats = ds;
   }
 
   async start() {
@@ -563,6 +578,7 @@ export class SimulationEngine {
         ind.death_day = day;
         ind.death_cause = cause;
         this._aliveIds.delete(ind.id);
+        this.worldState.alive_count = Math.max(0, (this.worldState.alive_count ?? 1) - 1);
         // BUG-03: remove from group member_ids immediately so group size stays accurate
         if (ind.group_id) {
           const grp = this.groups.find(g => g.id === ind.group_id);
@@ -571,8 +587,9 @@ export class SimulationEngine {
         this._newDeadThisTick.push(ind);
         this._todayDeaths++;
         this.totalDeaths++;
-        // Grief event — sent to group members, kin, and nearby survivors
-        // Use spatialGrid for proximity; skip full alive scan
+        // Yas bildirimi — grup üyelerine, akrabalara ve yakın hayatta kalanlara
+        // groupMembersMap tick başında kuruldu; bu tick'teki ölümleri kaçırabilir.
+        // is_dead filtresi ile güvenli hale getirildi.
         const griefNearby = getNeighbours(ind, spatialGrid);
         const griefCandidates = new Set([
           ...griefNearby,
@@ -1350,16 +1367,12 @@ export class SimulationEngine {
           if (tradeEvent) tickEvents.push(tradeEvent);
         }
 
-        // Disease spread — bidirectional
-        if (ind.infections?.length && !other.infections?.length) {
-          for (const inf of ind.infections) {
-            spreadInfection(ind, other, inf.pathogen_id, day, alive.length);
-          }
+        // Hastalık yayılımı — her iki yönde koşulsuz; spreadInfection immunity+duplicate kontrolü yapar
+        for (const inf of (ind.infections ?? [])) {
+          spreadInfection(ind, other, inf.pathogen_id, day, alive.length);
         }
-        if (other.infections?.length && !ind.infections?.length) {
-          for (const inf of other.infections) {
-            spreadInfection(other, ind, inf.pathogen_id, day, alive.length);
-          }
+        for (const inf of (other.infections ?? [])) {
+          spreadInfection(other, ind, inf.pathogen_id, day, alive.length);
         }
       }
     }
@@ -1528,14 +1541,14 @@ export class SimulationEngine {
     if (this._genCacheDay !== undefined && this.currentDay - this._genCacheDay < 365) {
       return this._genCache ?? 0;
     }
-    let oldest = 0;
+    let maxGen = 0;
     for (const id of this._aliveIds) {
       const ind = this.population.get(id);
       if (!ind) continue;
-      const age = this.currentDay - (ind.birth_day ?? 0);
-      if (age > oldest) oldest = age;
+      const g = ind.generation ?? 0;
+      if (g > maxGen) maxGen = g;
     }
-    this._genCache = Math.floor(oldest / (25 * 365));
+    this._genCache = maxGen;
     this._genCacheDay = this.currentDay;
     return this._genCache;
   }

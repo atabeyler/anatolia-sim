@@ -60,6 +60,7 @@ export function createFounder(params = {}) {
   phenotype.height_cm = Math.round(150 + phenotype.height_factor * 45);
   return {
     id: uuidv4(), simulation_id: null,
+    is_founder: true,
     birth_day: -(params.ageYears ?? 20) * 365,
     death_day: null, alive: true, sex,
     x: params.x ?? 0, y: params.y ?? 0,
@@ -73,6 +74,7 @@ export function createFounder(params = {}) {
     language: createInitialLanguage(phenotype, true),
     memory: { social: [], events: [], knowledge: [] },
     parent_1_id: null, parent_2_id: null, inbreeding_coeff: 0,
+    generation: 0,
   };
 }
 
@@ -118,6 +120,7 @@ export function createChild(parent1, parent2, birthDay, simulationId, communityL
     memory: { social: [], events: [], knowledge: [] },
     parent_1_id: parent1.id, parent_2_id: parent2.id,
     inbreeding_coeff: 0, is_twin: false,
+    generation: Math.max((parent1.generation ?? 0), (parent2.generation ?? 0)) + 1,
   };
 
   // Populate epigenome with proper heritability-weighted inheritance

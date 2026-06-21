@@ -68,6 +68,9 @@ export function learnFromTeacher(learner, teacher) {
   const teacherWords = Object.keys(teacher.language.vocabulary);
   if (teacherWords.length === 0) return;
   if (!learner.language) return;
+  // Learner needs minimum FOXP2 expression to form new words from observation
+  const foxp2 = learner.language.foxp2_expression ?? (learner.phenotype?.language_capacity ?? 0.5) * 0.1;
+  if (foxp2 < 0.25) return;
   if (!learner.language.vocabulary) learner.language.vocabulary = {};
   const maxLearn = Math.floor((learner.phenotype?.fluid_intelligence ?? 0.5) * 3);
   for (const word of teacherWords.slice(0, maxLearn)) {
