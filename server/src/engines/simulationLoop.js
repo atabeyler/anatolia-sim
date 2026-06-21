@@ -222,7 +222,7 @@ export class SimulationEngine {
     this._todayDeaths = 0;
     this._newDeadThisTick = [];
     const day = this.currentDay;
-    const alive = [...this._aliveIds].map(id => this.population.get(id)).filter(Boolean);
+    let alive = [...this._aliveIds].map(id => this.population.get(id)).filter(Boolean);
     for (const ind of alive) {
       ind.alive = true;
       ind.age = day - (ind.birth_day ?? 0);
