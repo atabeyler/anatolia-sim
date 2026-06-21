@@ -11,8 +11,10 @@ const WORKER_TIMEOUT_MS = 30000; // BUG-06: 30s timeout — prevents infinite ha
 
 export class WorkerPool {
   constructor() {
-    // Cap at 2 workers on hosted environments to stay within 512MB memory limit
-    this.size = Math.min(2, Math.max(1, Math.ceil(cpus().length / 2)));
+    const requestedMax = Number(process.env.MAX_WORKERS ?? 2);
+    const maxWorkers = Number.isFinite(requestedMax) && requestedMax > 0 ? Math.floor(requestedMax) : 2;
+    // Cap worker count so hosted and desktop builds can keep RAM/CPU predictable.
+    this.size = Math.min(maxWorkers, Math.max(1, Math.ceil(cpus().length / 2)));
     this._workers = [];
     this._serialized = new WeakMap(); // cache: individual → {beliefs, known_techs arrays}
     this._init();

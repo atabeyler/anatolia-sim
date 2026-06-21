@@ -251,13 +251,21 @@ async function waitForServer(timeoutMs = 90000) {
 
 function buildServerEnv(cfg) {
   const useLocalDb = cfg?.DESKTOP_LOCAL_DB === '1' || !cfg?.DATABASE_URL;
+  const desktopHeapMb = String(cfg?.DESKTOP_SERVER_HEAP_MB || process.env.DESKTOP_SERVER_HEAP_MB || 768);
+  const desktopMaxWorkers = String(cfg?.MAX_WORKERS || process.env.DESKTOP_MAX_WORKERS || 1);
   const env = {
     ...process.env,
     ELECTRON_RUN_AS_NODE: '1',
     PORT: String(PORT),
     CLIENT_URL: LOCAL_URL,
     NODE_ENV: 'production',
+    MAX_WORKERS: desktopMaxWorkers,
   };
+
+  const nodeOptions = env.NODE_OPTIONS ?? '';
+  if (!/--max-old-space-size=/.test(nodeOptions)) {
+    env.NODE_OPTIONS = `${nodeOptions} --max-old-space-size=${desktopHeapMb}`.trim();
+  }
 
   if (useLocalDb) {
     env.DESKTOP_LOCAL_DB = '1';

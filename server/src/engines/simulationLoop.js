@@ -1759,6 +1759,8 @@ export class SimulationEngine {
       centroid_trail: this._centroidTrail,
       fast_forward_target: this._fastForwardTarget,
       is_warping: this._fastForwardTarget !== null,
+      worker_count: this._pool?.size ?? 0,
+      workers_disabled: this._pool == null,
     };
   }
 }

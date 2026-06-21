@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { basename, join, dirname, relative, sep } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -16,15 +16,19 @@ function collectEngineFiles(dir) {
   return files;
 }
 
+function relEnginePath(file) {
+  return relative(ENGINES_DIR, file).split(sep).join('/');
+}
+
 describe('Cardinal Rule', () => {
   it('only consciousnessEngine.js may directly assign to .consciousness', () => {
     const files = collectEngineFiles(ENGINES_DIR);
     const violators = [];
     for (const file of files) {
-      if (file.endsWith('consciousnessEngine.js')) continue;
+      if (basename(file) === 'consciousnessEngine.js') continue;
       const src = readFileSync(file, 'utf8');
       if (/\.consciousness\s*=[^=]/.test(src)) {
-        violators.push(file.replace(ENGINES_DIR + '/', ''));
+        violators.push(relEnginePath(file));
       }
     }
     expect(
@@ -39,15 +43,15 @@ describe('Cardinal Rule', () => {
     const ALLOWED = ['genome.js', 'epigeneticsEngine.js', 'individual.js'];
     const violators = [];
     for (const file of files) {
-      const basename = file.split('/').pop();
-      if (ALLOWED.includes(basename)) continue;
+      const name = basename(file);
+      if (ALLOWED.includes(name)) continue;
       const src = readFileSync(file, 'utf8');
       // Match patterns like: p.someField = value or phenotype.someField = value
       // but NOT comparisons (===, !==, >=, <=, ==, !=) and NOT property access chains
       const matches = src.match(/\bp\.((?!is_dead|alive|group_id|name)[a-z_]+)\s*=[^=]/g) ?? [];
       // Filter out false positives: lines with 'const p =' or 'let p =' or 'p =' where p is not phenotype
       const realMatches = matches.filter(m => !m.includes('p.x') && !m.includes('p.y') && !m.includes('p.id'));
-      if (realMatches.length > 0) violators.push({ file: basename, matches: realMatches });
+      if (realMatches.length > 0) violators.push({ file: name, matches: realMatches });
     }
     expect(
       violators,
@@ -59,10 +63,11 @@ describe('Cardinal Rule', () => {
     const files = collectEngineFiles(ENGINES_DIR);
     const violators = [];
     for (const file of files) {
-      if (file.endsWith('languageEngine.js') || file.endsWith('individual.js')) continue;
+      const name = basename(file);
+      if (name === 'languageEngine.js' || name === 'individual.js') continue;
       const src = readFileSync(file, 'utf8');
       if (/foxp2_expression\s*=[^=]/.test(src)) {
-        violators.push(file.replace(ENGINES_DIR + '/', ''));
+        violators.push(relEnginePath(file));
       }
     }
     expect(violators, `foxp2_expression written outside allowed files: ${violators.join(', ')}`).toEqual([]);
@@ -72,10 +77,10 @@ describe('Cardinal Rule', () => {
     const files = collectEngineFiles(ENGINES_DIR);
     const violators = [];
     for (const file of files) {
-      if (file.endsWith('beliefEngine.js')) continue;
+      if (basename(file) === 'beliefEngine.js') continue;
       const src = readFileSync(file, 'utf8');
       if (/\.beliefs\.(add|set)\s*\(/.test(src)) {
-        violators.push(file.replace(ENGINES_DIR + '/', ''));
+        violators.push(relEnginePath(file));
       }
     }
     expect(violators, `ind.beliefs.add() called outside beliefEngine.js: ${violators.join(', ')}`).toEqual([]);
@@ -86,11 +91,11 @@ describe('Cardinal Rule', () => {
     const ALLOWED = ['technologyEngine.js', 'activityEngine.js'];
     const violators = [];
     for (const file of files) {
-      const basename = file.split('/').pop();
-      if (ALLOWED.includes(basename)) continue;
+      const name = basename(file);
+      if (ALLOWED.includes(name)) continue;
       const src = readFileSync(file, 'utf8');
       if (/\.known_techs\.(add|set)\s*\(/.test(src)) {
-        violators.push(file.replace(ENGINES_DIR + '/', ''));
+        violators.push(relEnginePath(file));
       }
     }
     expect(violators, `known_techs.add() called outside allowed files: ${violators.join(', ')}`).toEqual([]);
