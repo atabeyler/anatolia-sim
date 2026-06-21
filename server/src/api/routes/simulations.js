@@ -266,14 +266,21 @@ router.get('/:id/population', authenticate, requireSimulationOwner, async (req, 
   try {
     const engine = simulationManager.getEngine(req.params.id);
     if (engine) {
-      const individuals = [...engine.population.values()]
+      const filtered = [...engine.population.values()]
         .filter(ind => {
           if (req.query.alive === 'true') return !ind.is_dead;
           if (req.query.alive === 'false') return ind.is_dead;
           return true;
         })
-        .slice(0, 5000)
-        .map(ind => serializeIndividual(ind, engine.currentDay));
+        .slice(0, 5000);
+      const individuals = [];
+      for (const ind of filtered) {
+        try {
+          individuals.push(serializeIndividual(ind, engine.currentDay));
+        } catch (serErr) {
+          console.error('[population] serializeIndividual error for', ind?.id, serErr);
+        }
+      }
       return res.json(individuals);
     }
 
@@ -283,7 +290,7 @@ router.get('/:id/population', authenticate, requireSimulationOwner, async (req, 
     sql += ' LIMIT 5000';
     const { rows } = await query(sql, [req.params.id]);
     res.json(rows.map(row => serializeIndividual({ ...row, is_dead: row.alive === false }, req.simulation.current_day ?? 0)));
-  } catch { res.status(500).json({ error: 'Failed to fetch population' }); }
+  } catch (err) { console.error('[population] error:', err); res.status(500).json({ error: 'Failed to fetch population' }); }
 });
 
 router.get('/:id/population/:individualId', authenticate, requireSimulationOwner, async (req, res) => {
@@ -300,7 +307,7 @@ router.get('/:id/population/:individualId', authenticate, requireSimulationOwner
     );
     if (rows.length === 0) return res.status(404).json({ error: 'Individual not found' });
     res.json(serializeIndividual({ ...rows[0], is_dead: rows[0].alive === false }, req.simulation.current_day ?? 0));
-  } catch { res.status(500).json({ error: 'Failed to fetch individual' }); }
+  } catch (err) { console.error('[individual] error:', err); res.status(500).json({ error: 'Failed to fetch individual' }); }
 });
 
 router.get('/:id/events', authenticate, requireSimulationOwner, async (req, res) => {
