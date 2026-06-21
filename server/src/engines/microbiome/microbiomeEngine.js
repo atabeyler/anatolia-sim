@@ -15,6 +15,7 @@ export function processMicrobiomeTick(population,worldState,simDay){
   const events=[];
   const alive=population.filter(i=>!i.is_dead);
   const density=alive.length;
+  for(const ind of alive)dedupeInfections(ind);
   // Grace period: no outbreaks before day 180 or below 8 people
   if(simDay<180||density<8)return events;
   for(const[pathId,path]of Object.entries(PATHOGEN_TYPES)){
@@ -90,6 +91,7 @@ function envExposureProb(ind,path,sm,density){
 
 export function spreadInfection(infected,susceptible,pathId,simDay,aliveCount=50){
   if(!infected.infections?.some(i=>i.pathogen_id===pathId)||susceptible.immunities?.[pathId]>simDay)return false;
+  if(susceptible.infections?.some(i=>i.pathogen_id===pathId))return false;
   const path=PATHOGEN_TYPES[pathId];
   if(!path)return false;
   const groupScale=Math.min(1.0,Math.max(0.3,aliveCount/30));
@@ -100,6 +102,17 @@ export function spreadInfection(infected,susceptible,pathId,simDay,aliveCount=50
     return true;
   }
   return false;
+}
+
+function dedupeInfections(ind){
+  if(!Array.isArray(ind.infections)||ind.infections.length<2)return;
+  const byPath=new Map();
+  for(const inf of ind.infections){
+    if(!inf?.pathogen_id)continue;
+    const prev=byPath.get(inf.pathogen_id);
+    if(!prev||((inf.days_remaining??0)>(prev.days_remaining??0)))byPath.set(inf.pathogen_id,inf);
+  }
+  ind.infections=[...byPath.values()];
 }
 
 export function updateGutMicrobiome(individual,worldState){

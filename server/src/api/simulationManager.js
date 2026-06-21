@@ -119,11 +119,9 @@ class SimulationManager {
         values
       ).catch(err => console.warn('[onDeath] persist error:', err.message));
       // Free large heap objects from dead individuals — they stay in population Map
-      // for parent-id lookups but no longer need their full state in memory.
+      // for parent-id lookups and posthumous births. Keep genetic/phenotype data:
+      // pregnancies conceived before a disease death still need the dead parent genome.
       for (const ind of dead) {
-        ind.genome = null;
-        ind.phenotype = null;
-        ind.epigenome = null;
         ind.mind = null;
         ind.social = null;
         ind.memory = null;
