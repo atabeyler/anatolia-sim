@@ -77,8 +77,7 @@ function mod(individual, id, delta, simDay) {
   if (!individual.epigenome[id]) {
     individual.epigenome[id] = { methylation: 0.5, last_modified: null };
   }
-  if (!locus.reversible && individual.epigenome[id].locked) return;
-  if (!locus.reversible) individual.epigenome[id].locked = true;
+  if (!locus.reversible && delta < 0) return;
   individual.epigenome[id].methylation = Math.min(
     Math.max((individual.epigenome[id].methylation ?? 0.5) + delta, 0),
     1
