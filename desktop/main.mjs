@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import { spawn, execFile } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpus } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
@@ -252,7 +253,8 @@ async function waitForServer(timeoutMs = 90000) {
 function buildServerEnv(cfg) {
   const useLocalDb = cfg?.DESKTOP_LOCAL_DB === '1' || !cfg?.DATABASE_URL;
   const desktopHeapMb = String(cfg?.DESKTOP_SERVER_HEAP_MB || process.env.DESKTOP_SERVER_HEAP_MB || 768);
-  const desktopMaxWorkers = String(cfg?.MAX_WORKERS || process.env.DESKTOP_MAX_WORKERS || 1);
+  const defaultDesktopWorkers = Math.min(2, Math.max(1, Math.ceil(cpus().length / 2)));
+  const desktopMaxWorkers = String(cfg?.MAX_WORKERS || process.env.DESKTOP_MAX_WORKERS || defaultDesktopWorkers);
   const env = {
     ...process.env,
     ELECTRON_RUN_AS_NODE: '1',
