@@ -309,8 +309,8 @@ export class SimulationEngine {
     }
     {
       const adults = alive.filter(i => (i.age ?? 0) / 365 >= 2);
-      // Worker pool disabled: 512MB Render limit — run on main thread to avoid worker RAM overhead
-      const WORKER_THRESHOLD = Infinity;
+      // On hosted environments (512MB limit) workers are disabled via env var to prevent OOM
+      const WORKER_THRESHOLD = process.env.DISABLE_WORKERS === 'true' ? Infinity : 20;
       if (adults.length >= WORKER_THRESHOLD) {
         let poolResult;
         try {
