@@ -189,7 +189,8 @@ class SimulationManager {
 
   // Bulk UPSERT — one query per BATCH_SIZE individuals instead of N sequential queries
   async persistPopulation(simId, engine) {
-    const all = [...engine.population.values()];
+    // Only persist living individuals — dead ones are already written via onDeath
+    const all = [...engine.population.values()].filter(i => !i.is_dead);
     if (all.length === 0) return;
 
     for (let start = 0; start < all.length; start += BATCH_SIZE) {
