@@ -106,6 +106,8 @@ export class SimulationEngine {
     // BUG-05: cached word count — expensive O(n×v) calc, updated only at checkpoints
     this._wordCountCache = 0;
     this._wordCountCacheDay = -1;
+    // Cache of founder individuals — only 2 ever; avoids O(total_ever) scan every tick.
+    this._foundersCache = [];
   }
 
   destroy() {
@@ -162,6 +164,7 @@ export class SimulationEngine {
       ds.causes[c] = (ds.causes[c] ?? 0) + 1;
     }
     this._deathStats = ds;
+    this._foundersCache = [...this.population.values()].filter(i => i.is_founder);
   }
 
   async start() {
@@ -851,6 +854,13 @@ export class SimulationEngine {
     // 20. Update human environmental impact
     this.worldState.human_impact = Math.min(1, alive.filter(i => !i.is_dead).length / 1000);
 
+    // Prune empty groups (all members died) and their orphaned settlements
+    if (this.groups.some(g => g.member_ids.length === 0)) {
+      const liveGroupIds = new Set(this.groups.filter(g => g.member_ids.length > 0).map(g => g.id));
+      this.groups = this.groups.filter(g => g.member_ids.length > 0);
+      this.settlements = this.settlements.filter(s => liveGroupIds.has(s.group_id));
+    }
+
     // 21. Compute stats
     const currentAlive = alive.filter(i => !i.is_dead);
     const stats = this.computeStats(day, currentAlive);
@@ -944,6 +954,29 @@ export class SimulationEngine {
           is_warping: false,
           fast_forward_target: null,
         });
+      }
+    }
+
+    // Compact dead individuals from this tick to a minimal ancestor record.
+    // Keeps only fields needed for inbreeding traversal and stats; frees genome/mind/etc.
+    for (const ind of this._newDeadThisTick) {
+      if (!ind.id || !this.population.has(ind.id)) continue;
+      const compact = {
+        id: ind.id,
+        parent_1_id: ind.parent_1_id ?? null,
+        parent_2_id: ind.parent_2_id ?? null,
+        inbreeding_coeff: ind.inbreeding_coeff ?? 0,
+        is_dead: true,
+        is_founder: ind.is_founder ?? false,
+        sex: ind.sex,
+        birth_day: ind.birth_day,
+        death_day: ind.death_day,
+        death_cause: ind.death_cause ?? null,
+      };
+      this.population.set(ind.id, compact);
+      if (ind.is_founder) {
+        const fi = (this._foundersCache ?? []).findIndex(f => f.id === ind.id);
+        if (fi !== -1) this._foundersCache[fi] = compact;
       }
     }
 
@@ -1650,15 +1683,12 @@ export class SimulationEngine {
         const avgDeathAge = ds.count ? Math.round((ds.ageSum / ds.count) * 10) / 10 : null;
         return { count: ds.count, avg_age: avgDeathAge, infant_deaths: ds.infant_deaths, child_deaths: ds.child_deaths, causes: { ...ds.causes } };
       })(),
-      founders: (() => {
-        const all = [...this.population.values()].filter(i => i.is_founder);
-        return all.map(i => ({
-          sex: i.sex,
-          age: Math.round(getAge(i, day)),
-          alive: !i.is_dead,
-          note: 'Founders are fixed in position by design — they are the anchor of the family band',
-        }));
-      })(),
+      founders: (this._foundersCache ?? []).map(i => ({
+        sex: i.sex,
+        age: Math.round(getAge(i, day)),
+        alive: !i.is_dead,
+        note: 'Founders are fixed in position by design — they are the anchor of the family band',
+      })),
       centroid_x: Math.round((this._bandCentroid?.x ?? this.worldState.longitude ?? 0) * 10000) / 10000,
       centroid_y: Math.round((this._bandCentroid?.y ?? this.worldState.latitude ?? 0) * 10000) / 10000,
       movement_context: (() => {

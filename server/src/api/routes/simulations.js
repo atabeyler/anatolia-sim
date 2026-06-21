@@ -265,13 +265,12 @@ router.post('/:id/speed', authenticate, requireSimulationOwner, async (req, res)
 router.get('/:id/population', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const engine = simulationManager.getEngine(req.params.id);
-    if (engine) {
-      const individuals = [...engine.population.values()]
-        .filter(ind => {
-          if (req.query.alive === 'true') return !ind.is_dead;
-          if (req.query.alive === 'false') return ind.is_dead;
-          return true;
-        })
+    // Serve alive individuals directly from engine (full in-memory state).
+    // Dead individuals are compacted in-memory; fall through to DB for full data.
+    if (engine && req.query.alive !== 'false') {
+      const individuals = [...engine._aliveIds]
+        .map(id => engine.population.get(id))
+        .filter(Boolean)
         .slice(0, 5000)
         .map(ind => serializeIndividual(ind, engine.currentDay));
       return res.json(individuals);
@@ -289,10 +288,11 @@ router.get('/:id/population', authenticate, requireSimulationOwner, async (req, 
 router.get('/:id/population/:individualId', authenticate, requireSimulationOwner, async (req, res) => {
   try {
     const engine = simulationManager.getEngine(req.params.id);
-    if (engine) {
+    // Only serve from engine if the individual is alive (full record); dead ones are
+    // compacted in-memory — fall through to DB where their complete data is preserved.
+    if (engine && engine._aliveIds.has(req.params.individualId)) {
       const ind = engine.population.get(req.params.individualId);
-      if (!ind) return res.status(404).json({ error: 'Individual not found' });
-      return res.json(serializeIndividual(ind, engine.currentDay));
+      if (ind) return res.json(serializeIndividual(ind, engine.currentDay));
     }
     const { rows } = await query(
       'SELECT id, sex, birth_day, death_day, alive, x, y, genome, phenotype, health, mind, social, skills, beliefs, language, parent_1_id, parent_2_id, death_cause FROM individuals WHERE simulation_id = $1 AND id = $2',
