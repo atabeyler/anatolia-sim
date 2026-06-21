@@ -428,7 +428,7 @@ export class SimulationEngine {
     // 4c. All fears diminish over time (forgetting / re-adaptation)
     for (const ind of alive) {
       if ((ind._waterFear ?? 0) > 0) {
-        ind._waterFear = Math.max(0, ind._waterFear - 0.0005);   // ~2000 days
+        ind._waterFear = Math.max(0, ind._waterFear - 0.0002);   // ~5000 days (~14 yrs)
       }
       if (ind._fears) {
         for (const key of Object.keys(ind._fears)) {

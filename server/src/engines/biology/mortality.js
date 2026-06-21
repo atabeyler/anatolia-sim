@@ -33,7 +33,7 @@ export function computeDailyDeathRisk(individual, currentDay, environment) {
   // this floor the simulation nearly always goes extinct in the first 50 days, making the
   // hypothesis untestable. Min multiplier 0.30 at population=1, linearly rising to 1.0 at 15.
   const aliveCount = environment?.alive_count ?? 100;
-  if (aliveCount < 15) baseRisk *= Math.max(0.3, aliveCount / 15);
+  if (aliveCount < 25) baseRisk *= Math.max(0.25, aliveCount / 25);
 
   // Thriving healthy adult: low risk if they're well-fed and in prime years
   if (age >= 15 && age < 45 && (health?.hp ?? 1) > 0.85 && (health?.calories ?? 1) > 0.7) {
