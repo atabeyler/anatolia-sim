@@ -83,20 +83,20 @@ describe('computeDailyDeathRisk — çarpanlar', () => {
       .toBeLessThan(computeDailyDeathRisk(baseline, DAY, { alive_count: 100 }));
   });
 
-  it('akrabalık katsayısı > 0.35 riski ×1.5 yapar', () => {
+  it('akrabalık katsayısı > 0.50 riski ×1.25 yapar', () => {
     const normal = makeInd({ birth_day: DAY - 25 * 365 });
-    const inbred = makeInd({ birth_day: DAY - 25 * 365, inbreeding_coeff: 0.4 });
+    const inbred = makeInd({ birth_day: DAY - 25 * 365, inbreeding_coeff: 0.6 });
     const rN = computeDailyDeathRisk(normal, DAY, { alive_count: 100 });
     const rI = computeDailyDeathRisk(inbred, DAY, { alive_count: 100 });
-    expect(rI).toBeCloseTo(rN * 1.5, 6);
+    expect(rI).toBeCloseTo(rN * 1.25, 6);
   });
 
-  it('akrabalık katsayısı = 0.35 eşiğinde çarpan UYGULANMAZ', () => {
-    const atThreshold  = makeInd({ birth_day: DAY - 25 * 365, inbreeding_coeff: 0.35 });
-    const justBelow    = makeInd({ birth_day: DAY - 25 * 365, inbreeding_coeff: 0.34 });
+  it('akrabalık katsayısı = 0.50 eşiğinde çarpan UYGULANMAZ', () => {
+    const atThreshold  = makeInd({ birth_day: DAY - 25 * 365, inbreeding_coeff: 0.50 });
+    const justBelow    = makeInd({ birth_day: DAY - 25 * 365, inbreeding_coeff: 0.49 });
     const rAt    = computeDailyDeathRisk(atThreshold, DAY, { alive_count: 100 });
     const rBelow = computeDailyDeathRisk(justBelow,   DAY, { alive_count: 100 });
-    expect(rAt).toBeCloseTo(rBelow, 8); // ≤ 0.35 için ×1.5 uygulanmamalı
+    expect(rAt).toBeCloseTo(rBelow, 8); // ≤ 0.50 için ×1.25 uygulanmamalı
   });
 
   it('risk 0.99 ile sınırlandırılır', () => {
@@ -127,19 +127,20 @@ describe('computeDailyDeathRisk — su/boğulma', () => {
 });
 
 describe('computeDailyDeathRisk — extinction guard', () => {
-  it('küçük popülasyonda (< 15) risk azalır (model artefaktı)', () => {
-    const ind   = makeInd({ birth_day: DAY - 25 * 365 });
+  it('küçük popülasyonda (< 25) risk azalır (model artefaktı)', () => {
+    const ind    = makeInd({ birth_day: DAY - 25 * 365 });
     const rLarge = computeDailyDeathRisk(ind, DAY, { alive_count: 100 });
     const rSmall = computeDailyDeathRisk(ind, DAY, { alive_count: 5 });
     // Biyolojiye aykırı ama tasarım gereği — tez savunmasında model sınırlaması olarak raporlanmalı
     expect(rSmall).toBeLessThan(rLarge);
   });
 
-  it('popülasyon = 1 için risk 0.30× çarpan alır (minimum guard)', () => {
+  it('popülasyon = 1 için risk 0.25× çarpan alır (minimum guard)', () => {
     const ind     = makeInd({ birth_day: DAY - 25 * 365 });
     const rSingle = computeDailyDeathRisk(ind, DAY, { alive_count: 1 });
-    const r15     = computeDailyDeathRisk(ind, DAY, { alive_count: 15 });
-    expect(rSingle).toBeCloseTo(r15 * 0.3 / 1, 0); // 1/15 ≈ 0.067 < 0.30 → min 0.30
+    const rFull   = computeDailyDeathRisk(ind, DAY, { alive_count: 100 });
+    // aliveCount=1: 1/25=0.04 < 0.25 → min 0.25x uygulanır
+    expect(rSingle).toBeCloseTo(rFull * 0.25, 5);
   });
 });
 
