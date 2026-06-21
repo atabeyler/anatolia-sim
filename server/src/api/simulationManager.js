@@ -113,7 +113,7 @@ class SimulationManager {
       const values = dead.flatMap(d => [d.id, d.death_day ?? null, d.death_cause ?? null]);
       const rows = dead.map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`).join(', ');
       query(
-        `UPDATE individuals SET alive = false, death_day = v.dd, death_cause = v.dc
+        `UPDATE individuals SET alive = false, death_day = v.dd::integer, death_cause = v.dc
          FROM (VALUES ${rows}) AS v(id, dd, dc)
          WHERE individuals.id = v.id::uuid`,
         values
