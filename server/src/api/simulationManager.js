@@ -3,7 +3,7 @@ import { query } from '../db/database.js';
 
 const BATCH_SIZE = 200; // max individuals per bulk upsert
 
-async function withRetry(fn, retries = 3, baseDelayMs = 2000) {
+async function withRetry(fn, retries = 3, baseDelayMs = 500) {
   for (let attempt = 0; attempt < retries; attempt++) {
     try { return await fn(); }
     catch (err) {
