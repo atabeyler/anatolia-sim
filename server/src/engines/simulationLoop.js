@@ -1745,6 +1745,10 @@ export class SimulationEngine {
     const avg = hist.length ? hist.reduce((a, b) => a + b, 0) / hist.length : 0;
     const max = hist.length ? Math.max(...hist) : 0;
     const min = hist.length ? Math.min(...hist) : 0;
+    const memory = process.memoryUsage();
+    const alive = [...this._aliveIds].map(id => this.population.get(id)).filter(Boolean);
+    const activeInfections = alive.reduce((sum, ind) => sum + (Array.isArray(ind.infections) ? ind.infections.length : 0), 0);
+    const infectedIndividuals = alive.filter(ind => Array.isArray(ind.infections) && ind.infections.length > 0).length;
     return {
       tick_avg_ms: Math.round(avg * 10) / 10,
       tick_max_ms: max,
@@ -1754,6 +1758,7 @@ export class SimulationEngine {
       speed_multiplier: this.speedMultiplier,
       population: this._aliveIds.size,
       total_ever: this.population.size,
+      dead_retained: this.population.size - this._aliveIds.size,
       current_day: this.currentDay,
       milestones_reached: [...this._milestones],
       centroid_trail: this._centroidTrail,
@@ -1761,6 +1766,18 @@ export class SimulationEngine {
       is_warping: this._fastForwardTarget !== null,
       worker_count: this._pool?.size ?? 0,
       workers_disabled: this._pool == null,
+      memory: {
+        rss_mb: Math.round(memory.rss / 1024 / 1024 * 10) / 10,
+        heap_used_mb: Math.round(memory.heapUsed / 1024 / 1024 * 10) / 10,
+        heap_total_mb: Math.round(memory.heapTotal / 1024 / 1024 * 10) / 10,
+        external_mb: Math.round(memory.external / 1024 / 1024 * 10) / 10,
+        array_buffers_mb: Math.round(memory.arrayBuffers / 1024 / 1024 * 10) / 10,
+      },
+      infections: {
+        infected_individuals: infectedIndividuals,
+        active_infections: activeInfections,
+      },
+      runtime: this._runtimeDiagnostics ?? {},
     };
   }
 }

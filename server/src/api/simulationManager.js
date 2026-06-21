@@ -28,6 +28,24 @@ class SimulationManager {
     const { rows: individuals } = await query('SELECT * FROM individuals WHERE simulation_id = $1', [simulation.id]);
     const engine = new SimulationEngine(simulation);
     engine.load(individuals.map(parseIndividual));
+    engine._runtimeDiagnostics = {
+      event_buffer_length: 0,
+      event_flush_in_progress: false,
+      event_flush_count: 0,
+      event_flush_error_count: 0,
+      last_event_flush_ms: null,
+      last_event_flush_at: null,
+      checkpoint_in_progress: false,
+      checkpoint_skip_count: 0,
+      checkpoint_error_count: 0,
+      last_checkpoint_ms: null,
+      last_checkpoint_at: null,
+      last_checkpoint_day: null,
+      persist_state_ms: null,
+      persist_population_ms: null,
+      death_persist_error_count: 0,
+      last_death_persist_ms: null,
+    };
 
     // Restore discovered sets from latest checkpoint so resumed simulations don't
     // re-fire technology/belief/art events that already happened before the pause.
@@ -89,19 +107,31 @@ class SimulationManager {
       if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
       if (eventBuffer.length === 0 || _isFlushing) return;
       _isFlushing = true;
+      engine._runtimeDiagnostics.event_flush_in_progress = true;
       const batch = eventBuffer.splice(0);
+      engine._runtimeDiagnostics.event_buffer_length = eventBuffer.length;
+      const flushStart = Date.now();
       try {
         const placeholders = batch.map((_, i) => `($${i*8+1},$${i*8+2},$${i*8+3},$${i*8+4},$${i*8+5},$${i*8+6},$${i*8+7},$${i*8+8})`).join(',');
         const values = batch.flatMap(e => [e.simulation_id, e.sim_day, e.sim_year, e.event_type, e.description, JSON.stringify(e.data ?? {}), e.importance ?? 1, e.created_at ?? new Date().toISOString()]);
         await withRetry(() => query(`INSERT INTO simulation_events (simulation_id,sim_day,sim_year,event_type,description,data,importance,created_at) VALUES ${placeholders}`, values));
-      } catch { /* non-critical — events lost on persistent DB failure */ } finally {
+        engine._runtimeDiagnostics.event_flush_count++;
+      } catch {
+        engine._runtimeDiagnostics.event_flush_error_count++;
+        /* non-critical - events lost on persistent DB failure */
+      } finally {
         _isFlushing = false;
+        engine._runtimeDiagnostics.event_flush_in_progress = false;
+        engine._runtimeDiagnostics.last_event_flush_ms = Date.now() - flushStart;
+        engine._runtimeDiagnostics.last_event_flush_at = new Date().toISOString();
+        engine._runtimeDiagnostics.event_buffer_length = eventBuffer.length;
         // flush again if events arrived while we were writing
         if (eventBuffer.length >= 50) flushEvents();
       }
     };
     engine.onEvent = (event) => {
       eventBuffer.push(event);
+      engine._runtimeDiagnostics.event_buffer_length = eventBuffer.length;
       if (eventBuffer.length >= 50) { flushEvents(); }
       else if (!flushTimer) { flushTimer = setTimeout(flushEvents, 5000); }
     };
@@ -110,6 +140,7 @@ class SimulationManager {
     // Fire-and-forget batch UPDATE — non-critical if it fails (checkpoint will catch up).
     engine.onDeath = (dead) => {
       if (dead.length === 0) return;
+      const deathPersistStart = Date.now();
       const values = dead.flatMap(d => [d.id, d.death_day ?? null, d.death_cause ?? null]);
       const rows = dead.map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`).join(', ');
       query(
@@ -117,7 +148,12 @@ class SimulationManager {
          FROM (VALUES ${rows}) AS v(id, dd, dc)
          WHERE individuals.id = v.id::uuid`,
         values
-      ).catch(err => console.warn('[onDeath] persist error:', err.message));
+      ).then(() => {
+        engine._runtimeDiagnostics.last_death_persist_ms = Date.now() - deathPersistStart;
+      }).catch(err => {
+        engine._runtimeDiagnostics.death_persist_error_count++;
+        console.warn('[onDeath] persist error:', err.message);
+      });
       // Free large heap objects from dead individuals — they stay in population Map
       // for parent-id lookups and posthumous births. Keep genetic/phenotype data:
       // pregnancies conceived before a disease death still need the dead parent genome.
@@ -136,8 +172,13 @@ class SimulationManager {
 
     engine.onCheckpoint = async (cp) => {
       // Skip if a checkpoint is already in progress for this simulation
-      if (this._checkpointLocks.get(simulation.id)) return;
+      if (this._checkpointLocks.get(simulation.id)) {
+        engine._runtimeDiagnostics.checkpoint_skip_count++;
+        return;
+      }
       this._checkpointLocks.set(simulation.id, true);
+      engine._runtimeDiagnostics.checkpoint_in_progress = true;
+      const checkpointStart = Date.now();
       try {
         await withRetry(() => query(
           `INSERT INTO checkpoints (simulation_id, sim_day, sim_year, population_count, population_snapshot, world_state, cultural_state, tech_state, stats, belief_state, art_state, groups)
@@ -148,12 +189,21 @@ class SimulationManager {
            JSON.stringify(cp.belief_state ?? []), JSON.stringify(cp.art_state ?? []),
            JSON.stringify(cp.groups ?? [])]
         ));
+        const stateStart = Date.now();
         await withRetry(() => this.persistState(simulation.id, engine));
+        engine._runtimeDiagnostics.persist_state_ms = Date.now() - stateStart;
+        const populationStart = Date.now();
         await withRetry(() => this.persistPopulation(simulation.id, engine));
+        engine._runtimeDiagnostics.persist_population_ms = Date.now() - populationStart;
+        engine._runtimeDiagnostics.last_checkpoint_day = cp.sim_day;
       } catch (err) {
+        engine._runtimeDiagnostics.checkpoint_error_count++;
         console.error(`[SimulationEngine] checkpoint error: ${err.message}`);
       } finally {
         this._checkpointLocks.set(simulation.id, false);
+        engine._runtimeDiagnostics.checkpoint_in_progress = false;
+        engine._runtimeDiagnostics.last_checkpoint_ms = Date.now() - checkpointStart;
+        engine._runtimeDiagnostics.last_checkpoint_at = new Date().toISOString();
       }
     };
 
