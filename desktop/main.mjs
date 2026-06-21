@@ -59,6 +59,7 @@ async function setupAutoUpdater() {
     autoUpdater.autoInstallOnAppQuit = true;
 
     autoUpdater.on('update-available', async (info) => {
+      if (!mainWindow || mainWindow.isDestroyed()) return;
       const { response } = await dialog.showMessageBox(mainWindow, {
         type: 'info',
         title: 'Update Available',
@@ -70,8 +71,10 @@ async function setupAutoUpdater() {
 
       if (response === 0) {
         autoUpdater.downloadUpdate();
-        mainWindow.setProgressBar(0.01); // Görev çubuğunda hemen göster
-        try { mainWindow.webContents.send('update-download-progress', { percent: 1 }); } catch {}
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.setProgressBar(0.01);
+          try { mainWindow.webContents.send('update-download-progress', { percent: 1 }); } catch {}
+        }
       }
     });
 
@@ -104,27 +107,29 @@ async function setupAutoUpdater() {
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.setTitle('Anatolia Sim');
         mainWindow.setProgressBar(-1);
+        dialog.showMessageBox(mainWindow, {
+          type: 'error',
+          title: 'Update Error',
+          message: 'Could not check for updates:',
+          detail: err?.message ?? String(err),
+          buttons: ['OK'],
+        }).catch(() => {});
       }
-      dialog.showMessageBox(mainWindow, {
-        type: 'error',
-        title: 'Update Error',
-        message: 'Could not check for updates:',
-        detail: err?.message ?? String(err),
-        buttons: ['OK'],
-      });
     });
 
     // Ana pencere yüklendikten 5 saniye sonra kontrol et
     setTimeout(() => autoUpdater.checkForUpdates(), 5000);
   } catch (err) {
     console.error('[updater] failed to start:', err?.message);
-    dialog.showMessageBox(mainWindow, {
-      type: 'error',
-      title: 'Updater Failed',
-      message: 'Auto-updater could not be loaded:',
-      detail: err?.message ?? String(err),
-      buttons: ['OK'],
-    }).catch(() => {});
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      dialog.showMessageBox(mainWindow, {
+        type: 'error',
+        title: 'Updater Failed',
+        message: 'Auto-updater could not be loaded:',
+        detail: err?.message ?? String(err),
+        buttons: ['OK'],
+      }).catch(() => {});
+    }
   }
 }
 
@@ -148,13 +153,17 @@ function showSetupWindow() {
 
     setupWin.loadFile(join(__dirname, 'setup.html'));
 
-    ipcMain.once('setup-save', (_event, config) => {
+    const onSetupSave = (_event, config) => {
       saveConfig(config);
       setupWin.close();
       resolve(config);
-    });
+    };
+    ipcMain.once('setup-save', onSetupSave);
 
-    setupWin.on('closed', () => resolve(null));
+    setupWin.on('closed', () => {
+      ipcMain.removeListener('setup-save', onSetupSave);
+      resolve(null);
+    });
   });
 }
 
@@ -291,7 +300,15 @@ async function ensureLocalServer(cfg) {
 
   serverProcess.on('exit', (code, signal) => {
     if (!app.isQuiting && code !== 0 && signal !== 'SIGTERM') {
-      console.error(`[desktop] sunucu kapandı (${code ?? 'null'}, ${signal ?? '-'})`);
+      console.warn(`[desktop] sunucu kapandı (${code ?? 'null'}, ${signal ?? '-'}) — yeniden başlatılıyor`);
+      setTimeout(async () => {
+        try {
+          await ensureLocalServer(cfg);
+          if (mainWindow && !mainWindow.isDestroyed()) mainWindow.reload();
+        } catch (err) {
+          console.error('[desktop] yeniden başlatma hatası:', err);
+        }
+      }, 2000);
     }
   });
 
@@ -354,7 +371,18 @@ function startVersionWatcher() {
       if (!knownVersion) { knownVersion = data.version ?? null; return; }
       if (data.version && data.version !== knownVersion) {
         knownVersion = data.version;
-        mainWindow.reload();
+        if (!mainWindow || mainWindow.isDestroyed()) return;
+        const { response } = await dialog.showMessageBox(mainWindow, {
+          type: 'info',
+          title: 'Application Updated',
+          message: `Anatolia Sim has been updated to ${data.version}.`,
+          detail: 'Reload the app now to apply the update?',
+          buttons: ['Reload Now', 'Later'],
+          defaultId: 0,
+        });
+        if (response === 0 && mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.reload();
+        }
       }
     } catch {}
   }, 60_000);
@@ -379,8 +407,12 @@ async function boot() {
     mkdirSync(join(app.getPath('userData'), 'db'), { recursive: true });
   }
 
-  await ensureLocalServer(cfg);
+  // Show main window immediately with a loading screen so the user sees feedback
+  // while the server subprocess starts (can take up to 90 s on first PGLite boot).
   createMainWindow();
+  await mainWindow.loadFile(join(__dirname, 'loading.html'));
+
+  await ensureLocalServer(cfg);
   await mainWindow.loadURL(LOCAL_URL);
   startVersionWatcher();
   setupAutoUpdater();

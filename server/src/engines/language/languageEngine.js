@@ -12,19 +12,22 @@ export function updateLanguageStage(individual, groupSize, generationCount, grou
   if (!individual.phenotype || !individual.language) return { upgraded: false };
   // Stage check uses expressed foxp2, not genetic ceiling.
   // Expression grows through social interaction (see updateFoxp2Expression).
-  const foxp2 = individual.language?.foxp2_expression ?? (individual.phenotype?.language_capacity ?? 0.5) * 0.15;
+  const foxp2 = individual.language?.foxp2_expression ?? (individual.phenotype?.language_capacity ?? 0.5) * 0.10;
   const currentStage = individual.language?.stage ?? 0;
   for (let i = LANGUAGE_STAGES.length - 1; i >= 0; i--) {
     const s = LANGUAGE_STAGES[i];
     if (foxp2 >= s.foxp2_min && groupSize >= s.group_min && generationCount >= s.gen_min) {
       if (i > currentStage) {
+        // Advance at most one stage per tick to prevent multi-stage jumps
+        const nextStage = currentStage + 1;
+        const nextDef = LANGUAGE_STAGES[nextStage];
         const prevStage = currentStage;
-        individual.language.stage = i;
-        individual.language.stage_name = s.name;
-        if (i >= 4) individual.language.grammar = true;
-        if (i >= 6) individual.language.writing = true;
+        individual.language.stage = nextStage;
+        individual.language.stage_name = nextDef.name;
+        if (nextStage >= 4) individual.language.grammar = true;
+        if (nextStage >= 6) individual.language.writing = true;
         // No vocabulary seeding — words must emerge through observation and social teaching.
-        return { upgraded: true, prevStage, newStage: i, stageName: s.name };
+        return { upgraded: true, prevStage, newStage: nextStage, stageName: nextDef.name };
       }
       break;
     }
@@ -93,7 +96,7 @@ export function getLanguageSummary(population) {
   const stages = {};
   for (const ind of population.values()) {
     if (!ind.alive) continue;
-    const s = ind.language.stage_name;
+    const s = ind.language?.stage_name ?? 'pre-linguistic';
     stages[s] = (stages[s] ?? 0) + 1;
   }
   return stages;

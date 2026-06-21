@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { updateLanguageStage, updateFoxp2Expression, learnFromTeacher, generateProtoWord, CORE_CONCEPTS } from '../src/engines/language/languageEngine.js';
+import { updateLanguageStage, updateFoxp2Expression, learnFromTeacher, generateProtoWord, CORE_CONCEPTS, getLanguageSummary } from '../src/engines/language/languageEngine.js';
 
 // Thresholds (synchronized with languageEngine.js)
 // stage 0: foxp2≥0,  group≥1,  gen≥0
@@ -142,6 +142,74 @@ describe('updateLanguageStage — stage_name is updated', () => {
     const ind = makeInd({ language: makeLang(5, 0.82) });
     updateLanguageStage(ind, 50, 30);
     expect(ind.language.stage_name).toBe('writing');
+  });
+});
+
+// ── H-08 regression — stage advances at most +1 per tick ────────────────────
+
+describe('H-08 regression — updateLanguageStage advances at most one stage per call', () => {
+  it('an individual at stage 0 can only advance to stage 1 even if all higher thresholds are met', () => {
+    // stage 6 thresholds all satisfied, but advancement must be capped at +1
+    const ind = makeInd({ language: makeLang(0, 0.95) });
+    const res = updateLanguageStage(ind, 50, 30);
+    expect(res.upgraded).toBe(true);
+    expect(ind.language.stage).toBe(1); // not 6
+  });
+
+  it('requires 6 separate calls to reach stage 6 from stage 0', () => {
+    const ind = makeInd({ language: makeLang(0, 0.95) });
+    let upgrades = 0;
+    for (let call = 0; call < 10; call++) {
+      const res = updateLanguageStage(ind, 50, 30);
+      if (res.upgraded) upgrades++;
+      if (ind.language.stage === 6) break;
+    }
+    expect(upgrades).toBeGreaterThanOrEqual(6);
+    expect(ind.language.stage).toBe(6);
+  });
+
+  it('stage_name matches the actual stage after each step-by-step advance', () => {
+    const names = ['pre-linguistic', 'gestural', 'emotional-sounds', 'proto-words', 'syntax', 'abstract', 'writing'];
+    const ind = makeInd({ language: makeLang(0, 0.95) });
+    for (let expected = 1; expected <= 6; expected++) {
+      updateLanguageStage(ind, 50, 30);
+      expect(ind.language.stage).toBe(expected);
+      expect(ind.language.stage_name).toBe(names[expected]);
+    }
+  });
+});
+
+// ── H-06 regression — getLanguageSummary null safety ────────────────────────
+
+describe('H-06 regression — getLanguageSummary handles missing language object', () => {
+  it('does not crash when an alive individual has no language field', () => {
+    const pop = new Map([
+      ['a', { alive: true, language: { stage: 1, stage_name: 'gestural' } }],
+      ['b', { alive: true }], // no language field
+      ['c', { alive: true, language: null }], // null language
+    ]);
+    expect(() => getLanguageSummary(pop)).not.toThrow();
+  });
+
+  it('individuals without a language object count as pre-linguistic', () => {
+    const pop = new Map([['x', { alive: true }]]);
+    const result = getLanguageSummary(pop);
+    expect(result['pre-linguistic']).toBe(1);
+  });
+});
+
+// ── H-12 regression — FOXP2 fallback consistent at 0.10 ─────────────────────
+
+describe('H-12 regression — FOXP2 fallback uses 0.10 not 0.15', () => {
+  it('individual with no foxp2_expression uses cap × 0.10 as fallback threshold', () => {
+    // cap = 0.4; fallback = 0.4 * 0.10 = 0.04 — below stage-2 foxp2_min of 0.40, so no upgrade
+    const ind = makeInd({
+      phenotype: { language_capacity: 0.4, fluid_intelligence: 0.7 },
+      language: { stage: 1, stage_name: 'gestural', vocabulary: {} },
+      // foxp2_expression intentionally omitted — falls back to cap × 0.10 = 0.04
+    });
+    const res = updateLanguageStage(ind, 10, 2);
+    expect(res.upgraded).toBe(false);
   });
 });
 

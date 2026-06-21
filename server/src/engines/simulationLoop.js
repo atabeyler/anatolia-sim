@@ -421,8 +421,15 @@ export class SimulationEngine {
       if (snapStr < 0.05) continue;
 
       const scatter = 0.003 + ageYears * 0.006;
-      ind.x = caregiver.x * snapStr + ind.x * (1 - snapStr) + (Math.random() - 0.5) * scatter;
-      ind.y = caregiver.y * snapStr + ind.y * (1 - snapStr) + (Math.random() - 0.5) * scatter;
+      const newX = caregiver.x * snapStr + ind.x * (1 - snapStr) + (Math.random() - 0.5) * scatter;
+      const newY = caregiver.y * snapStr + ind.y * (1 - snapStr) + (Math.random() - 0.5) * scatter;
+      if (isOnLand(newY, newX)) {
+        ind.x = newX;
+        ind.y = newY;
+        ind._inWater = false;
+      } else {
+        ind._inWater = true;
+      }
     }
 
     // 4c. All fears diminish over time (forgetting / re-adaptation)
@@ -1118,7 +1125,7 @@ export class SimulationEngine {
 
       // ── Mating urge: activates when basic needs are met ─
       if (cal > 0.38 && hyd > 0.32 && !ind.health?.pregnancy
-          && ageYears >= 13 && (ind.mating_urge ?? 0) > 0.65) {
+          && ageYears >= 15 && (ind.mating_urge ?? 0) > 0.65) {
         const oppSex = ind.sex === 'male' ? 'female' : 'male';
         let nearestDist = 10;
         let nearestPartner = null;
@@ -1276,7 +1283,7 @@ export class SimulationEngine {
     const ageYears = ind.age / 365;
 
     // Pre-puberty or very old — no urge
-    if (ageYears < 13 || ageYears > 72) { ind.mating_urge = 0; return; }
+    if (ageYears < 15 || ageYears > 72) { ind.mating_urge = 0; return; }
 
     // Suppress mating drive during pregnancy but let it slowly build so the female
     // is ready sooner after birth (avoids a ~50-day dead zone post-partum)
@@ -1343,10 +1350,15 @@ export class SimulationEngine {
           if (tradeEvent) tickEvents.push(tradeEvent);
         }
 
-        // Disease spread
+        // Disease spread — bidirectional
         if (ind.infections?.length && !other.infections?.length) {
           for (const inf of ind.infections) {
             spreadInfection(ind, other, inf.pathogen_id, day, alive.length);
+          }
+        }
+        if (other.infections?.length && !ind.infections?.length) {
+          for (const inf of other.infections) {
+            spreadInfection(other, ind, inf.pathogen_id, day, alive.length);
           }
         }
       }
@@ -1434,6 +1446,11 @@ export class SimulationEngine {
           ind.death_cause = type;
           ind._death_logged = true;
           this._aliveIds.delete(ind.id);
+          if (ind.group_id) {
+            const grp = this.groups.find(g => g.id === ind.group_id);
+            if (grp) grp.member_ids = grp.member_ids.filter(id => id !== ind.id);
+          }
+          this._newDeadThisTick.push(ind);
           deaths++;
           this._todayDeaths++;
           this.totalDeaths++;
@@ -1512,7 +1529,9 @@ export class SimulationEngine {
       return this._genCache ?? 0;
     }
     let oldest = 0;
-    for (const ind of this.population.values()) {
+    for (const id of this._aliveIds) {
+      const ind = this.population.get(id);
+      if (!ind) continue;
       const age = this.currentDay - (ind.birth_day ?? 0);
       if (age > oldest) oldest = age;
     }
