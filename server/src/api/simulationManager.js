@@ -74,6 +74,8 @@ class SimulationManager {
     engine.onTick = (data) => this.broadcast(simulation.id, { type: 'tick', ...data });
 
     engine.onEnded = async ({ reason }) => {
+      // Simülasyon kapanmadan önce bekleyen tüm olayları flush et (kaybetme)
+      await flushEvents().catch(() => {});
       await query("UPDATE simulations SET status = 'completed', updated_at = NOW() WHERE id = $1", [simulation.id]).catch(() => {});
       this.broadcast(simulation.id, { type: 'simulation_ended', reason });
     };
@@ -205,7 +207,7 @@ class SimulationManager {
           JSON.stringify(ind.phenotype),
           JSON.stringify(ind.epigenome ?? {}),
           JSON.stringify(ind.health),
-          JSON.stringify({ ...(ind.mind ?? {}), _volatile: { satiation: ind.satiation ?? null, mating_urge: ind.mating_urge ?? null, age: ind.age ?? null, _waterFear: ind._waterFear ?? null, _fears: ind._fears ?? null, _waterExperience: ind._waterExperience ?? null, known_techs: ind.known_techs instanceof Set ? [...ind.known_techs] : (Array.isArray(ind.known_techs) ? ind.known_techs : []), _experience: ind._experience ?? {} } }),
+          JSON.stringify({ ...(ind.mind ?? {}), _volatile: { satiation: ind.satiation ?? null, mating_urge: ind.mating_urge ?? null, age: ind.age ?? null, _waterFear: ind._waterFear ?? null, _fears: ind._fears ?? null, _waterExperience: ind._waterExperience ?? null, known_techs: ind.known_techs instanceof Set ? [...ind.known_techs] : (Array.isArray(ind.known_techs) ? ind.known_techs : []), _experience: ind._experience ?? {}, generation: ind.generation ?? 0 } }),
           JSON.stringify(ind.social),
           JSON.stringify(ind.skills ?? []),
           JSON.stringify(ind.beliefs instanceof Set ? [...ind.beliefs] : (Array.isArray(ind.beliefs) ? ind.beliefs : [])),
@@ -291,6 +293,8 @@ function parseIndividual(row) {
   else if (isFounder) parsed.known_techs = new Set(['swimming']); // kurucu garantisi
   if (isFounder && parsed.known_techs) parsed.known_techs.add('swimming'); // eski kayıtlar için
   if (volatile._experience !== undefined) parsed._experience = volatile._experience;
+  if (volatile.generation !== undefined) parsed.generation = volatile.generation;
+  else if (isFounder) parsed.generation = 0;
   if (row.psychology && Object.keys(row.psychology).length > 0) parsed.psychology = row.psychology;
   else if (volatile.psychology) parsed.psychology = volatile.psychology;
   if (row.inventory && Object.keys(row.inventory).length > 0) parsed.inventory = row.inventory;

@@ -53,8 +53,10 @@ export function updateEpigenome(individual, env, simDay) {
   if ((individual.age ?? 0) / 365 < 5 && stress > 0.6) {
     mod(individual, 'MAOA_REGULATION', 0.03, simDay);
   }
+  // Enfeksiyon → bağışıklık belleği artar (metilasyon YUKARI → pozitif delta).
+  // reversible=false ile birlikte: bir kez priming yaşandı mı kalıcı.
   if (individual.infections?.length > 0) {
-    mod(individual, 'IMMUNE_PRIMING', -0.02, simDay);
+    mod(individual, 'IMMUNE_PRIMING', +0.02, simDay);
   }
   if (nutrition < 0.2) {
     mod(individual, 'BDNF_PROMOTER', 0.015, simDay);
@@ -94,7 +96,8 @@ function applyFX(ind) {
   p.aggression = Math.min(Math.max((p.aggression ?? 0.5) * 0.999 + (e.MAOA_REGULATION?.methylation ?? 0.5) * 0.001, 0), 1);
   p.oxytocin_sensitivity = (p.oxytocin_sensitivity ?? 0.5) * 0.99 + (1 - (e.OXTR_METHYL?.methylation ?? 0.5)) * 0.01;
   p.learning_rate = (p.learning_rate ?? 0.5) * 0.99 + (1 - (e.BDNF_PROMOTER?.methylation ?? 0.5)) * 0.01;
-  p.immune_strength = (p.immune_strength ?? 0.5) * 0.99 + (1 - (e.IMMUNE_PRIMING?.methylation ?? 0.5)) * 0.01;
+  // Yüksek metilasyon = daha fazla bağışıklık primingleme = güçlü bağışıklık
+  p.immune_strength = (p.immune_strength ?? 0.5) * 0.99 + (e.IMMUNE_PRIMING?.methylation ?? 0.5) * 0.01;
 }
 
 export function computeEpigeneticAge(individual) {

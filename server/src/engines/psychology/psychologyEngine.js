@@ -67,8 +67,16 @@ export function updateMentalState(individual, events, worldState, simDay) {
   else if (ps.wellbeing > 0.8 && ps.stress_level < 0.2) ps.mental_state = 'excited';
   else if (ps.wellbeing > 0.6 && ps.stress_level < 0.3) ps.mental_state = 'content';
   else ps.mental_state = 'calm';
-  if (ps.trauma_events.length > 3) ps.trauma_anxiety = Math.min((ps.trauma_anxiety ?? 0) + 0.01, 0.7);
-  if (ps.wellbeing < 0.3) individual.health_score = Math.max((individual.health_score ?? 0.5) - 0.005, 0);
+  // Trauma anxiety decays slowly over time (healing) but spikes with new events
+  ps.trauma_anxiety = Math.max(0, (ps.trauma_anxiety ?? 0) - 0.0005);
+  if (ps.trauma_events.length > 3) ps.trauma_anxiety = Math.min(ps.trauma_anxiety + 0.01, 0.7);
+  // Düşük psikolojik iyilik hali fiziksel sağlığı kademeli olarak etkiler.
+  // health_score updatePhysiology'de üzerine yazılıyor; bunun yerine hp doğrudan düşürülür.
+  if (ps.wellbeing < 0.3) {
+    if (individual.health) {
+      individual.health.hp = Math.max(0, (individual.health.hp ?? 0.5) - 0.003);
+    }
+  }
   // Theory of Mind grows from pure social observation (1 point/day in group).
   // The THRESHOLD comes from genetics — fast for high IQ×empathy, slow for low.
   // Designer sets one base constant (150); actual timing emerges from the individual.

@@ -4,7 +4,7 @@
 import { parentPort } from 'worker_threads';
 import { selectAction } from './agent/decisionEngine.js';
 import { updateEpigenome } from './epigenetics/epigeneticsEngine.js';
-import { updateGutMicrobiome, spreadInfection } from './microbiome/microbiomeEngine.js';
+import { updateGutMicrobiome } from './microbiome/microbiomeEngine.js';
 import { updateMentalState } from './psychology/psychologyEngine.js';
 import { updateConsciousness } from './consciousness/consciousnessEngine.js';
 import { accumulateExperience } from './agent/activityEngine.js';

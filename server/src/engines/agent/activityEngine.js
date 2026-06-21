@@ -13,6 +13,8 @@
 // ── Technology emergence thresholds ───────────────────────────────────────────
 // ALL listed skills must simultaneously exceed their threshold.
 // Effective threshold = base / learningFactor(ind).
+// SYNC NOTE: Every tech key here MUST also exist in technologyEngine.js TECH_TREE,
+// and vice versa — the two representations must stay in lock-step.
 export const TECH_SKILLS = {
   // Tier 0
   stone_tools:        { prereqs: [],                              skills: { stone_handling: 1500 } },
@@ -101,7 +103,7 @@ export function accumulateExperience(ind, worldState) {
 
   // ── Wood friction ──────────────────────────────────────────────────────────
   // Handling branches, sticks — shaping, rubbing, testing flexibility.
-  const woodPresent = ['temperate_forest', 'tropical', 'mediterranean', 'grassland', 'savanna'].includes(biome);
+  const woodPresent = ['temperate_forest', 'tropical_rainforest', 'mediterranean', 'grassland', 'tropical_savanna'].includes(biome);
   if (woodPresent) {
     if (action === 'craft')   gain('wood_friction', 1.0);
     else if (action === 'forage' || action === 'explore') gain('wood_friction', 0.3);
@@ -109,7 +111,7 @@ export function accumulateExperience(ind, worldState) {
 
   // ── Plant gathering ────────────────────────────────────────────────────────
   // Collecting, testing, sorting plants — the foundation of foraging knowledge.
-  const plantsPresent = ['grassland', 'temperate_forest', 'mediterranean', 'tropical', 'savanna'].includes(biome);
+  const plantsPresent = ['grassland', 'temperate_forest', 'mediterranean', 'tropical_rainforest', 'tropical_savanna'].includes(biome);
   if (plantsPresent) {
     if (action === 'forage')  gain('plant_gathering', 1.0);
     else if (action === 'explore') gain('plant_gathering', 0.2);
@@ -203,7 +205,8 @@ export function checkTechEmergence(ind, discoveredTechs) {
   for (const [techId, req] of Object.entries(TECH_SKILLS)) {
     if (discoveredTechs.has(techId)) continue;
     if (known.has(techId))           continue;
-    if (req.prereqs?.some(p => !discoveredTechs.has(p))) continue;
+    // Kardinal Kural: önkoşullar bireyin kendi bilgisinde olmalı (global havuzda değil).
+    if (req.prereqs?.some(p => !known.has(p))) continue;
     if (req.langMin && (ind.language?.stage ?? 0) < req.langMin) continue;
     if ((iq) < (IQ_MINIMUMS[techId] ?? 0)) continue;
 
