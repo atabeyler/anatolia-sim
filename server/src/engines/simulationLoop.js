@@ -309,9 +309,8 @@ export class SimulationEngine {
     }
     {
       const adults = alive.filter(i => (i.age ?? 0) / 365 >= 2);
-      // Use worker pool only when population is large enough for parallelism to pay off.
-      // Below the threshold, IPC serialization overhead exceeds the compute gain.
-      const WORKER_THRESHOLD = 20;
+      // Worker pool disabled: 512MB Render limit — run on main thread to avoid worker RAM overhead
+      const WORKER_THRESHOLD = Infinity;
       if (adults.length >= WORKER_THRESHOLD) {
         let poolResult;
         try {
