@@ -1167,6 +1167,17 @@ export class SimulationEngine {
     const nextX = Math.max(-180, Math.min(180, prevX + Math.cos(ind._moveAngle) * step));
     const nextY = Math.max(-85,  Math.min(85,  prevY + Math.sin(ind._moveAngle) * step));
 
+    // Hard water block: individuals with meaningful water fear don't enter water.
+    // Cohesion pull (0.88) can overpower the angular avoidance (0.55), so we need
+    // a hard stop rather than just redirecting the movement angle.
+    if (!isOnLand(nextY, nextX) && (ind._waterFear ?? 0) > 0.15 && ind._lastLandX !== undefined) {
+      ind.x = ind._lastLandX;
+      ind.y = ind._lastLandY;
+      ind._moveAngle = (ind._moveAngle + Math.PI) % (Math.PI * 2);
+      ind._inWater = false;
+      return;
+    }
+
     ind.x = nextX;
     ind.y = nextY;
     const nowInWater = !isOnLand(nextY, nextX);
