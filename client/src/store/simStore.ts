@@ -148,6 +148,7 @@ interface SimStore {
   events: SimEvent[];
   setStats: (stats: SimStats) => void;
   addEvent: (event: SimEvent) => void;
+  addEvents: (events: SimEvent[]) => void;
   setEvents: (events: SimEvent[]) => void;
   resetLiveState: () => void;
 
@@ -234,6 +235,13 @@ export const useSimStore = create<SimStore>((set) => ({
     const key = normalizeEventKey(event);
     if (s.events.some(existing => normalizeEventKey(existing) === key)) return s;
     return { events: [event, ...s.events].slice(0, 200) };
+  }),
+  addEvents: (newEvents) => set(s => {
+    // Single state update for a batch — avoids N re-renders and O(N×M) JSON.stringify
+    const existingKeys = new Set(s.events.map(normalizeEventKey));
+    const toAdd = newEvents.filter(e => !existingKeys.has(normalizeEventKey(e)));
+    if (toAdd.length === 0) return s;
+    return { events: [...toAdd, ...s.events].slice(0, 200) };
   }),
   setEvents: (events) => {
     const seen = new Set<string>();

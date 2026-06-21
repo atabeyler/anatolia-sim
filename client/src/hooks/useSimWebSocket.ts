@@ -7,7 +7,7 @@ export function useSimWebSocket(simId: string | null) {
   const reconnectDelay = useRef(3000);
   const unmounted = useRef(false);
   const isFirstConnect = useRef(true);
-  const { accessToken, setStats, addEvent, setCentroidTrail, addMilestone, setIsWarping, setFastForwardTarget } = useSimStore();
+  const { accessToken, setStats, addEvents, setCentroidTrail, addMilestone, setIsWarping, setFastForwardTarget } = useSimStore();
 
   useEffect(() => {
     if (!simId || !accessToken) return;
@@ -32,7 +32,7 @@ export function useSimWebSocket(simId: string | null) {
           const data = JSON.parse(e.data);
           if (data.type === 'tick') {
             if (data.stats) setStats(data.stats);
-            if (data.events) data.events.forEach(addEvent);
+            if (data.events?.length) addEvents(data.events);
             if (data.centroid_trail) setCentroidTrail(data.centroid_trail);
             if (typeof data.is_warping === 'boolean') setIsWarping(data.is_warping);
             if ('fast_forward_target' in data) setFastForwardTarget(data.fast_forward_target ?? null);
