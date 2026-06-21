@@ -111,19 +111,24 @@ describe('checkTechEmergence — stone_tools emergence', () => {
   });
 });
 
-describe('checkTechEmergence — prerequisite enforcement', () => {
-  it('hunting_spear blocked when stone_tools not in discoveredTechs', () => {
+describe('checkTechEmergence — prerequisite enforcement (BUG-02: uses known_techs not discoveredTechs)', () => {
+  it('hunting_spear blocked when stone_tools not in individual known_techs', () => {
+    // BUG-02 fix: prereq check uses ind.known_techs, not discoveredTechs global.
+    // Even if discoveredTechs has stone_tools, individual must personally know it.
     const ind = makeInd({ phenotype: { fluid_intelligence: 0.8, curiosity: 0.8 } });
     ind._experience = { hunting_practice: 9999, wood_friction: 9999 };
-    const emerged = checkTechEmergence(ind, new Set()); // stone_tools not discovered
+    ind.known_techs = new Set(); // individual does NOT know stone_tools
+    const globalDiscovered = new Set(['stone_tools']); // global discovery doesn't help
+    const emerged = checkTechEmergence(ind, globalDiscovered);
     expect(emerged).not.toContain('hunting_spear');
   });
 
-  it('hunting_spear emerges once stone_tools is in discoveredTechs', () => {
+  it('hunting_spear emerges once stone_tools is in individual known_techs', () => {
+    // BUG-02 fix: individual must have stone_tools in their own known_techs.
     const ind = makeInd({ phenotype: { fluid_intelligence: 0.8, curiosity: 0.8 } });
     ind._experience = { stone_handling: 9999, hunting_practice: 9999, wood_friction: 9999 };
-    const discovered = new Set(['stone_tools']);
-    const emerged = checkTechEmergence(ind, discovered);
+    ind.known_techs = new Set(['stone_tools']); // individual personally knows it
+    const emerged = checkTechEmergence(ind, new Set(['stone_tools']));
     expect(emerged).toContain('hunting_spear');
   });
 });

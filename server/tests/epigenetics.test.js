@@ -148,17 +148,17 @@ describe('updateEpigenome — çevresel metilasyon dinamiği', () => {
     expect(ind.epigenome.MAOA_REGULATION.methylation).toBeGreaterThanOrEqual(0.9);
   });
 
-  it('H-02 regression — IMMUNE_PRIMING negative delta (infection path) is blocked', () => {
-    // IMMUNE_PRIMING is irreversible. updateEpigenome applies -0.02 when infected.
-    // With H-02 fix, negative delta is blocked → methylation stays at initial value.
+  it('BUG-01 fix — IMMUNE_PRIMING increases (+0.02) when infected (reversible=false blocks negatives only)', () => {
+    // After BUG-01: infection applies +0.02 (positive delta). reversible=false only
+    // blocks negative deltas, so methylation rises toward 1 with each infected day.
     const ind = makeUpdatable({ infections: [{ pathogen_id: 'pathogen-test' }] });
     initializeEpigenome(ind);
-    const initial = ind.epigenome.IMMUNE_PRIMING.methylation;
+    ind.epigenome.IMMUNE_PRIMING.methylation = 0.5;
 
     for (let d = 1; d < 100; d++) updateEpigenome(ind, {}, d);
 
-    // Negative delta was blocked → methylation is unchanged
-    expect(ind.epigenome.IMMUNE_PRIMING.methylation).toBe(initial);
+    // Positive delta applied each day → methylation strictly above initial 0.5
+    expect(ind.epigenome.IMMUNE_PRIMING.methylation).toBeGreaterThan(0.5);
   });
 
   it('metilasyon değerleri [0, 1] aralığında kalır', () => {
