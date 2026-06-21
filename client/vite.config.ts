@@ -21,6 +21,13 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    rollupOptions: { output: { manualChunks: { three: ['three','@react-three/fiber','@react-three/drei'], react: ['react','react-dom','react-router-dom'] } } },
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules/three') || id.includes('@react-three')) return 'three';
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router')) return 'react';
+        },
+      },
+    },
   },
 });
