@@ -140,8 +140,9 @@ describe('H-16 regression — estimateGenerations() excludes dead individuals', 
     expect(gen).toBe(0);
   });
 
-  it('returns 1 when oldest alive individual is ~25 years old', () => {
-    const ind = makeInd({ birth_day: -(25 * 365 + 1) });
+  it('returns 1 when alive individual has generation=1 (BUG-09: pedigree depth, not age)', () => {
+    // BUG-09 fix: generation is tracked as a pedigree field, not inferred from age.
+    const ind = makeInd({ generation: 1 });
     engine.population.set(ind.id, ind);
     engine._aliveIds.add(ind.id);
     engine.currentDay = 0;
@@ -150,21 +151,32 @@ describe('H-16 regression — estimateGenerations() excludes dead individuals', 
     expect(gen).toBe(1);
   });
 
+  it('returns max generation across all alive individuals', () => {
+    const gen2 = makeInd({ generation: 2 });
+    const gen5 = makeInd({ generation: 5 });
+    engine.population.set(gen2.id, gen2);
+    engine.population.set(gen5.id, gen5);
+    engine._aliveIds.add(gen2.id);
+    engine._aliveIds.add(gen5.id);
+    engine.currentDay = 0;
+    expect(engine.estimateGenerations()).toBe(5);
+  });
+
   it('result is cached and not recomputed within 365 days', () => {
-    const ind = makeInd({ birth_day: -5 * 365 });
+    const ind = makeInd({ generation: 0 });
     engine.population.set(ind.id, ind);
     engine._aliveIds.add(ind.id);
     engine.currentDay = 0;
 
     const first = engine.estimateGenerations();
-    // Add a very old alive individual — but cache should prevent re-computation
-    const old = makeInd({ birth_day: -200 * 365 });
-    engine.population.set(old.id, old);
-    engine._aliveIds.add(old.id);
+    // Add a high-generation alive individual — cache should prevent re-computation
+    const newer = makeInd({ generation: 10 });
+    engine.population.set(newer.id, newer);
+    engine._aliveIds.add(newer.id);
     engine.currentDay = 100; // still < 365 days since last cache
 
     const second = engine.estimateGenerations();
-    expect(second).toBe(first); // still cached
+    expect(second).toBe(first); // still 0 (cached, newer ignored)
   });
 });
 
