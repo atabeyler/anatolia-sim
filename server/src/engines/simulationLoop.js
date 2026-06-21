@@ -1683,6 +1683,7 @@ export class SimulationEngine {
 
   logEvent(day, type, description, data = {}, importance = 1) {
     const event = {
+      id: `${day}_${type}_${(this._eventSeq = (this._eventSeq ?? 0) + 1)}`,
       simulation_id: this.simId,
       sim_day: day,
       sim_year: Math.floor(day / 365),
