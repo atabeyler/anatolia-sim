@@ -254,7 +254,7 @@ function makeIndividual(overrides = {}) {
   };
 }
 
-describe('BUG-12 — processDisaster updates worldState.alive_count after each death', () => {
+describe('BUG-12 — processDisaster removes dead individuals from _aliveIds', () => {
   let engine;
   beforeEach(() => {
     engine = new SimulationEngine(makeSim());
@@ -264,26 +264,26 @@ describe('BUG-12 — processDisaster updates worldState.alive_count after each d
   });
   afterEach(() => { engine.destroy?.(); });
 
-  it('alive_count decrements when processDisaster kills individuals (mortality_factor=1.0)', () => {
+  it('_aliveIds shrinks to match survivors when mortality_factor=1.0', () => {
     const pop = Array.from({ length: 5 }, () => makeIndividual());
     pop.forEach(ind => { engine.population.set(ind.id, ind); engine._aliveIds.add(ind.id); });
-    engine.worldState.alive_count = 5;
 
-    // Force all to die
     engine.processDisaster({ type: 'wildfire', mortality_factor: 1.0 }, pop, 0);
 
+    // processDisaster deletes from _aliveIds for each death; alive_count is set at tick start
     const survivors = pop.filter(i => !i.is_dead).length;
-    expect(engine.worldState.alive_count).toBe(survivors);
+    expect(engine._aliveIds.size).toBe(survivors); // 0 — all died
+    expect(engine._newDeadThisTick).toHaveLength(5);
   });
 
-  it('alive_count is not modified when no one dies (mortality_factor=0)', () => {
+  it('_aliveIds unchanged when no one dies (mortality_factor=0)', () => {
     const pop = Array.from({ length: 4 }, () => makeIndividual());
     pop.forEach(ind => { engine.population.set(ind.id, ind); engine._aliveIds.add(ind.id); });
-    engine.worldState.alive_count = 4;
 
     engine.processDisaster({ type: 'wildfire', mortality_factor: 0 }, pop, 0);
 
-    expect(engine.worldState.alive_count).toBe(4);
+    expect(engine._aliveIds.size).toBe(4);
+    expect(engine._newDeadThisTick).toHaveLength(0);
   });
 });
 
