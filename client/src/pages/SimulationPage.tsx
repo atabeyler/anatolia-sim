@@ -351,12 +351,16 @@ export default function SimulationPage() {
     return () => clearInterval(id);
   }, []);
 
-  // Auto-reload when a new server version is deployed
+  // Auto-reload when a new server version is deployed — only reload when sim is paused
   useEffect(() => {
     let currentVersion: string | null = null;
     const check = () => fetch('/api/health').then(r => r.json()).then(d => {
       if (!currentVersion) { currentVersion = d.version; return; }
-      if (d.version !== currentVersion) window.location.reload();
+      if (d.version !== currentVersion) {
+        const { currentSim } = useSimStore.getState();
+        if (currentSim?.status !== 'running') window.location.reload();
+        else currentVersion = d.version; // skip reload while running, pick up new version
+      }
     }).catch(() => {});
     check();
     const id = setInterval(check, 60_000);
