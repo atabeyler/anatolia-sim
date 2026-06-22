@@ -239,6 +239,14 @@ async function main() {
 
 main();
 
+// Keep Render free-tier instance awake — ping self every 4 minutes to prevent spin-down
+const SELF_URL = process.env.RENDER_EXTERNAL_URL;
+if (SELF_URL) {
+  setInterval(() => {
+    fetch(`${SELF_URL}/api/health`).catch(() => {});
+  }, 4 * 60 * 1000);
+}
+
 function shutdown(signal) {
   console.log(`${signal} alındı — graceful shutdown başlıyor`);
   server.close(() => {
