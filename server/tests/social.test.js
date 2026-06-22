@@ -48,8 +48,6 @@ function makeGroup(id, memberIds, overrides = {}) {
   };
 }
 
-// ── RELATIONSHIP_TYPES & GROUP_ROLES ─────────────────────────────────────────
-
 describe('RELATIONSHIP_TYPES — definition checks', () => {
   it('defines 6 relationship types', () => {
     expect(Object.keys(RELATIONSHIP_TYPES)).toHaveLength(6);
@@ -78,8 +76,6 @@ describe('GROUP_ROLES — definition checks', () => {
     expect(GROUP_ROLES.MEMBER).toBe('member');
   });
 });
-
-// ── computeSocialStatus ───────────────────────────────────────────────────────
 
 describe('computeSocialStatus', () => {
   it('returns 0 when group is null', () => {
@@ -115,20 +111,16 @@ describe('computeSocialStatus', () => {
   it('physical_strength contributes in young groups but not old ones', () => {
     const youngGroup = makeGroup('g1', ['a'], { founded_day: 0 });
     const oldGroup   = makeGroup('g2', ['a'], { founded_day: 5000 });
-    // Strong but dim: benefits from youth weight (physical_strength), hurt by old-group weight (intelligence)
     const strongDim = makeInd('a', {
       age: 30 * 365,
       phenotype: { dominance: 0.0, fluid_intelligence: 0.0, empathy: 0.0, physical_strength: 0.99 },
       social: { reputation: 0.0 },
     });
-    // physical_strength * 0.15 * (1-w): w=0 for youngGroup → contributes; w=1 for oldGroup → contributes 0
     expect(computeSocialStatus(strongDim, youngGroup)).toBeGreaterThan(
       computeSocialStatus(strongDim, oldGroup)
     );
   });
 });
-
-// ── processGroupDynamics ──────────────────────────────────────────────────────
 
 describe('processGroupDynamics — group formation', () => {
   it('returns array', () => {
@@ -162,7 +154,6 @@ describe('processGroupDynamics — group formation', () => {
     const adult  = makeInd('adult');
     const groups = [];
     processGroupDynamics([infant, adult], groups, 1);
-    // Only 1 non-infant ungrouped → no group formed
     expect(groups).toHaveLength(0);
   });
 });
@@ -281,8 +272,6 @@ describe('processGroupDynamics — group fission', () => {
   });
 });
 
-// ── assignGroupRoles ──────────────────────────────────────────────────────────
-
 describe('assignGroupRoles', () => {
   it('does nothing for empty members array', () => {
     const group = makeGroup('g1', []);
@@ -297,10 +286,10 @@ describe('assignGroupRoles', () => {
     expect(leader.group_role).toBe(GROUP_ROLES.LEADER);
   });
 
-  it('high-empathy + high-intelligence member gets HEALER role', () => {
+  it('dominant "socialize" behavior gives HEALER role', () => {
     const healer = makeInd('healer', {
       group_id: 'g1',
-      phenotype: { empathy: 0.8, fluid_intelligence: 0.7, physical_strength: 0.3, aggression: 0.2, dominance: 0.5, curiosity: 0.5, xenophobia: 0.0, independence: 0.3 },
+      _behaviorCounts: { socialize: 10, forage: 2, hunt: 1 },
     });
     const group = makeGroup('g1', ['leader', 'healer'], { leader_id: 'leader' });
     const leader = makeInd('leader', { group_id: 'g1' });
@@ -308,10 +297,10 @@ describe('assignGroupRoles', () => {
     expect(healer.group_role).toBe(GROUP_ROLES.HEALER);
   });
 
-  it('high-strength + high-aggression member gets WARRIOR role', () => {
+  it('dominant "hunt" behavior gives WARRIOR role', () => {
     const warrior = makeInd('warrior', {
       group_id: 'g1',
-      phenotype: { physical_strength: 0.8, aggression: 0.7, empathy: 0.3, fluid_intelligence: 0.4, dominance: 0.5, curiosity: 0.5, xenophobia: 0.0, independence: 0.3 },
+      _behaviorCounts: { hunt: 15, forage: 3, socialize: 1 },
     });
     const group = makeGroup('g1', ['leader', 'warrior'], { leader_id: 'leader' });
     const leader = makeInd('leader', { group_id: 'g1' });
@@ -319,11 +308,11 @@ describe('assignGroupRoles', () => {
     expect(warrior.group_role).toBe(GROUP_ROLES.WARRIOR);
   });
 
-  it('curious elder (age > 40) gets ELDER role', () => {
+  it('age > 40 with no dominant behavior gives ELDER role', () => {
     const elder = makeInd('elder', {
       group_id: 'g1',
       age: 50 * 365,
-      phenotype: { curiosity: 0.8, empathy: 0.4, physical_strength: 0.3, aggression: 0.2, fluid_intelligence: 0.4, dominance: 0.5, xenophobia: 0.0, independence: 0.3 },
+      _behaviorCounts: {},
     });
     const group = makeGroup('g1', ['leader', 'elder'], { leader_id: 'leader' });
     const leader = makeInd('leader', { group_id: 'g1' });
@@ -331,10 +320,11 @@ describe('assignGroupRoles', () => {
     expect(elder.group_role).toBe(GROUP_ROLES.ELDER);
   });
 
-  it('default member gets MEMBER role', () => {
+  it('young member with no behavior history gets MEMBER role', () => {
     const member = makeInd('member', {
       group_id: 'g1',
-      phenotype: { empathy: 0.3, fluid_intelligence: 0.3, physical_strength: 0.3, aggression: 0.2, curiosity: 0.3, dominance: 0.5, xenophobia: 0.0, independence: 0.3 },
+      age: 20 * 365,
+      _behaviorCounts: {},
     });
     const group = makeGroup('g1', ['leader', 'member'], { leader_id: 'leader' });
     const leader = makeInd('leader', { group_id: 'g1' });
