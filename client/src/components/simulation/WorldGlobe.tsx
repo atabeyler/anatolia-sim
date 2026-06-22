@@ -797,6 +797,12 @@ function RotatingGroup({
     }
     groupRef.current.rotation.order = 'YXZ';
     groupRef.current.rotation.y += delta * 0.025;
+    // Smooth-reset X tilt left over from intro (lerp toward 0 at ~1.5 rad/s)
+    if (Math.abs(groupRef.current.rotation.x) > 0.001) {
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, Math.min(1, delta * 1.5));
+    } else {
+      groupRef.current.rotation.x = 0;
+    }
     if (globeRotRef) (globeRotRef as React.MutableRefObject<number>).current = groupRef.current.rotation.y;
   });
 
