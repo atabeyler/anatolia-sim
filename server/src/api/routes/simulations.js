@@ -341,7 +341,7 @@ router.get('/:id/events/summary', authenticate, requireSimulationOwner, async (r
       countsByType = Object.fromEntries(engine._eventCounts ?? []);
       // Override birth/death counts with engine memory (authoritative — event log undercounts disaster victims)
       countsByType['birth'] = engine.totalBirths;
-      countsByType['death'] = [...engine.population.values()].filter(i => i.is_dead).length;
+      countsByType['death'] = engine.totalDeaths ?? 0;
     } else {
       const { rows } = await query(
         `SELECT event_type, COUNT(*)::int AS count
