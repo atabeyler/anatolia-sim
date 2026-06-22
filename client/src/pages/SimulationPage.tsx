@@ -705,6 +705,8 @@ export default function SimulationPage() {
 
                   <WorldGlobe
                     individuals={individuals}
+                    spawnLat={currentSim?.start_latitude}
+                    spawnLon={currentSim?.start_longitude}
                     onSelect={(ind) => { setSelectedInd(ind); setGlobeCoord(null); }}
                     onGlobeClick={(lat, lon) => { setGlobeCoord({ lat, lon }); setSelectedInd(null); }}
                   />

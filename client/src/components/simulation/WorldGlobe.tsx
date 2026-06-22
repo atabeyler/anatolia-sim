@@ -274,20 +274,45 @@ function makeNeptuneTex(): THREE.CanvasTexture {
 // ─── Cinematic intro ─────────────────────────────────────────────────────────
 
 const INTRO_START = new THREE.Vector3(0, 4, 30);
-const INTRO_END   = new THREE.Vector3(0, 0.5, 5.5);
 const INTRO_SECS  = 5.5;
+const CAM_DIST    = 5.5;
 
 function easeOutCubic(t: number) { return 1 - Math.pow(1 - t, 3); }
 
-function CameraIntro({ onDone }: { onDone: () => void }) {
+function spawnToCamera(lat: number, lon: number, globeRotY: number): THREE.Vector3 {
+  const latR = (lat * Math.PI) / 180;
+  // lon in globe-local space; subtract current globe rotation to get world-space direction
+  const lonR = (lon * Math.PI) / 180 - globeRotY;
+  return new THREE.Vector3(
+    CAM_DIST * Math.cos(latR) * Math.cos(lonR),
+    CAM_DIST * Math.sin(latR) * 0.6 + 0.3,
+    -CAM_DIST * Math.cos(latR) * Math.sin(lonR),
+  );
+}
+
+function CameraIntro({
+  spawnLat,
+  spawnLon,
+  globeRotRef,
+  onDone,
+}: {
+  spawnLat: number;
+  spawnLon: number;
+  globeRotRef: React.RefObject<number>;
+  onDone: () => void;
+}) {
   const { camera } = useThree();
   const progress = useRef(0);
   const done = useRef(false);
+  const endPos = useRef(new THREE.Vector3(0, 0.5, CAM_DIST));
 
   useFrame((_, delta) => {
     if (done.current) return;
     progress.current = Math.min(progress.current + delta / INTRO_SECS, 1);
-    camera.position.lerpVectors(INTRO_START, INTRO_END, easeOutCubic(progress.current));
+    const t = easeOutCubic(progress.current);
+    // Recompute target each frame using live globe rotation so we track it exactly
+    endPos.current.copy(spawnToCamera(spawnLat, spawnLon, globeRotRef.current ?? 0));
+    camera.position.lerpVectors(INTRO_START, endPos.current, t);
     if (progress.current >= 1) { done.current = true; onDone(); }
   });
 
@@ -758,15 +783,20 @@ function RotatingGroup({
   individuals,
   onSelect,
   onGlobeClick,
+  globeRotRef,
 }: {
   individuals: any[];
   onSelect?: (ind: any) => void;
   onGlobeClick?: (lat: number, lon: number) => void;
+  globeRotRef?: React.RefObject<number>;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const centroidTrail = useSimStore(s => s.centroidTrail);
   useFrame((_, delta) => {
-    if (groupRef.current) groupRef.current.rotation.y += delta * 0.025;
+    if (groupRef.current) {
+      groupRef.current.rotation.y += delta * 0.025;
+      if (globeRotRef) (globeRotRef as React.MutableRefObject<number>).current = groupRef.current.rotation.y;
+    }
   });
 
   const prevIndRef = useRef<any[]>([]);
@@ -802,19 +832,22 @@ function RotatingGroup({
 
 export default function WorldGlobe({
   individuals = [],
+  spawnLat,
+  spawnLon,
   onSelect,
   onGlobeClick,
 }: {
   individuals?: any[];
+  spawnLat?: number;
+  spawnLon?: number;
   onSelect?: (ind: any) => void;
   onGlobeClick?: (lat: number, lon: number) => void;
 }) {
   const [introDone, setIntroDone] = useState(false);
   const orbitRef = useRef<any>(null);
+  const globeRotRef = useRef<number>(0);
   const handleIntroDone = useCallback(() => {
     setIntroDone(true);
-    // Sync OrbitControls internal spherical state from current camera position
-    // so it doesn't snap/jump when it becomes enabled.
     requestAnimationFrame(() => orbitRef.current?.update());
   }, []);
 
@@ -834,8 +867,15 @@ export default function WorldGlobe({
       <SolarSystem />
       <Stars radius={250} depth={80} count={6000} factor={5} saturation={0} fade speed={0.3} />
       <Globe />
-      <RotatingGroup individuals={individuals} onSelect={onSelect} onGlobeClick={onGlobeClick} />
-      {!introDone && <CameraIntro onDone={handleIntroDone} />}
+      <RotatingGroup individuals={individuals} onSelect={onSelect} onGlobeClick={onGlobeClick} globeRotRef={globeRotRef} />
+      {!introDone && (
+        <CameraIntro
+          spawnLat={spawnLat ?? 39}
+          spawnLon={spawnLon ?? 35}
+          globeRotRef={globeRotRef}
+          onDone={handleIntroDone}
+        />
+      )}
       <OrbitControls
         ref={orbitRef}
         enabled={introDone}
