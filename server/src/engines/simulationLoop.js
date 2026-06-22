@@ -853,10 +853,10 @@ export class SimulationEngine {
     }
 
     // 20. Update human environmental impact
-    this.worldState.human_impact = Math.min(1, alive.filter(i => !i.is_dead).length / 1000);
+    this.worldState.human_impact = Math.min(1, alive.length / 1000);
 
     // 21. Compute stats
-    const currentAlive = alive.filter(i => !i.is_dead);
+    const currentAlive = alive;
     const stats = this.computeStats(day, currentAlive);
 
     // 22. Checkpoint (fire-and-forget — never block the simulation loop)
@@ -1567,8 +1567,66 @@ export class SimulationEngine {
   }
 
   computeStats(day, alive) {
-    const ages = alive.map(i => getAge(i, day));
-    const avgAge = ages.length ? ages.reduce((a, b) => a + b, 0) / ages.length : 0;
+    const count = alive.length;
+    let ageSum = 0;
+    let maleCount = 0;
+    let intelligenceSum = 0;
+    let consciousnessSum = 0;
+    let languageStageSum = 0;
+    let healthScoreSum = 0;
+    let wellbeingSum = 0;
+    let matingUrgeSum = 0;
+    let caloriesSum = 0;
+    let hydrationSum = 0;
+    let distanceSum = 0;
+    let maxLanguageStage = 0;
+    let maxTomStage = 0;
+    const ageBands = ['0-4','5-9','10-14','15-19','20-24','25-29','30-34','35-39','40-44','45-49','50-54','55-59','60-64','65+'];
+    const agePyramidCounts = Object.fromEntries(ageBands.map(b => [b, { male: 0, female: 0 }]));
+    const epigeneticIds = ['HPA_AXIS', 'BDNF_PROMOTER', 'MAOA_REGULATION', 'LEPTIN_RESIST', 'INSULIN_SENS', 'AVP_REGULATION', 'OXTR_METHYL', 'IMMUNE_PRIMING'];
+    const epigeneticSums = Object.fromEntries(epigeneticIds.map(id => [id, 0]));
+    const cx = this._bandCentroid?.x ?? this.worldState.longitude ?? 0;
+    const cy = this._bandCentroid?.y ?? this.worldState.latitude ?? 0;
+
+    for (const ind of alive) {
+      const age = getAge(ind, day);
+      ageSum += age;
+      if (ind.sex === 'male') maleCount++;
+      intelligenceSum += ind.phenotype?.fluid_intelligence ?? 0;
+
+      const consciousness = ind.mind?.consciousness ?? 0;
+      const langStage = ind.language?.stage ?? 0;
+      const healthScore = ind.health_score ?? 0.5;
+      const wellbeing = ind.psychology?.wellbeing ?? 0.5;
+      const matingUrge = ind.mating_urge ?? 0;
+      const calories = ind.health?.calories ?? 0.7;
+      const hydration = ind.health?.hydration ?? 0.7;
+
+      consciousnessSum += consciousness;
+      languageStageSum += langStage;
+      healthScoreSum += healthScore;
+      wellbeingSum += wellbeing;
+      matingUrgeSum += matingUrge;
+      caloriesSum += calories;
+      hydrationSum += hydration;
+      distanceSum += Math.hypot((ind.x ?? 0) - cx, (ind.y ?? 0) - cy);
+
+      if (langStage > maxLanguageStage) maxLanguageStage = langStage;
+      const tomStage = ind.psychology?.theory_of_mind ?? 0;
+      if (tomStage > maxTomStage) maxTomStage = tomStage;
+
+      const band = age >= 65 ? '65+' : `${Math.floor(age / 5) * 5}-${Math.floor(age / 5) * 5 + 4}`;
+      if (agePyramidCounts[band]) {
+        const sexBucket = ind.sex === 'male' ? 'male' : 'female';
+        agePyramidCounts[band][sexBucket]++;
+      }
+
+      for (const id of epigeneticIds) {
+        epigeneticSums[id] += ind.epigenome?.[id]?.methylation ?? 0.5;
+      }
+    }
+
+    const avgAge = count ? ageSum / count : 0;
     const econStats = computeEconomicStats(alive);
     const psychStats = computePopulationPsychStats(alive, econStats.gini ?? 0);
     const healthStats = computeHealthStats(alive);
@@ -1576,11 +1634,11 @@ export class SimulationEngine {
     return {
       day,
       year: Math.floor(day / 365),
-      population: alive.length,
+      population: count,
       total_ever: this.population.size,
       avg_age: Math.round(avgAge * 10) / 10,
-      sex_ratio: alive.filter(i => i.sex === 'male').length / Math.max(1, alive.length),
-      avg_intelligence: alive.reduce((s, i) => s + (i.phenotype?.fluid_intelligence ?? 0), 0) / Math.max(1, alive.length),
+      sex_ratio: maleCount / Math.max(1, count),
+      avg_intelligence: count ? intelligenceSum / count : 0,
       technologies: this.discoveredTechs.size,
       total_techs: Object.keys(TECH_TREE).length,
       beliefs: this.discoveredBeliefs.size,
@@ -1600,41 +1658,25 @@ export class SimulationEngine {
       deaths: this.totalDeaths,
       // BUG-05: use cached word count (updated at each checkpoint) to avoid O(n×vocab) every tick
       word_count: this._wordCountCache,
-      max_language_stage: Math.max(0, ...alive.map(i => i.language?.stage ?? 0)),
-      avg_consciousness: Math.round(alive.reduce((s, i) => s + (i.mind?.consciousness ?? 0), 0) / Math.max(1, alive.length) * 1000) / 1000,
-      max_tom_stage: Math.max(0, ...alive.map(i => i.psychology?.theory_of_mind ?? 0)),
+      max_language_stage: maxLanguageStage,
+      avg_consciousness: Math.round((count ? consciousnessSum / count : 0) * 1000) / 1000,
+      max_tom_stage: maxTomStage,
       tech_progress: {},
       qol_index: (() => {
-        const c = alive.reduce((s, i) => s + (i.mind?.consciousness ?? 0), 0) / Math.max(1, alive.length);
-        const langStg = alive.reduce((s, i) => s + (i.language?.stage ?? 0), 0) / Math.max(1, alive.length);
-        const hp = alive.reduce((s, i) => s + (i.health_score ?? 0.5), 0) / Math.max(1, alive.length);
-        const wb = alive.reduce((s, i) => s + (i.psychology?.wellbeing ?? 0.5), 0) / Math.max(1, alive.length);
+        const c = count ? consciousnessSum / count : 0;
+        const langStg = count ? languageStageSum / count : 0;
+        const hp = count ? healthScoreSum / count : 0;
+        const wb = count ? wellbeingSum / count : 0;
         return Math.round((c * 0.3 + (langStg / 6) * 0.2 + hp * 0.3 + wb * 0.2) * 1000) / 1000;
       })(),
       mean_wealth: Math.round(econStats.mean_wealth * 100) / 100,
       gini: Math.round(econStats.gini * 100) / 100,
       happiness_index: Math.round(psychStats.happiness_index * 100) / 100,
       sick_rate: Math.round(healthStats.sick_rate * 100) / 100,
-      epigenetics: (() => {
-        const loci = ['HPA_AXIS', 'BDNF_PROMOTER', 'MAOA_REGULATION', 'LEPTIN_RESIST', 'INSULIN_SENS', 'AVP_REGULATION', 'OXTR_METHYL', 'IMMUNE_PRIMING'];
-        const result = {};
-        for (const id of loci) {
-          const vals = alive.map(i => i.epigenome?.[id]?.methylation ?? 0.5);
-          result[id] = Math.round(vals.reduce((a, b) => a + b, 0) / Math.max(1, vals.length) * 100) / 100;
-        }
-        return result;
-      })(),
-      age_pyramid: (() => {
-        const bands = ['0-4','5-9','10-14','15-19','20-24','25-29','30-34','35-39','40-44','45-49','50-54','55-59','60-64','65+'];
-        const counts = {};
-        for (const b of bands) counts[b] = { male: 0, female: 0 };
-        for (let idx = 0; idx < alive.length; idx++) {
-          const age = Math.floor(ages[idx]);
-          const b = age >= 65 ? '65+' : `${Math.floor(age / 5) * 5}-${Math.floor(age / 5) * 5 + 4}`;
-          if (counts[b]) counts[b][alive[idx].sex === 'male' ? 'male' : 'female']++;
-        }
-        return bands.map(b => ({ group: b, male: counts[b].male, female: counts[b].female }));
-      })(),
+      epigenetics: Object.fromEntries(
+        epigeneticIds.map(id => [id, Math.round((epigeneticSums[id] / Math.max(1, count)) * 100) / 100])
+      ),
+      age_pyramid: ageBands.map(group => ({ group, male: agePyramidCounts[group].male, female: agePyramidCounts[group].female })),
       death_stats: (() => {
         // Incrementally maintained — avoids scanning all-time population every tick
         if (!this._deathStats) {
@@ -1666,13 +1708,11 @@ export class SimulationEngine {
       centroid_x: Math.round((this._bandCentroid?.x ?? this.worldState.longitude ?? 0) * 10000) / 10000,
       centroid_y: Math.round((this._bandCentroid?.y ?? this.worldState.latitude ?? 0) * 10000) / 10000,
       movement_context: (() => {
-        if (!alive.length) return null;
-        const avgUrge   = alive.reduce((s, i) => s + (i.mating_urge ?? 0), 0) / alive.length;
-        const avgCal    = alive.reduce((s, i) => s + (i.health?.calories ?? 0.7), 0) / alive.length;
-        const avgHyd    = alive.reduce((s, i) => s + (i.health?.hydration ?? 0.7), 0) / alive.length;
-        const cx = this._bandCentroid?.x ?? 0;
-        const cy = this._bandCentroid?.y ?? 0;
-        const avgDist   = alive.reduce((s, i) => s + Math.hypot((i.x??0)-cx, (i.y??0)-cy), 0) / alive.length;
+        if (!count) return null;
+        const avgUrge   = count ? matingUrgeSum / count : 0;
+        const avgCal    = count ? caloriesSum / count : 0;
+        const avgHyd    = count ? hydrationSum / count : 0;
+        const avgDist   = count ? distanceSum / count : 0;
         const dominant  = avgCal < 0.38 ? 'food seeking' : avgHyd < 0.32 ? 'water seeking' : avgUrge > 0.65 ? 'mate seeking' : 'band cohesion (staying together)';
         return {
           dominant_drive: dominant,
@@ -1746,9 +1786,14 @@ export class SimulationEngine {
     const max = hist.length ? Math.max(...hist) : 0;
     const min = hist.length ? Math.min(...hist) : 0;
     const memory = process.memoryUsage();
-    const alive = [...this._aliveIds].map(id => this.population.get(id)).filter(Boolean);
-    const activeInfections = alive.reduce((sum, ind) => sum + (Array.isArray(ind.infections) ? ind.infections.length : 0), 0);
-    const infectedIndividuals = alive.filter(ind => Array.isArray(ind.infections) && ind.infections.length > 0).length;
+    let activeInfections = 0;
+    let infectedIndividuals = 0;
+    for (const id of this._aliveIds) {
+      const ind = this.population.get(id);
+      if (!ind || !Array.isArray(ind.infections) || ind.infections.length === 0) continue;
+      infectedIndividuals++;
+      activeInfections += ind.infections.length;
+    }
     return {
       tick_avg_ms: Math.round(avg * 10) / 10,
       tick_max_ms: max,

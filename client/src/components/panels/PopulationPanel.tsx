@@ -893,7 +893,7 @@ function CompareModal({ indA, indB, onClose }: { indA: any; indB: any; onClose: 
 }
 
 export default function PopulationPanel() {
-  const { currentSim, accessToken, lang, stats } = useSimStore();
+  const { activePanel, currentSim, accessToken, lang, stats } = useSimStore();
   const [individuals, setIndividuals] = useState<any[]>([]);
   const [deadIndividuals, setDeadIndividuals] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -935,11 +935,15 @@ export default function PopulationPanel() {
   }
 
   useEffect(() => {
+    if (activePanel !== 'population') {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      return;
+    }
     load();
     // List refreshes more slowly than stats; counts come from WebSocket in real time.
     intervalRef.current = setInterval(load, 10000);
-    return () => clearInterval(intervalRef.current);
-  }, [currentSim?.id]);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [activePanel, currentSim?.id, accessToken]);
 
   const allForLookup = useMemo(() => [...individuals, ...deadIndividuals], [individuals, deadIndividuals]);
   const filtered = useMemo(() => {

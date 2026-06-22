@@ -260,14 +260,14 @@ function EventsArchiveModal({ simId, accessToken, lang: uiLang, initialFilter, o
 // ── Main Panel ───────────────────────────────────────────────────────────────
 
 export default function EventsPanel() {
-  const { events, lang, currentSim, accessToken, stats } = useSimStore();
+  const { activePanel, events, lang, currentSim, accessToken, stats } = useSimStore();
   const [filter, setFilter] = useState('all');
   const [summaryCounts, setSummaryCounts] = useState<Record<string, number>>({});
   const [summaryTotal, setSummaryTotal] = useState(0);
   const [archiveOpen, setArchiveOpen] = useState(false);
 
   useEffect(() => {
-    if (!currentSim || !accessToken) {
+    if (activePanel !== 'olaylar' || !currentSim || !accessToken) {
       setSummaryCounts({});
       setSummaryTotal(0);
       return;
@@ -285,7 +285,7 @@ export default function EventsPanel() {
     // Poll less aggressively — birth/death now come from WebSocket stats
     const timer = setInterval(load, 15000);
     return () => { active = false; clearInterval(timer); };
-  }, [currentSim?.id, accessToken]);
+  }, [activePanel, currentSim?.id, accessToken]);
 
   const visible = filter === 'all'
     ? events

@@ -66,20 +66,20 @@ function translateSkin(value: any, lang: string): string {
 
 
 export default function BiologyPanel() {
-  const { stats, lang, currentSim, accessToken, milestones } = useSimStore();
+  const { activePanel, stats, lang, currentSim, accessToken, milestones } = useSimStore();
   const [individuals, setIndividuals] = useState<any[]>([]);
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
-    if (!currentSim || !accessToken) return;
+    if (activePanel !== 'biology' || !currentSim || !accessToken) return;
     const headers = { Authorization: `Bearer ${accessToken}` };
-    const load = () => axios.get(`/api/simulations/${currentSim.id}/population?alive=true`, { headers })
+    const load = () => axios.get(`/api/simulations/${currentSim.id}/population?alive=true&limit=5000`, { headers })
       .then(r => { setIndividuals(r.data); setLoadError(false); })
       .catch(() => setLoadError(true));
     load();
     const timer = setInterval(load, 5000);
     return () => clearInterval(timer);
-  }, [currentSim?.id, accessToken]);
+  }, [activePanel, currentSim?.id, accessToken]);
 
   const avgIntel = stats?.avg_intelligence ?? 0;
   const pop = stats?.population ?? 0;

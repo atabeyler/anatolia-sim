@@ -360,12 +360,21 @@ export default function SimulationPage() {
     axios.get(`/api/simulations/${simId}/events?limit=100`, { headers })
       .then(r => setEvents(r.data)) // DB returns newest-first; store keeps same order
       .catch(() => {});
-    const interval = setInterval(() => {
-      axios.get(`/api/simulations/${simId}/population?alive=true&limit=500`, { headers })
+  }, [simId, accessToken]);
+
+  useEffect(() => {
+    if (!simId || !accessToken || activeTab !== 'harita') return;
+    const headers = { Authorization: `Bearer ${accessToken}` };
+    const loadPopulation = () => {
+      axios.get(`/api/simulations/${simId}/population?alive=true&limit=5000`, { headers })
         .then(r => setIndividuals(r.data));
+    };
+    loadPopulation();
+    const interval = setInterval(() => {
+      loadPopulation();
     }, 8000);
     return () => clearInterval(interval);
-  }, [simId, accessToken]);
+  }, [simId, accessToken, activeTab]);
 
   async function toggleSim() {
     if (!currentSim) { alert('Simülasyon yüklenmedi, sayfayı yenileyin.'); return; }

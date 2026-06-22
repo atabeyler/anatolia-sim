@@ -264,6 +264,7 @@ router.post('/:id/speed', authenticate, requireSimulationOwner, async (req, res)
 
 router.get('/:id/population', authenticate, requireSimulationOwner, async (req, res) => {
   try {
+    const safeLimit = Math.min(Math.max(parseInt(req.query.limit, 10) || 500, 1), 5000);
     const engine = simulationManager.getEngine(req.params.id);
     if (engine) {
       const filtered = [...engine.population.values()]
@@ -272,7 +273,7 @@ router.get('/:id/population', authenticate, requireSimulationOwner, async (req, 
           if (req.query.alive === 'false') return ind.is_dead;
           return true;
         })
-        .slice(0, 5000);
+        .slice(0, safeLimit);
       const individuals = [];
       for (const ind of filtered) {
         try {
@@ -287,7 +288,7 @@ router.get('/:id/population', authenticate, requireSimulationOwner, async (req, 
     let sql = 'SELECT id, sex, birth_day, death_day, alive, x, y, genome, phenotype, health, mind, social, skills, beliefs, language, parent_1_id, parent_2_id, death_cause FROM individuals WHERE simulation_id = $1';
     if (req.query.alive === 'true') sql += ' AND alive = true';
     else if (req.query.alive === 'false') sql += ' AND alive = false';
-    sql += ' LIMIT 5000';
+    sql += ` LIMIT ${safeLimit}`;
     const { rows } = await query(sql, [req.params.id]);
     res.json(rows.map(row => serializeIndividual({ ...row, is_dead: row.alive === false }, req.simulation.current_day ?? 0)));
   } catch (err) { console.error('[population] error:', err); res.status(500).json({ error: 'Failed to fetch population' }); }
