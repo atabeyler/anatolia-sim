@@ -99,7 +99,9 @@ export default function DashboardPage() {
       }, { headers });
       setSims(s => [data, ...s]);
       setShowNew(false);
-      navigate(`/simulation/${data.id}`);
+      navigate(`/simulation/${data.id}`, {
+        state: { introTarget: { lat: parseFloat(form.latitude), lon: parseFloat(form.longitude) } },
+      });
     } finally { setLoading(false); }
   }
 
