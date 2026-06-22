@@ -741,68 +741,18 @@ function RotatingGroup({
   onSelect,
   onGlobeClick,
   globeRotRef,
-  introTarget,
-  introPlaying = false,
-  onIntroComplete,
 }: {
   individuals: any[];
   onSelect?: (ind: any) => void;
   onGlobeClick?: (lat: number, lon: number) => void;
   globeRotRef?: React.RefObject<number>;
-  introTarget?: { lat: number; lon: number } | null;
-  introPlaying?: boolean;
-  onIntroComplete?: () => void;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const centroidTrail = useSimStore(s => s.centroidTrail);
 
-  const introStateRef = useRef({
-    started: false,
-    progress: 0,
-    startX: 0,
-    startY: 0,
-  });
-  const introCompleteRef = useRef(false);
-
-  useEffect(() => {
-    introStateRef.current.started = false;
-    introStateRef.current.progress = 0;
-    introCompleteRef.current = false;
-  }, [introTarget?.lat, introTarget?.lon, introPlaying]);
-
   useFrame((_, delta) => {
     if (!groupRef.current) return;
-    if (introPlaying) {
-      if (!introStateRef.current.started) {
-        introStateRef.current.started = true;
-        introStateRef.current.startX = groupRef.current.rotation.x;
-        introStateRef.current.startY = groupRef.current.rotation.y;
-      }
-      introStateRef.current.progress = Math.min(1, introStateRef.current.progress + delta / 2.8);
-      const eased = 1 - Math.pow(1 - introStateRef.current.progress, 3);
-      const introLat = introTarget?.lat ?? 0;
-      const introLon = introTarget?.lon ?? 0;
-      const targetPitch = THREE.MathUtils.clamp((introLat * Math.PI) / 180, -1.12, 1.12);
-      const targetYaw = -(((introLon * Math.PI) / 180) + (Math.PI / 2));
-      groupRef.current.rotation.order = 'YXZ';
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(introStateRef.current.startX, targetPitch, eased);
-      groupRef.current.rotation.y = lerpAngle(introStateRef.current.startY, targetYaw, eased);
-      groupRef.current.rotation.z = 0;
-      if (globeRotRef) (globeRotRef as React.MutableRefObject<number>).current = groupRef.current.rotation.y;
-      if (introStateRef.current.progress >= 1 && !introCompleteRef.current) {
-        introCompleteRef.current = true;
-        onIntroComplete?.();
-      }
-      return;
-    }
-    groupRef.current.rotation.order = 'YXZ';
     groupRef.current.rotation.y += delta * 0.025;
-    // Smooth-reset X tilt left over from intro (lerp toward 0 at ~1.5 rad/s)
-    if (Math.abs(groupRef.current.rotation.x) > 0.001) {
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, Math.min(1, delta * 1.5));
-    } else {
-      groupRef.current.rotation.x = 0;
-    }
     if (globeRotRef) (globeRotRef as React.MutableRefObject<number>).current = groupRef.current.rotation.y;
   });
 
@@ -837,10 +787,16 @@ function RotatingGroup({
 
 function IntroCameraRig({
   introPlaying,
+  spawnLat,
+  spawnLon,
+  globeRotRef,
   onIntroComplete,
   controlsRef,
 }: {
   introPlaying: boolean;
+  spawnLat: number;
+  spawnLon: number;
+  globeRotRef: React.RefObject<number>;
   onIntroComplete?: () => void;
   controlsRef: React.RefObject<any>;
 }) {
@@ -857,7 +813,15 @@ function IntroCameraRig({
     if (!introPlaying) return;
     progressRef.current = Math.min(1, progressRef.current + delta / 2.8);
     const eased = 1 - Math.pow(1 - progressRef.current, 3);
-    camera.position.lerpVectors(new THREE.Vector3(0, 1.15, 38), new THREE.Vector3(0, 0.55, 6.6), eased);
+    const latR = (spawnLat * Math.PI) / 180;
+    const lonR = (spawnLon * Math.PI) / 180 + ((globeRotRef as React.MutableRefObject<number>).current ?? 0);
+    const CAM_DIST = 5.5;
+    const endPos = new THREE.Vector3(
+      CAM_DIST * Math.cos(latR) * Math.cos(lonR),
+      CAM_DIST * Math.sin(latR),
+      -CAM_DIST * Math.cos(latR) * Math.sin(lonR),
+    );
+    camera.position.lerpVectors(new THREE.Vector3(0, 1.15, 38), endPos, eased);
     camera.lookAt(0, 0, 0);
     controlsRef.current?.target?.set?.(0, 0, 0);
     controlsRef.current?.update?.();
@@ -874,11 +838,10 @@ function IntroCameraRig({
 
 export default function WorldGlobe({
   individuals = [],
-  spawnLat,
-  spawnLon,
+  spawnLat = 39,
+  spawnLon = 28,
   onSelect,
   onGlobeClick,
-  introTarget = null,
   introPlaying = false,
   onIntroComplete,
 }: {
@@ -887,11 +850,11 @@ export default function WorldGlobe({
   spawnLon?: number;
   onSelect?: (ind: any) => void;
   onGlobeClick?: (lat: number, lon: number) => void;
-  introTarget?: { lat: number; lon: number } | null;
   introPlaying?: boolean;
   onIntroComplete?: () => void;
 }) {
   const controlsRef = useRef<any>(null);
+  const globeRotRef = useRef<number>(0);
 
   useEffect(() => {
     if (controlsRef.current) {
@@ -899,7 +862,7 @@ export default function WorldGlobe({
       controlsRef.current.target.set(0, 0, 0);
       controlsRef.current.update?.();
     }
-  }, [introPlaying, introTarget?.lat, introTarget?.lon]);
+  }, [introPlaying]);
 
   return (
     <Canvas
@@ -919,6 +882,9 @@ export default function WorldGlobe({
       <Globe />
       <IntroCameraRig
         introPlaying={introPlaying}
+        spawnLat={spawnLat}
+        spawnLon={spawnLon}
+        globeRotRef={globeRotRef}
         onIntroComplete={onIntroComplete}
         controlsRef={controlsRef}
       />
@@ -926,9 +892,7 @@ export default function WorldGlobe({
         individuals={individuals}
         onSelect={onSelect}
         onGlobeClick={onGlobeClick}
-        introTarget={introTarget}
-        introPlaying={introPlaying}
-        onIntroComplete={onIntroComplete}
+        globeRotRef={globeRotRef}
       />
       <OrbitControls
         ref={controlsRef}
