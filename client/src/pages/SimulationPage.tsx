@@ -749,7 +749,6 @@ export default function SimulationPage() {
                     spawnLon={currentSim?.start_longitude}
                     onSelect={(ind) => { setSelectedInd(ind); setGlobeCoord(null); }}
                     onGlobeClick={(lat, lon) => { setGlobeCoord({ lat, lon }); setSelectedInd(null); }}
-                    introTarget={introTarget}
                     introPlaying={!!introTarget}
                     onIntroComplete={() => setIntroTarget(null)}
                   />
