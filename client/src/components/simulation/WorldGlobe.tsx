@@ -274,12 +274,14 @@ function makeNeptuneTex(): THREE.CanvasTexture {
 // ─── Cinematic intro ──────────────────────────────────────────────────
 
 const INTRO_START = new THREE.Vector3(0, 4, 30);
-const INTRO_END   = new THREE.Vector3(0, 0.5, 5.5);
 const INTRO_SECS  = 5.5;
+// Globe rotates at 0.025 rad/s; individuals typically arrive ~2s after mount,
+// then intro runs 5.5s — total ~7.5s of globe rotation ≈ 0.19 rad to compensate.
+const GLOBE_ROT_COMPENSATION = 0.19;
 
 function easeOutCubic(t: number) { return 1 - Math.pow(1 - t, 3); }
 
-function CameraIntro({ onDone }: { onDone: () => void }) {
+function CameraIntro({ target, onDone }: { target: THREE.Vector3; onDone: () => void }) {
   const { camera } = useThree();
   const progress = useRef(0);
   const done = useRef(false);
@@ -287,11 +289,26 @@ function CameraIntro({ onDone }: { onDone: () => void }) {
   useFrame((_, delta) => {
     if (done.current) return;
     progress.current = Math.min(progress.current + delta / INTRO_SECS, 1);
-    camera.position.lerpVectors(INTRO_START, INTRO_END, easeOutCubic(progress.current));
+    camera.position.lerpVectors(INTRO_START, target, easeOutCubic(progress.current));
     if (progress.current >= 1) { done.current = true; onDone(); }
   });
 
   return null;
+}
+
+function centroidToCamera(individuals: any[]): THREE.Vector3 {
+  if (!individuals.length) return new THREE.Vector3(0, 0.5, 5.5);
+  const avgLat = individuals.reduce((s, i) => s + (i.y ?? 0), 0) / individuals.length;
+  const avgLon = individuals.reduce((s, i) => s + (i.x ?? 0), 0) / individuals.length;
+  const lat = (avgLat * Math.PI) / 180;
+  // subtract globe rotation that will have elapsed by end of intro
+  const lon = (avgLon * Math.PI) / 180 - GLOBE_ROT_COMPENSATION;
+  const dist = 5.5;
+  return new THREE.Vector3(
+    dist * Math.cos(lat) * Math.cos(lon),
+    dist * Math.sin(lat) * 0.5 + 0.3,
+    -dist * Math.cos(lat) * Math.sin(lon),
+  );
 }
 
 // ─── Globe ────────────────────────────────────────────────────────────────────────
@@ -809,8 +826,15 @@ export default function WorldGlobe({
   onSelect?: (ind: any) => void;
   onGlobeClick?: (lat: number, lon: number) => void;
 }) {
-  const [introActive, setIntroActive] = useState(true);
-  const handleIntroDone = useCallback(() => setIntroActive(false), []);
+  const [introTarget, setIntroTarget] = useState<THREE.Vector3 | null>(null);
+  const [introDone, setIntroDone] = useState(false);
+  const handleIntroDone = useCallback(() => setIntroDone(true), []);
+
+  // Lock in the centroid target the first time individuals arrive.
+  useEffect(() => {
+    if (introTarget !== null || introDone || individuals.length === 0) return;
+    setIntroTarget(centroidToCamera(individuals));
+  }, [individuals, introTarget, introDone]);
 
   return (
     <Canvas
@@ -829,9 +853,9 @@ export default function WorldGlobe({
       <Stars radius={250} depth={80} count={6000} factor={5} saturation={0} fade speed={0.3} />
       <Globe />
       <RotatingGroup individuals={individuals} onSelect={onSelect} onGlobeClick={onGlobeClick} />
-      {introActive && <CameraIntro onDone={handleIntroDone} />}
+      {introTarget && !introDone && <CameraIntro target={introTarget} onDone={handleIntroDone} />}
       <OrbitControls
-        enabled={!introActive}
+        enabled={introDone}
         enablePan={false}
         minDistance={2.15}
         maxDistance={220}
