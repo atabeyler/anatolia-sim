@@ -281,8 +281,8 @@ function easeOutCubic(t: number) { return 1 - Math.pow(1 - t, 3); }
 
 function spawnToCamera(lat: number, lon: number, globeRotY: number): THREE.Vector3 {
   const latR = (lat * Math.PI) / 180;
-  // lon in globe-local space; subtract current globe rotation to get world-space direction
-  const lonR = (lon * Math.PI) / 180 - globeRotY;
+  // Globe local lon + globeRotY = world-space angle of the spawn point
+  const lonR = (lon * Math.PI) / 180 + globeRotY;
   return new THREE.Vector3(
     CAM_DIST * Math.cos(latR) * Math.cos(lonR),
     CAM_DIST * Math.sin(latR) * 0.6 + 0.3,
