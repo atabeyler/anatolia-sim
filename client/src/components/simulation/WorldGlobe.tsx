@@ -1,4 +1,4 @@
-import { useRef, useMemo, useState, useEffect } from 'react';
+import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import * as THREE from 'three';
@@ -271,7 +271,30 @@ function makeNeptuneTex(): THREE.CanvasTexture {
   return new THREE.CanvasTexture(canvas);
 }
 
-// ─── Globe ───────────────────────────────────────────────────────────────────
+// ─── Cinematic intro ──────────────────────────────────────────────────
+
+const INTRO_START = new THREE.Vector3(0, 4, 30);
+const INTRO_END   = new THREE.Vector3(0, 0.5, 5.5);
+const INTRO_SECS  = 5.5;
+
+function easeOutCubic(t: number) { return 1 - Math.pow(1 - t, 3); }
+
+function CameraIntro({ onDone }: { onDone: () => void }) {
+  const { camera } = useThree();
+  const progress = useRef(0);
+  const done = useRef(false);
+
+  useFrame((_, delta) => {
+    if (done.current) return;
+    progress.current = Math.min(progress.current + delta / INTRO_SECS, 1);
+    camera.position.lerpVectors(INTRO_START, INTRO_END, easeOutCubic(progress.current));
+    if (progress.current >= 1) { done.current = true; onDone(); }
+  });
+
+  return null;
+}
+
+// ─── Globe ────────────────────────────────────────────────────────────────────────
 
 function GlobeMesh() {
   const { gl } = useThree();
@@ -318,7 +341,7 @@ function Globe() {
   );
 }
 
-// ─── Sun & Moon ──────────────────────────────────────────────────────────────
+// ─── Sun & Moon ─────────────────────────────────────────────────────────────
 
 function Sun() {
   const groupRef = useRef<THREE.Group>(null);
@@ -376,7 +399,7 @@ function Moon() {
   );
 }
 
-// ─── Solar System ─────────────────────────────────────────────────────────────
+// ─── Solar System ──────────────────────────────────────────────────────────────
 
 /** Faint orbit ring drawn in the ecliptic plane. */
 function OrbitPath({ dist }: { dist: number }) {
@@ -491,7 +514,7 @@ function SolarSystem() {
   );
 }
 
-// ─── Globe grid & population ──────────────────────────────────────────────────
+// ─── Globe grid & population ──────────────────────────────────────────────────────
 
 function GridLines() {
   const geo = useMemo(() => {
@@ -775,7 +798,7 @@ function RotatingGroup({
   );
 }
 
-// ─── Main export ──────────────────────────────────────────────────────────────
+// ─── Main export ──────────────────────────────────────────────────────────────────
 
 export default function WorldGlobe({
   individuals = [],
@@ -786,9 +809,12 @@ export default function WorldGlobe({
   onSelect?: (ind: any) => void;
   onGlobeClick?: (lat: number, lon: number) => void;
 }) {
+  const [introActive, setIntroActive] = useState(true);
+  const handleIntroDone = useCallback(() => setIntroActive(false), []);
+
   return (
     <Canvas
-      camera={{ position: [0, 0.5, 5.5], fov: 42 }}
+      camera={{ position: [0, 4, 30], fov: 42 }}
       style={{ background: 'transparent' }}
       dpr={Math.min(window.devicePixelRatio, 3)}
       gl={{ antialias: true, alpha: true, logarithmicDepthBuffer: true, powerPreference: 'high-performance' }}
@@ -803,7 +829,9 @@ export default function WorldGlobe({
       <Stars radius={250} depth={80} count={6000} factor={5} saturation={0} fade speed={0.3} />
       <Globe />
       <RotatingGroup individuals={individuals} onSelect={onSelect} onGlobeClick={onGlobeClick} />
+      {introActive && <CameraIntro onDone={handleIntroDone} />}
       <OrbitControls
+        enabled={!introActive}
         enablePan={false}
         minDistance={2.15}
         maxDistance={220}
