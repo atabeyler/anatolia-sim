@@ -107,6 +107,9 @@ export class SimulationEngine {
     // BUG-05: cached word count — expensive O(n×v) calc, updated only at checkpoints
     this._wordCountCache = 0;
     this._wordCountCacheDay = -1;
+
+    // Light-weight event summary cache for live dashboards.
+    this._eventCounts = new Map();
   }
 
   destroy() {
@@ -1738,6 +1741,7 @@ export class SimulationEngine {
     };
     this.events.push(event);
     if (this.events.length > 1000) this.events.shift();
+    this._eventCounts.set(type, (this._eventCounts.get(type) ?? 0) + 1);
     if (this.onEvent) {
       Promise.resolve(this.onEvent(event)).catch(err => {
         console.error('[SimulationEngine] event persist error:', err);

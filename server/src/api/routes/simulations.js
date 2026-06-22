@@ -335,20 +335,22 @@ router.get('/:id/events', authenticate, requireSimulationOwner, async (req, res)
 
 router.get('/:id/events/summary', authenticate, requireSimulationOwner, async (req, res) => {
   try {
-    const { rows } = await query(
-      `SELECT event_type, COUNT(*)::int AS count
-       FROM simulation_events
-       WHERE simulation_id = $1
-       GROUP BY event_type`,
-      [req.params.id]
-    );
-    const countsByType = Object.fromEntries(rows.map(row => [row.event_type, row.count]));
-
-    // Override birth/death counts with engine memory (authoritative — event log undercounts disaster victims)
     const engine = simulationManager.getEngine(req.params.id);
+    let countsByType = {};
     if (engine) {
+      countsByType = Object.fromEntries(engine._eventCounts ?? []);
+      // Override birth/death counts with engine memory (authoritative — event log undercounts disaster victims)
       countsByType['birth'] = engine.totalBirths;
       countsByType['death'] = [...engine.population.values()].filter(i => i.is_dead).length;
+    } else {
+      const { rows } = await query(
+        `SELECT event_type, COUNT(*)::int AS count
+         FROM simulation_events
+         WHERE simulation_id = $1
+         GROUP BY event_type`,
+        [req.params.id]
+      );
+      countsByType = Object.fromEntries(rows.map(row => [row.event_type, row.count]));
     }
 
     const total = Object.values(countsByType).reduce((s, c) => s + c, 0);
