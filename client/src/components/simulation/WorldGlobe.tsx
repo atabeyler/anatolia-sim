@@ -1,4 +1,4 @@
-import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import * as THREE from 'three';
@@ -269,54 +269,6 @@ function makeNeptuneTex(): THREE.CanvasTexture {
   ctx.fillStyle = ds; ctx.beginPath(); ctx.arc(0,0,W*0.09,0,Math.PI*2); ctx.fill();
   ctx.restore();
   return new THREE.CanvasTexture(canvas);
-}
-
-// ─── Cinematic intro ─────────────────────────────────────────────────────────
-
-const INTRO_START = new THREE.Vector3(0, 4, 30);
-const INTRO_SECS  = 5.5;
-const CAM_DIST    = 5.5;
-
-function easeOutCubic(t: number) { return 1 - Math.pow(1 - t, 3); }
-
-function spawnToCamera(lat: number, lon: number, globeRotY: number): THREE.Vector3 {
-  const latR = (lat * Math.PI) / 180;
-  // Globe local lon + globeRotY = world-space angle of the spawn point
-  const lonR = (lon * Math.PI) / 180 + globeRotY;
-  return new THREE.Vector3(
-    CAM_DIST * Math.cos(latR) * Math.cos(lonR),
-    CAM_DIST * Math.sin(latR) * 0.6 + 0.3,
-    -CAM_DIST * Math.cos(latR) * Math.sin(lonR),
-  );
-}
-
-function CameraIntro({
-  spawnLat,
-  spawnLon,
-  globeRotRef,
-  onDone,
-}: {
-  spawnLat: number;
-  spawnLon: number;
-  globeRotRef: React.RefObject<number>;
-  onDone: () => void;
-}) {
-  const { camera } = useThree();
-  const progress = useRef(0);
-  const done = useRef(false);
-  const endPos = useRef(new THREE.Vector3(0, 0.5, CAM_DIST));
-
-  useFrame((_, delta) => {
-    if (done.current) return;
-    progress.current = Math.min(progress.current + delta / INTRO_SECS, 1);
-    const t = easeOutCubic(progress.current);
-    // Recompute target each frame using live globe rotation so we track it exactly
-    endPos.current.copy(spawnToCamera(spawnLat, spawnLon, globeRotRef.current ?? 0));
-    camera.position.lerpVectors(INTRO_START, endPos.current, t);
-    if (progress.current >= 1) { done.current = true; onDone(); }
-  });
-
-  return null;
 }
 
 // ─── Globe ───────────────────────────────────────────────────────────────────
@@ -738,6 +690,11 @@ function latLonToVec3(x: number, y: number, r: number): [number, number, number]
   return [r * Math.cos(lat) * Math.cos(lon), r * Math.sin(lat), -r * Math.cos(lat) * Math.sin(lon)];
 }
 
+function lerpAngle(from: number, to: number, t: number) {
+  const delta = Math.atan2(Math.sin(to - from), Math.cos(to - from));
+  return from + delta * t;
+}
+
 function CentroidTrailLine({ trail }: { trail: CentroidPoint[] }) {
   const line = useMemo(() => {
     if (trail.length < 2) return null;
@@ -784,19 +741,69 @@ function RotatingGroup({
   onSelect,
   onGlobeClick,
   globeRotRef,
+  introTarget,
+  introPlaying = false,
+  onIntroComplete,
 }: {
   individuals: any[];
   onSelect?: (ind: any) => void;
   onGlobeClick?: (lat: number, lon: number) => void;
   globeRotRef?: React.RefObject<number>;
+  introTarget?: { lat: number; lon: number } | null;
+  introPlaying?: boolean;
+  onIntroComplete?: () => void;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const centroidTrail = useSimStore(s => s.centroidTrail);
+
+  const introStateRef = useRef({
+    started: false,
+    progress: 0,
+    startX: 0,
+    startY: 0,
+  });
+  const introCompleteRef = useRef(false);
+
+  useEffect(() => {
+    introStateRef.current.started = false;
+    introStateRef.current.progress = 0;
+    introCompleteRef.current = false;
+  }, [introTarget?.lat, introTarget?.lon, introPlaying]);
+
   useFrame((_, delta) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.025;
+    if (!groupRef.current) return;
+    if (introPlaying) {
+      if (!introStateRef.current.started) {
+        introStateRef.current.started = true;
+        introStateRef.current.startX = groupRef.current.rotation.x;
+        introStateRef.current.startY = groupRef.current.rotation.y;
+      }
+      introStateRef.current.progress = Math.min(1, introStateRef.current.progress + delta / 2.8);
+      const eased = 1 - Math.pow(1 - introStateRef.current.progress, 3);
+      const introLat = introTarget?.lat ?? 0;
+      const introLon = introTarget?.lon ?? 0;
+      const targetPitch = THREE.MathUtils.clamp((introLat * Math.PI) / 180, -1.12, 1.12);
+      const targetYaw = -(((introLon * Math.PI) / 180) + (Math.PI / 2));
+      groupRef.current.rotation.order = 'YXZ';
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(introStateRef.current.startX, targetPitch, eased);
+      groupRef.current.rotation.y = lerpAngle(introStateRef.current.startY, targetYaw, eased);
+      groupRef.current.rotation.z = 0;
       if (globeRotRef) (globeRotRef as React.MutableRefObject<number>).current = groupRef.current.rotation.y;
+      if (introStateRef.current.progress >= 1 && !introCompleteRef.current) {
+        introCompleteRef.current = true;
+        onIntroComplete?.();
+      }
+      return;
     }
+    groupRef.current.rotation.order = 'YXZ';
+    groupRef.current.rotation.y += delta * 0.025;
+    // Smooth-reset X tilt left over from intro (lerp toward 0 at ~1.5 rad/s)
+    if (Math.abs(groupRef.current.rotation.x) > 0.001) {
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, 0, Math.min(1, delta * 1.5));
+    } else {
+      groupRef.current.rotation.x = 0;
+    }
+    if (globeRotRef) (globeRotRef as React.MutableRefObject<number>).current = groupRef.current.rotation.y;
   });
 
   const prevIndRef = useRef<any[]>([]);
@@ -828,6 +835,41 @@ function RotatingGroup({
   );
 }
 
+function IntroCameraRig({
+  introPlaying,
+  onIntroComplete,
+  controlsRef,
+}: {
+  introPlaying: boolean;
+  onIntroComplete?: () => void;
+  controlsRef: React.RefObject<any>;
+}) {
+  const { camera } = useThree();
+  const progressRef = useRef(0);
+  const completeRef = useRef(false);
+
+  useEffect(() => {
+    progressRef.current = 0;
+    completeRef.current = false;
+  }, [introPlaying]);
+
+  useFrame((_, delta) => {
+    if (!introPlaying) return;
+    progressRef.current = Math.min(1, progressRef.current + delta / 2.8);
+    const eased = 1 - Math.pow(1 - progressRef.current, 3);
+    camera.position.lerpVectors(new THREE.Vector3(0, 1.15, 38), new THREE.Vector3(0, 0.55, 6.6), eased);
+    camera.lookAt(0, 0, 0);
+    controlsRef.current?.target?.set?.(0, 0, 0);
+    controlsRef.current?.update?.();
+    if (progressRef.current >= 1 && !completeRef.current) {
+      completeRef.current = true;
+      onIntroComplete?.();
+    }
+  });
+
+  return null;
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export default function WorldGlobe({
@@ -836,24 +878,32 @@ export default function WorldGlobe({
   spawnLon,
   onSelect,
   onGlobeClick,
+  introTarget = null,
+  introPlaying = false,
+  onIntroComplete,
 }: {
   individuals?: any[];
   spawnLat?: number;
   spawnLon?: number;
   onSelect?: (ind: any) => void;
   onGlobeClick?: (lat: number, lon: number) => void;
+  introTarget?: { lat: number; lon: number } | null;
+  introPlaying?: boolean;
+  onIntroComplete?: () => void;
 }) {
-  const [introDone, setIntroDone] = useState(false);
-  const orbitRef = useRef<any>(null);
-  const globeRotRef = useRef<number>(0);
-  const handleIntroDone = useCallback(() => {
-    setIntroDone(true);
-    requestAnimationFrame(() => orbitRef.current?.update());
-  }, []);
+  const controlsRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (controlsRef.current) {
+      controlsRef.current.enabled = !introPlaying;
+      controlsRef.current.target.set(0, 0, 0);
+      controlsRef.current.update?.();
+    }
+  }, [introPlaying, introTarget?.lat, introTarget?.lon]);
 
   return (
     <Canvas
-      camera={{ position: [0, 4, 30], fov: 42 }}
+      camera={{ position: introPlaying ? [0, 1.15, 38] : [0, 0.5, 5.5], fov: introPlaying ? 34 : 42 }}
       style={{ background: 'transparent' }}
       dpr={Math.min(window.devicePixelRatio, 3)}
       gl={{ antialias: true, alpha: true, logarithmicDepthBuffer: true, powerPreference: 'high-performance' }}
@@ -867,18 +917,21 @@ export default function WorldGlobe({
       <SolarSystem />
       <Stars radius={250} depth={80} count={6000} factor={5} saturation={0} fade speed={0.3} />
       <Globe />
-      <RotatingGroup individuals={individuals} onSelect={onSelect} onGlobeClick={onGlobeClick} globeRotRef={globeRotRef} />
-      {!introDone && (
-        <CameraIntro
-          spawnLat={spawnLat ?? 39}
-          spawnLon={spawnLon ?? 35}
-          globeRotRef={globeRotRef}
-          onDone={handleIntroDone}
-        />
-      )}
+      <IntroCameraRig
+        introPlaying={introPlaying}
+        onIntroComplete={onIntroComplete}
+        controlsRef={controlsRef}
+      />
+      <RotatingGroup
+        individuals={individuals}
+        onSelect={onSelect}
+        onGlobeClick={onGlobeClick}
+        introTarget={introTarget}
+        introPlaying={introPlaying}
+        onIntroComplete={onIntroComplete}
+      />
       <OrbitControls
-        ref={orbitRef}
-        enabled={introDone}
+        ref={controlsRef}
         enablePan={false}
         minDistance={2.15}
         maxDistance={220}
