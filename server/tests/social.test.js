@@ -48,6 +48,8 @@ function makeGroup(id, memberIds, overrides = {}) {
   };
 }
 
+// ── RELATIONSHIP_TYPES & GROUP_ROLES ─────────────────────────────────────────
+
 describe('RELATIONSHIP_TYPES — definition checks', () => {
   it('defines 6 relationship types', () => {
     expect(Object.keys(RELATIONSHIP_TYPES)).toHaveLength(6);
@@ -76,6 +78,8 @@ describe('GROUP_ROLES — definition checks', () => {
     expect(GROUP_ROLES.MEMBER).toBe('member');
   });
 });
+
+// ── computeSocialStatus ───────────────────────────────────────────────────────
 
 describe('computeSocialStatus', () => {
   it('returns 0 when group is null', () => {
@@ -111,16 +115,20 @@ describe('computeSocialStatus', () => {
   it('physical_strength contributes in young groups but not old ones', () => {
     const youngGroup = makeGroup('g1', ['a'], { founded_day: 0 });
     const oldGroup   = makeGroup('g2', ['a'], { founded_day: 5000 });
+    // Strong but dim: benefits from youth weight (physical_strength), hurt by old-group weight (intelligence)
     const strongDim = makeInd('a', {
       age: 30 * 365,
       phenotype: { dominance: 0.0, fluid_intelligence: 0.0, empathy: 0.0, physical_strength: 0.99 },
       social: { reputation: 0.0 },
     });
+    // physical_strength * 0.15 * (1-w): w=0 for youngGroup → contributes; w=1 for oldGroup → contributes 0
     expect(computeSocialStatus(strongDim, youngGroup)).toBeGreaterThan(
       computeSocialStatus(strongDim, oldGroup)
     );
   });
 });
+
+// ── processGroupDynamics ──────────────────────────────────────────────────────
 
 describe('processGroupDynamics — group formation', () => {
   it('returns array', () => {
@@ -154,6 +162,7 @@ describe('processGroupDynamics — group formation', () => {
     const adult  = makeInd('adult');
     const groups = [];
     processGroupDynamics([infant, adult], groups, 1);
+    // Only 1 non-infant ungrouped → no group formed
     expect(groups).toHaveLength(0);
   });
 });
@@ -271,6 +280,8 @@ describe('processGroupDynamics — group fission', () => {
     }
   });
 });
+
+// ── assignGroupRoles ──────────────────────────────────────────────────────────
 
 describe('assignGroupRoles', () => {
   it('does nothing for empty members array', () => {
