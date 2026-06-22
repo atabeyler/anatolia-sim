@@ -690,6 +690,11 @@ function latLonToVec3(x: number, y: number, r: number): [number, number, number]
   return [r * Math.cos(lat) * Math.cos(lon), r * Math.sin(lat), -r * Math.cos(lat) * Math.sin(lon)];
 }
 
+function lerpAngle(from: number, to: number, t: number) {
+  const delta = Math.atan2(Math.sin(to - from), Math.cos(to - from));
+  return from + delta * t;
+}
+
 function CentroidTrailLine({ trail }: { trail: CentroidPoint[] }) {
   const line = useMemo(() => {
     if (trail.length < 2) return null;
@@ -750,17 +755,12 @@ function RotatingGroup({
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const centroidTrail = useSimStore(s => s.centroidTrail);
-  const introTargetQuat = useMemo(() => {
-    if (!introTarget) return null;
-    const target = latLonToVec3(introTarget.lon, introTarget.lat, 1);
-    const from = new THREE.Vector3(...target).normalize();
-    return new THREE.Quaternion().setFromUnitVectors(from, new THREE.Vector3(0, 0, 1));
-  }, [introTarget?.lat, introTarget?.lon]);
 
   const introStateRef = useRef({
     started: false,
     progress: 0,
-    startQuat: new THREE.Quaternion(),
+    startX: 0,
+    startY: 0,
   });
   const introCompleteRef = useRef(false);
 
@@ -772,18 +772,22 @@ function RotatingGroup({
 
   useFrame((_, delta) => {
     if (!groupRef.current) return;
-    if (introPlaying && introTargetQuat) {
+    if (introPlaying) {
       if (!introStateRef.current.started) {
         introStateRef.current.started = true;
-        introStateRef.current.startQuat.copy(groupRef.current.quaternion);
+        introStateRef.current.startX = groupRef.current.rotation.x;
+        introStateRef.current.startY = groupRef.current.rotation.y;
       }
       introStateRef.current.progress = Math.min(1, introStateRef.current.progress + delta / 2.8);
       const eased = 1 - Math.pow(1 - introStateRef.current.progress, 3);
-      groupRef.current.quaternion.slerpQuaternions(
-        introStateRef.current.startQuat,
-        introTargetQuat,
-        eased,
-      );
+      const introLat = introTarget?.lat ?? 0;
+      const introLon = introTarget?.lon ?? 0;
+      const targetPitch = THREE.MathUtils.clamp((introLat * Math.PI) / 180, -1.12, 1.12);
+      const targetYaw = -(((introLon * Math.PI) / 180) + (Math.PI / 2));
+      groupRef.current.rotation.order = 'YXZ';
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(introStateRef.current.startX, targetPitch, eased);
+      groupRef.current.rotation.y = lerpAngle(introStateRef.current.startY, targetYaw, eased);
+      groupRef.current.rotation.z = 0;
       if (globeRotRef) (globeRotRef as React.MutableRefObject<number>).current = groupRef.current.rotation.y;
       if (introStateRef.current.progress >= 1 && !introCompleteRef.current) {
         introCompleteRef.current = true;
@@ -791,6 +795,7 @@ function RotatingGroup({
       }
       return;
     }
+    groupRef.current.rotation.order = 'YXZ';
     groupRef.current.rotation.y += delta * 0.025;
     if (globeRotRef) (globeRotRef as React.MutableRefObject<number>).current = groupRef.current.rotation.y;
   });
@@ -846,7 +851,7 @@ function IntroCameraRig({
     if (!introPlaying) return;
     progressRef.current = Math.min(1, progressRef.current + delta / 2.8);
     const eased = 1 - Math.pow(1 - progressRef.current, 3);
-    camera.position.lerpVectors(new THREE.Vector3(0, 0.9, 24), new THREE.Vector3(0, 0.5, 5.5), eased);
+    camera.position.lerpVectors(new THREE.Vector3(0, 1.15, 38), new THREE.Vector3(0, 0.55, 6.6), eased);
     camera.lookAt(0, 0, 0);
     controlsRef.current?.target?.set?.(0, 0, 0);
     controlsRef.current?.update?.();
@@ -892,7 +897,7 @@ export default function WorldGlobe({
 
   return (
     <Canvas
-      camera={{ position: introPlaying ? [0, 0.9, 24] : [0, 0.5, 5.5], fov: introPlaying ? 36 : 42 }}
+      camera={{ position: introPlaying ? [0, 1.15, 38] : [0, 0.5, 5.5], fov: introPlaying ? 34 : 42 }}
       style={{ background: 'transparent' }}
       dpr={Math.min(window.devicePixelRatio, 3)}
       gl={{ antialias: true, alpha: true, logarithmicDepthBuffer: true, powerPreference: 'high-performance' }}
