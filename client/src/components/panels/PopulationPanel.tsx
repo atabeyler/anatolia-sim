@@ -901,7 +901,7 @@ export default function PopulationPanel() {
   const [compareSet, setCompareSet] = useState<any[]>([]);
   const [showCompare, setShowCompare] = useState(false);
   const [filter, setFilter] = useState<'all' | 'male' | 'female'>('all');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [deadExpanded, setDeadExpanded] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
   const loadingRef = useRef(false);
