@@ -28,6 +28,8 @@ export function useSimWebSocket(simId: string | null) {
       };
 
       socket.onmessage = (e) => {
+        // Respond to JSON-level pings (some proxies strip native WS ping frames)
+        if (e.data === '{"type":"ping"}') { socket.send('{"type":"pong"}'); return; }
         try {
           const data = JSON.parse(e.data);
           if (data.type === 'tick') {

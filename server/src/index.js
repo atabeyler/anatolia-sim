@@ -148,6 +148,17 @@ wss.on('connection', (ws, req) => {
         current_day: eng?.currentDay ?? null,
       };
       try { ws.send(JSON.stringify(statusPayload)); } catch {}
+
+      // Heartbeat: ping every 30s to keep Render's load balancer from closing
+      // idle connections (Render cuts WebSocket after ~90s of silence).
+      ws.isAlive = true;
+      ws.on('pong', () => { ws.isAlive = true; });
+      const heartbeat = setInterval(() => {
+        if (!ws.isAlive) { clearInterval(heartbeat); ws.terminate(); return; }
+        ws.isAlive = false;
+        try { ws.ping(); } catch { clearInterval(heartbeat); }
+      }, 30000);
+      ws.on('close', () => clearInterval(heartbeat));
     } catch {
       ws.close(1008, 'Invalid token');
     }
