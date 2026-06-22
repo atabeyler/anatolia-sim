@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, type CSSProperties } from 'react';
 import FooterBar from '../components/layout/FooterBar';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Play, Pause, LogOut, ChevronLeft, ChevronRight, Users, Globe, Zap, Shield, Flame, Heart, Trash2, Sparkles, BookOpen, CircleSlash2, FastForward, X } from 'lucide-react';
 import { useSimStore } from '../store/simStore';
@@ -247,6 +247,7 @@ function DraggableLogPanel({ events, lang, fmtEvent, eventColor }: {
 
 export default function SimulationPage() {
   const { simId } = useParams<{ simId: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
   const { user, accessToken, setCurrentSim, currentSim, stats, events, activePanel, setActivePanel, lang, speedMultiplier, setSpeed, resetLiveState, setEvents, simulationEnded, clearSimulationEnded, isWarping, fastForwardTarget } = useSimStore();
   const [individuals, setIndividuals] = useState<any[]>([]);
@@ -265,6 +266,22 @@ export default function SimulationPage() {
   const [speedBusy, setSpeedBusy] = useState(false);
   const [endModal, setEndModal] = useState<{ mode: 'natural' | 'manual'; reason?: string } | null>(null);
   const [ffTarget, setFfTarget] = useState('');
+  const [introTarget, setIntroTarget] = useState<{ lat: number; lon: number } | null>(() => {
+    const navTarget = (location.state as any)?.introTarget;
+    if (navTarget && Number.isFinite(navTarget.lat) && Number.isFinite(navTarget.lon)) {
+      return { lat: Number(navTarget.lat), lon: Number(navTarget.lon) };
+    }
+    if (!simId) return null;
+    try {
+      const raw = localStorage.getItem(`anatolia-sim-intro:${simId}`);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (Number.isFinite(parsed?.lat) && Number.isFinite(parsed?.lon)) {
+        return { lat: Number(parsed.lat), lon: Number(parsed.lon) };
+      }
+    } catch {}
+    return null;
+  });
 
   // Show end modal when simulation ends naturally
   useEffect(() => {
@@ -366,6 +383,29 @@ export default function SimulationPage() {
     }, 8000);
     return () => clearInterval(interval);
   }, [simId, accessToken]);
+
+  useEffect(() => {
+    if (!simId) return;
+    const navTarget = (location.state as any)?.introTarget;
+    let nextTarget: { lat: number; lon: number } | null = null;
+    if (navTarget && Number.isFinite(navTarget.lat) && Number.isFinite(navTarget.lon)) {
+      nextTarget = { lat: Number(navTarget.lat), lon: Number(navTarget.lon) };
+    } else {
+      try {
+        const raw = localStorage.getItem(`anatolia-sim-intro:${simId}`);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Number.isFinite(parsed?.lat) && Number.isFinite(parsed?.lon)) {
+            nextTarget = { lat: Number(parsed.lat), lon: Number(parsed.lon) };
+          }
+        }
+      } catch {}
+    }
+    setIntroTarget(nextTarget);
+    if (nextTarget) {
+      try { localStorage.removeItem(`anatolia-sim-intro:${simId}`); } catch {}
+    }
+  }, [simId, location.key]);
 
   async function toggleSim() {
     if (!currentSim) { alert('Simülasyon yüklenmedi, sayfayı yenileyin.'); return; }
@@ -709,6 +749,9 @@ export default function SimulationPage() {
                     spawnLon={currentSim?.start_longitude}
                     onSelect={(ind) => { setSelectedInd(ind); setGlobeCoord(null); }}
                     onGlobeClick={(lat, lon) => { setGlobeCoord({ lat, lon }); setSelectedInd(null); }}
+                    introTarget={introTarget}
+                    introPlaying={!!introTarget}
+                    onIntroComplete={() => setIntroTarget(null)}
                   />
                 </div>
 

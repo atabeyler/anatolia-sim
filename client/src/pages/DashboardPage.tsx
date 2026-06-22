@@ -90,16 +90,23 @@ export default function DashboardPage() {
   async function createSim(form: any, founder1: any, founder2: any) {
     setLoading(true);
     try {
+      const introTarget = {
+        lat: parseFloat(form.latitude),
+        lon: parseFloat(form.longitude),
+      };
       const { data } = await axios.post('/api/simulations', {
         name: form.name,
-        latitude: parseFloat(form.latitude),
-        longitude: parseFloat(form.longitude),
+        latitude: introTarget.lat,
+        longitude: introTarget.lon,
         founder1_params: founder1,
         founder2_params: founder2,
       }, { headers });
+      try {
+        localStorage.setItem(`anatolia-sim-intro:${data.id}`, JSON.stringify(introTarget));
+      } catch {}
       setSims(s => [data, ...s]);
       setShowNew(false);
-      navigate(`/simulation/${data.id}`);
+      navigate(`/simulation/${data.id}`, { state: { introTarget } });
     } finally { setLoading(false); }
   }
 
