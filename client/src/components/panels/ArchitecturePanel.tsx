@@ -38,11 +38,8 @@ function t(lang: string, value: { tr: string; en: string; de: string; fr: string
 export default function ArchitecturePanel() {
   const { events, lang } = useSimStore();
 
-  const archEvents = events.filter(e => e.event_type === 'architecture');
-  const builtStructures = archEvents.map(e => {
-    const match = e.description?.match(/a (.+)$/);
-    return match ? match[1].replace(/ /g, '_') : null;
-  }).filter(Boolean) as string[];
+  const archEvents = events.filter(e => e.event_type === 'structure_built');
+  const builtStructures = archEvents.map(e => (e as any).structure_type ?? null).filter(Boolean) as string[];
   const uniqueStructures = [...new Set(builtStructures)];
 
   return (

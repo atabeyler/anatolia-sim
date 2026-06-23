@@ -21,17 +21,17 @@ const OBSERVABLES: { tr: string; en: string; de: string; fr: string; ar: string 
 ];
 
 export default function AstronomyPanel() {
-  const { events, lang } = useSimStore();
+  const { events, stats, lang } = useSimStore();
 
-  const astroEvents = events.filter(e => e.event_type === 'astronomy');
-  const discoveries = astroEvents.filter(e => e.description?.includes('can be predicted') || e.description?.includes('developed'));
+  const astroEvents = events.filter(e => e.event_type === 'celestial_observation' || e.event_type === 'astronomy_discovery');
+  const discoveries = events.filter(e => e.event_type === 'astronomy_discovery');
 
   return (
     <DetailPanel panelId="astronomy" title="Astronomy" titleTr="Astronomi">
       <div className="bg-sim-surface rounded-lg p-3 mb-3 flex items-center gap-3">
         <Telescope size={24} className="text-blue-400" />
         <div>
-          <div className="text-blue-400 font-bold text-lg">{discoveries.length}</div>
+          <div className="text-blue-400 font-bold text-lg">{(stats as any)?.astronomy_knowledge ?? discoveries.length}</div>
           <div className="text-sim-muted text-sm">
             {text(lang as LangCode, { tr: 'Astronomik Keşifler', en: 'Astronomical Discoveries', de: 'Astronomische Entdeckungen', fr: 'Découvertes astronomiques', ar: 'اكتشافات فلكية' })}
           </div>
@@ -44,7 +44,7 @@ export default function AstronomyPanel() {
         </h4>
         <div className="space-y-1.5">
           {KNOWLEDGE_ITEMS.map(item => {
-            const discovered = discoveries.some(e => e.description?.toLowerCase().includes(item.id.replace('_', ' ')));
+            const discovered = discoveries.some(e => (e as any).event_id === item.id || e.description?.toLowerCase().includes(item.id.replace(/_/g, ' ')));
             return (
               <div
                 key={item.id}
