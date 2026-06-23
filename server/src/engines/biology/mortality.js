@@ -29,9 +29,6 @@ export function computeDailyDeathRisk(individual, currentDay, environment) {
   else               baseRisk = 0.00061;
 
   // Extinction guard: tiny bands receive high individual attention (infant care, food sharing).
-  // Biologically, isolated individuals face greater predator/starvation risk — but without
-  // this floor the simulation nearly always goes extinct in the first 50 days, making the
-  // hypothesis untestable. Min multiplier 0.30 at population=1, linearly rising to 1.0 at 15.
   const aliveCount = environment?.alive_count ?? 100;
   if (aliveCount < 25) baseRisk *= Math.max(0.25, aliveCount / 25);
 
@@ -44,9 +41,28 @@ export function computeDailyDeathRisk(individual, currentDay, environment) {
   if ((health?.hp ?? 1) < 0.2)                baseRisk *= 3;
   if ((health?.calories ?? 1) < 0.1)          baseRisk *= 5;
   if ((health?.hydration ?? 1) < 0.1)         baseRisk *= 10;
-  // NOTE: active infections are in ind.infections[] (microbiomeEngine), NOT health.disease.
-  // Microbiome engine handles its own per-tick mortality — do not double-add here.
+
+  // ── Wizard phenotype fields → actual mortality impact ───────────────────────
+  // immune_strength: reduces overall disease-related risk
   baseRisk *= (1 - (phenotype?.immune_strength ?? 0.5) * 0.3);
+
+  // stress_resilience + health_resilience: general survival buffer
+  const resilience = ((phenotype?.stress_resilience ?? 0.5) + (phenotype?.health_resilience ?? 0.5)) / 2;
+  baseRisk *= (1 - (resilience - 0.5) * 0.25); // range: ×1.125 (min) → ×0.875 (max)
+
+  // endurance + physical_strength: reduces trauma and predator risk
+  const toughness = ((phenotype?.endurance ?? 0.5) + (phenotype?.physical_strength ?? 0.5)) / 2;
+  if (environment) {
+    const predatorReduction = (toughness - 0.5) * 0.4;
+    baseRisk -= (environment.predator_risk ?? 0) * 0.0002 * predatorReduction;
+  }
+
+  // metabolism: high metabolism burns calories faster → slightly higher starvation risk
+  if ((health?.calories ?? 1) < 0.4) {
+    const metab = phenotype?.metabolism ?? 0.5;
+    baseRisk *= (1 + (metab - 0.5) * 0.2); // high metabolism = up to 10% more risk when hungry
+  }
+
   // Drowning risk — reduced by accumulated water experience (observational learning)
   if (individual._inWater) {
     const waterSkill = Math.min(0.9, (individual._waterExperience ?? 0) * 0.9);
@@ -67,28 +83,56 @@ export function rollDeath(individual, currentDay, environment) {
 }
 
 function determineCause(individual, currentDay, environment) {
-  const { health } = individual;
+  const { health, phenotype } = individual;
   const age = getAge(individual, currentDay);
   if (individual._inWater)                                          return DEATH_CAUSES.DROWNING;
   if ((health?.hydration ?? 1) < 0.1)                              return DEATH_CAUSES.DEHYDRATION;
   if ((health?.calories  ?? 1) < 0.05)                             return DEATH_CAUSES.STARVATION;
   if (individual.infections?.length > 0)                            return DEATH_CAUSES.INFECTION;
-  if (age >= (individual.phenotype?.max_lifespan ?? 90) - 5)       return DEATH_CAUSES.OLD_AGE;
+  if (age >= (phenotype?.max_lifespan ?? 90) - 5)                  return DEATH_CAUSES.OLD_AGE;
   if ((environment?.predator_risk ?? 0) > 0.5 && Math.random() < 0.3) return DEATH_CAUSES.PREDATOR;
-  // Cause reflects the actual risk profile, not random label lottery
-  if (age < 5)   return DEATH_CAUSES.INFECTION;   // infants/toddlers: mostly infection
-  if (age < 15)  return Math.random() < 0.5 ? DEATH_CAUSES.INFECTION : DEATH_CAUSES.TRAUMA;
+
+  // Founders never die of genetic disease — user designed their genome intentionally
+  const isFounder = individual.is_founder === true;
+
+  // Genetic disease probability scales down with health_resilience + immune_strength
+  const geneticResistance = ((phenotype?.health_resilience ?? 0.5) + (phenotype?.immune_strength ?? 0.5)) / 2;
+  // At resistance=0.0 → geneticChance=0.30; at 0.5 → 0.22; at 1.0 → 0.0
+  const geneticChance = isFounder ? 0 : Math.max(0, 0.30 - geneticResistance * 0.30);
+
+  // Fertility: high fertility reduces birth complication risk for females in labour
+  const birthCompChance = (individual.sex === 'female' && health?.pregnancy)
+    ? Math.max(0, 0.15 - (phenotype?.fertility ?? 0.5) * 0.15)
+    : 0;
+
+  // Physical toughness reduces trauma probability
+  const toughness = ((phenotype?.endurance ?? 0.5) + (phenotype?.physical_strength ?? 0.5)) / 2;
+  const traumaWeight = Math.max(0.05, 0.30 - (toughness - 0.5) * 0.20);
+
+  if (age < 5)  return DEATH_CAUSES.INFECTION;
+  if (age < 15) return Math.random() < 0.5 ? DEATH_CAUSES.INFECTION : DEATH_CAUSES.TRAUMA;
+
   if (age < 45) {
     const r = Math.random();
-    if (r < 0.45) return DEATH_CAUSES.INFECTION;
-    if (r < 0.75) return DEATH_CAUSES.TRAUMA;
-    if (r < 0.97) return DEATH_CAUSES.GENETIC;
+    const infectionCut  = 0.45;
+    const traumaCut     = infectionCut + traumaWeight;
+    const birthCompCut  = traumaCut + birthCompChance;
+    const geneticCut    = birthCompCut + geneticChance;
+    if (r < infectionCut) return DEATH_CAUSES.INFECTION;
+    if (r < traumaCut)    return DEATH_CAUSES.TRAUMA;
+    if (r < birthCompCut) return DEATH_CAUSES.BIRTH_COMP;
+    if (r < geneticCut)   return DEATH_CAUSES.GENETIC;
     return DEATH_CAUSES.PREDATOR;
   }
   // 45+
   const r = Math.random();
-  if (r < 0.45) return DEATH_CAUSES.INFECTION;
-  if (r < 0.65) return DEATH_CAUSES.OLD_AGE;
-  if (r < 0.80) return DEATH_CAUSES.TRAUMA;
-  return DEATH_CAUSES.GENETIC;
+  const infectionCut = 0.45;
+  const oldAgeCut    = infectionCut + 0.20;
+  const traumaCut    = oldAgeCut + traumaWeight;
+  const geneticCut   = traumaCut + geneticChance;
+  if (r < infectionCut) return DEATH_CAUSES.INFECTION;
+  if (r < oldAgeCut)    return DEATH_CAUSES.OLD_AGE;
+  if (r < traumaCut)    return DEATH_CAUSES.TRAUMA;
+  if (r < geneticCut)   return DEATH_CAUSES.GENETIC;
+  return DEATH_CAUSES.OLD_AGE;
 }
