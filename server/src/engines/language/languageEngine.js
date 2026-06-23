@@ -61,6 +61,20 @@ export function tryAcquireWordFromEnvironment(individual, concept, groupId) {
   if (Math.random() > foxp2 * iq * 0.15) return false;
   individual.language.vocabulary = individual.language.vocabulary ?? {};
   individual.language.vocabulary[concept] = generateProtoWord(concept, groupId);
+
+  // Log the very first word this individual ever acquires
+  if (individual.mind && !individual.mind._logged_first_word) {
+    individual.mind._logged_first_word = true;
+    if (!individual.mind.inner_thought_log) individual.mind.inner_thought_log = [];
+    if (individual.mind.inner_thought_log.length < 200) {
+      individual.mind.inner_thought_log.push({
+        day: individual._sim_day ?? 0,
+        kind: 'first_word',
+        thought: { proto: individual.language.vocabulary[concept], annotated: `${individual.language.vocabulary[concept]} [${concept}]` },
+      });
+    }
+  }
+
   return true;
 }
 

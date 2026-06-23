@@ -145,6 +145,7 @@ function createInitialMind(phenotype) {
     consciousness: 0, death_awareness: false,
     belief_capacity: phenotype.belief_capacity,
     emotional_state: 0.5, stress: 0,
+    inner_thought_log: [],
   };
 }
 

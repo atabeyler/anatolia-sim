@@ -129,6 +129,19 @@ function buildThoughtString(concepts, vocab, stage, c, simDay) {
   return { proto: wordStr, annotated: withHints };
 }
 
+// Abstract concepts that mark a cognitive milestone when first thought
+const ABSTRACT_CONCEPTS = new Set(['time', 'god', 'spirit', 'sky', 'die', 'born']);
+
+// Consciousness thresholds that warrant a milestone log entry
+const C_MILESTONES = [0.1, 0.25, 0.5, 0.75];
+
+function pushThoughtLog(ind, simDay, kind, thought) {
+  if (!ind.mind.inner_thought_log) ind.mind.inner_thought_log = [];
+  // Cap log at 200 entries to avoid unbounded memory growth
+  if (ind.mind.inner_thought_log.length >= 200) return;
+  ind.mind.inner_thought_log.push({ day: simDay, kind, thought });
+}
+
 export function updateInnerThought(ind, simDay) {
   if (!ind.mind) return;
   const c        = ind.mind.consciousness ?? 0;
@@ -150,6 +163,46 @@ export function updateInnerThought(ind, simDay) {
   const concepts = getSalientConcepts(ind, simDay);
   const thought = buildThoughtString(concepts, vocab, stage, c, simDay);
   ind.mind.inner_thought = thought;
+
+  if (!thought) return;
+
+  // ── Log milestone: first thought ever ────────────────────────────────────
+  if (!ind.mind._logged_first_thought) {
+    ind.mind._logged_first_thought = true;
+    pushThoughtLog(ind, simDay, 'first_thought', thought);
+  }
+
+  // ── Log milestone: consciousness threshold crossings ──────────────────────
+  const logged = ind.mind._logged_c_milestones ?? (ind.mind._logged_c_milestones = 0);
+  for (let i = logged; i < C_MILESTONES.length; i++) {
+    if (c >= C_MILESTONES[i]) {
+      ind.mind._logged_c_milestones = i + 1;
+      pushThoughtLog(ind, simDay, `consciousness_${Math.round(C_MILESTONES[i] * 100)}`, thought);
+    } else break;
+  }
+
+  // ── Log milestone: first abstract concept ────────────────────────────────
+  if (!ind.mind._logged_abstract && concepts.some(x => ABSTRACT_CONCEPTS.has(x))) {
+    const known = concepts.filter(x => ABSTRACT_CONCEPTS.has(x) && vocab[x]);
+    if (known.length > 0) {
+      ind.mind._logged_abstract = true;
+      pushThoughtLog(ind, simDay, 'first_abstract', thought);
+    }
+  }
+
+  // ── Log milestone: death proximity (hp critical) ─────────────────────────
+  const hp = ind.health?.hp ?? 1;
+  if (hp < 0.15 && !ind.mind._logged_death_thought) {
+    ind.mind._logged_death_thought = true;
+    pushThoughtLog(ind, simDay, 'death_proximity', thought);
+  }
+
+  // ── Log milestone: grief state ───────────────────────────────────────────
+  const mental = ind.psychology?.mental_state;
+  if (mental === 'grieving' && !ind.mind._logged_grief) {
+    ind.mind._logged_grief = true;
+    pushThoughtLog(ind, simDay, 'grief', thought);
+  }
 }
 
 export function updateConsciousness(ind) {
