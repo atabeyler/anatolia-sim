@@ -9,15 +9,16 @@ export default function EconomyPanel() {
 
   const meanWealth = (stats as any)?.mean_wealth ?? 0;
   const gini = (stats as any)?.gini ?? 0;
+  const foodAb = (stats as any)?.food_abundance ?? 0;
+  const waterAb = (stats as any)?.water_abundance ?? 0;
 
   const tradeEvents = events.filter(e => e.event_type === 'trade');
 
   const resourceData = [
-    { name: 'Food', value: 60 },
-    { name: 'Water', value: 50 },
-    { name: 'Stone', value: 20 },
-    { name: 'Wood', value: 35 },
-    { name: 'Clay', value: 10 },
+    { name: t('Yiyecek', 'Food'), value: Math.round(foodAb * 100) },
+    { name: t('Su', 'Water'), value: Math.round(waterAb * 100) },
+    { name: t('Servet', 'Wealth'), value: Math.round(Math.min(meanWealth / 10, 100)) },
+    { name: t('Eşitlik', 'Equality'), value: Math.round((1 - gini) * 100) },
   ];
 
   return (
@@ -37,14 +38,15 @@ export default function EconomyPanel() {
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {t('Kaynak Dağılımı', 'Resource Distribution', 'Ressourcenverteilung', 'Distribution des ressources', 'توزيع الموارد')}
+          {t('Kaynak Durumu', 'Resource Status', 'Ressourcenstatus', 'État des ressources', 'حالة الموارد')}
         </h4>
-        <ResponsiveContainer width="100%" height={120}>
+        <ResponsiveContainer width="100%" height={110}>
           <BarChart data={resourceData} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
-            <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#888' }} />
-            <YAxis tick={{ fontSize: 12, fill: '#888' }} />
+            <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#888' }} />
+            <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#888' }} />
             <Tooltip
               contentStyle={{ backgroundColor: '#0f1117', border: '1px solid #2a2a3a', fontSize: 12 }}
+              formatter={(v: any) => [`${v}%`]}
             />
             <Bar dataKey="value" fill="#7c3aed" radius={[2, 2, 0, 0]} />
           </BarChart>
