@@ -591,49 +591,34 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
   const tr = (trStr: string, enStr: string) => text(lang as LangCode, { tr: trStr, en: enStr, de: enStr, fr: enStr, ar: enStr });
 
   const storageKey = INNER_VOICE_ARCHIVE_KEY(ind.id);
-  const [archive, setArchive] = useState<{ thought: string; year: number; ts: number }[]>(() => {
+  const [archive, setArchive] = useState<{ annotated: string; proto: string; year: number }[]>(() => {
     try { return JSON.parse(localStorage.getItem(storageKey) ?? '[]'); } catch { return []; }
   });
-  const [current, setCurrent] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchThought = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await axios.post('/api/aria/inner-voice', {
-        individual: ind,
-        simYear: (stats as any)?.year,
-        simStats: stats,
-        lang,
-      });
-      const thought = res.data?.thought ?? '';
-      if (thought) {
-        setCurrent(thought);
-        const entry = { thought, year: (stats as any)?.year ?? 0, ts: Date.now() };
-        setArchive(prev => {
-          const updated = [entry, ...prev].slice(0, 50);
-          try { localStorage.setItem(storageKey, JSON.stringify(updated)); } catch {}
-          return updated;
-        });
-      }
-    } catch (e: any) {
-      setError(e?.response?.data?.error ?? e?.message ?? 'Error');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const thought = ind.mind?.inner_thought ?? null;
+  const simYear = (stats as any)?.year ?? 0;
 
-  useEffect(() => { fetchThought(); }, []);
+  // Save current thought to archive when modal opens (if new)
+  useEffect(() => {
+    if (!thought?.annotated) return;
+    setArchive(prev => {
+      if (prev[0]?.annotated === thought.annotated) return prev;
+      const updated = [{ ...thought, year: simYear }, ...prev].slice(0, 50);
+      try { localStorage.setItem(storageKey, JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+  }, []);
 
   const c = ind.mind?.consciousness ?? 0;
+  const stage = ind.language?.stage ?? 0;
   const accentColor = c > 0.5 ? '#c8b4ff' : c > 0.15 ? '#7dd3fc' : '#6a8878';
   const name = nameFromId(ind.id, ind.sex, ind.phenotype?.name ?? ind.name);
+  const vocab = ind.language?.vocabulary ?? {};
+  const wordCount = Object.keys(vocab).length;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
-      <div className="flex flex-col" style={{ width: 400, maxHeight: '80vh', background: 'rgba(4,4,18,0.98)', border: `1px solid ${accentColor}40`, boxShadow: '0 16px 60px rgba(0,0,0,0.8)', borderRadius: 2 }}>
+      <div className="flex flex-col" style={{ width: 420, maxHeight: '82vh', background: 'rgba(4,4,18,0.98)', border: `1px solid ${accentColor}40`, boxShadow: '0 16px 60px rgba(0,0,0,0.8)', borderRadius: 2 }}>
 
         {/* Header */}
         <div className="flex items-center gap-2 px-4 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${accentColor}20` }}>
@@ -647,27 +632,59 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
 
         {/* Current thought */}
         <div className="px-4 pt-4 pb-3 flex-shrink-0">
-          <div style={{ background: `${accentColor}08`, border: `1px solid ${accentColor}20`, borderLeft: `3px solid ${accentColor}`, padding: '10px 12px', borderRadius: 2, minHeight: 60 }}>
-            {loading ? (
-              <p className="font-share-tech" style={{ fontSize: 12, color: '#6a8878', fontStyle: 'italic' }}>{tr('Düşünce oluşturuluyor...', 'Generating thought...')}</p>
-            ) : error ? (
-              <p className="font-share-tech" style={{ fontSize: 12, color: '#e05a5a' }}>{error}</p>
-            ) : current ? (
-              <p className="font-share-tech" style={{ fontSize: 13, color: '#c8d8e8', lineHeight: 1.6, fontStyle: 'italic' }}>"{current}"</p>
-            ) : null}
+          <div style={{ background: `${accentColor}06`, border: `1px solid ${accentColor}20`, borderLeft: `3px solid ${accentColor}`, padding: '10px 12px', borderRadius: 2, minHeight: 64 }}>
+            {thought?.annotated ? (
+              <>
+                <p className="font-share-tech" style={{ fontSize: 15, color: '#e8e0ff', lineHeight: 1.7, letterSpacing: '0.08em' }}>
+                  {thought.proto}
+                </p>
+                <p className="font-share-tech" style={{ fontSize: 10, color: '#6a7888', marginTop: 4, lineHeight: 1.5 }}>
+                  {thought.annotated}
+                </p>
+              </>
+            ) : thought?.tr || thought?.en ? (
+              <p className="font-share-tech" style={{ fontSize: 12, color: '#c8d8e8', lineHeight: 1.6, fontStyle: 'italic' }}>
+                {typeof thought === 'object' ? (lang === 'tr' ? thought.tr : thought.en) : String(thought)}
+              </p>
+            ) : stage < 2 ? (
+              <p className="font-share-tech" style={{ fontSize: 12, color: '#4a5568', fontStyle: 'italic' }}>
+                {tr('Dil yok — henüz düşünce oluşmuyor.', 'No language — no thought yet.')}
+              </p>
+            ) : wordCount === 0 ? (
+              <p className="font-share-tech" style={{ fontSize: 12, color: '#4a5568', fontStyle: 'italic' }}>
+                {tr('Kelime bilmiyor — iç ses sessiz.', 'No words known — inner voice silent.')}
+              </p>
+            ) : (
+              <p className="font-share-tech" style={{ fontSize: 12, color: '#4a5568', fontStyle: 'italic' }}>
+                {tr('Düşünce oluşuyor...', 'Thought forming...')}
+              </p>
+            )}
           </div>
-          <div className="flex items-center gap-2 mt-2">
+
+          {/* Stats row */}
+          <div className="flex items-center gap-3 mt-2">
             <div style={{ flex: 1, height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 1 }}>
               <div style={{ width: `${Math.round(c * 100)}%`, height: '100%', background: accentColor, borderRadius: 1 }} />
             </div>
-            <span className="font-share-tech" style={{ fontSize: 10, color: '#6a8878' }}>{tr('Bilinç', 'Consc.')} {Math.round(c * 100)}%</span>
-            <button
-              onClick={fetchThought}
-              disabled={loading}
-              style={{ background: 'transparent', border: `1px solid ${accentColor}40`, color: accentColor, cursor: loading ? 'not-allowed' : 'pointer', padding: '2px 8px', fontSize: 10, fontFamily: 'Share Tech Mono, monospace', borderRadius: 2, opacity: loading ? 0.5 : 1 }}>
-              {tr('YENİLE', 'REFRESH')}
-            </button>
+            <span className="font-share-tech" style={{ fontSize: 10, color: '#6a8878' }}>
+              {tr('Bilinç', 'Consc.')} {Math.round(c * 100)}%
+            </span>
+            <span className="font-share-tech" style={{ fontSize: 10, color: '#6a8878' }}>
+              {wordCount} {tr('kelime', 'words')}
+            </span>
           </div>
+
+          {/* Vocabulary peek */}
+          {wordCount > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {Object.entries(vocab).slice(0, 12).map(([concept, word]) => (
+                <span key={concept} className="font-share-tech" style={{ fontSize: 9, color: '#8898a8', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', padding: '1px 4px', borderRadius: 2 }}>
+                  {String(word)} <span style={{ color: '#4a5568' }}>[{concept}]</span>
+                </span>
+              ))}
+              {wordCount > 12 && <span className="font-share-tech" style={{ fontSize: 9, color: '#4a5568' }}>+{wordCount - 12}</span>}
+            </div>
+          )}
         </div>
 
         {/* Archive */}
@@ -680,9 +697,11 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
             </div>
             <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
               {archive.slice(1).map((entry, i) => (
-                <div key={i} style={{ borderLeft: `2px solid ${accentColor}25`, paddingLeft: 8 }}>
+                <div key={i} style={{ borderLeft: `2px solid ${accentColor}20`, paddingLeft: 8 }}>
                   <span className="font-share-tech" style={{ fontSize: 10, color: '#4a5568' }}>Y{entry.year}</span>
-                  <p className="font-share-tech" style={{ fontSize: 11, color: '#8898a8', fontStyle: 'italic', marginTop: 2 }}>"{entry.thought}"</p>
+                  <p className="font-share-tech" style={{ fontSize: 11, color: '#8898a8', letterSpacing: '0.06em', marginTop: 2 }}>
+                    {entry.proto ?? entry.annotated}
+                  </p>
                 </div>
               ))}
             </div>

@@ -6,7 +6,7 @@ import { selectAction } from './agent/decisionEngine.js';
 import { updateEpigenome } from './epigenetics/epigeneticsEngine.js';
 import { updateGutMicrobiome } from './microbiome/microbiomeEngine.js';
 import { updateMentalState } from './psychology/psychologyEngine.js';
-import { updateConsciousness } from './consciousness/consciousnessEngine.js';
+import { updateConsciousness, updateInnerThought } from './consciousness/consciousnessEngine.js';
 import { accumulateExperience } from './agent/activityEngine.js';
 import { gatherResources, consumeResources, produceGoods } from './economy/economyEngine.js';
 
@@ -58,6 +58,7 @@ parentPort.on('message', ({ individuals, worldState, discoveredTechs, day }) => 
 
     // ── 5b. Consciousness ────────────────────────────────────────────────────
     updateConsciousness(ind);
+    updateInnerThought(ind, day);
 
     // ── 13. Experience accumulation ──────────────────────────────────────────
     accumulateExperience(ind, worldState);
