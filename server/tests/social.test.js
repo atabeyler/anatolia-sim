@@ -150,7 +150,7 @@ describe('processGroupDynamics — group formation', () => {
   });
 
   it('infant life_stage is excluded from ungrouped pool', () => {
-    const infant = makeInd('infant', { life_stage: 'INFANT' });
+    const infant = makeInd('infant', { life_stage: 'infant' });
     const adult  = makeInd('adult');
     const groups = [];
     processGroupDynamics([infant, adult], groups, 1);
