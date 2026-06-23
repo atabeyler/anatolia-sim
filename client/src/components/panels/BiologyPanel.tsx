@@ -90,22 +90,22 @@ export default function BiologyPanel() {
     <DetailPanel panelId="biology" title="Biology" titleTr="Biyoloji">
       {loadError && (
         <div className="mb-2 px-3 py-2 text-xs font-share-tech text-sim-red bg-sim-red/10 border border-sim-red/30 rounded">
-          {text(lang as LangCode, { en: 'Failed to load individual data. Retrying…', tr: 'Bireysel veri yüklenemedi. Yeniden deneniyor…' })}
+          {text(lang as LangCode, { en: 'Failed to load individual data. Retrying…', tr: 'Bireysel veri yüklenemedi. Yeniden deneniyor…', de: 'Individualdaten konnten nicht geladen werden. Wiederholen…', fr: 'Échec du chargement des données. Réessai…', ar: 'فشل تحميل البيانات الفردية. إعادة المحاولة…' })}
         </div>
       )}
-      <Section title={text(lang as LangCode, { en: 'Population Vitals', tr: 'Nüfus Değerleri' })}>
-        <MetricRow label={text(lang as LangCode, { en: 'Population', tr: 'Nüfus' })} value={pop} />
-        <MetricRow label={text(lang as LangCode, { en: 'Avg Age', tr: 'Ortalama Yaş' })} value={`${avgAge.toFixed(1)} yr`} />
-        <MetricRow label={text(lang as LangCode, { en: 'Sex Ratio M:F', tr: 'Cinsiyet Oranı E:K' })} value={`${(sexRatio * 100).toFixed(0)}% / ${((1 - sexRatio) * 100).toFixed(0)}%`} />
-        <MetricRow label={text(lang as LangCode, { en: 'Avg Intelligence', tr: 'Ortalama Zekâ' })} value={(avgIntel * 100).toFixed(1) + '%'} />
-        <MetricRow label={text(lang as LangCode, { en: 'Sick Rate', tr: 'Hastalık Oranı' })} value={`${((stats?.sick_rate ?? 0) * 100).toFixed(1)}%`} />
-        <MetricRow label={text(lang as LangCode, { en: 'Avg Consciousness', tr: 'Ort. Bilinç' })} value={`${((stats?.avg_consciousness ?? 0) * 100).toFixed(2)}%`} />
-        <MetricRow label={text(lang as LangCode, { en: 'Max ToM Stage', tr: 'Maks. Zihin Teorisi' })} value={`${stats?.max_tom_stage ?? 0} / 3`} />
+      <Section title={text(lang as LangCode, { en: 'Population Vitals', tr: 'Nüfus Değerleri', de: 'Bevölkerungsdaten', fr: 'Données démographiques', ar: 'البيانات الحيوية للسكان' })}>
+        <MetricRow label={text(lang as LangCode, { en: 'Population', tr: 'Nüfus', de: 'Bevölkerung', fr: 'Population', ar: 'السكان' })} value={pop} />
+        <MetricRow label={text(lang as LangCode, { en: 'Avg Age', tr: 'Ortalama Yaş', de: 'Ø Alter', fr: 'Âge moy.', ar: 'متوسط العمر' })} value={`${avgAge.toFixed(1)} yr`} />
+        <MetricRow label={text(lang as LangCode, { en: 'Sex Ratio M:F', tr: 'Cinsiyet Oranı E:K', de: 'Geschl.-verh. M:W', fr: 'Ratio H:F', ar: 'نسبة ذ:أ' })} value={`${(sexRatio * 100).toFixed(0)}% / ${((1 - sexRatio) * 100).toFixed(0)}%`} />
+        <MetricRow label={text(lang as LangCode, { en: 'Avg Intelligence', tr: 'Ortalama Zekâ', de: 'Ø Intelligenz', fr: 'Intelligence moy.', ar: 'متوسط الذكاء' })} value={(avgIntel * 100).toFixed(1) + '%'} />
+        <MetricRow label={text(lang as LangCode, { en: 'Sick Rate', tr: 'Hastalık Oranı', de: 'Krankenquote', fr: 'Taux de maladie', ar: 'معدل المرض' })} value={`${((stats?.sick_rate ?? 0) * 100).toFixed(1)}%`} />
+        <MetricRow label={text(lang as LangCode, { en: 'Avg Consciousness', tr: 'Ort. Bilinç', de: 'Ø Bewusstsein', fr: 'Conscience moy.', ar: 'متوسط الوعي' })} value={`${((stats?.avg_consciousness ?? 0) * 100).toFixed(2)}%`} />
+        <MetricRow label={text(lang as LangCode, { en: 'Max ToM Stage', tr: 'Maks. Zihin Teorisi', de: 'Max ToM-Stufe', fr: 'Stade ToM max', ar: 'أقصى مرحلة ToM' })} value={`${stats?.max_tom_stage ?? 0} / 3`} />
       </Section>
 
-      <Section title={text(lang as LangCode, { en: 'Genome Activity', tr: 'Genom Aktivitesi' })}>
+      <Section title={text(lang as LangCode, { en: 'Genome Activity', tr: 'Genom Aktivitesi', de: 'Genomaktivität', fr: 'Activité génomique', ar: 'نشاط الجينوم' })}>
         <p className="text-sim-muted text-sm italic mb-2">
-          {text(lang as LangCode, { en: 'Gene loci drive behavior. Values emerge from meiosis and mutation.', tr: 'Gen lokusları davranışları yönlendirir. Değerler mayoz ve mutasyondan ortaya çıkar.' })}
+          {text(lang as LangCode, { en: 'Gene loci drive behavior. Values emerge from meiosis and mutation.', tr: 'Gen lokusları davranışları yönlendirir. Değerler mayoz ve mutasyondan ortaya çıkar.', de: 'Genloci steuern das Verhalten. Werte entstehen durch Meiose und Mutation.', fr: 'Les loci géniques guident le comportement. Les valeurs émergent de la méiose et des mutations.', ar: 'مواضع الجينات تحدد السلوك. تظهر القيم من الانقسام الاختزالي والطفرات.' })}
         </p>
         {Object.entries(GENE_LABELS).slice(0, 6).map(([key, labels]) => {
           const phenoKey = labels.phenoKey;
@@ -129,15 +129,15 @@ export default function BiologyPanel() {
         })}
       </Section>
 
-      <Section title={text(lang as LangCode, { en: 'Living Individuals', tr: 'Yaşayan Bireyler' })}>
+      <Section title={text(lang as LangCode, { en: 'Living Individuals', tr: 'Yaşayan Bireyler', de: 'Lebende Individuen', fr: 'Individus vivants', ar: 'الأفراد الأحياء' })}>
         {individuals.length === 0 ? (
           <p className="text-sim-muted text-sm italic">
-            {text(lang as LangCode, { en: 'No live population loaded yet.', tr: 'Canlı nüfus henüz yüklenmedi.' })}
+            {text(lang as LangCode, { en: 'No live population loaded yet.', tr: 'Canlı nüfus henüz yüklenmedi.', de: 'Noch keine lebende Bevölkerung geladen.', fr: 'Aucune population vivante chargée.', ar: 'لم يتم تحميل أي سكان أحياء بعد.' })}
           </p>
         ) : (
           <div className="space-y-2 max-h-80 overflow-auto pr-1">
             {individuals.slice(0, 80).map(ind => {
-              const sexTr = ind.sex === 'male' ? 'Erkek' : ind.sex === 'female' ? 'Kadın' : ind.sex;
+              const sexLocalized = text(lang as LangCode, { en: ind.sex, tr: ind.sex === 'male' ? 'Erkek' : ind.sex === 'female' ? 'Kadın' : ind.sex, de: ind.sex === 'male' ? 'Männlich' : ind.sex === 'female' ? 'Weiblich' : ind.sex, fr: ind.sex === 'male' ? 'Mâle' : ind.sex === 'female' ? 'Femelle' : ind.sex, ar: ind.sex === 'male' ? 'ذكر' : ind.sex === 'female' ? 'أنثى' : ind.sex });
               const hairVal = ind.phenotype?.hair_color ?? '-';
               const eyeVal  = ind.phenotype?.eye_color ?? '-';
               const skinVal = ind.phenotype?.skin_color ?? ind.phenotype?.skin_tone;
@@ -146,18 +146,18 @@ export default function BiologyPanel() {
                 <div key={ind.id} className="bg-sim-bg/60 border border-sim-border/40 rounded p-2">
                   <div className="flex justify-between gap-2 mb-1">
                     <span className="text-sim-text font-semibold truncate">
-                      {ind.name ?? ind.phenotype?.name ?? text(lang as LangCode, { en: 'Unnamed', tr: 'İsimsiz' })}
+                      {ind.name ?? ind.phenotype?.name ?? text(lang as LangCode, { en: 'Unnamed', tr: 'İsimsiz', de: 'Unbenannt', fr: 'Sans nom', ar: 'بلا اسم' })}
                     </span>
                     <span className="text-sim-accent font-mono text-[12px]">{Number(ind.age_years ?? 0).toFixed(1)} yr</span>
                   </div>
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[12px]">
-                    <Mini label={text(lang as LangCode, { en: 'Sex', tr: 'Cinsiyet' })} value={text(lang as LangCode, { en: ind.sex, tr: sexTr })} />
-                    <Mini label={text(lang as LangCode, { en: 'Location', tr: 'Konum' })} value={`${Number(ind.y ?? 0).toFixed(2)}, ${Number(ind.x ?? 0).toFixed(2)}`} />
-                    <Mini label={text(lang as LangCode, { en: 'Hair', tr: 'Saç' })} value={text(lang as LangCode, { en: hairVal, tr: HAIR_TR[hairVal] ?? hairVal })} />
-                    <Mini label={text(lang as LangCode, { en: 'Eye', tr: 'Göz' })} value={text(lang as LangCode, { en: eyeVal, tr: EYE_TR[eyeVal] ?? eyeVal })} />
-                    <Mini label={text(lang as LangCode, { en: 'Skin', tr: 'Ten' })} value={translateSkin(skinVal, lang)} />
-                    <Mini label={text(lang as LangCode, { en: 'Height', tr: 'Boy' })} value={`${ind.phenotype?.height_cm ?? '-'} cm`} />
-                    <Mini label={text(lang as LangCode, { en: 'IQ', tr: 'Zekâ' })} value={`${((ind.phenotype?.fluid_intelligence ?? 0) * 100).toFixed(0)}%`} />
+                    <Mini label={text(lang as LangCode, { en: 'Sex', tr: 'Cinsiyet', de: 'Geschlecht', fr: 'Sexe', ar: 'الجنس' })} value={sexLocalized} />
+                    <Mini label={text(lang as LangCode, { en: 'Location', tr: 'Konum', de: 'Standort', fr: 'Emplacement', ar: 'الموقع' })} value={`${Number(ind.y ?? 0).toFixed(2)}, ${Number(ind.x ?? 0).toFixed(2)}`} />
+                    <Mini label={text(lang as LangCode, { en: 'Hair', tr: 'Saç', de: 'Haare', fr: 'Cheveux', ar: 'الشعر' })} value={text(lang as LangCode, { en: hairVal, tr: HAIR_TR[hairVal] ?? hairVal })} />
+                    <Mini label={text(lang as LangCode, { en: 'Eye', tr: 'Göz', de: 'Auge', fr: 'Œil', ar: 'العين' })} value={text(lang as LangCode, { en: eyeVal, tr: EYE_TR[eyeVal] ?? eyeVal })} />
+                    <Mini label={text(lang as LangCode, { en: 'Skin', tr: 'Ten', de: 'Haut', fr: 'Peau', ar: 'البشرة' })} value={translateSkin(skinVal, lang)} />
+                    <Mini label={text(lang as LangCode, { en: 'Height', tr: 'Boy', de: 'Größe', fr: 'Taille', ar: 'الطول' })} value={`${ind.phenotype?.height_cm ?? '-'} cm`} />
+                    <Mini label={text(lang as LangCode, { en: 'IQ', tr: 'Zekâ', de: 'IQ', fr: 'QI', ar: 'معدل الذكاء' })} value={`${((ind.phenotype?.fluid_intelligence ?? 0) * 100).toFixed(0)}%`} />
                     <Mini
                       label={text(lang as LangCode, { en: 'Language', tr: 'Dil', de: 'Sprache', fr: 'Langage', ar: 'اللغة' })}
                       value={lang === 'tr' ? (LANG_STAGE_TR[langStage.toLowerCase()] ?? langStage) : langStage.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
@@ -170,8 +170,15 @@ export default function BiologyPanel() {
         )}
       </Section>
 
-      <Section title={text(lang as LangCode, { en: 'Life Stages', tr: 'Yaşam Evreleri' })}>
+      <Section title={text(lang as LangCode, { en: 'Life Stages', tr: 'Yaşam Evreleri', de: 'Lebensphasen', fr: 'Étapes de vie', ar: 'مراحل الحياة' })}>
         {(() => {
+          const LIFE_STAGE_I18N: Record<string, { tr: string; de: string; fr: string; ar: string }> = {
+            infant:     { tr: 'Bebek',    de: 'Säugling',    fr: 'Nourrisson', ar: 'رضيع' },
+            child:      { tr: 'Çocuk',    de: 'Kind',         fr: 'Enfant',     ar: 'طفل' },
+            adolescent: { tr: 'Ergen',    de: 'Jugendlicher', fr: 'Adolescent', ar: 'مراهق' },
+            adult:      { tr: 'Yetişkin', de: 'Erwachsener',  fr: 'Adulte',     ar: 'بالغ' },
+            elder:      { tr: 'Yaşlı',    de: 'Älterer',      fr: 'Aîné',       ar: 'شيخ' },
+          };
           const counts: Record<string, number> = { infant: 0, child: 0, adolescent: 0, adult: 0, elder: 0 };
           for (const ind of individuals) {
             const stage = (ind.life_stage ?? '').toLowerCase();
@@ -180,7 +187,7 @@ export default function BiologyPanel() {
           return ['infant', 'child', 'adolescent', 'adult', 'elder'].map(stage => (
             <div key={stage} className="flex justify-between py-0.5 border-b border-sim-border/30">
               <span className="text-sim-muted">
-                {text(lang as LangCode, { en: stage, tr: LIFE_STAGE_TR[stage] ?? stage })}
+                {text(lang as LangCode, { en: stage, tr: LIFE_STAGE_I18N[stage]?.tr ?? stage, de: LIFE_STAGE_I18N[stage]?.de ?? stage, fr: LIFE_STAGE_I18N[stage]?.fr ?? stage, ar: LIFE_STAGE_I18N[stage]?.ar ?? stage })}
               </span>
               <span className="text-sim-text font-mono">{counts[stage]}</span>
             </div>

@@ -53,7 +53,7 @@ export default function HypothesisPanel() {
     try {
       const { data } = await axios.post(`/api/analysis/${currentSim.id}/hypothesis`, { hypothesis, lang, stats, events: events.slice(0, 50) }, { headers: { Authorization: `Bearer ${accessToken}` } });
       setResult(data);
-    } catch { setResult({ verdict: 'inconclusive', confidence: 0, reasoning: text(lang as LangCode, { en: 'Test failed.', tr: 'Test başarısız.' }) }); }
+    } catch { setResult({ verdict: 'inconclusive', confidence: 0, reasoning: text(lang as LangCode, { en: 'Test failed.', tr: 'Test başarısız.', de: 'Test fehlgeschlagen.', fr: 'Test échoué.', ar: 'فشل الاختبار.' }) }); }
     setLoading(false);
   }
 
@@ -71,18 +71,18 @@ export default function HypothesisPanel() {
       {stats && (
         <div className="bg-sim-surface rounded-lg p-3 mb-3">
           <div className="text-sim-gold text-xs font-semibold uppercase tracking-widest mb-2">
-            {text(lang as LangCode, { en: 'Adam & Eve Hypothesis Metrics', tr: 'Adem & Havva Hipotez Metrikleri' })}
+            {text(lang as LangCode, { en: 'Adam & Eve Hypothesis Metrics', tr: 'Adem & Havva Hipotez Metrikleri', de: 'Adam & Eva Hypothesenmetriken', fr: 'Métriques Hypothèse Adam & Ève', ar: 'مقاييس فرضية آدم وحواء' })}
           </div>
           <div className="grid grid-cols-2 gap-1.5">
             {[
-              { label: text(lang as LangCode, { en: 'Avg Consciousness', tr: 'Ort. Bilinç' }), value: ((stats.avg_consciousness ?? 0) * 100).toFixed(1) + '%' },
-              { label: text(lang as LangCode, { en: 'Max ToM Stage', tr: 'Max ZihinKur.' }), value: stats.max_tom_stage ?? 0 },
-              { label: text(lang as LangCode, { en: 'Word Count', tr: 'Kelime Sayısı' }), value: stats.word_count ?? 0 },
-              { label: text(lang as LangCode, { en: 'Lang Stage', tr: 'Dil Aşaması' }), value: stats.max_language_stage ?? 0 },
-              { label: text(lang as LangCode, { en: 'Technologies', tr: 'Teknolojiler' }), value: stats.technologies ?? 0 },
-              { label: text(lang as LangCode, { en: 'Beliefs', tr: 'İnançlar' }), value: stats.beliefs ?? 0 },
-              { label: text(lang as LangCode, { en: 'Art Forms', tr: 'Sanat Biçimleri' }), value: stats.art_forms ?? 0 },
-              { label: text(lang as LangCode, { en: 'QoL Index', tr: 'YYK Endeksi' }), value: ((stats.qol_index ?? 0) * 100).toFixed(1) + '%' },
+              { label: text(lang as LangCode, { en: 'Avg Consciousness', tr: 'Ort. Bilinç', de: 'Ø Bewusstsein', fr: 'Conscience moy.', ar: 'متوسط الوعي' }), value: ((stats.avg_consciousness ?? 0) * 100).toFixed(1) + '%' },
+              { label: text(lang as LangCode, { en: 'Max ToM Stage', tr: 'Max ZihinKur.', de: 'Max ToM-Stufe', fr: 'Stade ToM max', ar: 'أقصى مرحلة ToM' }), value: stats.max_tom_stage ?? 0 },
+              { label: text(lang as LangCode, { en: 'Word Count', tr: 'Kelime Sayısı', de: 'Wortanzahl', fr: 'Nb. de mots', ar: 'عدد الكلمات' }), value: stats.word_count ?? 0 },
+              { label: text(lang as LangCode, { en: 'Lang Stage', tr: 'Dil Aşaması', de: 'Sprachstufe', fr: 'Niveau langue', ar: 'مرحلة اللغة' }), value: stats.max_language_stage ?? 0 },
+              { label: text(lang as LangCode, { en: 'Technologies', tr: 'Teknolojiler', de: 'Technologien', fr: 'Technologies', ar: 'التقنيات' }), value: stats.technologies ?? 0 },
+              { label: text(lang as LangCode, { en: 'Beliefs', tr: 'İnançlar', de: 'Überzeugungen', fr: 'Croyances', ar: 'المعتقدات' }), value: stats.beliefs ?? 0 },
+              { label: text(lang as LangCode, { en: 'Art Forms', tr: 'Sanat Biçimleri', de: 'Kunstformen', fr: "Formes d'art", ar: 'أشكال الفن' }), value: stats.art_forms ?? 0 },
+              { label: text(lang as LangCode, { en: 'QoL Index', tr: 'YYK Endeksi', de: 'Lebensqualität', fr: 'Indice Q.V.', ar: 'مؤشر جودة الحياة' }), value: ((stats.qol_index ?? 0) * 100).toFixed(1) + '%' },
             ].map(({ label, value }) => (
               <div key={label} className="bg-sim-bg rounded p-1.5">
                 <div className="text-sim-muted" style={{ fontSize: 10 }}>{label}</div>
@@ -105,7 +105,7 @@ export default function HypothesisPanel() {
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {text(lang as LangCode, { en: 'Examples', tr: 'Örnekler' })}
+          {text(lang as LangCode, { en: 'Examples', tr: 'Örnekler', de: 'Beispiele', fr: 'Exemples', ar: 'أمثلة' })}
         </h4>
         <div className="space-y-1">
           {examples.map(ex => (
@@ -120,12 +120,12 @@ export default function HypothesisPanel() {
       <textarea
         value={hypothesis}
         onChange={e => setHypothesis(e.target.value)}
-        placeholder={text(lang as LangCode, { en: 'State your hypothesis…', tr: 'Hipotezinizi belirtin…' })}
+        placeholder={text(lang as LangCode, { en: 'State your hypothesis…', tr: 'Hipotezinizi belirtin…', de: 'Geben Sie Ihre Hypothese ein…', fr: 'Énoncez votre hypothèse…', ar: 'اذكر فرضيتك…' })}
         className="w-full bg-sim-bg border border-sim-border rounded-lg px-3 py-2 text-sm text-sim-text resize-none h-16 focus:border-sim-accent focus:outline-none mb-2"
       />
       <button onClick={test} disabled={loading || !hypothesis.trim()}
         className="w-full px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 mb-3">
-        {loading ? text(lang as LangCode, { en: 'Testing…', tr: 'Test ediliyor…' }) : text(lang as LangCode, { en: 'Test Hypothesis', tr: 'Hipotezi Test Et' })}
+        {loading ? text(lang as LangCode, { en: 'Testing…', tr: 'Test ediliyor…', de: 'Testen…', fr: 'Test en cours…', ar: 'جارٍ الاختبار…' }) : text(lang as LangCode, { en: 'Test Hypothesis', tr: 'Hipotezi Test Et', de: 'Hypothese testen', fr: "Tester l'hypothèse", ar: 'اختبار الفرضية' })}
       </button>
 
       {result && verdictStyle && (() => {
@@ -135,14 +135,14 @@ export default function HypothesisPanel() {
             <div className="flex items-center gap-2 mb-2">
               <Icon size={14} className={verdictStyle.color} />
               <span className={`text-sm font-semibold uppercase ${verdictStyle.color}`}>
-                {result.verdict} ({(result.confidence * 100).toFixed(0)}% {text(lang as LangCode, { en: 'confidence', tr: 'güven' })})
+                {result.verdict} ({(result.confidence * 100).toFixed(0)}% {text(lang as LangCode, { en: 'confidence', tr: 'güven', de: 'Konfidenz', fr: 'confiance', ar: 'ثقة' })})
               </span>
             </div>
             {result.ci_lower !== undefined && result.ci_upper !== undefined && (
               <p className="text-xs text-sim-muted mb-2">
                 95% CI: [{(result.ci_lower * 100).toFixed(1)}%, {(result.ci_upper * 100).toFixed(1)}%]
                 {result.n_evidence !== undefined && (
-                  <span className="ml-2 opacity-60">n={result.n_evidence} {text(lang as LangCode, { en: 'events', tr: 'olay' })}</span>
+                  <span className="ml-2 opacity-60">n={result.n_evidence} {text(lang as LangCode, { en: 'events', tr: 'olay', de: 'Ereignisse', fr: 'événements', ar: 'أحداث' })}</span>
                 )}
               </p>
             )}

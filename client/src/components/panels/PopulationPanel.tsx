@@ -1348,7 +1348,7 @@ export default function PopulationPanel() {
               </div>
               <button
                 onClick={e => toggleCompare(e, ind)}
-                title={text(lang as LangCode, { en: 'Add to comparison', tr: 'Karşılaştırmaya ekle', de: 'Add to comparison', fr: 'Add to comparison', ar: 'Add to comparison' })}
+                title={text(lang as LangCode, { en: 'Add to comparison', tr: 'Karşılaştırmaya ekle', de: 'Zum Vergleich hinzufügen', fr: 'Ajouter à la comparaison', ar: 'أضف للمقارنة' })}
                 style={{
                   background: compareSet.find(i => i.id === ind.id) ? 'rgba(79,110,247,0.25)' : 'transparent',
                   border: `1px solid ${compareSet.find(i => i.id === ind.id) ? 'rgba(79,110,247,0.7)' : 'rgba(79,110,247,0.2)'}`,
@@ -1368,7 +1368,7 @@ export default function PopulationPanel() {
       {filtered.length > 100 && (
         <div className="text-center py-2">
           <span className="font-share-tech text-sim-muted/40 tracking-widest" style={{ fontSize: 12 }}>
-            +{filtered.length - 100} {text(lang as LangCode, { en: 'more individuals', tr: 'birey daha', de: 'more individuals', fr: 'more individuals', ar: 'more individuals' })}
+            +{filtered.length - 100} {text(lang as LangCode, { en: 'more individuals', tr: 'birey daha', de: 'weitere Individuen', fr: 'individus de plus', ar: 'فرد إضافي' })}
           </span>
         </div>
       )}
@@ -1376,7 +1376,7 @@ export default function PopulationPanel() {
       {filtered.length === 0 && !loading && (
         <div className="flex flex-col items-center py-6 gap-2">
           <Users size={24} className="text-sim-muted/20" />
-          <span className="font-share-tech text-sim-muted/40 tracking-widest" style={{ fontSize: 12 }}>{text(lang as LangCode, { en: 'NO POPULATION', tr: 'NÜFUS YOK', de: 'NO POPULATION', fr: 'NO POPULATION', ar: 'NO POPULATION' })}</span>
+          <span className="font-share-tech text-sim-muted/40 tracking-widest" style={{ fontSize: 12 }}>{text(lang as LangCode, { en: 'NO POPULATION', tr: 'NÜFUS YOK', de: 'KEINE BEVÖLKERUNG', fr: 'AUCUNE POPULATION', ar: 'لا يوجد سكان' })}</span>
         </div>
       )}
 
@@ -1388,7 +1388,7 @@ export default function PopulationPanel() {
             className="w-full flex items-center gap-2 px-2 py-1.5"
             style={{ background: 'rgba(160,80,80,0.08)', border: '1px solid rgba(160,80,80,0.25)' }}>
             <span className="font-share-tech tracking-widest flex-1 text-left" style={{ fontSize: 12, color: '#a05050' }}>
-              † {text(lang as LangCode, { en: 'DECEASED', tr: 'HAYATINI KAYBETTİLER', de: 'DECEASED', fr: 'DECEASED', ar: 'DECEASED' })} ({stats?.deaths ?? deadIndividuals.length ?? 0})
+              † {text(lang as LangCode, { en: 'DECEASED', tr: 'HAYATINI KAYBETTİLER', de: 'VERSTORBEN', fr: 'DÉCÉDÉS', ar: 'المتوفون' })} ({stats?.deaths ?? deadIndividuals.length ?? 0})
             </span>
             <ChevronDown size={10} style={{ color: '#a05050', transform: deadExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </button>
@@ -1426,7 +1426,7 @@ export default function PopulationPanel() {
               {deadIndividuals.length > 100 && (
                 <div className="text-center py-1">
                   <span className="font-share-tech" style={{ fontSize: 12, color: '#703030' }}>
-                    +{deadIndividuals.length - 100} {text(lang as LangCode, { en: 'more', tr: 'daha', de: 'more', fr: 'more', ar: 'more' })}
+                    +{deadIndividuals.length - 100} {text(lang as LangCode, { en: 'more', tr: 'daha', de: 'mehr', fr: 'de plus', ar: 'المزيد' })}
                   </span>
                 </div>
               )}
