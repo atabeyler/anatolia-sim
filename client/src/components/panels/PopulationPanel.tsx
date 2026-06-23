@@ -586,9 +586,47 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
 
 const INNER_VOICE_ARCHIVE_KEY = (id: string) => `inner_voice_${id}`;
 
-// Concept priority based on real sim state — mirrors server logic
+const CONCEPT_I18N: Record<string, Record<string, string>> = {
+  food:    { tr: 'yiyecek', en: 'food',    de: 'Essen',    fr: 'nourriture', ar: 'طعام'   },
+  water:   { tr: 'su',      en: 'water',   de: 'Wasser',   fr: 'eau',        ar: 'ماء'    },
+  danger:  { tr: 'tehlike', en: 'danger',  de: 'Gefahr',   fr: 'danger',     ar: 'خطر'   },
+  pain:    { tr: 'acı',     en: 'pain',    de: 'Schmerz',  fr: 'douleur',    ar: 'ألم'    },
+  fire:    { tr: 'ateş',    en: 'fire',    de: 'Feuer',    fr: 'feu',        ar: 'نار'    },
+  sleep:   { tr: 'uyku',    en: 'sleep',   de: 'Schlaf',   fr: 'sommeil',    ar: 'نوم'    },
+  hunt:    { tr: 'av',      en: 'hunt',    de: 'Jagd',     fr: 'chasse',     ar: 'صيد'    },
+  run:     { tr: 'koş',     en: 'run',     de: 'laufen',   fr: 'courir',     ar: 'ركض'    },
+  me:      { tr: 'ben',     en: 'me',      de: 'ich',      fr: 'moi',        ar: 'أنا'    },
+  you:     { tr: 'sen',     en: 'you',     de: 'du',       fr: 'toi',        ar: 'أنت'    },
+  us:      { tr: 'biz',     en: 'us',      de: 'wir',      fr: 'nous',       ar: 'نحن'    },
+  die:     { tr: 'ölüm',    en: 'die',     de: 'Tod',      fr: 'mort',       ar: 'موت'    },
+  born:    { tr: 'doğum',   en: 'born',    de: 'Geburt',   fr: 'naissance',  ar: 'ولادة'  },
+  good:    { tr: 'iyi',     en: 'good',    de: 'gut',      fr: 'bon',        ar: 'جيد'    },
+  bad:     { tr: 'kötü',    en: 'bad',     de: 'schlecht', fr: 'mauvais',    ar: 'سيئ'    },
+  here:    { tr: 'burada',  en: 'here',    de: 'hier',     fr: 'ici',        ar: 'هنا'    },
+  there:   { tr: 'orada',   en: 'there',   de: 'dort',     fr: 'là-bas',     ar: 'هناك'   },
+  them:    { tr: 'onlar',   en: 'them',    de: 'sie',      fr: 'eux',        ar: 'هم'     },
+  sun:     { tr: 'güneş',   en: 'sun',     de: 'Sonne',    fr: 'soleil',     ar: 'شمس'    },
+  moon:    { tr: 'ay',      en: 'moon',    de: 'Mond',     fr: 'lune',       ar: 'قمر'    },
+  rain:    { tr: 'yağmur',  en: 'rain',    de: 'Regen',    fr: 'pluie',      ar: 'مطر'    },
+  dark:    { tr: 'karanlık',en: 'dark',    de: 'dunkel',   fr: 'sombre',     ar: 'ظلام'   },
+  light:   { tr: 'ışık',    en: 'light',   de: 'Licht',    fr: 'lumière',    ar: 'ضوء'    },
+  earth:   { tr: 'toprak',  en: 'earth',   de: 'Erde',     fr: 'terre',      ar: 'أرض'    },
+  eat:     { tr: 'ye',      en: 'eat',     de: 'essen',    fr: 'manger',     ar: 'أكل'    },
+  time:    { tr: 'zaman',   en: 'time',    de: 'Zeit',     fr: 'temps',      ar: 'وقت'    },
+  god:     { tr: 'tanrı',   en: 'god',     de: 'Gott',     fr: 'dieu',       ar: 'إله'    },
+  spirit:  { tr: 'ruh',     en: 'spirit',  de: 'Geist',    fr: 'esprit',     ar: 'روح'    },
+  sky:     { tr: 'gökyüzü', en: 'sky',     de: 'Himmel',   fr: 'ciel',       ar: 'سماء'   },
+};
+
+function conceptLabel(concept: string, lang: string): string {
+  const row = CONCEPT_I18N[concept];
+  if (!row) return concept;
+  return row[lang] ?? row.en ?? concept;
+}
+
+
 // offset param rotates through known words so thoughts vary over time
-function clientThoughtFromVocab(ind: any, simDay: number, offset: number): { proto: string; annotated: string } | null {
+function clientThoughtFromVocab(ind: any, simDay: number, offset: number, lang = 'en'): { proto: string; annotated: string } | null {
   const vocab: Record<string, string> = ind.language?.vocabulary ?? {};
   const stage = ind.language?.stage ?? 0;
   if (stage < 2 || Object.keys(vocab).length === 0) return null;
@@ -636,7 +674,7 @@ function clientThoughtFromVocab(ind: any, simDay: number, offset: number): { pro
   if (selected.length === 0) return null;
   return {
     proto: selected.map(concept => vocab[concept]).join(stage >= 4 ? '  ' : '... '),
-    annotated: selected.map(concept => `${vocab[concept]} [${concept}]`).join(stage >= 4 ? '  ' : '... '),
+    annotated: selected.map(concept => `${vocab[concept]} [${conceptLabel(concept, lang)}]`).join(stage >= 4 ? '  ' : '... '),
   };
 }
 
@@ -674,7 +712,7 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
   const thought: { proto: string; annotated: string } | null =
     serverThought?.annotated
       ? { proto: serverThought.proto ?? '', annotated: serverThought.annotated }
-      : clientThoughtFromVocab(ind, simDay, tick);
+      : clientThoughtFromVocab(ind, simDay, tick, lang);
 
   // Archive every new thought automatically
   useEffect(() => {
@@ -744,7 +782,7 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
             <div className="mt-2 flex flex-wrap gap-1">
               {Object.entries(vocab).slice(0, 14).map(([concept, word]) => (
                 <span key={concept} className="font-share-tech" style={{ fontSize: 11, color: '#8898a8', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', padding: '2px 5px', borderRadius: 2 }}>
-                  {String(word)} <span style={{ color: '#4a5568' }}>[{concept}]</span>
+                  {String(word)} <span style={{ color: '#4a5568' }}>[{conceptLabel(concept, lang)}]</span>
                 </span>
               ))}
               {wordCount > 14 && <span className="font-share-tech" style={{ fontSize: 11, color: '#4a5568' }}>+{wordCount - 14}</span>}
