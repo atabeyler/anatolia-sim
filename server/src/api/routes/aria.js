@@ -316,7 +316,7 @@ RULES:
 - No modern concepts. No meta-commentary. Just the thought itself.`;
 
     const thought = await geminiChat({
-      model: process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite',
+      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite',
       system,
       user: 'Generate the inner thought.',
       max_tokens: 120,
@@ -326,7 +326,13 @@ RULES:
     res.json({ thought: thought.replace(/^["']|["']$/g, '').trim() });
   } catch (err) {
     console.error('Inner voice error:', err?.message);
-    res.status(err?.status ?? 500).json({ error: err?.message ?? 'Failed' });
+    const status = err?.status ?? 500;
+    const msg = status === 429
+      ? 'AI kota doldu, lütfen biraz bekleyin.'
+      : status >= 500
+        ? 'AI şu an yanıt vermiyor, tekrar deneyin.'
+        : (err?.message ?? 'Hata');
+    res.status(status).json({ error: msg });
   }
 });
 
