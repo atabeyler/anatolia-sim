@@ -148,14 +148,7 @@ export function updateInnerThought(ind, simDay) {
   if (Object.keys(vocab).length === 0) return;
 
   const concepts = getSalientConcepts(ind, simDay);
-
-  // Filter concepts accessible at this stage
-  const accessibleTier = TIER_STAGE.findLastIndex(minStage => stage >= minStage);
-  const maxConceptIdx  = CONCEPT_TIERS.length; // tier gating by vocab content is implicit
-  // Actually: just use all known words — the vocab itself is the real gate
-  const accessible = concepts; // individual can only think words they know
-
-  const thought = buildThoughtString(accessible, vocab, stage, c, simDay);
+  const thought = buildThoughtString(concepts, vocab, stage, c, simDay);
   ind.mind.inner_thought = thought;
 }
 
