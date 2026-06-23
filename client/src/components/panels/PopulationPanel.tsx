@@ -586,6 +586,56 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
 
 const INNER_VOICE_ARCHIVE_KEY = (id: string) => `inner_voice_${id}`;
 
+// Concept priority based on real sim state — mirrors server logic
+function clientThoughtFromVocab(ind: any, simDay: number): { proto: string; annotated: string } | null {
+  const vocab: Record<string, string> = ind.language?.vocabulary ?? {};
+  const stage = ind.language?.stage ?? 0;
+  if (stage < 2 || Object.keys(vocab).length === 0) return null;
+
+  const ps  = ind.psychology ?? {};
+  const ph  = ind.phenotype ?? {};
+  const c   = ind.mind?.consciousness ?? 0;
+  const hunger  = 1 - (ind.satiation ?? 0.5);
+  const thirst  = 1 - (ind.hydration ?? 0.5);
+  const hp      = ind.health?.hp ?? 1;
+  const mental  = ps.mental_state ?? 'calm';
+  const wellbeing = ps.wellbeing ?? 0.5;
+  const hasGroup  = !!ind.group_id;
+  const hasMate   = !!(ps.mate_id || ind.social?.mate_id);
+  const recentDeath = (ps.trauma_events ?? []).some((e: any) => e.type === 'kin_death' && (simDay - e.day) < 20);
+  const recentDisaster = (ps.trauma_events ?? []).some((e: any) => e.type !== 'kin_death' && (simDay - e.day) < 15);
+
+  const priority: string[] = [];
+  if (hunger > 0.7)           priority.push('food', 'hunt', 'eat');
+  if (thirst > 0.7)           priority.push('water');
+  if (hp < 0.3)               priority.push('pain', 'die');
+  if (recentDisaster)         priority.push('danger', 'run', 'fire');
+  if (mental === 'grieving' || recentDeath) priority.push('die', 'you', 'bad');
+  if (mental === 'anxious')   priority.push('danger', 'bad');
+  if (mental === 'depressed') priority.push('bad', 'sleep');
+  if (hunger > 0.45)          priority.push('food');
+  if (thirst > 0.45)          priority.push('water');
+  if (!hasGroup)              priority.push('us', 'here', 'you');
+  if (hasMate)                priority.push('you', 'good');
+  if (mental === 'excited')   priority.push('good', 'us');
+  if (c > 0.3 && (ph.curiosity ?? 0.5) > 0.6) priority.push('sky', 'sun', 'moon', 'time');
+  if (c > 0.5)                priority.push('god', 'spirit', 'time');
+  if (wellbeing > 0.7)        priority.push('good', 'here');
+  priority.push('me', 'here', 'good', 'bad', 'sleep');
+
+  const seen = new Set<string>();
+  const ordered = priority.filter(c => { if (seen.has(c)) return false; seen.add(c); return true; });
+  const known = ordered.filter(concept => vocab[concept]);
+  if (known.length === 0) return null;
+
+  const maxWords = stage <= 2 ? 1 : stage === 3 ? Math.min(2, known.length) : Math.min(3 + Math.floor(c * 3), known.length);
+  const selected = known.slice(0, maxWords);
+  return {
+    proto: selected.map(concept => vocab[concept]).join(stage >= 4 ? '  ' : '... '),
+    annotated: selected.map(concept => `${vocab[concept]} [${concept}]`).join(stage >= 4 ? '  ' : '... '),
+  };
+}
+
 function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClose: () => void }) {
   const { stats } = useSimStore();
   const tr = (trStr: string, enStr: string) => text(lang as LangCode, { tr: trStr, en: enStr, de: enStr, fr: enStr, ar: enStr });
@@ -595,10 +645,17 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
     try { return JSON.parse(localStorage.getItem(storageKey) ?? '[]'); } catch { return []; }
   });
 
-  const thought = ind.mind?.inner_thought ?? null;
   const simYear = (stats as any)?.year ?? 0;
+  const simDay  = (stats as any)?.day ?? 0;
 
-  // Save current thought to archive when modal opens (if new)
+  // Server thought (from sim engine) — preferred. Fall back to client-generated.
+  const serverThought = ind.mind?.inner_thought;
+  const thought: { proto: string; annotated: string } | null =
+    serverThought?.annotated
+      ? { proto: serverThought.proto ?? '', annotated: serverThought.annotated }
+      : clientThoughtFromVocab(ind, simDay);
+
+  // Save to archive when modal opens
   useEffect(() => {
     if (!thought?.annotated) return;
     setArchive(prev => {
@@ -633,30 +690,22 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
         {/* Current thought */}
         <div className="px-4 pt-4 pb-3 flex-shrink-0">
           <div style={{ background: `${accentColor}06`, border: `1px solid ${accentColor}20`, borderLeft: `3px solid ${accentColor}`, padding: '10px 12px', borderRadius: 2, minHeight: 64 }}>
-            {thought?.annotated ? (
+            {thought ? (
               <>
-                <p className="font-share-tech" style={{ fontSize: 15, color: '#e8e0ff', lineHeight: 1.7, letterSpacing: '0.08em' }}>
+                <p className="font-share-tech" style={{ fontSize: 15, color: '#e8e0ff', lineHeight: 1.7, letterSpacing: '0.1em' }}>
                   {thought.proto}
                 </p>
                 <p className="font-share-tech" style={{ fontSize: 10, color: '#6a7888', marginTop: 4, lineHeight: 1.5 }}>
                   {thought.annotated}
                 </p>
               </>
-            ) : thought?.tr || thought?.en ? (
-              <p className="font-share-tech" style={{ fontSize: 12, color: '#c8d8e8', lineHeight: 1.6, fontStyle: 'italic' }}>
-                {typeof thought === 'object' ? (lang === 'tr' ? thought.tr : thought.en) : String(thought)}
-              </p>
             ) : stage < 2 ? (
               <p className="font-share-tech" style={{ fontSize: 12, color: '#4a5568', fontStyle: 'italic' }}>
                 {tr('Dil yok — henüz düşünce oluşmuyor.', 'No language — no thought yet.')}
               </p>
-            ) : wordCount === 0 ? (
-              <p className="font-share-tech" style={{ fontSize: 12, color: '#4a5568', fontStyle: 'italic' }}>
-                {tr('Kelime bilmiyor — iç ses sessiz.', 'No words known — inner voice silent.')}
-              </p>
             ) : (
               <p className="font-share-tech" style={{ fontSize: 12, color: '#4a5568', fontStyle: 'italic' }}>
-                {tr('Düşünce oluşuyor...', 'Thought forming...')}
+                {tr('Kelime bilmiyor — iç ses sessiz.', 'No words known — inner voice silent.')}
               </p>
             )}
           </div>
