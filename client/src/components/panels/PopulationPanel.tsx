@@ -159,7 +159,7 @@ function StatRow({ label, value, color = '#a0b4ff' }: { label: string; value: Re
   );
 }
 
-function generateInnerThought(ind: any, lang: string): string {
+function generateInnerThought(ind: any, lang: string, seed: number): string {
   const c = ind.mind?.consciousness ?? 0;
   const ph = ind.phenotype ?? {};
   const ps = ind.psychology ?? {};
@@ -182,76 +182,84 @@ function generateInnerThought(ind: any, lang: string): string {
   const tr = (trStr: string, enStr: string) =>
     text(lang as LangCode, { tr: trStr, en: enStr, de: enStr, fr: enStr, ar: enStr });
 
-  if (isDead) return tr('Sessizlik.', 'Silence.');
+  // pick(arr) — seeded random pick so thoughts rotate on each refresh
+  const pick = <T,>(arr: T[]): T => arr[seed % arr.length];
 
-  // Very low consciousness — pure drives
+  if (isDead) return pick([tr('Sessizlik.', 'Silence.'), tr('Artık hiçbir şey.', 'Nothing anymore.'), tr('...', '...')]);
+
   if (c < 0.03) {
-    if (hunger > 0.7) return tr('...açlık...', '...hunger...');
-    if (thirst > 0.7) return tr('...su...', '...water...');
-    if (hp < 0.3)     return tr('...ağrı...', '...pain...');
-    return tr('...', '...');
+    if (hunger > 0.7) return pick([tr('...açlık...', '...hunger...'), tr('...yemek...', '...food...'), tr('...boş...', '...empty...')]);
+    if (thirst > 0.7) return pick([tr('...su...', '...water...'), tr('...susuzluk...', '...thirst...')]);
+    if (hp < 0.3)     return pick([tr('...ağrı...', '...pain...'), tr('...acı...', '...hurts...')]);
+    return pick([tr('...', '...'), tr('—', '—'), tr('...ışık...', '...light...')]);
   }
 
   if (c < 0.08) {
-    if (hunger > 0.6) return tr('Bir şey yemek istiyorum.', 'Need food.');
-    if (thirst > 0.6) return tr('Su. Su olmalı.', 'Water. Must find water.');
-    if (hp < 0.4)     return tr('Ağrıyor. Ağrıyor.', 'Hurts. It hurts.');
-    if (!hasGroup)    return tr('Yalnızım.', 'Alone.');
-    return tr('Buradayım.', 'I am here.');
+    if (hunger > 0.6) return pick([tr('Bir şey yemek istiyorum.', 'Need food.'), tr('Karnım boş.', 'My stomach is empty.'), tr('Yiyecek nerede?', 'Where is food?')]);
+    if (thirst > 0.6) return pick([tr('Su. Su olmalı.', 'Water. Must find water.'), tr('Susamışım.', 'Thirsty.'), tr('Su bulmam lazım.', 'I need water.')]);
+    if (hp < 0.4)     return pick([tr('Ağrıyor. Ağrıyor.', 'Hurts. It hurts.'), tr('Kendimi iyi hissetmiyorum.', 'I don\'t feel good.'), tr('Ne zaman geçer?', 'When will it pass?')]);
+    if (!hasGroup)    return pick([tr('Yalnızım.', 'Alone.'), tr('Kimse yok.', 'No one here.'), tr('Nereye gitsem?', 'Where should I go?')]);
+    return pick([tr('Buradayım.', 'I am here.'), tr('Devam et.', 'Keep going.'), tr('Güvendeyim.', 'Safe.')]);
   }
 
-  // Low consciousness — basic emotions + immediate surroundings
   if (c < 0.15) {
-    if (mentalState === 'grieving') return tr('Birini kaybettim. Acıyor.', 'Someone is gone. It hurts.');
-    if (mentalState === 'anxious')  return tr('Tehlike var. Kaçmalıyım.', 'Danger. Must flee.');
-    if (hunger > 0.5) return tr('Bugün yiyecek bulamadım.', 'No food today.');
-    if (hasGroup) return tr('Grubumla birlikteyim. Güvendeyim.', 'With my group. Safe.');
-    if (stress > 0.7) return tr('Kötü bir şey hissediyorum.', 'Something feels bad.');
-    return tr('Bugün güneş var.', 'Sun is out today.');
+    if (mentalState === 'grieving') return pick([tr('Birini kaybettim. Acıyor.', 'Someone is gone. It hurts.'), tr('Neden gitti?', 'Why did they go?'), tr('Bir daha göremeyeceğim.', 'I won\'t see them again.')]);
+    if (mentalState === 'anxious')  return pick([tr('Tehlike var. Kaçmalıyım.', 'Danger. Must flee.'), tr('Bir şeyler yanlış.', 'Something is wrong.'), tr('Dikkatli olmalıyım.', 'Must be careful.')]);
+    if (hunger > 0.5) return pick([tr('Bugün yiyecek bulamadım.', 'No food today.'), tr('Çok açım.', 'So hungry.'), tr('Avlanmalıyım.', 'I must hunt.')]);
+    if (hasGroup) return pick([tr('Grubumla birlikteyim. Güvendeyim.', 'With my group. Safe.'), tr('Etrafımda insanlar var.', 'People around me.'), tr('Birlikte daha güçlüyüz.', 'Together we are stronger.')]);
+    if (stress > 0.7) return pick([tr('Kötü bir şey hissediyorum.', 'Something feels bad.'), tr('İçim sıkışık.', 'I feel trapped inside.'), tr('Neden bu kadar ağır?', 'Why does this feel so heavy?')]);
+    return pick([tr('Bugün güneş var.', 'Sun is out today.'), tr('Rüzgar esiyor.', 'The wind is blowing.'), tr('Sessiz bir gün.', 'A quiet day.'), tr('Hayat devam ediyor.', 'Life goes on.')]);
   }
 
-  // Mid-low consciousness — social awareness
   if (c < 0.25) {
-    if (mentalState === 'grieving') return tr('Birisi gitti. Bir daha göremeyeceğim.', 'Someone is gone. I won\'t see them again.');
-    if (hasMate) return tr('O yakında olunca daha iyi hissediyorum.', 'I feel better when they are near.');
-    if (mentalState === 'excited') return tr('Bir şeyler oluyor! Heyecanlıyım.', 'Something is happening! I feel excited.');
-    if (tom >= 1) return tr('O da benim gibi hissediyor mu acaba?', 'I wonder if they feel like I do?');
-    if (stress > 0.6) return tr('Grup içinde bir gerilim var.', 'There is tension in the group.');
-    if (wellbeing > 0.7) return tr('İyi bir gün. Karnım tok, grubum yanımda.', 'Good day. Full belly, group nearby.');
-    return tr('Yarın ne olacak?', 'What will tomorrow bring?');
+    if (mentalState === 'grieving') return pick([tr('Birisi gitti. Bir daha göremeyeceğim.', 'Someone is gone. I won\'t see them again.'), tr('Boşluk var içimde.', 'There\'s an emptiness inside me.'), tr('Ağlamak istiyorum ama bilmiyorum nasıl.', 'I want to cry but I don\'t know how.')]);
+    if (hasMate) return pick([tr('O yakında olunca daha iyi hissediyorum.', 'I feel better when they are near.'), tr('Onunla olmak istiyorum.', 'I want to be with them.'), tr('Sesini duymak istiyorum.', 'I want to hear their voice.')]);
+    if (mentalState === 'excited') return pick([tr('Bir şeyler oluyor! Heyecanlıyım.', 'Something is happening! I feel excited.'), tr('Bugün farklı bir şey var.', 'Something is different today.'), tr('İyi bir şey geliyor sanki.', 'Something good is coming, I think.')]);
+    if (tom >= 1) return pick([tr('O da benim gibi hissediyor mu acaba?', 'I wonder if they feel like I do?'), tr('Onun aklından neler geçiyor?', 'What is going through their mind?'), tr('Neden öyle baktı?', 'Why did they look at me that way?')]);
+    if (stress > 0.6) return pick([tr('Grup içinde bir gerilim var.', 'There is tension in the group.'), tr('Bir şeyler değişti aramızda.', 'Something changed between us.'), tr('Neden bu kadar gerginim?', 'Why am I so tense?')]);
+    if (wellbeing > 0.7) return pick([tr('İyi bir gün. Karnım tok, grubum yanımda.', 'Good day. Full belly, group nearby.'), tr('Bugün mutluyum.', 'I am happy today.'), tr('Her şey yolunda gidiyor.', 'Everything is going well.')]);
+    return pick([tr('Yarın ne olacak?', 'What will tomorrow bring?'), tr('Burada ne kadar kalacağız?', 'How long will we stay here?'), tr('Başka insanlar da var mı orada?', 'Are there other people out there?')]);
   }
 
-  // Mid consciousness — past, future, identity
   if (c < 0.45) {
-    if (isFounder && age > 30) return tr('Bu toprakları ilk ben gördüm. Başka kimseler var mıydı?', 'I was the first to see these lands. Were there others?');
-    if (mentalState === 'depressed') return tr('Neden bu kadar zor? Her şey ağır geliyor.', 'Why is everything so hard? It all feels heavy.');
-    if (tom >= 2) return tr('Onların ne düşündüğünü merak ediyorum. Beni görüyorlar mı?', 'I wonder what they think. Do they see me?');
-    if (curiosity > 0.7) return tr('O dağın ötesinde ne var? Bunu öğrenmek istiyorum.', 'What is beyond that mountain? I want to know.');
-    if (langStage >= 3) return tr('Kelimeler aklımda şekilleniyor. Anlatmak istiyorum.', 'Words are forming in my mind. I want to tell someone.');
-    if (stress > 0.5) return tr('Eskiden daha kolaydı. Şimdi her şey değişti.', 'It used to be easier. Now everything has changed.');
-    return tr('Ben kimim? Neden buradayım?', 'Who am I? Why am I here?');
+    if (isFounder && age > 30) return pick([tr('Bu toprakları ilk ben gördüm. Başka kimseler var mıydı?', 'I was the first to see these lands. Were there others?'), tr('Buraya nasıl geldim? Neden?', 'How did I come here? Why?'), tr('Geride ne bıraktım?', 'What did I leave behind?')]);
+    if (mentalState === 'depressed') return pick([tr('Neden bu kadar zor? Her şey ağır geliyor.', 'Why is everything so hard? It all feels heavy.'), tr('Devam etmek istemiyor gibiyim.', 'I don\'t feel like going on.'), tr('Bir anlam var mı bunun?', 'Is there any point to this?')]);
+    if (tom >= 2) return pick([tr('Onların ne düşündüğünü merak ediyorum. Beni görüyorlar mı?', 'I wonder what they think. Do they see me?'), tr('Herkesin bir iç dünyası var.', 'Everyone has an inner world.'), tr('Ben de onlar için bir şeyler hissediyorum.', 'I feel things for them too.')]);
+    if (curiosity > 0.7) return pick([tr('O dağın ötesinde ne var? Bunu öğrenmek istiyorum.', 'What is beyond that mountain? I want to know.'), tr('Bu dünya ne kadar büyük?', 'How big is this world?'), tr('Hiç görmediğim şeyler var.', 'There are things I\'ve never seen.')]);
+    if (langStage >= 3) return pick([tr('Kelimeler aklımda şekilleniyor. Anlatmak istiyorum.', 'Words are forming in my mind. I want to tell someone.'), tr('Düşüncelerimi aktarabilsem...', 'If only I could convey my thoughts...'), tr('Bazı şeyleri anlatmak çok zor.', 'Some things are so hard to put into words.')]);
+    if (stress > 0.5) return pick([tr('Eskiden daha kolaydı. Şimdi her şey değişti.', 'It used to be easier. Now everything has changed.'), tr('Yoruldum ama devam edeceğim.', 'I\'m tired but I\'ll keep going.'), tr('Bu da geçecek.', 'This too shall pass.')]);
+    return pick([tr('Ben kimim? Neden buradayım?', 'Who am I? Why am I here?'), tr('Var olmak ne demek?', 'What does it mean to exist?'), tr('Bir gün hepsi biter mi?', 'Will it all end one day?'), tr('Benden sonra ne kalacak?', 'What will remain after me?')]);
   }
 
-  // High consciousness — abstract, philosophical
   if (c < 0.7) {
-    if (mentalState === 'grieving') return tr('Ölüm gerçek. Ben de bir gün gideceğim. Ama şimdi buradayım.', 'Death is real. I will go one day too. But I am here now.');
-    if (tom >= 3) return tr('Her biri ayrı bir dünya. Ben sadece birini görebiliyorum.', 'Each person is a separate world. I can only see one.');
-    if (langStage >= 4) return tr('Bazı şeyleri kelimelerle anlatamıyorum. Ama hissediyorum.', 'Some things cannot be said with words. But I feel them.');
-    if (curiosity > 0.6) return tr('Yıldızlar her gece aynı yerde. Bu bir anlam taşıyor mu?', 'Stars are in the same place every night. Does this mean something?');
-    if (hasMate) return tr('Onunla geçirdiğim zamanları hatırlıyorum. O anlar gerçekti.', 'I remember the time we spent together. Those moments were real.');
-    return tr('Gelecek nesiller bizi hatırlayacak mı?', 'Will future generations remember us?');
+    if (mentalState === 'grieving') return pick([tr('Ölüm gerçek. Ben de bir gün gideceğim. Ama şimdi buradayım.', 'Death is real. I will go one day too. But I am here now.'), tr('Kayıp, sevginin bir parçası.', 'Loss is part of love.'), tr('Onlar gitmiş ama ben hatırlıyorum.', 'They are gone but I remember.')]);
+    if (tom >= 3) return pick([tr('Her biri ayrı bir dünya. Ben sadece birini görebiliyorum.', 'Each person is a separate world. I can only see one.'), tr('Kimsenin içini tam bilemem.', 'I can never fully know anyone\'s inner world.'), tr('Belki de herkes böyle yalnız.', 'Perhaps everyone is this lonely.')]);
+    if (langStage >= 4) return pick([tr('Bazı şeyleri kelimelerle anlatamıyorum. Ama hissediyorum.', 'Some things cannot be said with words. But I feel them.'), tr('Dil yetersiz kalıyor bazen.', 'Language falls short sometimes.'), tr('Anlatmak istiyorum ama nasıl?', 'I want to express it but how?')]);
+    if (curiosity > 0.6) return pick([tr('Yıldızlar her gece aynı yerde. Bu bir anlam taşıyor mu?', 'Stars are in the same place every night. Does this mean something?'), tr('Gökyüzü neden böyle?', 'Why is the sky the way it is?'), tr('Biz neyiz bu evrende?', 'What are we in this universe?')]);
+    if (hasMate) return pick([tr('Onunla geçirdiğim zamanları hatırlıyorum. O anlar gerçekti.', 'I remember the time we spent together. Those moments were real.'), tr('Sevmek, var olmanın en güzel hali.', 'Love is the most beautiful way to exist.'), tr('Onu kaybetsem ne olur?', 'What would happen if I lost them?')]);
+    return pick([tr('Gelecek nesiller bizi hatırlayacak mı?', 'Will future generations remember us?'), tr('Bu dünyaya bir şey bırakabilir miyim?', 'Can I leave something to this world?'), tr('Geçmiş neden bu kadar ağır?', 'Why does the past weigh so much?'), tr('Anlam arıyorum ama nerede?', 'I\'m looking for meaning, but where?')]);
   }
 
-  // Very high consciousness — deep self-awareness
-  if (mentalState === 'grieving') return tr('Acı, var olmanın bir parçası. Bunu anlamak uzun zaman aldı.', 'Grief is part of existence. It took me long to understand this.');
-  if (tom >= 3) return tr('Başkalarının acısını kendi bedenimde hissediyorum. Bu beni hem güçsüz hem güçlü kılıyor.', 'I feel others\' pain in my own body. This makes me both weak and strong.');
-  if (langStage >= 5) return tr('Kelimeler artık benim için yetersiz. Bir şeyleri aktarmak istiyorum ama nasıl?', 'Words are not enough anymore. I want to pass something on, but how?');
-  if (isFounder) return tr('Ben başlangıçtım. Şimdi anlıyorum: her şey devam edecek, ben olmadan da.', 'I was the beginning. Now I understand: everything will continue, even without me.');
-  return tr('Burada olmak — sadece bu — yeterli mi? Bilmiyorum. Ama şu an buradayım.', 'Being here — just this — is it enough? I don\'t know. But I am here now.');
+  // Very high consciousness
+  if (mentalState === 'grieving') return pick([tr('Acı, var olmanın bir parçası. Bunu anlamak uzun zaman aldı.', 'Grief is part of existence. It took me long to understand this.'), tr('Her son, bir başlangıcın habercisi mi?', 'Is every ending a herald of a new beginning?')]);
+  if (tom >= 3) return pick([tr('Başkalarının acısını kendi bedenimde hissediyorum. Bu beni hem güçsüz hem güçlü kılıyor.', 'I feel others\' pain in my own body. This makes me both weak and strong.'), tr('Ben onlarda, onlar bende yaşıyor.', 'I live in them, they live in me.'), tr('Biz belki de hepimiz biriyiz.', 'Perhaps we are all one.')]);
+  if (langStage >= 5) return pick([tr('Kelimeler artık benim için yetersiz. Bir şeyleri aktarmak istiyorum ama nasıl?', 'Words are not enough anymore. I want to pass something on, but how?'), tr('Dilimiz henüz çok genç. Anlatamıyorum.', 'Our language is too young. I can\'t express it.'), tr('İçimdeki ses kelimelerden önce var.', 'The voice inside me exists before words.')]);
+  if (isFounder) return pick([tr('Ben başlangıçtım. Şimdi anlıyorum: her şey devam edecek, ben olmadan da.', 'I was the beginning. Now I understand: everything will continue, even without me.'), tr('Tohumları ben ektim. Meyveleri göremeyeceğim.', 'I planted the seeds. I won\'t see the fruit.')]);
+  return pick([
+    tr('Burada olmak — sadece bu — yeterli mi? Bilmiyorum. Ama şu an buradayım.', 'Being here — just this — is it enough? I don\'t know. But I am here now.'),
+    tr('Her şey geçici. Ama bu an gerçek.', 'Everything is temporary. But this moment is real.'),
+    tr('Neden var oluyoruz? Belki cevap yok. Ama soru var.', 'Why do we exist? Maybe there\'s no answer. But the question is there.'),
+    tr('Ölümden korkuyorum. Ama yaşamaktan da korkuyorum bazen.', 'I fear death. But sometimes I fear living too.'),
+  ]);
 }
 
 function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndividuals: any[]; onClose: () => void }) {
   const { lang, events, watchedIndividualId, setWatchedIndividual } = useSimStore();
+  const [thoughtSeed, setThoughtSeed] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setThoughtSeed(s => s + 1), 6000);
+    return () => clearInterval(id);
+  }, []);
   const name = nameFromId(ind.id, ind.sex, ind.phenotype?.name ?? ind.name);
   const age = parseFloat(ind.age_years ?? 0);
   const stage = lifeStage(age, lang);
@@ -488,7 +496,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
               borderRadius: 2,
             }}>
               <p className="font-share-tech" style={{ fontSize: 12, color: '#c8d8e8', lineHeight: 1.6, fontStyle: 'italic' }}>
-                "{generateInnerThought(ind, lang)}"
+                "{generateInnerThought(ind, lang, thoughtSeed)}"
               </p>
               <div className="flex items-center gap-1.5 mt-2">
                 <div style={{ flex: 1, height: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 1 }}>
