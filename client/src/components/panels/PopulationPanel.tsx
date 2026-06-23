@@ -159,6 +159,97 @@ function StatRow({ label, value, color = '#a0b4ff' }: { label: string; value: Re
   );
 }
 
+function generateInnerThought(ind: any, lang: string): string {
+  const c = ind.mind?.consciousness ?? 0;
+  const ph = ind.phenotype ?? {};
+  const ps = ind.psychology ?? {};
+  const health = ind.health ?? {};
+  const langStage = ind.language?.stage ?? 0;
+  const isDead = ind.alive === false || ind.is_dead;
+  const age = parseFloat(ind.age_years ?? 0);
+  const stress = ps.stress_level ?? 0;
+  const wellbeing = ps.wellbeing ?? 0.5;
+  const mentalState = ps.mental_state ?? 'calm';
+  const hasGroup = !!ind.group_id;
+  const hasMate = ind.social?.has_mate;
+  const hp = health.hp ?? 1;
+  const hunger = 1 - (health.calories ?? 0.5);
+  const thirst = 1 - (health.hydration ?? 0.5);
+  const tom = ps.theory_of_mind ?? 0;
+  const curiosity = ph.curiosity ?? 0;
+  const isFounder = !ind.parent_1_id && !ind.parent_2_id;
+
+  const tr = (trStr: string, enStr: string) =>
+    text(lang as LangCode, { tr: trStr, en: enStr, de: enStr, fr: enStr, ar: enStr });
+
+  if (isDead) return tr('Sessizlik.', 'Silence.');
+
+  // Very low consciousness — pure drives
+  if (c < 0.03) {
+    if (hunger > 0.7) return tr('...açlık...', '...hunger...');
+    if (thirst > 0.7) return tr('...su...', '...water...');
+    if (hp < 0.3)     return tr('...ağrı...', '...pain...');
+    return tr('...', '...');
+  }
+
+  if (c < 0.08) {
+    if (hunger > 0.6) return tr('Bir şey yemek istiyorum.', 'Need food.');
+    if (thirst > 0.6) return tr('Su. Su olmalı.', 'Water. Must find water.');
+    if (hp < 0.4)     return tr('Ağrıyor. Ağrıyor.', 'Hurts. It hurts.');
+    if (!hasGroup)    return tr('Yalnızım.', 'Alone.');
+    return tr('Buradayım.', 'I am here.');
+  }
+
+  // Low consciousness — basic emotions + immediate surroundings
+  if (c < 0.15) {
+    if (mentalState === 'grieving') return tr('Birini kaybettim. Acıyor.', 'Someone is gone. It hurts.');
+    if (mentalState === 'anxious')  return tr('Tehlike var. Kaçmalıyım.', 'Danger. Must flee.');
+    if (hunger > 0.5) return tr('Bugün yiyecek bulamadım.', 'No food today.');
+    if (hasGroup) return tr('Grubumla birlikteyim. Güvendeyim.', 'With my group. Safe.');
+    if (stress > 0.7) return tr('Kötü bir şey hissediyorum.', 'Something feels bad.');
+    return tr('Bugün güneş var.', 'Sun is out today.');
+  }
+
+  // Mid-low consciousness — social awareness
+  if (c < 0.25) {
+    if (mentalState === 'grieving') return tr('Birisi gitti. Bir daha göremeyeceğim.', 'Someone is gone. I won\'t see them again.');
+    if (hasMate) return tr('O yakında olunca daha iyi hissediyorum.', 'I feel better when they are near.');
+    if (mentalState === 'excited') return tr('Bir şeyler oluyor! Heyecanlıyım.', 'Something is happening! I feel excited.');
+    if (tom >= 1) return tr('O da benim gibi hissediyor mu acaba?', 'I wonder if they feel like I do?');
+    if (stress > 0.6) return tr('Grup içinde bir gerilim var.', 'There is tension in the group.');
+    if (wellbeing > 0.7) return tr('İyi bir gün. Karnım tok, grubum yanımda.', 'Good day. Full belly, group nearby.');
+    return tr('Yarın ne olacak?', 'What will tomorrow bring?');
+  }
+
+  // Mid consciousness — past, future, identity
+  if (c < 0.45) {
+    if (isFounder && age > 30) return tr('Bu toprakları ilk ben gördüm. Başka kimseler var mıydı?', 'I was the first to see these lands. Were there others?');
+    if (mentalState === 'depressed') return tr('Neden bu kadar zor? Her şey ağır geliyor.', 'Why is everything so hard? It all feels heavy.');
+    if (tom >= 2) return tr('Onların ne düşündüğünü merak ediyorum. Beni görüyorlar mı?', 'I wonder what they think. Do they see me?');
+    if (curiosity > 0.7) return tr('O dağın ötesinde ne var? Bunu öğrenmek istiyorum.', 'What is beyond that mountain? I want to know.');
+    if (langStage >= 3) return tr('Kelimeler aklımda şekilleniyor. Anlatmak istiyorum.', 'Words are forming in my mind. I want to tell someone.');
+    if (stress > 0.5) return tr('Eskiden daha kolaydı. Şimdi her şey değişti.', 'It used to be easier. Now everything has changed.');
+    return tr('Ben kimim? Neden buradayım?', 'Who am I? Why am I here?');
+  }
+
+  // High consciousness — abstract, philosophical
+  if (c < 0.7) {
+    if (mentalState === 'grieving') return tr('Ölüm gerçek. Ben de bir gün gideceğim. Ama şimdi buradayım.', 'Death is real. I will go one day too. But I am here now.');
+    if (tom >= 3) return tr('Her biri ayrı bir dünya. Ben sadece birini görebiliyorum.', 'Each person is a separate world. I can only see one.');
+    if (langStage >= 4) return tr('Bazı şeyleri kelimelerle anlatamıyorum. Ama hissediyorum.', 'Some things cannot be said with words. But I feel them.');
+    if (curiosity > 0.6) return tr('Yıldızlar her gece aynı yerde. Bu bir anlam taşıyor mu?', 'Stars are in the same place every night. Does this mean something?');
+    if (hasMate) return tr('Onunla geçirdiğim zamanları hatırlıyorum. O anlar gerçekti.', 'I remember the time we spent together. Those moments were real.');
+    return tr('Gelecek nesiller bizi hatırlayacak mı?', 'Will future generations remember us?');
+  }
+
+  // Very high consciousness — deep self-awareness
+  if (mentalState === 'grieving') return tr('Acı, var olmanın bir parçası. Bunu anlamak uzun zaman aldı.', 'Grief is part of existence. It took me long to understand this.');
+  if (tom >= 3) return tr('Başkalarının acısını kendi bedenimde hissediyorum. Bu beni hem güçsüz hem güçlü kılıyor.', 'I feel others\' pain in my own body. This makes me both weak and strong.');
+  if (langStage >= 5) return tr('Kelimeler artık benim için yetersiz. Bir şeyleri aktarmak istiyorum ama nasıl?', 'Words are not enough anymore. I want to pass something on, but how?');
+  if (isFounder) return tr('Ben başlangıçtım. Şimdi anlıyorum: her şey devam edecek, ben olmadan da.', 'I was the beginning. Now I understand: everything will continue, even without me.');
+  return tr('Burada olmak — sadece bu — yeterli mi? Bilmiyorum. Ama şu an buradayım.', 'Being here — just this — is it enough? I don\'t know. But I am here now.');
+}
+
 function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndividuals: any[]; onClose: () => void }) {
   const { lang, events, watchedIndividualId, setWatchedIndividual } = useSimStore();
   const name = nameFromId(ind.id, ind.sex, ind.phenotype?.name ?? ind.name);
@@ -383,6 +474,30 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
               <TraitRow label={tr('Stres', 'Stress')}                 value={mind.stress ?? 0}              color="#e05a5a" />
               <TraitRow label={tr('Serotonin', 'Serotonin')}          value={ph.serotonin ?? 0}             color="#4ecb71" />
               <TraitRow label={tr('Stres Direnci', 'Stress Resil.')}  value={ph.stress_resilience ?? 0}    color="#7dd3fc" />
+            </div>
+          </div>
+
+          {/* -- İç Ses / Inner Voice -- */}
+          <div>
+            <SectionHeader label={tr('İÇ SES', 'INNER VOICE')} />
+            <div style={{
+              background: 'rgba(200,180,255,0.04)',
+              border: '1px solid rgba(200,180,255,0.15)',
+              borderLeft: `3px solid ${(mind.consciousness ?? 0) > 0.5 ? '#c8b4ff' : (mind.consciousness ?? 0) > 0.15 ? '#7dd3fc' : '#4a5568'}`,
+              padding: '8px 10px',
+              borderRadius: 2,
+            }}>
+              <p className="font-share-tech" style={{ fontSize: 12, color: '#c8d8e8', lineHeight: 1.6, fontStyle: 'italic' }}>
+                "{generateInnerThought(ind, lang)}"
+              </p>
+              <div className="flex items-center gap-1.5 mt-2">
+                <div style={{ flex: 1, height: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 1 }}>
+                  <div style={{ width: `${Math.round((mind.consciousness ?? 0) * 100)}%`, height: '100%', background: (mind.consciousness ?? 0) > 0.5 ? '#c8b4ff' : '#7dd3fc', borderRadius: 1 }} />
+                </div>
+                <span className="font-share-tech" style={{ fontSize: 10, color: '#8898c8' }}>
+                  {tr('Bilinç', 'Consc.')} {Math.round((mind.consciousness ?? 0) * 100)}%
+                </span>
+              </div>
             </div>
           </div>
 
