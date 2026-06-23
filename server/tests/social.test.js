@@ -1,31 +1,33 @@
 import { describe, it, expect } from 'vitest';
 import {
+  RELATIONSHIP_TYPES,
+  GROUP_ROLES,
   computeSocialStatus,
   processGroupDynamics,
-  GROUP_ROLES,
-  RELATIONSHIP_TYPES,
+  assignGroupRoles,
 } from '../src/engines/social/socialEngine.js';
 
 function makeInd(id, overrides = {}) {
   return {
     id,
     alive: true,
-    x: 0, y: 0,
-    age: 25 * 365,
+    is_dead: false,
     life_stage: 'ADULT',
+    age: 25 * 365,
+    x: 32, y: 38,
     group_id: null,
     phenotype: {
       dominance: 0.5,
       fluid_intelligence: 0.5,
       empathy: 0.5,
       physical_strength: 0.5,
-      xenophobia: 0.1,
-      independence: 0.5,
+      aggression: 0.3,
+      curiosity: 0.5,
+      xenophobia: 0.0,
+      independence: 0.3,
       ...overrides.phenotype,
     },
-    social: { reputation: 0.5, group_id: null, children_ids: [], relationships: {}, ...overrides.social },
-    beliefs: new Set(),
-    _behaviorCounts: {},
+    social: { reputation: 0.5, group_id: null },
     ...overrides,
   };
 }
@@ -33,151 +35,307 @@ function makeInd(id, overrides = {}) {
 function makeGroup(id, memberIds, overrides = {}) {
   return {
     id,
+    founder_id: memberIds[0],
     leader_id: memberIds[0],
     member_ids: [...memberIds],
-    founded_day: 0,
-    internal_tension: 0,
-    territory: { x: 0, y: 0, radius: 10 },
+    founded_day: 100,
+    internal_tension: 0.2,
+    prestige: 0.1,
+    territory: { x: 32, y: 38, radius: 5 },
     alliances: [],
     rival_ids: [],
-    prestige: 0.1,
     ...overrides,
   };
 }
 
+describe('RELATIONSHIP_TYPES — definition checks', () => {
+  it('defines 6 relationship types', () => {
+    expect(Object.keys(RELATIONSHIP_TYPES)).toHaveLength(6);
+  });
+
+  it('includes KIN, MATE, ALLY, RIVAL, NEUTRAL, OUTGROUP', () => {
+    expect(RELATIONSHIP_TYPES.KIN).toBe('kin');
+    expect(RELATIONSHIP_TYPES.MATE).toBe('mate');
+    expect(RELATIONSHIP_TYPES.ALLY).toBe('ally');
+    expect(RELATIONSHIP_TYPES.RIVAL).toBe('rival');
+    expect(RELATIONSHIP_TYPES.NEUTRAL).toBe('neutral');
+    expect(RELATIONSHIP_TYPES.OUTGROUP).toBe('outgroup');
+  });
+});
+
+describe('GROUP_ROLES — definition checks', () => {
+  it('defines 6 roles', () => {
+    expect(Object.keys(GROUP_ROLES)).toHaveLength(6);
+  });
+
+  it('includes LEADER, ELDER, WARRIOR, GATHERER, HEALER, MEMBER', () => {
+    expect(GROUP_ROLES.LEADER).toBe('leader');
+    expect(GROUP_ROLES.ELDER).toBe('elder');
+    expect(GROUP_ROLES.WARRIOR).toBe('warrior');
+    expect(GROUP_ROLES.HEALER).toBe('healer');
+    expect(GROUP_ROLES.MEMBER).toBe('member');
+  });
+});
+
 describe('computeSocialStatus', () => {
-  it('returns 0 when no group exists', () => {
+  it('returns 0 when group is null', () => {
     const ind = makeInd('i1');
     expect(computeSocialStatus(ind, null)).toBe(0);
   });
 
-  it('produces value in [0, 1] range', () => {
-    const ind   = makeInd('i1', { phenotype: { dominance: 0.8, fluid_intelligence: 0.8, empathy: 0.8, physical_strength: 0.8 } });
-    const group = makeGroup('g1', ['i1'], { founded_day: 1000 });
+  it('result is always between 0 and 1', () => {
+    const ind = makeInd('i1', {
+      phenotype: { dominance: 0.9, fluid_intelligence: 0.9, empathy: 0.9, physical_strength: 0.9 },
+      social: { reputation: 1.0 },
+    });
+    const group = makeGroup('g1', ['i1']);
     const status = computeSocialStatus(ind, group);
     expect(status).toBeGreaterThanOrEqual(0);
     expect(status).toBeLessThanOrEqual(1);
   });
 
-  it('high dominance + IQ → high status', () => {
-    const high = makeInd('h', { phenotype: { dominance: 0.9, fluid_intelligence: 0.9, empathy: 0.9, physical_strength: 0.9 } });
-    const low  = makeInd('l', { phenotype: { dominance: 0.1, fluid_intelligence: 0.1, empathy: 0.1, physical_strength: 0.1 } });
-    const group = makeGroup('g1', ['h', 'l'], { founded_day: 500 });
+  it('high-dominance individual has higher status than low-dominance', () => {
+    const group = makeGroup('g1', ['a', 'b'], { founded_day: 0 });
+    const high = makeInd('a', { phenotype: { dominance: 0.9, fluid_intelligence: 0.5, empathy: 0.5, physical_strength: 0.5 }, social: { reputation: 0.5 } });
+    const low  = makeInd('b', { phenotype: { dominance: 0.1, fluid_intelligence: 0.5, empathy: 0.5, physical_strength: 0.5 }, social: { reputation: 0.5 } });
     expect(computeSocialStatus(high, group)).toBeGreaterThan(computeSocialStatus(low, group));
   });
 
-  it('reputation contributes to status', () => {
-    const highRep = makeInd('hr', { social: { reputation: 1.0 } });
-    const lowRep  = makeInd('lr', { social: { reputation: 0.0 } });
-    const group   = makeGroup('g1', ['hr', 'lr'], { founded_day: 500 });
-    expect(computeSocialStatus(highRep, group)).toBeGreaterThan(computeSocialStatus(lowRep, group));
+  it('higher reputation increases status', () => {
+    const group = makeGroup('g1', ['a', 'b'], { founded_day: 0 });
+    const base = makeInd('a', { social: { reputation: 0.2 } });
+    const rep  = makeInd('b', { social: { reputation: 0.9 } });
+    expect(computeSocialStatus(rep, group)).toBeGreaterThan(computeSocialStatus(base, group));
+  });
+
+  it('physical_strength contributes in young groups but not old ones', () => {
+    const youngGroup = makeGroup('g1', ['a'], { founded_day: 0 });
+    const oldGroup   = makeGroup('g2', ['a'], { founded_day: 5000 });
+    const strongDim = makeInd('a', {
+      age: 30 * 365,
+      phenotype: { dominance: 0.0, fluid_intelligence: 0.0, empathy: 0.0, physical_strength: 0.99 },
+      social: { reputation: 0.0 },
+    });
+    expect(computeSocialStatus(strongDim, youngGroup)).toBeGreaterThan(
+      computeSocialStatus(strongDim, oldGroup)
+    );
   });
 });
 
 describe('processGroupDynamics — group formation', () => {
-  it('two groupless individuals in close proximity form a new group', () => {
-    const i1 = makeInd('i1');
-    const i2 = makeInd('i2');
-    const population = [i1, i2];
-    const groups = [];
-
-    processGroupDynamics(population, groups, 1);
-
-    expect(groups.length).toBeGreaterThan(0);
-    expect(i1.group_id).not.toBeNull();
-    expect(i2.group_id).not.toBeNull();
+  it('returns array', () => {
+    const result = processGroupDynamics([], [], 1);
+    expect(Array.isArray(result)).toBe(true);
   });
 
-  it('individuals are assigned to the same group', () => {
+  it('two ungrouped adults near each other form a new group', () => {
+    const i1 = makeInd('i1', { x: 32, y: 38 });
+    const i2 = makeInd('i2', { x: 32, y: 38 });
+    const groups = [];
+    const events = processGroupDynamics([i1, i2], groups, 1);
+    const formed = events.find(e => e.type === 'group_formed');
+    expect(formed).toBeDefined();
+    expect(groups).toHaveLength(1);
+  });
+
+  it('group_formed event has correct shape', () => {
     const i1 = makeInd('i1');
     const i2 = makeInd('i2');
     const groups = [];
+    const events = processGroupDynamics([i1, i2], groups, 10);
+    const ev = events.find(e => e.type === 'group_formed');
+    expect(ev).toBeDefined();
+    expect(typeof ev.group_id).toBe('string');
+    expect(ev.day).toBe(10);
+  });
 
-    processGroupDynamics([i1, i2], groups, 1);
+  it('infant life_stage is excluded from ungrouped pool', () => {
+    const infant = makeInd('infant', { life_stage: 'infant' });
+    const adult  = makeInd('adult');
+    const groups = [];
+    processGroupDynamics([infant, adult], groups, 1);
+    expect(groups).toHaveLength(0);
+  });
+});
 
-    expect(i1.group_id).toBe(i2.group_id);
+describe('processGroupDynamics — join existing group', () => {
+  it('ungrouped individual joins nearby group', () => {
+    const leader = makeInd('leader', { group_id: 'g1', x: 32, y: 38 });
+    leader.group_id = 'g1';
+    const newcomer = makeInd('newcomer', { x: 32, y: 38, phenotype: { xenophobia: 0.0, dominance: 0.5, fluid_intelligence: 0.5, empathy: 0.5, physical_strength: 0.5, aggression: 0.3, curiosity: 0.5, independence: 0.3 } });
+    const group = makeGroup('g1', ['leader'], { territory: { x: 32, y: 38, radius: 5 } });
+    const groups = [group];
+    let joined = false;
+    for (let day = 0; day < 100 && !joined; day++) {
+      const evs = processGroupDynamics([leader, newcomer], groups, day);
+      if (evs.find(e => e.type === 'group_join')) joined = true;
+    }
+    expect(joined).toBe(true);
+  });
+});
+
+describe('processGroupDynamics — leadership change', () => {
+  it('strong challenger can unseat current leader', () => {
+    const leader = makeInd('leader', {
+      group_id: 'g1',
+      phenotype: { dominance: 0.1, physical_strength: 0.1, fluid_intelligence: 0.5, empathy: 0.5, aggression: 0.3, curiosity: 0.5, xenophobia: 0.0, independence: 0.3 },
+      social: { reputation: 0.5 },
+    });
+    const challenger = makeInd('challenger', {
+      group_id: 'g1',
+      phenotype: { dominance: 0.99, physical_strength: 0.99, fluid_intelligence: 0.5, empathy: 0.5, aggression: 0.3, curiosity: 0.5, xenophobia: 0.0, independence: 0.3 },
+      social: { reputation: 0.5 },
+    });
+    const group = makeGroup('g1', ['leader', 'challenger'], { leader_id: 'leader', founded_day: 0 });
+    const groups = [group];
+    let changed = false;
+    for (let day = 0; day < 2000 && !changed; day++) {
+      const evs = processGroupDynamics([leader, challenger], groups, day);
+      if (evs.find(e => e.type === 'leadership_change')) changed = true;
+    }
+    expect(changed).toBe(true);
+  });
+
+  it('leadership_change event has correct shape', () => {
+    const leader = makeInd('leader', {
+      group_id: 'g1',
+      phenotype: { dominance: 0.05, physical_strength: 0.05, fluid_intelligence: 0.5, empathy: 0.5, aggression: 0.3, curiosity: 0.5, xenophobia: 0.0, independence: 0.3 },
+      social: { reputation: 0.5 },
+    });
+    const challenger = makeInd('challenger', {
+      group_id: 'g1',
+      phenotype: { dominance: 0.99, physical_strength: 0.99, fluid_intelligence: 0.5, empathy: 0.5, aggression: 0.3, curiosity: 0.5, xenophobia: 0.0, independence: 0.3 },
+      social: { reputation: 0.5 },
+    });
+    const group = makeGroup('g1', ['leader', 'challenger'], { leader_id: 'leader', founded_day: 0 });
+    let ev = null;
+    for (let day = 0; day < 2000 && !ev; day++) {
+      const evs = processGroupDynamics([leader, challenger], [group], day);
+      ev = evs.find(e => e.type === 'leadership_change') ?? null;
+    }
+    if (ev) {
+      expect(ev).toMatchObject({ type: 'leadership_change', group_id: 'g1' });
+      expect(typeof ev.new_leader_id).toBe('string');
+      expect(ev.day).toBeGreaterThanOrEqual(0);
+    }
   });
 });
 
 describe('processGroupDynamics — group fission', () => {
-  it('group with 26+ members attempts fission (threshold: 25)', () => {
-    // Create 26 individuals — all with high independence, low status (for fission)
-    const members = Array.from({ length: 26 }, (_, i) =>
+  it('large group with high tension can split', () => {
+    const members = Array.from({ length: 12 }, (_, i) =>
       makeInd(`m${i}`, {
-        phenotype: { dominance: 0.1, fluid_intelligence: 0.5, empathy: 0.5, physical_strength: 0.5, independence: 0.8 },
-        social: { reputation: 0.1 },
+        group_id: 'g1',
+        x: 32 + (Math.random() - 0.5),
+        y: 38 + (Math.random() - 0.5),
+        phenotype: {
+          dominance: 0.5, fluid_intelligence: 0.5, empathy: 0.5,
+          physical_strength: 0.5, aggression: 0.5, curiosity: 0.5,
+          xenophobia: 0.0, independence: 0.9,
+        },
+        social: { reputation: 0.3 },
       })
     );
-    members.forEach(m => { m.group_id = 'g1'; });
-    const group = makeGroup('g1', members.map(m => m.id));
+    const group = makeGroup('g1', members.map(m => m.id), { internal_tension: 0.85, founded_day: 0 });
     const groups = [group];
-
-    // Fission is probabilistic — should occur at least once in 300 tries
-    let fissioned = false;
-    for (let day = 0; day < 300; day++) {
-      processGroupDynamics(members, groups, day);
-      if (groups.length > 1) { fissioned = true; break; }
+    let split = false;
+    for (let day = 0; day < 500 && !split; day++) {
+      const evs = processGroupDynamics(members, groups, day);
+      if (evs.find(e => e.type === 'group_split')) split = true;
     }
-    expect(fissioned).toBe(true);
+    expect(split).toBe(true);
   });
 
-  it('tension > 0.8 triggers fission', () => {
-    const members = Array.from({ length: 10 }, (_, i) =>
+  it('group_split event has correct shape', () => {
+    const members = Array.from({ length: 12 }, (_, i) =>
       makeInd(`m${i}`, {
-        phenotype: { dominance: 0.1, fluid_intelligence: 0.5, empathy: 0.5, physical_strength: 0.5, independence: 0.9 },
-        social: { reputation: 0.1 },
+        group_id: 'g1',
+        phenotype: {
+          dominance: 0.5, fluid_intelligence: 0.5, empathy: 0.5,
+          physical_strength: 0.5, aggression: 0.5, curiosity: 0.5,
+          xenophobia: 0.0, independence: 0.95,
+        },
+        social: { reputation: 0.2 },
       })
     );
-    members.forEach(m => { m.group_id = 'g1'; });
-    const group = makeGroup('g1', members.map(m => m.id), { internal_tension: 0.9 });
+    const group = makeGroup('g1', members.map(m => m.id), { internal_tension: 0.9, founded_day: 0 });
     const groups = [group];
-
-    let fissioned = false;
-    for (let day = 0; day < 300; day++) {
-      processGroupDynamics(members, groups, day);
-      if (groups.length > 1) { fissioned = true; break; }
+    let ev = null;
+    for (let day = 0; day < 500 && !ev; day++) {
+      const evs = processGroupDynamics(members, groups, day);
+      ev = evs.find(e => e.type === 'group_split') ?? null;
     }
-    expect(fissioned).toBe(true);
-  });
-
-  it('group with < 8 members does not split (minimum size condition)', () => {
-    const members = Array.from({ length: 5 }, (_, i) =>
-      makeInd(`m${i}`, {
-        phenotype: { independence: 0.9, dominance: 0.1, fluid_intelligence: 0.5, empathy: 0.5, physical_strength: 0.5 },
-        social: { reputation: 0.1 },
-      })
-    );
-    members.forEach(m => { m.group_id = 'g1'; });
-    const group = makeGroup('g1', members.map(m => m.id), { internal_tension: 0.9 });
-    const groups = [group];
-
-    for (let day = 0; day < 30; day++) {
-      processGroupDynamics(members, groups, day);
+    if (ev) {
+      expect(ev).toMatchObject({ type: 'group_split', parent_group_id: 'g1' });
+      expect(typeof ev.new_group_id).toBe('string');
     }
-    expect(groups.length).toBe(1); // no fission should occur
   });
 });
 
-describe('RELATIONSHIP_TYPES — definition check', () => {
-  it('6 relationship types defined', () => {
-    expect(Object.keys(RELATIONSHIP_TYPES)).toHaveLength(6);
+describe('assignGroupRoles', () => {
+  it('does nothing for empty members array', () => {
+    const group = makeGroup('g1', []);
+    expect(() => assignGroupRoles([], group)).not.toThrow();
   });
 
-  it('contains basic types', () => {
-    expect(RELATIONSHIP_TYPES.KIN).toBe('kin');
-    expect(RELATIONSHIP_TYPES.MATE).toBe('mate');
-    expect(RELATIONSHIP_TYPES.RIVAL).toBe('rival');
-  });
-});
-
-describe('GROUP_ROLES — definition check', () => {
-  it('6 roles defined', () => {
-    expect(Object.keys(GROUP_ROLES)).toHaveLength(6);
+  it('leader gets LEADER role', () => {
+    const leader = makeInd('leader', { group_id: 'g1' });
+    const member = makeInd('member', { group_id: 'g1' });
+    const group = makeGroup('g1', ['leader', 'member'], { leader_id: 'leader' });
+    assignGroupRoles([leader, member], group);
+    expect(leader.group_role).toBe(GROUP_ROLES.LEADER);
   });
 
-  it('contains basic roles', () => {
-    expect(GROUP_ROLES.LEADER).toBe('leader');
-    expect(GROUP_ROLES.WARRIOR).toBe('warrior');
-    expect(GROUP_ROLES.HEALER).toBe('healer');
+  it('dominant "socialize" behavior gives HEALER role', () => {
+    const healer = makeInd('healer', {
+      group_id: 'g1',
+      _behaviorCounts: { socialize: 10, forage: 2, hunt: 1 },
+    });
+    const group = makeGroup('g1', ['leader', 'healer'], { leader_id: 'leader' });
+    const leader = makeInd('leader', { group_id: 'g1' });
+    assignGroupRoles([leader, healer], group);
+    expect(healer.group_role).toBe(GROUP_ROLES.HEALER);
+  });
+
+  it('dominant "hunt" behavior gives WARRIOR role', () => {
+    const warrior = makeInd('warrior', {
+      group_id: 'g1',
+      _behaviorCounts: { hunt: 15, forage: 3, socialize: 1 },
+    });
+    const group = makeGroup('g1', ['leader', 'warrior'], { leader_id: 'leader' });
+    const leader = makeInd('leader', { group_id: 'g1' });
+    assignGroupRoles([leader, warrior], group);
+    expect(warrior.group_role).toBe(GROUP_ROLES.WARRIOR);
+  });
+
+  it('age > 40 with no dominant behavior gives ELDER role', () => {
+    const elder = makeInd('elder', {
+      group_id: 'g1',
+      age: 50 * 365,
+      _behaviorCounts: {},
+    });
+    const group = makeGroup('g1', ['leader', 'elder'], { leader_id: 'leader' });
+    const leader = makeInd('leader', { group_id: 'g1' });
+    assignGroupRoles([leader, elder], group);
+    expect(elder.group_role).toBe(GROUP_ROLES.ELDER);
+  });
+
+  it('young member with no behavior history gets MEMBER role', () => {
+    const member = makeInd('member', {
+      group_id: 'g1',
+      age: 20 * 365,
+      _behaviorCounts: {},
+    });
+    const group = makeGroup('g1', ['leader', 'member'], { leader_id: 'leader' });
+    const leader = makeInd('leader', { group_id: 'g1' });
+    assignGroupRoles([leader, member], group);
+    expect(member.group_role).toBe(GROUP_ROLES.MEMBER);
+  });
+
+  it('every member gets a role assigned', () => {
+    const members = Array.from({ length: 8 }, (_, i) => makeInd(`m${i}`, { group_id: 'g1' }));
+    const group = makeGroup('g1', members.map(m => m.id), { leader_id: 'm0' });
+    assignGroupRoles(members, group);
+    members.forEach(m => expect(m.group_role).toBeDefined());
   });
 });

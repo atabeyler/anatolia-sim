@@ -62,8 +62,8 @@ describe('processAstronomyTick — celestial events', () => {
   });
 
   it('infants and children do not unlock astronomy knowledge', () => {
-    const infant = makeObs('i1', { life_stage: 'INFANT' });
-    const child  = makeObs('c1', { life_stage: 'CHILD' });
+    const infant = makeObs('i1', { life_stage: 'infant' });
+    const child  = makeObs('c1', { life_stage: 'child' });
     const obs = new Set(['lunar_cycle']);
     const knowledge = new Set();
     for (let day = 0; day < 5000; day++) {
