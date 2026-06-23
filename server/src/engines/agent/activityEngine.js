@@ -200,8 +200,9 @@ export function checkTechEmergence(ind, discoveredTechs) {
   const iq     = ind.phenotype?.fluid_intelligence ?? 0.5;
   const cur    = ind.phenotype?.curiosity          ?? 0.5;
   const innov  = ind.phenotype?.innovation         ?? 0.5;
-  // Factor: genius (0.9×0.9×4 ≈ 3.24) reaches thresholds ~3× faster. Innovation boosts discovery.
-  const factor = Math.max(0.1, iq * cur * 4 * (0.5 + innov * 0.5));
+  // Factor: genius (0.9×0.9×4 ≈ 3.24) reaches thresholds ~3× faster.
+  // Innovation modifies at neutral (0.5 → ×1.0), max (1.0 → ×1.5), min (0.0 → ×0.5).
+  const factor = Math.max(0.1, iq * cur * 4 * (0.5 + innov));
 
   for (const [techId, req] of Object.entries(TECH_SKILLS)) {
     if (discoveredTechs.has(techId)) continue;
