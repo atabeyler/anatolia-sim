@@ -553,6 +553,7 @@ function PopulationDots({
   const { founders, males, females } = useMemo(() => {
     const founders: any[] = [], males: any[] = [], females: any[] = [];
     for (const ind of individuals) {
+      if (ind.is_dead || ind.alive === false) continue;
       if (!ind.parent_1_id && !ind.parent_2_id) founders.push(ind);
       else if (ind.sex === 'male') males.push(ind);
       else females.push(ind);
