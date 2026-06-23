@@ -159,107 +159,9 @@ function StatRow({ label, value, color = '#a0b4ff' }: { label: string; value: Re
   );
 }
 
-function generateInnerThought(ind: any, lang: string, seed: number): string {
-  const c = ind.mind?.consciousness ?? 0;
-  const ph = ind.phenotype ?? {};
-  const ps = ind.psychology ?? {};
-  const health = ind.health ?? {};
-  const langStage = ind.language?.stage ?? 0;
-  const isDead = ind.alive === false || ind.is_dead;
-  const age = parseFloat(ind.age_years ?? 0);
-  const stress = ps.stress_level ?? 0;
-  const wellbeing = ps.wellbeing ?? 0.5;
-  const mentalState = ps.mental_state ?? 'calm';
-  const hasGroup = !!ind.group_id;
-  const hasMate = ind.social?.has_mate;
-  const hp = health.hp ?? 1;
-  const hunger = 1 - (health.calories ?? 0.5);
-  const thirst = 1 - (health.hydration ?? 0.5);
-  const tom = ps.theory_of_mind ?? 0;
-  const curiosity = ph.curiosity ?? 0;
-  const isFounder = !ind.parent_1_id && !ind.parent_2_id;
-
-  const tr = (trStr: string, enStr: string) =>
-    text(lang as LangCode, { tr: trStr, en: enStr, de: enStr, fr: enStr, ar: enStr });
-
-  // pick(arr) — seeded random pick so thoughts rotate on each refresh
-  const pick = <T,>(arr: T[]): T => arr[seed % arr.length];
-
-  if (isDead) return pick([tr('Sessizlik.', 'Silence.'), tr('Artık hiçbir şey.', 'Nothing anymore.'), tr('...', '...')]);
-
-  if (c < 0.03) {
-    if (hunger > 0.7) return pick([tr('...açlık...', '...hunger...'), tr('...yemek...', '...food...'), tr('...boş...', '...empty...')]);
-    if (thirst > 0.7) return pick([tr('...su...', '...water...'), tr('...susuzluk...', '...thirst...')]);
-    if (hp < 0.3)     return pick([tr('...ağrı...', '...pain...'), tr('...acı...', '...hurts...')]);
-    return pick([tr('...', '...'), tr('—', '—'), tr('...ışık...', '...light...')]);
-  }
-
-  if (c < 0.08) {
-    if (hunger > 0.6) return pick([tr('Bir şey yemek istiyorum.', 'Need food.'), tr('Karnım boş.', 'My stomach is empty.'), tr('Yiyecek nerede?', 'Where is food?')]);
-    if (thirst > 0.6) return pick([tr('Su. Su olmalı.', 'Water. Must find water.'), tr('Susamışım.', 'Thirsty.'), tr('Su bulmam lazım.', 'I need water.')]);
-    if (hp < 0.4)     return pick([tr('Ağrıyor. Ağrıyor.', 'Hurts. It hurts.'), tr('Kendimi iyi hissetmiyorum.', 'I don\'t feel good.'), tr('Ne zaman geçer?', 'When will it pass?')]);
-    if (!hasGroup)    return pick([tr('Yalnızım.', 'Alone.'), tr('Kimse yok.', 'No one here.'), tr('Nereye gitsem?', 'Where should I go?')]);
-    return pick([tr('Buradayım.', 'I am here.'), tr('Devam et.', 'Keep going.'), tr('Güvendeyim.', 'Safe.')]);
-  }
-
-  if (c < 0.15) {
-    if (mentalState === 'grieving') return pick([tr('Birini kaybettim. Acıyor.', 'Someone is gone. It hurts.'), tr('Neden gitti?', 'Why did they go?'), tr('Bir daha göremeyeceğim.', 'I won\'t see them again.')]);
-    if (mentalState === 'anxious')  return pick([tr('Tehlike var. Kaçmalıyım.', 'Danger. Must flee.'), tr('Bir şeyler yanlış.', 'Something is wrong.'), tr('Dikkatli olmalıyım.', 'Must be careful.')]);
-    if (hunger > 0.5) return pick([tr('Bugün yiyecek bulamadım.', 'No food today.'), tr('Çok açım.', 'So hungry.'), tr('Avlanmalıyım.', 'I must hunt.')]);
-    if (hasGroup) return pick([tr('Grubumla birlikteyim. Güvendeyim.', 'With my group. Safe.'), tr('Etrafımda insanlar var.', 'People around me.'), tr('Birlikte daha güçlüyüz.', 'Together we are stronger.')]);
-    if (stress > 0.7) return pick([tr('Kötü bir şey hissediyorum.', 'Something feels bad.'), tr('İçim sıkışık.', 'I feel trapped inside.'), tr('Neden bu kadar ağır?', 'Why does this feel so heavy?')]);
-    return pick([tr('Bugün güneş var.', 'Sun is out today.'), tr('Rüzgar esiyor.', 'The wind is blowing.'), tr('Sessiz bir gün.', 'A quiet day.'), tr('Hayat devam ediyor.', 'Life goes on.')]);
-  }
-
-  if (c < 0.25) {
-    if (mentalState === 'grieving') return pick([tr('Birisi gitti. Bir daha göremeyeceğim.', 'Someone is gone. I won\'t see them again.'), tr('Boşluk var içimde.', 'There\'s an emptiness inside me.'), tr('Ağlamak istiyorum ama bilmiyorum nasıl.', 'I want to cry but I don\'t know how.')]);
-    if (hasMate) return pick([tr('O yakında olunca daha iyi hissediyorum.', 'I feel better when they are near.'), tr('Onunla olmak istiyorum.', 'I want to be with them.'), tr('Sesini duymak istiyorum.', 'I want to hear their voice.')]);
-    if (mentalState === 'excited') return pick([tr('Bir şeyler oluyor! Heyecanlıyım.', 'Something is happening! I feel excited.'), tr('Bugün farklı bir şey var.', 'Something is different today.'), tr('İyi bir şey geliyor sanki.', 'Something good is coming, I think.')]);
-    if (tom >= 1) return pick([tr('O da benim gibi hissediyor mu acaba?', 'I wonder if they feel like I do?'), tr('Onun aklından neler geçiyor?', 'What is going through their mind?'), tr('Neden öyle baktı?', 'Why did they look at me that way?')]);
-    if (stress > 0.6) return pick([tr('Grup içinde bir gerilim var.', 'There is tension in the group.'), tr('Bir şeyler değişti aramızda.', 'Something changed between us.'), tr('Neden bu kadar gerginim?', 'Why am I so tense?')]);
-    if (wellbeing > 0.7) return pick([tr('İyi bir gün. Karnım tok, grubum yanımda.', 'Good day. Full belly, group nearby.'), tr('Bugün mutluyum.', 'I am happy today.'), tr('Her şey yolunda gidiyor.', 'Everything is going well.')]);
-    return pick([tr('Yarın ne olacak?', 'What will tomorrow bring?'), tr('Burada ne kadar kalacağız?', 'How long will we stay here?'), tr('Başka insanlar da var mı orada?', 'Are there other people out there?')]);
-  }
-
-  if (c < 0.45) {
-    if (isFounder && age > 30) return pick([tr('Bu toprakları ilk ben gördüm. Başka kimseler var mıydı?', 'I was the first to see these lands. Were there others?'), tr('Buraya nasıl geldim? Neden?', 'How did I come here? Why?'), tr('Geride ne bıraktım?', 'What did I leave behind?')]);
-    if (mentalState === 'depressed') return pick([tr('Neden bu kadar zor? Her şey ağır geliyor.', 'Why is everything so hard? It all feels heavy.'), tr('Devam etmek istemiyor gibiyim.', 'I don\'t feel like going on.'), tr('Bir anlam var mı bunun?', 'Is there any point to this?')]);
-    if (tom >= 2) return pick([tr('Onların ne düşündüğünü merak ediyorum. Beni görüyorlar mı?', 'I wonder what they think. Do they see me?'), tr('Herkesin bir iç dünyası var.', 'Everyone has an inner world.'), tr('Ben de onlar için bir şeyler hissediyorum.', 'I feel things for them too.')]);
-    if (curiosity > 0.7) return pick([tr('O dağın ötesinde ne var? Bunu öğrenmek istiyorum.', 'What is beyond that mountain? I want to know.'), tr('Bu dünya ne kadar büyük?', 'How big is this world?'), tr('Hiç görmediğim şeyler var.', 'There are things I\'ve never seen.')]);
-    if (langStage >= 3) return pick([tr('Kelimeler aklımda şekilleniyor. Anlatmak istiyorum.', 'Words are forming in my mind. I want to tell someone.'), tr('Düşüncelerimi aktarabilsem...', 'If only I could convey my thoughts...'), tr('Bazı şeyleri anlatmak çok zor.', 'Some things are so hard to put into words.')]);
-    if (stress > 0.5) return pick([tr('Eskiden daha kolaydı. Şimdi her şey değişti.', 'It used to be easier. Now everything has changed.'), tr('Yoruldum ama devam edeceğim.', 'I\'m tired but I\'ll keep going.'), tr('Bu da geçecek.', 'This too shall pass.')]);
-    return pick([tr('Ben kimim? Neden buradayım?', 'Who am I? Why am I here?'), tr('Var olmak ne demek?', 'What does it mean to exist?'), tr('Bir gün hepsi biter mi?', 'Will it all end one day?'), tr('Benden sonra ne kalacak?', 'What will remain after me?')]);
-  }
-
-  if (c < 0.7) {
-    if (mentalState === 'grieving') return pick([tr('Ölüm gerçek. Ben de bir gün gideceğim. Ama şimdi buradayım.', 'Death is real. I will go one day too. But I am here now.'), tr('Kayıp, sevginin bir parçası.', 'Loss is part of love.'), tr('Onlar gitmiş ama ben hatırlıyorum.', 'They are gone but I remember.')]);
-    if (tom >= 3) return pick([tr('Her biri ayrı bir dünya. Ben sadece birini görebiliyorum.', 'Each person is a separate world. I can only see one.'), tr('Kimsenin içini tam bilemem.', 'I can never fully know anyone\'s inner world.'), tr('Belki de herkes böyle yalnız.', 'Perhaps everyone is this lonely.')]);
-    if (langStage >= 4) return pick([tr('Bazı şeyleri kelimelerle anlatamıyorum. Ama hissediyorum.', 'Some things cannot be said with words. But I feel them.'), tr('Dil yetersiz kalıyor bazen.', 'Language falls short sometimes.'), tr('Anlatmak istiyorum ama nasıl?', 'I want to express it but how?')]);
-    if (curiosity > 0.6) return pick([tr('Yıldızlar her gece aynı yerde. Bu bir anlam taşıyor mu?', 'Stars are in the same place every night. Does this mean something?'), tr('Gökyüzü neden böyle?', 'Why is the sky the way it is?'), tr('Biz neyiz bu evrende?', 'What are we in this universe?')]);
-    if (hasMate) return pick([tr('Onunla geçirdiğim zamanları hatırlıyorum. O anlar gerçekti.', 'I remember the time we spent together. Those moments were real.'), tr('Sevmek, var olmanın en güzel hali.', 'Love is the most beautiful way to exist.'), tr('Onu kaybetsem ne olur?', 'What would happen if I lost them?')]);
-    return pick([tr('Gelecek nesiller bizi hatırlayacak mı?', 'Will future generations remember us?'), tr('Bu dünyaya bir şey bırakabilir miyim?', 'Can I leave something to this world?'), tr('Geçmiş neden bu kadar ağır?', 'Why does the past weigh so much?'), tr('Anlam arıyorum ama nerede?', 'I\'m looking for meaning, but where?')]);
-  }
-
-  // Very high consciousness
-  if (mentalState === 'grieving') return pick([tr('Acı, var olmanın bir parçası. Bunu anlamak uzun zaman aldı.', 'Grief is part of existence. It took me long to understand this.'), tr('Her son, bir başlangıcın habercisi mi?', 'Is every ending a herald of a new beginning?')]);
-  if (tom >= 3) return pick([tr('Başkalarının acısını kendi bedenimde hissediyorum. Bu beni hem güçsüz hem güçlü kılıyor.', 'I feel others\' pain in my own body. This makes me both weak and strong.'), tr('Ben onlarda, onlar bende yaşıyor.', 'I live in them, they live in me.'), tr('Biz belki de hepimiz biriyiz.', 'Perhaps we are all one.')]);
-  if (langStage >= 5) return pick([tr('Kelimeler artık benim için yetersiz. Bir şeyleri aktarmak istiyorum ama nasıl?', 'Words are not enough anymore. I want to pass something on, but how?'), tr('Dilimiz henüz çok genç. Anlatamıyorum.', 'Our language is too young. I can\'t express it.'), tr('İçimdeki ses kelimelerden önce var.', 'The voice inside me exists before words.')]);
-  if (isFounder) return pick([tr('Ben başlangıçtım. Şimdi anlıyorum: her şey devam edecek, ben olmadan da.', 'I was the beginning. Now I understand: everything will continue, even without me.'), tr('Tohumları ben ektim. Meyveleri göremeyeceğim.', 'I planted the seeds. I won\'t see the fruit.')]);
-  return pick([
-    tr('Burada olmak — sadece bu — yeterli mi? Bilmiyorum. Ama şu an buradayım.', 'Being here — just this — is it enough? I don\'t know. But I am here now.'),
-    tr('Her şey geçici. Ama bu an gerçek.', 'Everything is temporary. But this moment is real.'),
-    tr('Neden var oluyoruz? Belki cevap yok. Ama soru var.', 'Why do we exist? Maybe there\'s no answer. But the question is there.'),
-    tr('Ölümden korkuyorum. Ama yaşamaktan da korkuyorum bazen.', 'I fear death. But sometimes I fear living too.'),
-  ]);
-}
 
 function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndividuals: any[]; onClose: () => void }) {
   const { lang, events, watchedIndividualId, setWatchedIndividual } = useSimStore();
-  const [thoughtSeed, setThoughtSeed] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setThoughtSeed(s => s + 1), 6000);
-    return () => clearInterval(id);
-  }, []);
   const name = nameFromId(ind.id, ind.sex, ind.phenotype?.name ?? ind.name);
   const age = parseFloat(ind.age_years ?? 0);
   const stage = lifeStage(age, lang);
@@ -275,6 +177,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
   const [archivedJournal, setArchivedJournal] = useState<any[]>([]);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [treeOpen, setTreeOpen] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
 
   const TYPE_ICON: Record<string, string> = {
     birth: '✦', death: '†', language: '◆', technology: '⚙',
@@ -364,6 +267,17 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => setVoiceOpen(true)}
+              title={text(lang as LangCode, { en: 'Inner voice', tr: 'İç ses', de: 'Innere Stimme', fr: 'Voix intérieure', ar: 'الصوت الداخلي' })}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(200,180,255,0.3)',
+                color: '#c8b4ff', cursor: 'pointer', padding: '2px 6px',
+                fontSize: 11, lineHeight: 1, fontFamily: 'Share Tech Mono, monospace', borderRadius: 2,
+              }}>
+              {text(lang as LangCode, { en: '💭 VOICE', tr: '💭 İÇ SES', de: '💭 STIMME', fr: '💭 VOIX', ar: '💭 الصوت' })}
+            </button>
             <button
               onClick={() => setTreeOpen(true)}
               title={text(lang as LangCode, { en: 'View family tree', tr: 'Soy ağacını görüntüle', de: 'Stammbaum anzeigen', fr: 'Voir l\'arbre généalogique', ar: 'عرض شجرة العائلة' })}
@@ -482,30 +396,6 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
               <TraitRow label={tr('Stres', 'Stress')}                 value={mind.stress ?? 0}              color="#e05a5a" />
               <TraitRow label={tr('Serotonin', 'Serotonin')}          value={ph.serotonin ?? 0}             color="#4ecb71" />
               <TraitRow label={tr('Stres Direnci', 'Stress Resil.')}  value={ph.stress_resilience ?? 0}    color="#7dd3fc" />
-            </div>
-          </div>
-
-          {/* -- İç Ses / Inner Voice -- */}
-          <div>
-            <SectionHeader label={tr('İÇ SES', 'INNER VOICE')} />
-            <div style={{
-              background: 'rgba(200,180,255,0.04)',
-              border: '1px solid rgba(200,180,255,0.15)',
-              borderLeft: `3px solid ${(mind.consciousness ?? 0) > 0.5 ? '#c8b4ff' : (mind.consciousness ?? 0) > 0.15 ? '#7dd3fc' : '#4a5568'}`,
-              padding: '8px 10px',
-              borderRadius: 2,
-            }}>
-              <p className="font-share-tech" style={{ fontSize: 12, color: '#c8d8e8', lineHeight: 1.6, fontStyle: 'italic' }}>
-                "{generateInnerThought(ind, lang, thoughtSeed)}"
-              </p>
-              <div className="flex items-center gap-1.5 mt-2">
-                <div style={{ flex: 1, height: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 1 }}>
-                  <div style={{ width: `${Math.round((mind.consciousness ?? 0) * 100)}%`, height: '100%', background: (mind.consciousness ?? 0) > 0.5 ? '#c8b4ff' : '#7dd3fc', borderRadius: 1 }} />
-                </div>
-                <span className="font-share-tech" style={{ fontSize: 10, color: '#8898c8' }}>
-                  {tr('Bilinç', 'Consc.')} {Math.round((mind.consciousness ?? 0) * 100)}%
-                </span>
-              </div>
             </div>
           </div>
 
@@ -658,6 +548,14 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
         </div>{/* end scrollable content */}
       </div>{/* end modal box */}
 
+      {voiceOpen && (
+        <InnerVoiceModal
+          ind={ind}
+          lang={lang}
+          onClose={() => setVoiceOpen(false)}
+        />
+      )}
+
       {treeOpen && (
         <FamilyTreeModal
           ind={ind}
@@ -682,6 +580,115 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
         />
       )}
 
+    </div>
+  );
+}
+
+const INNER_VOICE_ARCHIVE_KEY = (id: string) => `inner_voice_${id}`;
+
+function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClose: () => void }) {
+  const { stats } = useSimStore();
+  const tr = (trStr: string, enStr: string) => text(lang as LangCode, { tr: trStr, en: enStr, de: enStr, fr: enStr, ar: enStr });
+
+  const storageKey = INNER_VOICE_ARCHIVE_KEY(ind.id);
+  const [archive, setArchive] = useState<{ thought: string; year: number; ts: number }[]>(() => {
+    try { return JSON.parse(localStorage.getItem(storageKey) ?? '[]'); } catch { return []; }
+  });
+  const [current, setCurrent] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchThought = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await axios.post('/api/aria/inner-voice', {
+        individual: ind,
+        simYear: (stats as any)?.year,
+        simStats: stats,
+        lang,
+      });
+      const thought = res.data?.thought ?? '';
+      if (thought) {
+        setCurrent(thought);
+        const entry = { thought, year: (stats as any)?.year ?? 0, ts: Date.now() };
+        setArchive(prev => {
+          const updated = [entry, ...prev].slice(0, 50);
+          try { localStorage.setItem(storageKey, JSON.stringify(updated)); } catch {}
+          return updated;
+        });
+      }
+    } catch (e: any) {
+      setError(e?.response?.data?.error ?? e?.message ?? 'Error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchThought(); }, []);
+
+  const c = ind.mind?.consciousness ?? 0;
+  const accentColor = c > 0.5 ? '#c8b4ff' : c > 0.15 ? '#7dd3fc' : '#6a8878';
+  const name = nameFromId(ind.id, ind.sex, ind.phenotype?.name ?? ind.name);
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
+      <div className="flex flex-col" style={{ width: 400, maxHeight: '80vh', background: 'rgba(4,4,18,0.98)', border: `1px solid ${accentColor}40`, boxShadow: '0 16px 60px rgba(0,0,0,0.8)', borderRadius: 2 }}>
+
+        {/* Header */}
+        <div className="flex items-center gap-2 px-4 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${accentColor}20` }}>
+          <span style={{ fontSize: 12, color: accentColor, fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.15em', flex: 1 }}>
+            💭 {tr('İÇ SES', 'INNER VOICE')} — {name}
+          </span>
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#6a8878', cursor: 'pointer', lineHeight: 0, padding: 2 }}>
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Current thought */}
+        <div className="px-4 pt-4 pb-3 flex-shrink-0">
+          <div style={{ background: `${accentColor}08`, border: `1px solid ${accentColor}20`, borderLeft: `3px solid ${accentColor}`, padding: '10px 12px', borderRadius: 2, minHeight: 60 }}>
+            {loading ? (
+              <p className="font-share-tech" style={{ fontSize: 12, color: '#6a8878', fontStyle: 'italic' }}>{tr('Düşünce oluşturuluyor...', 'Generating thought...')}</p>
+            ) : error ? (
+              <p className="font-share-tech" style={{ fontSize: 12, color: '#e05a5a' }}>{error}</p>
+            ) : current ? (
+              <p className="font-share-tech" style={{ fontSize: 13, color: '#c8d8e8', lineHeight: 1.6, fontStyle: 'italic' }}>"{current}"</p>
+            ) : null}
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <div style={{ flex: 1, height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 1 }}>
+              <div style={{ width: `${Math.round(c * 100)}%`, height: '100%', background: accentColor, borderRadius: 1 }} />
+            </div>
+            <span className="font-share-tech" style={{ fontSize: 10, color: '#6a8878' }}>{tr('Bilinç', 'Consc.')} {Math.round(c * 100)}%</span>
+            <button
+              onClick={fetchThought}
+              disabled={loading}
+              style={{ background: 'transparent', border: `1px solid ${accentColor}40`, color: accentColor, cursor: loading ? 'not-allowed' : 'pointer', padding: '2px 8px', fontSize: 10, fontFamily: 'Share Tech Mono, monospace', borderRadius: 2, opacity: loading ? 0.5 : 1 }}>
+              {tr('YENİLE', 'REFRESH')}
+            </button>
+          </div>
+        </div>
+
+        {/* Archive */}
+        {archive.length > 1 && (
+          <div className="flex flex-col flex-1 overflow-hidden" style={{ borderTop: `1px solid ${accentColor}15` }}>
+            <div className="px-4 py-2 flex-shrink-0">
+              <span style={{ fontSize: 10, color: '#6a8878', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.1em' }}>
+                {tr('ARŞİV', 'ARCHIVE')} ({archive.length - 1})
+              </span>
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
+              {archive.slice(1).map((entry, i) => (
+                <div key={i} style={{ borderLeft: `2px solid ${accentColor}25`, paddingLeft: 8 }}>
+                  <span className="font-share-tech" style={{ fontSize: 10, color: '#4a5568' }}>Y{entry.year}</span>
+                  <p className="font-share-tech" style={{ fontSize: 11, color: '#8898a8', fontStyle: 'italic', marginTop: 2 }}>"{entry.thought}"</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

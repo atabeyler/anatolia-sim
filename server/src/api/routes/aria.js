@@ -264,4 +264,70 @@ router.post('/speak', authenticate, async (req, res) => {
   }
 });
 
+router.post('/inner-voice', authenticate, async (req, res) => {
+  try {
+    const { individual, simYear, simStats, lang } = req.body;
+    if (!individual) return res.status(400).json({ error: 'No individual provided' });
+
+    const langCode = resolveLangCode(lang);
+    const respondIn = resolveLanguageName(langCode);
+
+    const ind = individual;
+    const c = ind.mind?.consciousness ?? 0;
+    const stress = ind.mind?.stress ?? 0;
+    const ph = ind.phenotype ?? {};
+    const ps = ind.psychology ?? {};
+    const health = ind.health ?? {};
+    const langStage = ind.language?.stage ?? 0;
+    const age = parseFloat(ind.age_years ?? 0);
+    const role = ind.group_role ?? 'member';
+    const isFounder = ind.is_founder || ind.founder;
+    const isDead = ind.is_dead || ind.alive === false;
+
+    const consciousnessDesc =
+      c < 0.03 ? 'near-zero (pure reflexive survival)' :
+      c < 0.08 ? 'very low (basic sensations and instincts)' :
+      c < 0.15 ? 'low (proto-emotions, vague feelings)' :
+      c < 0.25 ? 'emerging (rudimentary self-awareness)' :
+      c < 0.45 ? 'moderate (emotional awareness, simple plans)' :
+      c < 0.70 ? 'high (self-reflection, complex emotions)' :
+      'very high (deep introspection, existential thought)';
+
+    const langDesc =
+      langStage <= 1 ? 'no language (only grunts/signals)' :
+      langStage <= 2 ? 'proto-language (simple sounds)' :
+      langStage <= 3 ? 'basic language (short phrases)' :
+      langStage <= 4 ? 'developing language' :
+      langStage <= 5 ? 'fluent language' : 'complex language';
+
+    const system = `You are simulating the inner monologue of a prehistoric human in Anatolia, year ${simYear ?? '?'} of a simulation.
+This individual: age ${age.toFixed(0)}, sex ${ind.sex ?? 'unknown'}, role ${role}${isFounder ? ' (FOUNDER)' : ''}${isDead ? ' (DECEASED)' : ''}.
+Consciousness level: ${(c * 100).toFixed(0)}% — ${consciousnessDesc}.
+Language: ${langDesc}.
+Stress: ${(stress * 100).toFixed(0)}%. Health: ${(health.current_health ?? 0.8).toFixed(2)}.
+Psychology: theory_of_mind=${ps.theory_of_mind ?? 0}/3, mental_state=${ps.mental_state ?? 'neutral'}.
+Phenotype: curiosity=${(ph.curiosity ?? 0.5).toFixed(2)}, empathy=${(ph.empathy ?? 0.5).toFixed(2)}, creativity=${(ph.creativity ?? 0.5).toFixed(2)}, fear=${(ph.fear ?? 0.5).toFixed(2)}.
+
+RULES:
+- Write ONLY the raw inner thought, no quotes, no narration.
+- Match consciousness level: near-zero = purely sensory fragments; very high = philosophical reflection.
+- Write in ${respondIn}.
+- Max 2 sentences. Keep it visceral and authentic to the era.
+- No modern concepts. No meta-commentary. Just the thought itself.`;
+
+    const thought = await geminiChat({
+      model: process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite',
+      system,
+      user: 'Generate the inner thought.',
+      max_tokens: 120,
+      temperature: 0.9,
+    });
+
+    res.json({ thought: thought.replace(/^["']|["']$/g, '').trim() });
+  } catch (err) {
+    console.error('Inner voice error:', err?.message);
+    res.status(err?.status ?? 500).json({ error: err?.message ?? 'Failed' });
+  }
+});
+
 export default router;
