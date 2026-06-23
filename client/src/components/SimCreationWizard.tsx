@@ -8,26 +8,26 @@ const fromKg = (kg: number, hv: number) => { const h = toCm(hv)/100; return Math
 
 /* ── option lists ───────────────────────────────────────────────────────── */
 const EYE_OPTS  = [
-  {v:'brown', tr:'Kahverengi', en:'Brown', c:'#6b3a1f'},
-  {v:'hazel',  tr:'Ela',        en:'Hazel', c:'#8b6914'},
-  {v:'green',  tr:'Yeşil',      en:'Green', c:'#2d6a2d'},
-  {v:'blue',   tr:'Mavi',       en:'Blue',  c:'#1a5276'},
+  {v:'brown', tr:'Kahverengi', en:'Brown', de:'Braun',      fr:'Marron',   ar:'بني',     c:'#6b3a1f'},
+  {v:'hazel',  tr:'Ela',       en:'Hazel', de:'Haselnuss',  fr:'Noisette', ar:'بندقي',   c:'#8b6914'},
+  {v:'green',  tr:'Yeşil',     en:'Green', de:'Grün',       fr:'Vert',     ar:'أخضر',    c:'#2d6a2d'},
+  {v:'blue',   tr:'Mavi',      en:'Blue',  de:'Blau',       fr:'Bleu',     ar:'أزرق',    c:'#1a5276'},
 ];
 const HAIR_OPTS = [
-  {v:'black', tr:'Siyah', en:'Black', c:'#111'},
-  {v:'dark',  tr:'Koyu',  en:'Dark',  c:'#2c1810'},
-  {v:'brown', tr:'Kahve', en:'Brown', c:'#5c3317'},
-  {v:'light', tr:'Açık',  en:'Light', c:'#c68642'},
-  {v:'blond', tr:'Sarı',  en:'Blond', c:'#d4a017'},
-  {v:'red',   tr:'Kızıl', en:'Red',   c:'#8b2500'},
+  {v:'black', tr:'Siyah', en:'Black', de:'Schwarz', fr:'Noir',   ar:'أسود',   c:'#111'},
+  {v:'dark',  tr:'Koyu',  en:'Dark',  de:'Dunkel',  fr:'Foncé',  ar:'داكن',   c:'#2c1810'},
+  {v:'brown', tr:'Kahve', en:'Brown', de:'Braun',   fr:'Marron', ar:'بني',    c:'#5c3317'},
+  {v:'light', tr:'Açık',  en:'Light', de:'Hell',    fr:'Clair',  ar:'فاتح',   c:'#c68642'},
+  {v:'blond', tr:'Sarı',  en:'Blond', de:'Blond',   fr:'Blond',  ar:'أشقر',   c:'#d4a017'},
+  {v:'red',   tr:'Kızıl', en:'Red',   de:'Rot',     fr:'Roux',   ar:'أحمر',   c:'#8b2500'},
 ];
 const SKIN_OPTS = [
-  {v:'fair',  tr:'Açık',   en:'Fair',  c:'#fde8d0'},
-  {v:'light', tr:'Bej',    en:'Light', c:'#f5c9a0'},
-  {v:'olive', tr:'Buğday', en:'Olive', c:'#c68642'},
-  {v:'tan',   tr:'Bronz',  en:'Tan',   c:'#a0614a'},
-  {v:'brown', tr:'Esmer',  en:'Brown', c:'#7b4a2d'},
-  {v:'dark',  tr:'Koyu',   en:'Dark',  c:'#3d1f0d'},
+  {v:'fair',  tr:'Açık',   en:'Fair',  de:'Hell',      fr:'Clair',    ar:'فاتح',    c:'#fde8d0'},
+  {v:'light', tr:'Bej',    en:'Light', de:'Blass',     fr:'Pâle',     ar:'شاحب',    c:'#f5c9a0'},
+  {v:'olive', tr:'Buğday', en:'Olive', de:'Oliv',      fr:'Olivâtre', ar:'زيتوني',  c:'#c68642'},
+  {v:'tan',   tr:'Bronz',  en:'Tan',   de:'Gebräunt',  fr:'Bronzé',   ar:'برونزي',  c:'#a0614a'},
+  {v:'brown', tr:'Esmer',  en:'Brown', de:'Braun',     fr:'Brun',     ar:'بني',     c:'#7b4a2d'},
+  {v:'dark',  tr:'Koyu',   en:'Dark',  de:'Dunkel',    fr:'Foncé',    ar:'داكن',    c:'#3d1f0d'},
 ];
 
 /* ── all genetics traits (20) ────────────────────────────────────────────── */
@@ -478,7 +478,7 @@ function ColorPicker({ label, opts, value, onChange, lang }: any) {
             }} />
             <span style={{ fontSize:14, color: value===o.v ? '#4f9ef7' : '#e0e0f0',
               fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.04em', whiteSpace:'nowrap' }}>
-              {lang==='tr' ? o.tr : o.en}
+              {(o as any)[lang] ?? o.en}
             </span>
           </div>
         ))}
@@ -628,8 +628,8 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
   }, [onExit]);
 
   const founderLabel = (meta.type !== 'sim-info' && meta.type !== 'summary')
-    ? ((meta as any).f === 1 ? t('KURUCU 1 — ERKEK', 'FOUNDER 1 — MALE')
-                              : t('KURUCU 2 — KADIN', 'FOUNDER 2 — FEMALE'))
+    ? ((meta as any).f === 1 ? t('KURUCU 1 — ERKEK', 'FOUNDER 1 — MALE', 'GRÜNDER 1 — MÄNNLICH', 'FONDATEUR 1 — MÂLE', 'المؤسس 1 — ذكر')
+                              : t('KURUCU 2 — KADIN', 'FOUNDER 2 — FEMALE', 'GRÜNDERIN 2 — WEIBLICH', 'FONDATRICE 2 — FEMELLE', 'المؤسسة 2 — أنثى'))
     : null;
 
   const isSummary  = meta.type === 'summary';
@@ -662,15 +662,15 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
   /* step title */
   function stepTitle(): string {
     switch (meta.type) {
-      case 'sim-info':   return t('SİMÜLASYON BİLGİLERİ', 'SIMULATION INFO');
-      case 'identity':   return t('KİMLİK BİLGİLERİ', 'IDENTITY');
-      case 'physical':   return t('FİZİKSEL ÖLÇÜLER', 'PHYSICAL');
-      case 'appearance': return t('DIŞ GÖRÜNÜŞ', 'APPEARANCE');
+      case 'sim-info':   return t('SİMÜLASYON BİLGİLERİ', 'SIMULATION INFO', 'SIMULATIONSINFOS', 'INFOS SIMULATION', 'معلومات المحاكاة');
+      case 'identity':   return t('KİMLİK BİLGİLERİ', 'IDENTITY', 'IDENTITÄT', 'IDENTITÉ', 'الهوية');
+      case 'physical':   return t('FİZİKSEL ÖLÇÜLER', 'PHYSICAL', 'KÖRPERMASSE', 'PHYSIQUE', 'الجسد');
+      case 'appearance': return t('DIŞ GÖRÜNÜŞ', 'APPEARANCE', 'AUSSEHEN', 'APPARENCE', 'المظهر');
       case 'trait': {
         const tr = ALL_TRAITS[meta.idx];
         return (lang === 'tr' ? tr.tr : tr.en).toUpperCase();
       }
-      case 'summary': return t('ÖZET', 'SUMMARY');
+      case 'summary': return t('ÖZET', 'SUMMARY', 'ZUSAMMENFASSUNG', 'RÉSUMÉ', 'ملخص');
     }
   }
 
@@ -688,11 +688,11 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
     /* Sim info */
     if (meta.type === 'sim-info') return (
       <>
-        <HudInput label={t('SİMÜLASYON ADI', 'SIMULATION NAME')} value={simForm.name}
+        <HudInput label={t('SİMÜLASYON ADI', 'SIMULATION NAME', 'SIMULATIONSNAME', 'NOM DE SIMULATION', 'اسم المحاكاة')} value={simForm.name}
           onChange={(e: any) => setSimForm(p => ({ ...p, name: e.target.value }))} />
-        <HudInput label={t('ENLEM (°N)', 'LATITUDE (°N)')} type="number" step="0.0001" value={simForm.latitude}
+        <HudInput label={t('ENLEM (°N)', 'LATITUDE (°N)', 'BREITENGRAD (°N)', 'LATITUDE (°N)', 'خط العرض (°N)')} type="number" step="0.0001" value={simForm.latitude}
           onChange={(e: any) => setSimForm(p => ({ ...p, latitude: e.target.value }))} />
-        <HudInput label={t('BOYLAM (°E)', 'LONGITUDE (°E)')} type="number" step="0.0001" value={simForm.longitude}
+        <HudInput label={t('BOYLAM (°E)', 'LONGITUDE (°E)', 'LÄNGENGRAD (°E)', 'LONGITUDE (°E)', 'خط الطول (°E)')} type="number" step="0.0001" value={simForm.longitude}
           onChange={(e: any) => setSimForm(p => ({ ...p, longitude: e.target.value }))} />
       </>
     );
@@ -700,20 +700,20 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
     /* Identity */
     if (meta.type === 'identity') return (
       <>
-        <HudInput label={t('İSİM', 'NAME')} value={fd.name}
+        <HudInput label={t('İSİM', 'NAME', 'NAME', 'NOM', 'الاسم')} value={fd.name}
           onChange={(e: any) => setFd((p: any) => ({ ...p, name: e.target.value }))} />
-        <HudInput label={t('YAŞ', 'AGE')} type="number" min={16} max={60} value={fd.ageYears}
+        <HudInput label={t('YAŞ', 'AGE', 'ALTER', 'ÂGE', 'العمر')} type="number" min={16} max={60} value={fd.ageYears}
           onChange={(e: any) => setFd((p: any) => ({ ...p, ageYears: +e.target.value }))} />
         <div style={{ marginBottom:16 }}>
-          <Lbl>{t('CİNSİYET', 'SEX')}</Lbl>
+          <Lbl>{t('CİNSİYET', 'SEX', 'GESCHLECHT', 'SEXE', 'الجنس')}</Lbl>
           <div style={{ display:'flex', gap:8 }}>
-            {[{ v:'male', tr:'ERKEK', en:'MALE' }, { v:'female', tr:'KADIN', en:'FEMALE' }].map(opt => (
+            {[{ v:'male', tr:'ERKEK', en:'MALE', de:'MÄNNLICH', fr:'MÂLE', ar:'ذكر' }, { v:'female', tr:'KADIN', en:'FEMALE', de:'WEIBLICH', fr:'FEMELLE', ar:'أنثى' }].map(opt => (
               <button key={opt.v} onClick={() => setFd((p: any) => ({ ...p, sex: opt.v }))}
                 style={{ fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', padding:'8px 22px', fontSize:14,
                   background: fd.sex===opt.v ? 'rgba(79,110,247,0.25)' : 'rgba(22,22,58,0.5)',
                   border: `1px solid ${fd.sex===opt.v ? 'rgba(79,110,247,0.6)' : 'rgba(79,110,247,0.15)'}`,
                   color:'#e0e0f0', clipPath:CLIP, cursor:'pointer' }}>
-                {t(opt.tr, opt.en)}
+                {t(opt.tr, opt.en, (opt as any).de, (opt as any).fr, (opt as any).ar)}
               </button>
             ))}
           </div>
@@ -725,7 +725,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
     if (meta.type === 'physical') return (
       <>
         <div style={{ marginBottom:24 }}>
-          <Lbl>{t('BOY', 'HEIGHT')}</Lbl>
+          <Lbl>{t('BOY', 'HEIGHT', 'GRÖSSE', 'TAILLE', 'الطول')}</Lbl>
           <div style={{ display:'flex', alignItems:'center', gap:16 }}>
             <NumInput value={toCm(fd.height)} unit="cm" min={145} max={200} color="#06b6d4"
               onChange={cm => setT('height', fromCm(cm))} />
@@ -733,7 +733,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           <SliderBar value={fd.height} color="#06b6d4" onChange={v => setT('height', v)} />
         </div>
         <div style={{ marginBottom:12 }}>
-          <Lbl>{t('KİLO', 'WEIGHT')}</Lbl>
+          <Lbl>{t('KİLO', 'WEIGHT', 'GEWICHT', 'POIDS', 'الوزن')}</Lbl>
           <div style={{ display:'flex', alignItems:'center', gap:16 }}>
             <NumInput value={toKg(fd.height, fd.metabolism)} unit="kg" min={40} max={130} color="#a855f7"
               onChange={kg => setT('metabolism', fromKg(kg, fd.height))} />
@@ -741,7 +741,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           <SliderBar value={fd.metabolism} color="#a855f7" onChange={v => setT('metabolism', v)} />
           <div style={{ display:'flex', justifyContent:'space-between', marginTop:5,
             fontSize:14, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace' }}>
-            <span>{t('İnce', 'Lean')}</span><span>{t('Orta', 'Average')}</span><span>{t('Kaslı', 'Heavy')}</span>
+            <span>{t('İnce', 'Lean', 'Schlank', 'Mince', 'نحيف')}</span><span>{t('Orta', 'Average', 'Mittel', 'Moyen', 'متوسط')}</span><span>{t('Kaslı', 'Heavy', 'Muskulös', 'Musclé', 'مفتول')}</span>
           </div>
         </div>
       </>
@@ -750,11 +750,11 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
     /* Appearance */
     if (meta.type === 'appearance') return (
       <>
-        <ColorPicker label={t('GÖZ RENGİ', 'EYE COLOR')}  opts={EYE_OPTS}  value={fd.eye_color}
+        <ColorPicker label={t('GÖZ RENGİ', 'EYE COLOR', 'AUGENFARBE', 'COULEUR DES YEUX', 'لون العيون')}  opts={EYE_OPTS}  value={fd.eye_color}
           onChange={(v: string) => setFd((p: any) => ({ ...p, eye_color: v }))}  lang={lang} />
-        <ColorPicker label={t('SAÇ RENGİ', 'HAIR COLOR')} opts={HAIR_OPTS} value={fd.hair_color}
+        <ColorPicker label={t('SAÇ RENGİ', 'HAIR COLOR', 'HAARFARBE', 'COULEUR DES CHEVEUX', 'لون الشعر')} opts={HAIR_OPTS} value={fd.hair_color}
           onChange={(v: string) => setFd((p: any) => ({ ...p, hair_color: v }))} lang={lang} />
-        <ColorPicker label={t('TEN RENGİ', 'SKIN TONE')}  opts={SKIN_OPTS} value={fd.skin_tone}
+        <ColorPicker label={t('TEN RENGİ', 'SKIN TONE', 'HAUTTON', 'TEINT', 'لون البشرة')}  opts={SKIN_OPTS} value={fd.skin_tone}
           onChange={(v: string) => setFd((p: any) => ({ ...p, skin_tone: v }))}  lang={lang} />
       </>
     );
@@ -826,25 +826,25 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
         <div style={{ gridColumn:'1/-1' }}>
           <div style={{ fontSize:16, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace',
             letterSpacing:'0.15em', marginBottom:8 }}>
-            {t('SİMÜLASYON', 'SIMULATION')}
+            {t('SİMÜLASYON', 'SIMULATION', 'SIMULATION', 'SIMULATION', 'المحاكاة')}
           </div>
-          <SumRow label={t('AD', 'NAME')}    value={simForm.name || '—'} />
-          <SumRow label={t('ENLEM', 'LAT')}  value={simForm.latitude || '—'} />
-          <SumRow label={t('BOYLAM', 'LNG')} value={simForm.longitude || '—'} />
+          <SumRow label={t('AD', 'NAME', 'NAME', 'NOM', 'الاسم')}    value={simForm.name || '—'} />
+          <SumRow label={t('ENLEM', 'LAT', 'BREITE', 'LAT', 'خط العرض')}  value={simForm.latitude || '—'} />
+          <SumRow label={t('BOYLAM', 'LNG', 'LÄNGE', 'LNG', 'خط الطول')} value={simForm.longitude || '—'} />
         </div>
         {([{ fd: f1, sex: 'male' }, { fd: f2, sex: 'female' }] as { fd: any; sex: string }[]).map(({ fd: founder, sex }) => (
           <div key={sex}>
             <div style={{ fontSize:16, color: sex==='male' ? '#4f9ef7' : '#ec4899',
               fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', marginBottom:8 }}>
-              {sex==='male' ? t('KURUCU 1 — ERKEK', 'FOUNDER 1 — MALE') : t('KURUCU 2 — KADIN', 'FOUNDER 2 — FEMALE')}
+              {sex==='male' ? t('KURUCU 1 — ERKEK', 'FOUNDER 1 — MALE', 'GRÜNDER 1 — MÄNNLICH', 'FONDATEUR 1 — MÂLE', 'المؤسس 1 — ذكر') : t('KURUCU 2 — KADIN', 'FOUNDER 2 — FEMALE', 'GRÜNDERIN 2 — WEIBLICH', 'FONDATRICE 2 — FEMELLE', 'المؤسسة 2 — أنثى')}
             </div>
-            <SumRow label={t('İSİM', 'NAME')}   value={founder.name} />
-            <SumRow label={t('YAŞ', 'AGE')}     value={String(founder.ageYears)} />
-            <SumRow label={t('BOY', 'HEIGHT')}  value={`${toCm(founder.height)} cm`} />
-            <SumRow label={t('KİLO', 'WEIGHT')} value={`${toKg(founder.height, founder.metabolism)} kg`} />
-            <SumRow label={t('ZEKA', 'IQ')}     value={`${(founder.fluid_intelligence * 100).toFixed(0)}%`} />
-            <SumRow label={t('SOSYAL BAĞ', 'SOC.BOND')} value={`${(founder.social_bonding * 100).toFixed(0)}%`} />
-            <SumRow label={t('BAĞIŞIKLIK', 'IMMUNITY')} value={`${(founder.immune_strength * 100).toFixed(0)}%`} />
+            <SumRow label={t('İSİM', 'NAME', 'NAME', 'NOM', 'الاسم')}   value={founder.name} />
+            <SumRow label={t('YAŞ', 'AGE', 'ALTER', 'ÂGE', 'العمر')}     value={String(founder.ageYears)} />
+            <SumRow label={t('BOY', 'HEIGHT', 'GRÖSSE', 'TAILLE', 'الطول')}  value={`${toCm(founder.height)} cm`} />
+            <SumRow label={t('KİLO', 'WEIGHT', 'GEWICHT', 'POIDS', 'الوزن')} value={`${toKg(founder.height, founder.metabolism)} kg`} />
+            <SumRow label={t('ZEKA', 'IQ', 'IQ', 'QI', 'معدل الذكاء')}     value={`${(founder.fluid_intelligence * 100).toFixed(0)}%`} />
+            <SumRow label={t('SOSYAL BAĞ', 'SOC.BOND', 'SOZ.BIND.', 'LIEN SOC.', 'الترابط الاجتماعي')} value={`${(founder.social_bonding * 100).toFixed(0)}%`} />
+            <SumRow label={t('BAĞIŞIKLIK', 'IMMUNITY', 'IMMUNITÄT', 'IMMUNITÉ', 'المناعة')} value={`${(founder.immune_strength * 100).toFixed(0)}%`} />
           </div>
         ))}
       </div>
@@ -917,19 +917,22 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
                 filter:'drop-shadow(0 0 8px #cc2222) drop-shadow(0 0 18px #cc222299)',
                 animation:'warn-pulse 1.4s ease-in-out infinite',
               }}>⚠</span>
-              <span style={{ textShadow:'0 0 12px #cc222288' }}>{t('UYARI', 'WARNING')}</span>
+              <span style={{ textShadow:'0 0 12px #cc222288' }}>{t('UYARI', 'WARNING', 'WARNUNG', 'AVERTISSEMENT', 'تحذير')}</span>
             </div>
             <div style={{ fontSize:16, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
               lineHeight:1.7, letterSpacing:'0.04em', marginBottom:24 }}>
               {t(
                 'Bu adım geri döndürülemez. Simülasyon başlatıldıktan sonra kurucu ayarları değiştirilemez.',
-                'This step is irreversible. Founder settings cannot be changed once the simulation is launched.'
+                'This step is irreversible. Founder settings cannot be changed once the simulation is launched.',
+                'Dieser Schritt ist unwiderruflich. Gründereinstellungen können nach dem Start nicht mehr geändert werden.',
+                'Cette étape est irréversible. Les paramètres du fondateur ne peuvent pas être modifiés après le lancement.',
+                'هذه الخطوة لا يمكن التراجع عنها. لا يمكن تغيير إعدادات المؤسس بعد إطلاق المحاكاة.'
               )}
             </div>
             <div style={{ fontSize:16, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
               letterSpacing:'0.12em', marginBottom:20, borderTop:'1px solid rgba(204,34,34,0.25)',
               paddingTop:16 }}>
-              {t('Onaylıyor musunuz?', 'Do you confirm?')}
+              {t('Onaylıyor musunuz?', 'Do you confirm?', 'Bestätigen Sie?', 'Confirmez-vous?', 'هل تؤكد؟')}
             </div>
             <div style={{ display:'flex', gap:12 }}>
               <button
@@ -937,14 +940,14 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
                 style={{ ...btnBase, fontSize:16, flex:1,
                   background:'rgba(78,203,113,0.18)', border:'1px solid rgba(78,203,113,0.55)',
                   color:'#4ecb71' }}>
-                {t('ONAYLA', 'CONFIRM')}
+                {t('ONAYLA', 'CONFIRM', 'BESTÄTIGEN', 'CONFIRMER', 'تأكيد')}
               </button>
               <button
                 onClick={() => setConfirmOpen(false)}
                 style={{ ...btnBase, fontSize:16, flex:1,
                   background:'rgba(204,34,34,0.15)', border:'1px solid rgba(204,34,34,0.45)',
                   color:'#e05555' }}>
-                {t('VAZGEÇ', 'CANCEL')}
+                {t('VAZGEÇ', 'CANCEL', 'ABBRECHEN', 'ANNULER', 'إلغاء')}
               </button>
             </div>
           </div>
@@ -956,25 +959,25 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
         display:'flex', gap:6 }}>
         <button onClick={onExit}
           style={{ ...btnExit, flex:1, textAlign:'center', padding:'9px 4px', minWidth:0 }}>
-          {t('ÇIK', 'EXIT')}
+          {t('ÇIK', 'EXIT', 'BEENDEN', 'QUITTER', 'خروج')}
         </button>
         {step > 0 && (
           <button onClick={back}
             style={{ ...btnBack, flex:1, textAlign:'center', padding:'9px 4px', minWidth:0 }}>
-            ← {t('GERİ', 'BACK')}
+            ← {t('GERİ', 'BACK', 'ZURÜCK', 'RETOUR', 'رجوع')}
           </button>
         )}
         {isSummary ? (
           <button onClick={() => setConfirmOpen(true)} disabled={loading}
             style={{ ...btnStart, flex:2, textAlign:'center', padding:'9px 4px', minWidth:0,
               opacity: loading ? 0.5 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}>
-            {loading ? t('BAŞLATILIYOR…', 'INITIALIZING…') : t('BAŞLAT', 'LAUNCH')}
+            {loading ? t('BAŞLATILIYOR…', 'INITIALIZING…', 'WIRD GESTARTET…', 'DÉMARRAGE…', 'جارٍ التشغيل…') : t('BAŞLAT', 'LAUNCH', 'STARTEN', 'LANCER', 'تشغيل')}
           </button>
         ) : (
           <button onClick={next} disabled={!canNext}
             style={{ ...btnNext, flex:2, textAlign:'center', padding:'9px 4px', minWidth:0,
               opacity: !canNext ? 0.4 : 1, cursor: !canNext ? 'not-allowed' : 'pointer' }}>
-            {t('DEVAM ET', 'CONTINUE')} →
+            {t('DEVAM ET', 'CONTINUE', 'WEITER', 'CONTINUER', 'متابعة')} →
           </button>
         )}
       </div>
