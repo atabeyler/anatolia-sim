@@ -85,7 +85,7 @@ export function accumulateExperience(ind, worldState) {
   // from the same physical activity. Range: ~0.04 to ~1.0.
   const iq  = ind.phenotype?.fluid_intelligence ?? 0.5;
   const cur = ind.phenotype?.curiosity          ?? 0.5;
-  const lr  = iq * cur;
+  const lr  = iq * cur * (0.5 + (ind.phenotype?.learning_rate ?? 0.5));
 
   function gain(skill, amount) {
     exp[skill] = (exp[skill] ?? 0) + amount * lr;
@@ -199,8 +199,9 @@ export function checkTechEmergence(ind, discoveredTechs) {
   const known  = ind.known_techs ?? new Set();
   const iq     = ind.phenotype?.fluid_intelligence ?? 0.5;
   const cur    = ind.phenotype?.curiosity          ?? 0.5;
-  // Factor: genius (0.9×0.9×4 ≈ 3.24) reaches thresholds ~3× faster.
-  const factor = Math.max(0.1, iq * cur * 4);
+  const innov  = ind.phenotype?.innovation         ?? 0.5;
+  // Factor: genius (0.9×0.9×4 ≈ 3.24) reaches thresholds ~3× faster. Innovation boosts discovery.
+  const factor = Math.max(0.1, iq * cur * 4 * (0.5 + innov * 0.5));
 
   for (const [techId, req] of Object.entries(TECH_SKILLS)) {
     if (discoveredTechs.has(techId)) continue;
