@@ -718,6 +718,7 @@ export class SimulationEngine {
       const unknownConcepts = CORE_CONCEPTS.filter(c => !ind.language.vocabulary?.[c]);
       if (unknownConcepts.length === 0) continue;
       const concept = unknownConcepts[Math.floor(Math.random() * Math.min(4, unknownConcepts.length))];
+      ind._sim_day = this.day;
       tryAcquireWordFromEnvironment(ind, concept, ind.group_id ?? 'global');
     }
 

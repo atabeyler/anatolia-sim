@@ -688,6 +688,7 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
     try { return JSON.parse(localStorage.getItem(storageKey) ?? '[]'); } catch { return []; }
   });
   const [tick, setTick] = useState(0);
+  const [activeTab, setActiveTab] = useState<'log' | 'archive'>('log');
 
   const simYear = (stats as any)?.year ?? 0;
   const simDay  = (stats as any)?.day ?? 0;
@@ -790,32 +791,102 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
           )}
         </div>
 
-        {/* Archive — always shown */}
-        <div className="flex flex-col flex-1 overflow-hidden" style={{ borderTop: `1px solid ${accentColor}15` }}>
-          <div className="px-4 py-2 flex-shrink-0 flex items-center justify-between">
-            <span style={{ fontSize: 12, color: '#6a8878', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.1em' }}>
-              {L('DÜŞÜNCE ARŞİVİ', 'THOUGHT ARCHIVE', 'GEDANKENARCHIV', 'ARCHIVE DE PENSÉES', 'أرشيف الأفكار')}
-              {archive.length > 0 && <span style={{ color: '#4a5568', marginLeft: 6 }}>({archive.length})</span>}
-            </span>
-            {archive.length > 0 && (
-              <button
-                onClick={() => {
-                  setArchive([]);
-                  try { localStorage.removeItem(storageKey); } catch {}
-                }}
-                style={{ background: 'transparent', border: '1px solid rgba(160,80,80,0.3)', color: '#a05050', cursor: 'pointer', padding: '2px 8px', fontSize: 11, fontFamily: 'Share Tech Mono, monospace', borderRadius: 2 }}>
-                {L('TEMİZLE', 'CLEAR', 'LÖSCHEN', 'EFFACER', 'مسح')}
-              </button>
-            )}
-          </div>
-          <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
-            {archive.length === 0 ? (
+        {/* Tab bar */}
+        <div className="flex flex-shrink-0" style={{ borderTop: `1px solid ${accentColor}15` }}>
+          {(['log', 'archive'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                flex: 1, padding: '7px 0', background: 'transparent', border: 'none',
+                borderBottom: activeTab === tab ? `2px solid ${accentColor}` : '2px solid transparent',
+                color: activeTab === tab ? accentColor : '#4a5568',
+                fontFamily: 'Share Tech Mono, monospace', fontSize: 11, letterSpacing: '0.1em', cursor: 'pointer',
+              }}>
+              {tab === 'log'
+                ? L('YAŞAM GÜNLÜĞÜ', 'LIFE LOG', 'LEBENSLOG', 'JOURNAL DE VIE', 'سجل الحياة')
+                : L('ANLIK ARŞİV', 'SESSION ARCHIVE', 'SITZUNGSARCHIV', 'ARCHIVE DE SESSION', 'أرشيف الجلسة')}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab content */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4 pt-3 space-y-2">
+          {activeTab === 'log' ? (() => {
+            const lifelog: Array<{ day: number; kind: string; thought: { proto?: string; annotated?: string } }> =
+              (ind.mind as any)?.inner_thought_log ?? [];
+            const kindLabel = (kind: string) => {
+              const map: Record<string, string[]> = {
+                first_word:        [L('İlk Kelime', 'First Word', 'Erstes Wort', 'Premier mot', 'أول كلمة')],
+                first_thought:     [L('İlk Düşünce', 'First Thought', 'Erster Gedanke', 'Première pensée', 'أول فكرة')],
+                first_abstract:    [L('İlk Soyut Kavram', 'First Abstract', 'Erstes Abstraktum', 'Première abstraction', 'أول مفهوم مجرد')],
+                consciousness_10:  ['10% ↑'],
+                consciousness_25:  ['25% ↑'],
+                consciousness_50:  ['50% ↑'],
+                consciousness_75:  ['75% ↑'],
+                death_proximity:   [L('Ölüm Yakın', 'Near Death', 'Nahe dem Tod', 'Près de la mort', 'قرب الموت')],
+                grief:             [L('Yas', 'Grief', 'Trauer', 'Deuil', 'الحزن')],
+              };
+              return (map[kind] ?? [kind])[0];
+            };
+            const kindColor = (kind: string) => {
+              if (kind === 'first_word') return '#a0c080';
+              if (kind === 'first_thought') return '#80a0c0';
+              if (kind === 'first_abstract') return '#c0a0e0';
+              if (kind.startsWith('consciousness')) return accentColor;
+              if (kind === 'death_proximity') return '#c06060';
+              if (kind === 'grief') return '#8070a0';
+              return '#6a8878';
+            };
+            if (lifelog.length === 0) return (
               <p style={{ fontSize: 13, color: '#4a5568', fontStyle: 'italic', fontFamily: 'Share Tech Mono, monospace' }}>
-                {L('Henüz arşivlenmiş düşünce yok.', 'No archived thoughts yet.',
-                   'Noch keine archivierten Gedanken.', 'Pas encore de pensées archivées.', 'لا توجد أفكار مؤرشفة بعد.')}
+                {L('Henüz önemli an kaydedilmedi.', 'No milestone moments recorded yet.',
+                   'Noch keine Meilensteine aufgezeichnet.', 'Pas encore de moments importants enregistrés.', 'لم تُسجَّل لحظات بارزة بعد.')}
               </p>
-            ) : (
-              archive.map((entry, i) => (
+            );
+            return (
+              <>
+                {lifelog.map((entry, i) => (
+                  <div key={i} style={{ borderLeft: `2px solid ${kindColor(entry.kind)}50`, paddingLeft: 10 }}>
+                    <div className="flex items-center gap-2">
+                      <span className="font-share-tech" style={{ fontSize: 10, color: kindColor(entry.kind), letterSpacing: '0.1em' }}>
+                        {kindLabel(entry.kind)}
+                      </span>
+                      <span className="font-share-tech" style={{ fontSize: 10, color: '#4a5568' }}>
+                        · {L('Gün', 'Day', 'Tag', 'Jour', 'يوم')} {entry.day}
+                      </span>
+                    </div>
+                    {entry.thought?.proto && (
+                      <p className="font-share-tech" style={{ fontSize: 14, color: '#8898a8', letterSpacing: '0.06em', marginTop: 2 }}>
+                        {entry.thought.proto}
+                      </p>
+                    )}
+                    {entry.thought?.annotated && (
+                      <p className="font-share-tech" style={{ fontSize: 11, color: '#4a5568', marginTop: 1 }}>
+                        {entry.thought.annotated}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </>
+            );
+          })() : (
+            <>
+              {archive.length > 0 && (
+                <div className="flex justify-end mb-1">
+                  <button
+                    onClick={() => { setArchive([]); try { localStorage.removeItem(storageKey); } catch {} }}
+                    style={{ background: 'transparent', border: '1px solid rgba(160,80,80,0.3)', color: '#a05050', cursor: 'pointer', padding: '2px 8px', fontSize: 11, fontFamily: 'Share Tech Mono, monospace', borderRadius: 2 }}>
+                    {L('TEMİZLE', 'CLEAR', 'LÖSCHEN', 'EFFACER', 'مسح')}
+                  </button>
+                </div>
+              )}
+              {archive.length === 0 ? (
+                <p style={{ fontSize: 13, color: '#4a5568', fontStyle: 'italic', fontFamily: 'Share Tech Mono, monospace' }}>
+                  {L('Henüz arşivlenmiş düşünce yok.', 'No archived thoughts yet.',
+                     'Noch keine archivierten Gedanken.', 'Pas encore de pensées archivées.', 'لا توجد أفكار مؤرشفة بعد.')}
+                </p>
+              ) : archive.map((entry, i) => (
                 <div key={i} style={{ borderLeft: `2px solid ${accentColor}20`, paddingLeft: 10 }}>
                   <span className="font-share-tech" style={{ fontSize: 12, color: '#4a6068' }}>
                     {L('Yıl', 'Year', 'Jahr', 'An', 'سنة')} {entry.year}
@@ -827,9 +898,9 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
                     {entry.annotated}
                   </p>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </>
+          )}
         </div>
       </div>
     </div>
