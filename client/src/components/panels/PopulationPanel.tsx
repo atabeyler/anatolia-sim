@@ -587,7 +587,8 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
 const INNER_VOICE_ARCHIVE_KEY = (id: string) => `inner_voice_${id}`;
 
 // Concept priority based on real sim state — mirrors server logic
-function clientThoughtFromVocab(ind: any, simDay: number): { proto: string; annotated: string } | null {
+// offset param rotates through known words so thoughts vary over time
+function clientThoughtFromVocab(ind: any, simDay: number, offset: number): { proto: string; annotated: string } | null {
   const vocab: Record<string, string> = ind.language?.vocabulary ?? {};
   const stage = ind.language?.stage ?? 0;
   if (stage < 2 || Object.keys(vocab).length === 0) return null;
@@ -621,15 +622,18 @@ function clientThoughtFromVocab(ind: any, simDay: number): { proto: string; anno
   if (c > 0.3 && (ph.curiosity ?? 0.5) > 0.6) priority.push('sky', 'sun', 'moon', 'time');
   if (c > 0.5)                priority.push('god', 'spirit', 'time');
   if (wellbeing > 0.7)        priority.push('good', 'here');
-  priority.push('me', 'here', 'good', 'bad', 'sleep');
+  priority.push('me', 'here', 'good', 'bad', 'sleep', 'earth', 'light', 'dark', 'rain', 'sun');
 
   const seen = new Set<string>();
-  const ordered = priority.filter(c => { if (seen.has(c)) return false; seen.add(c); return true; });
+  const ordered = priority.filter(concept => { if (seen.has(concept)) return false; seen.add(concept); return true; });
   const known = ordered.filter(concept => vocab[concept]);
   if (known.length === 0) return null;
 
   const maxWords = stage <= 2 ? 1 : stage === 3 ? Math.min(2, known.length) : Math.min(3 + Math.floor(c * 3), known.length);
-  const selected = known.slice(0, maxWords);
+  // rotate start index by offset so each tick picks a different slice
+  const startIdx = offset % Math.max(1, known.length - maxWords + 1);
+  const selected = known.slice(startIdx, startIdx + maxWords);
+  if (selected.length === 0) return null;
   return {
     proto: selected.map(concept => vocab[concept]).join(stage >= 4 ? '  ' : '... '),
     annotated: selected.map(concept => `${vocab[concept]} [${concept}]`).join(stage >= 4 ? '  ' : '... '),
@@ -638,49 +642,59 @@ function clientThoughtFromVocab(ind: any, simDay: number): { proto: string; anno
 
 function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClose: () => void }) {
   const { stats } = useSimStore();
-  const tr = (trStr: string, enStr: string) => text(lang as LangCode, { tr: trStr, en: enStr, de: enStr, fr: enStr, ar: enStr });
+  const L = (trStr: string, enStr: string, deStr = enStr, frStr = enStr, arStr = enStr) =>
+    text(lang as LangCode, { tr: trStr, en: enStr, de: deStr, fr: frStr, ar: arStr });
 
   const storageKey = INNER_VOICE_ARCHIVE_KEY(ind.id);
-  const [archive, setArchive] = useState<{ annotated: string; proto: string; year: number }[]>(() => {
+  const [archive, setArchive] = useState<{ proto: string; annotated: string; year: number }[]>(() => {
     try { return JSON.parse(localStorage.getItem(storageKey) ?? '[]'); } catch { return []; }
   });
+  const [tick, setTick] = useState(0);
 
   const simYear = (stats as any)?.year ?? 0;
   const simDay  = (stats as any)?.day ?? 0;
+  const c       = ind.mind?.consciousness ?? 0;
+  const stage   = ind.language?.stage ?? 0;
+  const vocab   = ind.language?.vocabulary ?? {};
+  const wordCount = Object.keys(vocab).length;
+  const accentColor = c > 0.5 ? '#c8b4ff' : c > 0.15 ? '#7dd3fc' : '#6a8878';
+  const name    = nameFromId(ind.id, ind.sex, ind.phenotype?.name ?? ind.name);
 
-  // Server thought (from sim engine) — preferred. Fall back to client-generated.
+  // Refresh interval: faster for higher consciousness (min 5s, max 20s)
+  const refreshMs = Math.round(20000 - c * 15000);
+
+  // Auto-refresh ticker
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), refreshMs);
+    return () => clearInterval(id);
+  }, [refreshMs]);
+
+  // Compute current thought from tick-based offset
   const serverThought = ind.mind?.inner_thought;
   const thought: { proto: string; annotated: string } | null =
     serverThought?.annotated
       ? { proto: serverThought.proto ?? '', annotated: serverThought.annotated }
-      : clientThoughtFromVocab(ind, simDay);
+      : clientThoughtFromVocab(ind, simDay, tick);
 
-  // Save to archive when modal opens
+  // Archive every new thought automatically
   useEffect(() => {
     if (!thought?.annotated) return;
     setArchive(prev => {
       if (prev[0]?.annotated === thought.annotated) return prev;
-      const updated = [{ ...thought, year: simYear }, ...prev].slice(0, 50);
+      const updated = [{ proto: thought.proto, annotated: thought.annotated, year: simYear }, ...prev].slice(0, 100);
       try { localStorage.setItem(storageKey, JSON.stringify(updated)); } catch {}
       return updated;
     });
-  }, []);
-
-  const c = ind.mind?.consciousness ?? 0;
-  const stage = ind.language?.stage ?? 0;
-  const accentColor = c > 0.5 ? '#c8b4ff' : c > 0.15 ? '#7dd3fc' : '#6a8878';
-  const name = nameFromId(ind.id, ind.sex, ind.phenotype?.name ?? ind.name);
-  const vocab = ind.language?.vocabulary ?? {};
-  const wordCount = Object.keys(vocab).length;
+  }, [thought?.annotated]);
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}>
-      <div className="flex flex-col" style={{ width: 420, maxHeight: '82vh', background: 'rgba(4,4,18,0.98)', border: `1px solid ${accentColor}40`, boxShadow: '0 16px 60px rgba(0,0,0,0.8)', borderRadius: 2 }}>
+      <div className="flex flex-col" style={{ width: 420, maxHeight: '84vh', background: 'rgba(4,4,18,0.98)', border: `1px solid ${accentColor}40`, boxShadow: '0 16px 60px rgba(0,0,0,0.8)', borderRadius: 2 }}>
 
         {/* Header */}
         <div className="flex items-center gap-2 px-4 py-3 flex-shrink-0" style={{ borderBottom: `1px solid ${accentColor}20` }}>
-          <span style={{ fontSize: 12, color: accentColor, fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.15em', flex: 1 }}>
-            💭 {tr('İÇ SES', 'INNER VOICE')} — {name}
+          <span style={{ fontSize: 14, color: accentColor, fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.12em', flex: 1 }}>
+            💭 {L('İÇ SES', 'INNER VOICE', 'INNERE STIMME', 'VOIX INTÉRIEURE', 'الصوت الداخلي')} — {name}
           </span>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#6a8878', cursor: 'pointer', lineHeight: 0, padding: 2 }}>
             <X size={16} />
@@ -689,23 +703,25 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
 
         {/* Current thought */}
         <div className="px-4 pt-4 pb-3 flex-shrink-0">
-          <div style={{ background: `${accentColor}06`, border: `1px solid ${accentColor}20`, borderLeft: `3px solid ${accentColor}`, padding: '10px 12px', borderRadius: 2, minHeight: 64 }}>
+          <div style={{ background: `${accentColor}06`, border: `1px solid ${accentColor}20`, borderLeft: `3px solid ${accentColor}`, padding: '12px 14px', borderRadius: 2, minHeight: 72 }}>
             {thought ? (
               <>
-                <p className="font-share-tech" style={{ fontSize: 15, color: '#e8e0ff', lineHeight: 1.7, letterSpacing: '0.1em' }}>
+                <p className="font-share-tech" style={{ fontSize: 17, color: '#e8e0ff', lineHeight: 1.8, letterSpacing: '0.1em' }}>
                   {thought.proto}
                 </p>
-                <p className="font-share-tech" style={{ fontSize: 10, color: '#6a7888', marginTop: 4, lineHeight: 1.5 }}>
+                <p className="font-share-tech" style={{ fontSize: 12, color: '#6a7888', marginTop: 6, lineHeight: 1.5 }}>
                   {thought.annotated}
                 </p>
               </>
             ) : stage < 2 ? (
-              <p className="font-share-tech" style={{ fontSize: 12, color: '#4a5568', fontStyle: 'italic' }}>
-                {tr('Dil yok — henüz düşünce oluşmuyor.', 'No language — no thought yet.')}
+              <p className="font-share-tech" style={{ fontSize: 14, color: '#4a5568', fontStyle: 'italic' }}>
+                {L('Dil yok — henüz düşünce oluşmuyor.', 'No language — no thought yet.',
+                   'Keine Sprache — noch kein Gedanke.', 'Pas de langage — pas encore de pensée.', 'لا لغة — لا فكر بعد.')}
               </p>
             ) : (
-              <p className="font-share-tech" style={{ fontSize: 12, color: '#4a5568', fontStyle: 'italic' }}>
-                {tr('Kelime bilmiyor — iç ses sessiz.', 'No words known — inner voice silent.')}
+              <p className="font-share-tech" style={{ fontSize: 14, color: '#4a5568', fontStyle: 'italic' }}>
+                {L('Kelime bilmiyor — iç ses sessiz.', 'No words known — inner voice silent.',
+                   'Keine Wörter — innere Stimme still.', 'Aucun mot connu — voix intérieure silencieuse.', 'لا كلمات — الصوت الداخلي صامت.')}
               </p>
             )}
           </div>
@@ -715,47 +731,68 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
             <div style={{ flex: 1, height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 1 }}>
               <div style={{ width: `${Math.round(c * 100)}%`, height: '100%', background: accentColor, borderRadius: 1 }} />
             </div>
-            <span className="font-share-tech" style={{ fontSize: 10, color: '#6a8878' }}>
-              {tr('Bilinç', 'Consc.')} {Math.round(c * 100)}%
+            <span className="font-share-tech" style={{ fontSize: 12, color: '#6a8878' }}>
+              {L('Bilinç', 'Consc.', 'Bewusstsein', 'Conscience', 'وعي')} {Math.round(c * 100)}%
             </span>
-            <span className="font-share-tech" style={{ fontSize: 10, color: '#6a8878' }}>
-              {wordCount} {tr('kelime', 'words')}
+            <span className="font-share-tech" style={{ fontSize: 12, color: '#6a8878' }}>
+              {wordCount} {L('kelime', 'words', 'Wörter', 'mots', 'كلمة')}
             </span>
           </div>
 
           {/* Vocabulary peek */}
           {wordCount > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
-              {Object.entries(vocab).slice(0, 12).map(([concept, word]) => (
-                <span key={concept} className="font-share-tech" style={{ fontSize: 9, color: '#8898a8', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', padding: '1px 4px', borderRadius: 2 }}>
+              {Object.entries(vocab).slice(0, 14).map(([concept, word]) => (
+                <span key={concept} className="font-share-tech" style={{ fontSize: 11, color: '#8898a8', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', padding: '2px 5px', borderRadius: 2 }}>
                   {String(word)} <span style={{ color: '#4a5568' }}>[{concept}]</span>
                 </span>
               ))}
-              {wordCount > 12 && <span className="font-share-tech" style={{ fontSize: 9, color: '#4a5568' }}>+{wordCount - 12}</span>}
+              {wordCount > 14 && <span className="font-share-tech" style={{ fontSize: 11, color: '#4a5568' }}>+{wordCount - 14}</span>}
             </div>
           )}
         </div>
 
-        {/* Archive */}
-        {archive.length > 1 && (
-          <div className="flex flex-col flex-1 overflow-hidden" style={{ borderTop: `1px solid ${accentColor}15` }}>
-            <div className="px-4 py-2 flex-shrink-0">
-              <span style={{ fontSize: 10, color: '#6a8878', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.1em' }}>
-                {tr('ARŞİV', 'ARCHIVE')} ({archive.length - 1})
-              </span>
-            </div>
-            <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
-              {archive.slice(1).map((entry, i) => (
-                <div key={i} style={{ borderLeft: `2px solid ${accentColor}20`, paddingLeft: 8 }}>
-                  <span className="font-share-tech" style={{ fontSize: 10, color: '#4a5568' }}>Y{entry.year}</span>
-                  <p className="font-share-tech" style={{ fontSize: 11, color: '#8898a8', letterSpacing: '0.06em', marginTop: 2 }}>
-                    {entry.proto ?? entry.annotated}
+        {/* Archive — always shown */}
+        <div className="flex flex-col flex-1 overflow-hidden" style={{ borderTop: `1px solid ${accentColor}15` }}>
+          <div className="px-4 py-2 flex-shrink-0 flex items-center justify-between">
+            <span style={{ fontSize: 12, color: '#6a8878', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.1em' }}>
+              {L('DÜŞÜNCE ARŞİVİ', 'THOUGHT ARCHIVE', 'GEDANKENARCHIV', 'ARCHIVE DE PENSÉES', 'أرشيف الأفكار')}
+              {archive.length > 0 && <span style={{ color: '#4a5568', marginLeft: 6 }}>({archive.length})</span>}
+            </span>
+            {archive.length > 0 && (
+              <button
+                onClick={() => {
+                  setArchive([]);
+                  try { localStorage.removeItem(storageKey); } catch {}
+                }}
+                style={{ background: 'transparent', border: '1px solid rgba(160,80,80,0.3)', color: '#a05050', cursor: 'pointer', padding: '2px 8px', fontSize: 11, fontFamily: 'Share Tech Mono, monospace', borderRadius: 2 }}>
+                {L('TEMİZLE', 'CLEAR', 'LÖSCHEN', 'EFFACER', 'مسح')}
+              </button>
+            )}
+          </div>
+          <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
+            {archive.length === 0 ? (
+              <p style={{ fontSize: 13, color: '#4a5568', fontStyle: 'italic', fontFamily: 'Share Tech Mono, monospace' }}>
+                {L('Henüz arşivlenmiş düşünce yok.', 'No archived thoughts yet.',
+                   'Noch keine archivierten Gedanken.', 'Pas encore de pensées archivées.', 'لا توجد أفكار مؤرشفة بعد.')}
+              </p>
+            ) : (
+              archive.map((entry, i) => (
+                <div key={i} style={{ borderLeft: `2px solid ${accentColor}20`, paddingLeft: 10 }}>
+                  <span className="font-share-tech" style={{ fontSize: 12, color: '#4a6068' }}>
+                    {L('Yıl', 'Year', 'Jahr', 'An', 'سنة')} {entry.year}
+                  </span>
+                  <p className="font-share-tech" style={{ fontSize: 14, color: '#8898a8', letterSpacing: '0.06em', marginTop: 2 }}>
+                    {entry.proto}
+                  </p>
+                  <p className="font-share-tech" style={{ fontSize: 11, color: '#4a5568', marginTop: 1 }}>
+                    {entry.annotated}
                   </p>
                 </div>
-              ))}
-            </div>
+              ))
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
