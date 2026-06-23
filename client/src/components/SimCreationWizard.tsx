@@ -646,6 +646,12 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (confirmOpenRef.current) { setConfirmOpen(false); return; }
+        onExit();
+        return;
+      }
       if (e.key !== 'Enter') return;
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'TEXTAREA') return;
