@@ -1,4 +1,5 @@
 import { getAge, getLifeStage } from './individual.js';
+import { computeEpigeneticAge } from '../epigenetics/epigeneticsEngine.js';
 
 const DEATH_CAUSES = {
   INFECTION: 'infection', TRAUMA: 'trauma', STARVATION: 'starvation',
@@ -17,7 +18,14 @@ const DEATH_CAUSES = {
 //   75+     → ~20%  → 0.00061/day
 // Disease outbreaks, starvation, disasters layer on top via multipliers.
 export function computeDailyDeathRisk(individual, currentDay, environment) {
-  const age = getAge(individual, currentDay);
+  const chronologicalAge = getAge(individual, currentDay);
+  // Epigenetic age modifier: stress/nutrition history accelerates or slows biological aging.
+  // computeEpigeneticAge returns a year value only when epigenome is present.
+  let age = chronologicalAge;
+  if (individual.epigenome) {
+    const epiYears = computeEpigeneticAge({ ...individual, age: chronologicalAge * 365 });
+    if (typeof epiYears === 'number' && !isNaN(epiYears) && epiYears > 0) age = epiYears;
+  }
   const { health, phenotype } = individual;
   let baseRisk = 0;
   if      (age < 1)  baseRisk = 0.00022;

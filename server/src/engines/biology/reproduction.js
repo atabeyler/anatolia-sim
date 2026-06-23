@@ -86,11 +86,7 @@ function deliverBirth(mother, father, birthDay, simulationId, communityLangStage
   const motherSurvives = Math.random() > motherRisk;
   const children = [];
 
-  // BUG-12: tag each child with whether the father was alive at birth (for accurate birth event display)
-  const fatherAliveAtBirth = !father.is_dead;
-
   const first = createChild(mother, father, birthDay, simulationId, communityLangStage, phonology);
-  first._fatherAliveAtBirth = fatherAliveAtBirth;
   if (Math.random() < neonatalRisk) {
     first.alive = false; first.is_dead = true; first.death_day = birthDay; first.death_cause = 'birth_complications';
   }
@@ -102,7 +98,6 @@ function deliverBirth(mother, father, birthDay, simulationId, communityLangStage
   if (Math.random() < twinChance) {
     const twin = createChild(mother, father, birthDay, simulationId, communityLangStage, phonology);
     twin.is_twin = true;
-    twin._fatherAliveAtBirth = fatherAliveAtBirth;
     if (Math.random() < neonatalRisk * 2.5) {
       twin.alive = false; twin.is_dead = true; twin.death_day = birthDay; twin.death_cause = 'birth_complications';
     }
@@ -111,7 +106,6 @@ function deliverBirth(mother, father, birthDay, simulationId, communityLangStage
     if (Math.random() < twinChance * 0.1) {
       const triplet = createChild(mother, father, birthDay, simulationId, communityLangStage, phonology);
       triplet.is_twin = true;
-      triplet._fatherAliveAtBirth = fatherAliveAtBirth;
       if (Math.random() < neonatalRisk * 4) {
         triplet.alive = false; triplet.is_dead = true; triplet.death_day = birthDay; triplet.death_cause = 'birth_complications';
       }
