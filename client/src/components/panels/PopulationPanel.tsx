@@ -1212,7 +1212,7 @@ export default function PopulationPanel() {
     // List refreshes more slowly than stats; counts come from WebSocket in real time.
     intervalRef.current = setInterval(load, 10000);
     return () => clearInterval(intervalRef.current);
-  }, [currentSim?.id]);
+  }, [currentSim?.id, accessToken]);
 
   const allForLookup = useMemo(() => [...individuals, ...deadIndividuals], [individuals, deadIndividuals]);
   const filtered = useMemo(() => {

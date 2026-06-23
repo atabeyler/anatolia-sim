@@ -44,15 +44,23 @@ async function getDesktopDb() {
 }
 
 function createDesktopPoolAdapter() {
+  // PGlite is single-connection — serialize all queries to prevent concurrent access errors
+  let queryQueue = Promise.resolve();
+  function serialQuery(db, text, params) {
+    const result = queryQueue.then(() => db.query(text, params));
+    queryQueue = result.catch(() => {});
+    return result;
+  }
+
   return {
     async query(text, params) {
       const db = await getDesktopDb();
-      return normalizeQueryResult(await db.query(text, params));
+      return normalizeQueryResult(await serialQuery(db, text, params));
     },
     async connect() {
       const db = await getDesktopDb();
       return {
-        query: async (text, params) => normalizeQueryResult(await db.query(text, params)),
+        query: async (text, params) => normalizeQueryResult(await serialQuery(db, text, params)),
         release: () => {},
       };
     },
