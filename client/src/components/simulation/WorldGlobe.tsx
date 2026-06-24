@@ -572,15 +572,17 @@ function PopulationDots({
   // Always keep all three <points> mounted — conditional unmounting causes R3F
   // to dispose materials and can corrupt the shared sprite texture for siblings.
   // Empty groups fall back to a single invisible point at [0,0,0] (inside globe).
+  // renderOrder={2} forces population dots to draw after centroid trail (renderOrder 1)
+  // and pop trails (renderOrder 1), regardless of Three.js camera-distance sort.
   return (
     <>
-      <points geometry={founderGeo}>
+      <points renderOrder={2} geometry={founderGeo}>
         <pointsMaterial map={spriteTex} size={0.055} color="#ff4444" sizeAttenuation transparent opacity={0.95} depthWrite={false} alphaTest={0.1} />
       </points>
-      <points geometry={maleGeo}>
+      <points renderOrder={2} geometry={maleGeo}>
         <pointsMaterial map={spriteTex} size={0.045} color="#90caff" sizeAttenuation transparent opacity={0.92} depthWrite={false} alphaTest={0.1} />
       </points>
-      <points geometry={femaleGeo}>
+      <points renderOrder={2} geometry={femaleGeo}>
         <pointsMaterial map={spriteTex} size={0.045} color="#ffaacc" sizeAttenuation transparent opacity={0.92} depthWrite={false} alphaTest={0.1} />
       </points>
     </>
@@ -601,7 +603,7 @@ function PopulationTrails({ snapshots }: { snapshots: { x: number; y: number }[]
   return (
     <>
       {layers.map((layer, i) => (
-        <points key={i} geometry={layer.geo}>
+        <points key={i} renderOrder={1} geometry={layer.geo}>
           <pointsMaterial map={spriteTex} size={layer.size} color="#88aaee" sizeAttenuation transparent opacity={layer.opacity} depthWrite={false} alphaTest={0.1} />
         </points>
       ))}
@@ -685,6 +687,11 @@ function lerpAngle(from: number, to: number, t: number) {
 }
 
 function CentroidTrailLine({ trail }: { trail: CentroidPoint[] }) {
+  // Use the shared sprite texture so centroid dots are circular, not squares.
+  // renderOrder={1} ensures they always draw before population dots (renderOrder 2)
+  // regardless of Three.js's camera-distance transparency sort.
+  const spriteTex = useMemo(() => getSharedSpriteTexture(), []);
+
   const line = useMemo(() => {
     if (trail.length < 2) return null;
     const r = 2.032;
@@ -717,8 +724,8 @@ function CentroidTrailLine({ trail }: { trail: CentroidPoint[] }) {
     <>
       {line && <primitive object={line} />}
       {dots && (
-        <points geometry={dots}>
-          <pointsMaterial size={0.06} color="#fbbf24" sizeAttenuation transparent opacity={0.9} depthWrite={false} />
+        <points renderOrder={1} geometry={dots}>
+          <pointsMaterial map={spriteTex} size={0.06} color="#fbbf24" sizeAttenuation transparent opacity={0.9} depthWrite={false} alphaTest={0.1} />
         </points>
       )}
     </>
