@@ -873,6 +873,78 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           background:'linear-gradient(90deg,#4f6ef7,#4f9ef7)', transition:'width 0.25s ease-out' }} />
       </div>
 
+      {/* Scrubber */}
+      <div style={{ padding:'8px 12px 0' }}>
+        <div style={{
+          position:'relative',
+          background:'rgba(7,7,26,0.86)',
+          border:'1px solid rgba(79,110,247,0.18)',
+          clipPath:CLIP,
+          padding:'8px 12px 10px',
+        }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:6 }}>
+            <div style={{ fontSize:12, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.18em' }}>
+              {t('HIZLI GEÇİŞ', 'WIZARD SCRUBBER', 'SCHNELLLAUF', 'SCRUBBER', 'شريط التنقل')}
+            </div>
+            <div style={{ fontSize:12, color:'#a0b4ff', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.08em' }}>
+              {step + 1} / {TOTAL} · {stepTitle()}
+            </div>
+          </div>
+          <div style={{ position:'relative', height:28, display:'flex', alignItems:'center' }}>
+            <div style={{
+              position:'absolute',
+              left:8,
+              right:8,
+              top:'50%',
+              height:4,
+              transform:'translateY(-50%)',
+              background:'linear-gradient(90deg, rgba(79,110,247,0.18), rgba(78,203,113,0.20))',
+              borderRadius:999,
+            }} />
+            {Array.from({ length: TOTAL }, (_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => jumpToStep(i)}
+                aria-label={`${i + 1} / ${TOTAL}: ${STEPS[i].type}`}
+                style={{
+                  position:'absolute',
+                  left:`${TOTAL === 1 ? 0 : (i / (TOTAL - 1)) * 100}%`,
+                  top:'50%',
+                  transform:'translate(-50%, -50%)',
+                  width:i === step ? 20 : 12,
+                  height:i === step ? 20 : 12,
+                  borderRadius:999,
+                  border:`1px solid ${i === step ? 'rgba(78,203,113,0.95)' : 'rgba(79,110,247,0.45)'}`,
+                  background:i === step ? '#4ecb71' : 'rgba(12,12,36,0.95)',
+                  boxShadow:i === step ? '0 0 0 5px rgba(78,203,113,0.18), 0 0 14px rgba(78,203,113,0.5)' : '0 0 0 3px rgba(79,110,247,0.08)',
+                  cursor:'pointer',
+                  padding:0,
+                }}
+              />
+            ))}
+            <input
+              type="range"
+              min={0}
+              max={TOTAL - 1}
+              step={1}
+              value={step}
+              onChange={(e) => jumpToStep(Number(e.target.value))}
+              aria-label={t('Adımlar arasında gez', 'Move through wizard steps', 'Zwischen Schritten springen', 'Naviguer entre les étapes', 'التنقل بين الخطوات')}
+              style={{
+                position:'absolute',
+                inset:0,
+                width:'100%',
+                height:'100%',
+                opacity:0,
+                cursor:'ew-resize',
+                margin:0,
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
       <div style={{ padding:'12px 20px', borderBottom:'1px solid rgba(79,110,247,0.2)',
         display:'flex', alignItems:'center', justifyContent:'space-between' }}>
@@ -960,78 +1032,6 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           </div>
         </div>
       )}
-
-      {/* Scrubber */}
-      <div style={{ padding:'0 12px 10px' }}>
-        <div style={{
-          position:'relative',
-          background:'rgba(7,7,26,0.86)',
-          border:'1px solid rgba(79,110,247,0.18)',
-          clipPath:CLIP,
-          padding:'10px 12px 12px',
-        }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:8 }}>
-            <div style={{ fontSize:12, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.18em' }}>
-              {t('HIZLI GEÇİŞ', 'WIZARD SCRUBBER', 'SCHNELLLAUF', 'SCRUBBER', 'شريط التنقل')}
-            </div>
-            <div style={{ fontSize:12, color:'#a0b4ff', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.08em' }}>
-              {step + 1} / {TOTAL} · {stepTitle()}
-            </div>
-          </div>
-          <div style={{ position:'relative', height:32, display:'flex', alignItems:'center' }}>
-            <div style={{
-              position:'absolute',
-              left:8,
-              right:8,
-              top:'50%',
-              height:4,
-              transform:'translateY(-50%)',
-              background:'linear-gradient(90deg, rgba(79,110,247,0.18), rgba(78,203,113,0.20))',
-              borderRadius:999,
-            }} />
-            {Array.from({ length: TOTAL }, (_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => jumpToStep(i)}
-                aria-label={`${i + 1} / ${TOTAL}: ${STEPS[i].type}`}
-                style={{
-                  position:'absolute',
-                  left:`${TOTAL === 1 ? 0 : (i / (TOTAL - 1)) * 100}%`,
-                  top:'50%',
-                  transform:'translate(-50%, -50%)',
-                  width:i === step ? 20 : 12,
-                  height:i === step ? 20 : 12,
-                  borderRadius:999,
-                  border:`1px solid ${i === step ? 'rgba(78,203,113,0.95)' : 'rgba(79,110,247,0.45)'}`,
-                  background:i === step ? '#4ecb71' : 'rgba(12,12,36,0.95)',
-                  boxShadow:i === step ? '0 0 0 5px rgba(78,203,113,0.18), 0 0 14px rgba(78,203,113,0.5)' : '0 0 0 3px rgba(79,110,247,0.08)',
-                  cursor:'pointer',
-                  padding:0,
-                }}
-              />
-            ))}
-            <input
-              type="range"
-              min={0}
-              max={TOTAL - 1}
-              step={1}
-              value={step}
-              onChange={(e) => jumpToStep(Number(e.target.value))}
-              aria-label={t('Adımlar arasında gez', 'Move through wizard steps', 'Zwischen Schritten springen', 'Naviguer entre les étapes', 'التنقل بين الخطوات')}
-              style={{
-                position:'absolute',
-                inset:0,
-                width:'100%',
-                height:'100%',
-                opacity:0,
-                cursor:'ew-resize',
-                margin:0,
-              }}
-            />
-          </div>
-        </div>
-      </div>
 
       {/* Navigation */}
       <div style={{ padding:'8px 12px 6px', marginTop:-32, borderTop:'1px solid rgba(79,110,247,0.15)',
