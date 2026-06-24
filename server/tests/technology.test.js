@@ -147,10 +147,9 @@ describe('learnTechFromObservation — basic learning', () => {
   });
 
   it('higher difficulty technology is learned more slowly (foraging vs food_preservation)', () => {
-    // foraging difficulty=0.3 → rate≈0.0015/call
-    // food_preservation difficulty=1.8 → rate≈0.00025/call
-    // In 10000 calls, foraging expected ≈15, food_preservation expected ≈2.5
-    const N = 10000;
+    // foraging difficulty=0.3 → rate≈0.001125/call → expected ≈56 in 50000 trials
+    // food_preservation difficulty=1.8 → rate≈0.0001875/call → expected ≈9 in 50000 trials
+    const N = 50000;
     let easyLearned = 0;
     let hardLearned = 0;
     for (let i = 0; i < N; i++) {
