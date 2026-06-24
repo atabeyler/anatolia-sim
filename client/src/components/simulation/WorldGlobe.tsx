@@ -563,19 +563,23 @@ function buildGeoFor(individuals: any[], r: number, predicate: (i: any) => boole
 }
 
 function DotGroup({ geo, color, spriteTex, onClick }: { geo: THREE.BufferGeometry; color: string; spriteTex: THREE.CanvasTexture; onClick: (e: any) => void }) {
-  const matRef = useRef<THREE.PointsMaterial>(null);
-  // No-dep useEffect runs after every React render. Forces map re-application
-  // so that notification-triggered re-renders (or any other external state update)
-  // cannot leave the material in a texture-less state causing squares.
-  useEffect(() => {
-    const mat = matRef.current;
-    if (!mat) return;
+  // Imperative material — bypasses R3F reconciler entirely so it can never lose
+  // the map prop during notification-triggered re-renders.
+  const mat = useMemo(() => new THREE.PointsMaterial({
+    map: spriteTex,
+    color: new THREE.Color(color),
+    size: 0.07,
+    sizeAttenuation: true,
+    transparent: true,
+    depthWrite: false,
+    alphaTest: 0.3,
+  }), [color, spriteTex]);
+  useFrame(() => {
     if (mat.map !== spriteTex) { mat.map = spriteTex; mat.needsUpdate = true; }
-    spriteTex.needsUpdate = true;
   });
   return (
-    <points geometry={geo} onClick={onClick}>
-      <pointsMaterial ref={matRef} map={spriteTex} color={color} size={0.07} sizeAttenuation transparent depthWrite={false} alphaTest={0.3} />
+    <points geometry={geo} material={mat} onClick={onClick}>
+      {/* material is applied imperatively via useMemo above */}
     </points>
   );
 }
