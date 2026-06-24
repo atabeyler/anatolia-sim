@@ -550,6 +550,7 @@ const MALE_COLOR    = new THREE.Color('#90caff');
 const FEMALE_COLOR  = new THREE.Color('#ffaacc');
 
 const DOT_VERT = `
+  precision mediump float;
   attribute vec3 aColor;
   varying vec3 vColor;
   void main() {
@@ -560,6 +561,7 @@ const DOT_VERT = `
   }
 `;
 const DOT_FRAG = `
+  precision mediump float;
   varying vec3 vColor;
   void main() {
     float d = length(gl_PointCoord - vec2(0.5));
