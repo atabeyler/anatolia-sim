@@ -597,7 +597,15 @@ function PopulationDots({
     return { founders, males, females };
   }, [individuals]);
 
-  const founderGeo = useMemo(() => buildAllDots(founders, 2.025), [founders]);
+  const founderPositions = useMemo(() => founders.map((ind) => {
+    const lat = ((ind.y ?? 0) * Math.PI) / 180;
+    const lon = ((ind.x ?? 0) * Math.PI) / 180;
+    return [
+      2.025 * Math.cos(lat) * Math.cos(lon),
+      2.025 * Math.sin(lat),
+      -2.025 * Math.cos(lat) * Math.sin(lon),
+    ] as [number, number, number];
+  }), [founders]);
   const maleGeo = useMemo(() => buildAllDots(males, 2.025), [males]);
   const femaleGeo = useMemo(() => buildAllDots(females, 2.025), [females]);
 
@@ -622,19 +630,27 @@ function PopulationDots({
 
   return (
     <>
-      {founderGeo && founders.length > 0 && (
-        <points geometry={founderGeo} onClick={handleClick}>
-          <pointsMaterial map={DOT_SPRITE_TEX} size={0.075} color="#fff176" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.3} />
-        </points>
-      )}
+      {founderPositions.map((pos, idx) => {
+        const ind = founders[idx];
+        return (
+          <sprite
+            key={ind.id ?? `founder-${idx}`}
+            position={pos}
+            scale={[0.12, 0.12, 0.12]}
+            onClick={handleClick}
+          >
+            <spriteMaterial map={DOT_SPRITE_TEX} color="#fff176" transparent opacity={1.0} depthWrite={false} alphaTest={0.1} />
+          </sprite>
+        );
+      })}
       {maleGeo && males.length > 0 && (
         <points geometry={maleGeo} onClick={handleClick}>
-          <pointsMaterial map={DOT_SPRITE_TEX} size={0.07} color="#90caff" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
+          <pointsMaterial alphaMap={DOT_SPRITE_TEX} size={0.07} color="#90caff" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.1} />
         </points>
       )}
       {femaleGeo && females.length > 0 && (
         <points geometry={femaleGeo} onClick={handleClick}>
-          <pointsMaterial map={DOT_SPRITE_TEX} size={0.07} color="#ffaacc" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
+          <pointsMaterial alphaMap={DOT_SPRITE_TEX} size={0.07} color="#ffaacc" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.1} />
         </points>
       )}
     </>
@@ -655,7 +671,7 @@ function PopulationTrails({ snapshots }: { snapshots: { x: number; y: number }[]
     <>
       {layers.map((layer, i) => (
         <points key={i} geometry={layer.geo}>
-          <pointsMaterial map={DOT_SPRITE_TEX} size={layer.size} color="#88aaee" sizeAttenuation transparent opacity={layer.opacity} depthWrite={false} alphaTest={0.01} />
+          <pointsMaterial alphaMap={DOT_SPRITE_TEX} size={layer.size} color="#88aaee" sizeAttenuation transparent opacity={layer.opacity} depthWrite={false} alphaTest={0.01} />
         </points>
       ))}
     </>
