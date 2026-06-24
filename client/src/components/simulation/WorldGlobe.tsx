@@ -554,80 +554,39 @@ function buildPositions(individuals: { x?: number; y?: number }[], r: number): T
   return g;
 }
 
-const FOUNDER_COLOR = new THREE.Color('#fff176');
-const MALE_COLOR    = new THREE.Color('#90caff');
-const FEMALE_COLOR  = new THREE.Color('#ffaacc');
-
-function markerPosition(ind: { x?: number; y?: number }, r: number): [number, number, number] {
-  const lat = ((ind.y ?? 0) * Math.PI) / 180;
-  const lon = ((ind.x ?? 0) * Math.PI) / 180;
-  return [r * Math.cos(lat) * Math.cos(lon), r * Math.sin(lat), -r * Math.cos(lat) * Math.sin(lon)];
-}
-
-function MarkerDot({
-  position,
-  color,
-  radius,
-}: {
-  position: [number, number, number];
-  color: string;
-  radius: number;
-}) {
-  return (
-    <mesh position={position} renderOrder={10}>
-      <sphereGeometry args={[radius, 10, 10]} />
-      <meshBasicMaterial color={color} toneMapped={false} />
-    </mesh>
-  );
-}
-
 function PopulationDots({
   individuals,
-  groupRef,
-  onSelect,
 }: {
   individuals: any[];
   groupRef: React.RefObject<THREE.Group | null>;
   onSelect?: (ind: any) => void;
 }) {
-  const alive = individuals.filter(i => !i.is_dead && i.alive !== false);
-  const founders = useMemo(() => alive.filter(i => i.is_founder).map(i => ({ ind: i, pos: markerPosition(i, 2.025) })), [alive]);
-  const males    = useMemo(() => alive.filter(i => !i.is_founder && i.sex === 'male').map(i => ({ ind: i, pos: markerPosition(i, 2.025) })), [alive]);
-  const females  = useMemo(() => alive.filter(i => !i.is_founder && i.sex !== 'male').map(i => ({ ind: i, pos: markerPosition(i, 2.025) })), [alive]);
+  const spriteTex = useMemo(() => getSharedSpriteTexture(), []);
+  const alive = useMemo(() => individuals.filter(i => !i.is_dead && i.alive !== false), [individuals]);
+  const founderGeo = useMemo(() => buildPositions(alive.filter(i => i.is_founder), 2.025), [alive]);
+  const maleGeo    = useMemo(() => buildPositions(alive.filter(i => !i.is_founder && i.sex === 'male'), 2.025), [alive]);
+  const femaleGeo  = useMemo(() => buildPositions(alive.filter(i => !i.is_founder && i.sex !== 'male'), 2.025), [alive]);
   const hasFounders = alive.some(i => i.is_founder);
   const hasMales    = alive.some(i => !i.is_founder && i.sex === 'male');
   const hasFemales  = alive.some(i => !i.is_founder && i.sex !== 'male');
 
-  const handleClick = (e: import('@react-three/fiber').ThreeEvent<MouseEvent>) => {
-    if (!onSelect || individuals.length === 0) return;
-    const r = 2.025;
-    let minDist = Infinity, minIdx = -1;
-    const ry = groupRef.current?.rotation.y ?? 0;
-    individuals.forEach((ind, i) => {
-      const lat = ((ind.y ?? 0) * Math.PI) / 180;
-      const lon = ((ind.x ?? 0) * Math.PI) / 180;
-      const px = r * Math.cos(lat) * Math.cos(lon);
-      const py = r * Math.sin(lat);
-      const pz = -r * Math.cos(lat) * Math.sin(lon);
-      const wx = px * Math.cos(ry) + pz * Math.sin(ry);
-      const wz = -px * Math.sin(ry) + pz * Math.cos(ry);
-      const d = Math.hypot(wx - e.point.x, py - e.point.y, wz - e.point.z);
-      if (d < minDist) { minDist = d; minIdx = i; }
-    });
-    if (minIdx >= 0 && minDist < 0.06) { e.stopPropagation(); onSelect(individuals[minIdx]); }
-  };
-
   return (
     <>
-      {hasFounders && founders.map(({ ind, pos }) => (
-        <MarkerDot key={ind.id ?? `founder-${pos.join(',')}`} position={pos} color="#fff176" radius={0.045} />
-      ))}
-      {hasMales && males.map(({ ind, pos }) => (
-        <MarkerDot key={ind.id ?? `male-${pos.join(',')}`} position={pos} color="#90caff" radius={0.038} />
-      ))}
-      {hasFemales && females.map(({ ind, pos }) => (
-        <MarkerDot key={ind.id ?? `female-${pos.join(',')}`} position={pos} color="#ffaacc" radius={0.038} />
-      ))}
+      {hasFounders && (
+        <points geometry={founderGeo}>
+          <pointsMaterial map={spriteTex} size={0.055} color="#fff176" sizeAttenuation transparent opacity={0.95} depthWrite={false} alphaTest={0.1} />
+        </points>
+      )}
+      {hasMales && (
+        <points geometry={maleGeo}>
+          <pointsMaterial map={spriteTex} size={0.045} color="#90caff" sizeAttenuation transparent opacity={0.92} depthWrite={false} alphaTest={0.1} />
+        </points>
+      )}
+      {hasFemales && (
+        <points geometry={femaleGeo}>
+          <pointsMaterial map={spriteTex} size={0.045} color="#ffaacc" sizeAttenuation transparent opacity={0.92} depthWrite={false} alphaTest={0.1} />
+        </points>
+      )}
     </>
   );
 }
