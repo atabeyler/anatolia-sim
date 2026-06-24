@@ -549,33 +549,12 @@ const FOUNDER_COLOR = new THREE.Color('#fff176');
 const MALE_COLOR    = new THREE.Color('#90caff');
 const FEMALE_COLOR  = new THREE.Color('#ffaacc');
 
-const DOT_VERT = `
-  precision mediump float;
-  attribute vec3 aColor;
-  varying vec3 vColor;
-  void main() {
-    vColor = aColor;
-    vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = clamp(5.0 * (2.5 / -mv.z), 2.0, 12.0);
-    gl_Position = projectionMatrix * mv;
-  }
-`;
-const DOT_FRAG = `
-  precision mediump float;
-  varying vec3 vColor;
-  void main() {
-    float d = length(gl_PointCoord - vec2(0.5));
-    if (d > 0.5) discard;
-    gl_FragColor = vec4(vColor, 1.0);
-  }
-`;
-
-function buildAllDots(individuals: any[], r: number, singleColor?: THREE.Color): THREE.BufferGeometry {
+function buildAllDots(individuals: any[], r: number): THREE.BufferGeometry {
   const alive = individuals.filter(i => !i.is_dead && i.alive !== false);
   if (alive.length === 0) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0], 3));
-    g.setAttribute('aColor',   new THREE.Float32BufferAttribute([0, 0, 0], 3));
+    g.setAttribute('color',    new THREE.Float32BufferAttribute([0, 0, 0], 3));
     return g;
   }
   const positions: number[] = [];
@@ -584,12 +563,12 @@ function buildAllDots(individuals: any[], r: number, singleColor?: THREE.Color):
     const lat = ((ind.y ?? 0) * Math.PI) / 180;
     const lon = ((ind.x ?? 0) * Math.PI) / 180;
     positions.push(r * Math.cos(lat) * Math.cos(lon), r * Math.sin(lat), -r * Math.cos(lat) * Math.sin(lon));
-    const c = singleColor ?? (ind.is_founder ? FOUNDER_COLOR : ind.sex === 'male' ? MALE_COLOR : FEMALE_COLOR);
+    const c = ind.is_founder ? FOUNDER_COLOR : ind.sex === 'male' ? MALE_COLOR : FEMALE_COLOR;
     colors.push(c.r, c.g, c.b);
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  g.setAttribute('aColor',   new THREE.Float32BufferAttribute(colors, 3));
+  g.setAttribute('color',    new THREE.Float32BufferAttribute(colors, 3));
   return g;
 }
 
@@ -602,6 +581,14 @@ function PopulationDots({
   groupRef: React.RefObject<THREE.Group | null>;
   onSelect?: (ind: any) => void;
 }) {
+  const { gl } = useThree();
+  // Re-create texture whenever the WebGL context changes (hard refresh destroys/recreates context).
+  const spriteTex = useMemo(() => {
+    const t = makeSpriteTexture();
+    t.needsUpdate = true;
+    return t;
+  }, [gl]);
+
   const geo = useMemo(() => buildAllDots(individuals, 2.025), [individuals]);
 
   const handleClick = (e: import('@react-three/fiber').ThreeEvent<MouseEvent>) => {
@@ -625,12 +612,14 @@ function PopulationDots({
 
   return (
     <points geometry={geo} onClick={handleClick}>
-      <shaderMaterial vertexShader={DOT_VERT} fragmentShader={DOT_FRAG} depthWrite={false} />
+      <pointsMaterial map={spriteTex} vertexColors size={0.07} sizeAttenuation transparent depthWrite={false} alphaTest={0.3} />
     </points>
   );
 }
 
 function PopulationTrails({ snapshots }: { snapshots: { x: number; y: number }[][] }) {
+  const { gl } = useThree();
+  const spriteTex = useMemo(() => { const t = makeSpriteTexture(); t.needsUpdate = true; return t; }, [gl]);
   const layers = useMemo(() => snapshots.map((snapshot, idx) => {
     const age = snapshots.length - 1 - idx;
     return {
@@ -644,18 +633,7 @@ function PopulationTrails({ snapshots }: { snapshots: { x: number; y: number }[]
     <>
       {layers.map((layer, i) => (
         <points key={i} geometry={layer.geo}>
-          <shaderMaterial
-            vertexShader={DOT_VERT}
-            fragmentShader={`
-              varying vec3 vColor;
-              void main() {
-                if (length(gl_PointCoord - vec2(0.5)) > 0.5) discard;
-                gl_FragColor = vec4(0.533, 0.667, 0.933, ${layer.opacity.toFixed(3)});
-              }
-            `}
-            depthWrite={false}
-            transparent
-          />
+          <pointsMaterial map={spriteTex} size={layer.size} color="#88aaee" sizeAttenuation transparent opacity={layer.opacity} depthWrite={false} alphaTest={0.1} />
         </points>
       ))}
     </>
