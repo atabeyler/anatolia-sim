@@ -24,6 +24,7 @@ export function useSimWebSocket(simId: string | null) {
 
       // Send token in first message, never in URL (URL is logged by proxies/CDNs).
       socket.onopen = () => {
+        reconnectDelay.current = 3000; // reset backoff on successful connect
         socket.send(JSON.stringify({ type: 'auth', token: accessToken }));
       };
 
@@ -75,10 +76,35 @@ export function useSimWebSocket(simId: string | null) {
       };
     }
 
+    // Immediately reconnect when user returns to the tab (mobile background/lock screen fix).
+    // Resets exponential backoff so there's no 30s wait after a long absence.
+    function onVisibilityChange() {
+      if (document.hidden || unmounted.current) return;
+      const state = ws.current?.readyState;
+      if (state === WebSocket.CLOSED || state === WebSocket.CLOSING || ws.current == null) {
+        if (reconnectTimer.current) { clearTimeout(reconnectTimer.current); reconnectTimer.current = null; }
+        reconnectDelay.current = 3000;
+        connect();
+      }
+    }
+
+    // iOS bfcache: page restored from memory with stale WS object — force fresh connect.
+    function onPageShow(e: PageTransitionEvent) {
+      if (!e.persisted || unmounted.current) return;
+      ws.current?.close();
+      if (reconnectTimer.current) { clearTimeout(reconnectTimer.current); reconnectTimer.current = null; }
+      reconnectDelay.current = 3000;
+      connect();
+    }
+
     connect();
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pageshow', onPageShow);
 
     return () => {
       unmounted.current = true;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pageshow', onPageShow);
       if (reconnectTimer.current) {
         clearTimeout(reconnectTimer.current);
         reconnectTimer.current = null;
