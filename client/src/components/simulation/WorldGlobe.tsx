@@ -1,4 +1,4 @@
-import { useRef, useMemo, useState, useEffect } from 'react';
+import { useRef, useMemo, useState, useEffect, memo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import * as THREE from 'three';
@@ -871,7 +871,7 @@ function IntroCameraRig({
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
-export default function WorldGlobe({
+function WorldGlobe({
   individuals = [],
   spawnLat = 39,
   spawnLon = 28,
@@ -942,3 +942,13 @@ export default function WorldGlobe({
     </Canvas>
   );
 }
+
+// Only re-render when data props change — ignore inline callback identity changes.
+// This prevents notification-triggered SimulationPage re-renders from propagating
+// into the Three.js scene and corrupting material state.
+export default memo(WorldGlobe, (prev, next) =>
+  prev.individuals === next.individuals &&
+  prev.spawnLat === next.spawnLat &&
+  prev.spawnLon === next.spawnLon &&
+  prev.introPlaying === next.introPlaying
+);
