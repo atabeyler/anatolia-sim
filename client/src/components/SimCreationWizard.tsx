@@ -669,7 +669,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
   /* step title */
   function stepTitle(): string {
     switch (meta.type) {
-      case 'sim-info':   return t('SIM BILGILERI', 'SIM INFO', 'SIM-INFOS', 'INFOS SIM', '??????? ????????');
+      case 'sim-info':   return t('SIM BİLGİLERİ', 'SIM INFO', 'SIM-INFOS', 'INFOS SIM', 'معلومات المحاكاة');
       case 'identity':   return t('KİMLİK BİLGİLERİ', 'IDENTITY', 'IDENTITÄT', 'IDENTITÉ', 'الهوية');
       case 'physical':   return t('FİZİKSEL ÖLÇÜLER', 'PHYSICAL', 'KÖRPERMASSE', 'PHYSIQUE', 'الجسد');
       case 'appearance': return t('DIŞ GÖRÜNÜŞ', 'APPEARANCE', 'AUSSEHEN', 'APPARENCE', 'المظهر');
@@ -695,7 +695,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
     /* Sim info */
     if (meta.type === 'sim-info') return (
       <>
-        <HudInput label={t('SIM ADI', 'SIM NAME', 'SIM NAME', 'SIM NAME', '??? ????????')} value={simForm.name}
+        <HudInput label={t('SIM ADI', 'SIM NAME', 'SIM NAME', 'NOM DE SIM', 'اسم المحاكاة')} value={simForm.name}
           onChange={(e: any) => setSimForm(p => ({ ...p, name: e.target.value }))} />
         <HudInput label={t('ENLEM (°N)', 'LATITUDE (°N)', 'BREITENGRAD (°N)', 'LATITUDE (°N)', 'خط العرض (°N)')} type="number" step="0.0001" value={simForm.latitude}
           onChange={(e: any) => setSimForm(p => ({ ...p, latitude: e.target.value }))} />
@@ -944,7 +944,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
         }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:8 }}>
             <div style={{ fontSize:13, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.18em' }}>
-              {t('HIZLI GEÇİŞ', 'WIZARD SCRUBBER', 'SCHNELLLAUF', 'SCRUBBER', 'شريط التنقل')}
+              {t('HIZLI GEÇİŞ', 'WIZARD SCRUBBER', 'SCHNELLNAVIGATION', 'NAVIGATION RAPIDE', 'شريط التنقل')}
             </div>
             <div style={{ fontSize:13, color:'#a0b4ff', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.08em' }}>
               {step + 1} / {TOTAL} · {stepTitle()}
@@ -1015,8 +1015,8 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
             letterSpacing:'0.08em',
             opacity:0.9,
           }}>
-            <span>{STEPS[0]?.type}</span>
-            <span>{STEPS[Math.max(0, TOTAL - 1)]?.type}</span>
+            <span>{t('SIM BİLGİLERİ', 'SIM INFO', 'SIM-INFOS', 'INFOS SIM', 'معلومات المحاكاة')}</span>
+            <span>{t('ÖZET', 'SUMMARY', 'ZUSAMMENFASSUNG', 'RÉSUMÉ', 'ملخص')}</span>
           </div>
         </div>
       </div>
