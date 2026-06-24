@@ -879,13 +879,21 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
       <div
         ref={scrubRef}
         title={`${step + 1} / ${TOTAL}`}
-        style={{ height:24, position:'relative', cursor:'pointer', flexShrink:0, display:'flex', alignItems:'center' }}
+        style={{ height:32, position:'relative', cursor:'pointer', flexShrink:0, display:'flex', alignItems:'center', touchAction:'none' }}
         onMouseDown={e => {
           scrubToX(e.clientX);
           const onMove = (ev: MouseEvent) => scrubToX(ev.clientX);
           const onUp   = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
           window.addEventListener('mousemove', onMove);
           window.addEventListener('mouseup', onUp);
+        }}
+        onTouchStart={e => {
+          e.preventDefault();
+          scrubToX(e.touches[0].clientX);
+          const onMove = (ev: TouchEvent) => scrubToX(ev.touches[0].clientX);
+          const onEnd  = () => { window.removeEventListener('touchmove', onMove); window.removeEventListener('touchend', onEnd); };
+          window.addEventListener('touchmove', onMove, { passive: false });
+          window.addEventListener('touchend', onEnd);
         }}
       >
         {/* Track */}
@@ -900,7 +908,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           position:'absolute', top:'50%',
           left:`${((step+1)/TOTAL)*100}%`,
           transform:'translate(-50%,-50%)',
-          width:22, height:22,
+          width:28, height:28,
           background:'linear-gradient(135deg,#6f9ef7,#4f6ef7)',
           border:'2.5px solid #c8dcff',
           borderRadius:'50%',
