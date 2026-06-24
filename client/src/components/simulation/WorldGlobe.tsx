@@ -562,6 +562,24 @@ function buildGeoFor(individuals: any[], r: number, predicate: (i: any) => boole
   return g;
 }
 
+function DotGroup({ geo, color, spriteTex, onClick }: { geo: THREE.BufferGeometry; color: string; spriteTex: THREE.CanvasTexture; onClick: (e: any) => void }) {
+  const matRef = useRef<THREE.PointsMaterial>(null);
+  // No-dep useEffect runs after every React render. Forces map re-application
+  // so that notification-triggered re-renders (or any other external state update)
+  // cannot leave the material in a texture-less state causing squares.
+  useEffect(() => {
+    const mat = matRef.current;
+    if (!mat) return;
+    if (mat.map !== spriteTex) { mat.map = spriteTex; mat.needsUpdate = true; }
+    spriteTex.needsUpdate = true;
+  });
+  return (
+    <points geometry={geo} onClick={onClick}>
+      <pointsMaterial ref={matRef} map={spriteTex} color={color} size={0.07} sizeAttenuation transparent depthWrite={false} alphaTest={0.3} />
+    </points>
+  );
+}
+
 function PopulationDots({
   individuals,
   groupRef,
@@ -601,12 +619,11 @@ function PopulationDots({
     if (minIdx >= 0 && minDist < 0.06) { e.stopPropagation(); onSelect(individuals[minIdx]); }
   };
 
-  const mp = { map: spriteTex, size: 0.07, sizeAttenuation: true, transparent: true, depthWrite: false, alphaTest: 0.3 } as const;
   return (
     <>
-      {hasFounders && <points geometry={founderGeo} onClick={handleClick}><pointsMaterial {...mp} color="#fff176" /></points>}
-      {hasMales    && <points geometry={maleGeo}    onClick={handleClick}><pointsMaterial {...mp} color="#90caff" /></points>}
-      {hasFemales  && <points geometry={femaleGeo}  onClick={handleClick}><pointsMaterial {...mp} color="#ffaacc" /></points>}
+      {hasFounders && <DotGroup geo={founderGeo} color="#fff176" spriteTex={spriteTex} onClick={handleClick} />}
+      {hasMales    && <DotGroup geo={maleGeo}    color="#90caff" spriteTex={spriteTex} onClick={handleClick} />}
+      {hasFemales  && <DotGroup geo={femaleGeo}  color="#ffaacc" spriteTex={spriteTex} onClick={handleClick} />}
     </>
   );
 }
