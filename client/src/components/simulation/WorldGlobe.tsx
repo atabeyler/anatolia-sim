@@ -579,7 +579,21 @@ function PopulationDots({
   groupRef: React.RefObject<THREE.Group | null>;
   onSelect?: (ind: any) => void;
 }) {
-  const geo = useMemo(() => buildAllDots(individuals, 2.025), [individuals]);
+  const { founders, males, females } = useMemo(() => {
+    const founders: any[] = [];
+    const males: any[] = [];
+    const females: any[] = [];
+    for (const ind of individuals) {
+      if (!ind.parent_1_id && !ind.parent_2_id) founders.push(ind);
+      else if (ind.sex === 'male') males.push(ind);
+      else females.push(ind);
+    }
+    return { founders, males, females };
+  }, [individuals]);
+
+  const founderGeo = useMemo(() => buildAllDots(founders, 2.025), [founders]);
+  const maleGeo = useMemo(() => buildAllDots(males, 2.025), [males]);
+  const femaleGeo = useMemo(() => buildAllDots(females, 2.025), [females]);
 
   const handleClick = (e: import('@react-three/fiber').ThreeEvent<MouseEvent>) => {
     if (!onSelect || individuals.length === 0) return;
@@ -602,9 +616,21 @@ function PopulationDots({
 
   return (
     <>
-      <points geometry={geo} onClick={handleClick}>
-        <pointsMaterial map={DOT_SPRITE_TEX} vertexColors size={0.07} sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
-      </points>
+      {founderGeo && founders.length > 0 && (
+        <points geometry={founderGeo} onClick={handleClick}>
+          <pointsMaterial map={DOT_SPRITE_TEX} size={0.11} color="#fff176" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
+        </points>
+      )}
+      {maleGeo && males.length > 0 && (
+        <points geometry={maleGeo} onClick={handleClick}>
+          <pointsMaterial map={DOT_SPRITE_TEX} size={0.07} color="#90caff" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
+        </points>
+      )}
+      {femaleGeo && females.length > 0 && (
+        <points geometry={femaleGeo} onClick={handleClick}>
+          <pointsMaterial map={DOT_SPRITE_TEX} size={0.07} color="#ffaacc" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
+        </points>
+      )}
     </>
   );
 }
