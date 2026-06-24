@@ -574,7 +574,7 @@ function PopulationDots({
     <>
       {hasFounders && (
         <points geometry={founderGeo}>
-          <pointsMaterial map={spriteTex} size={0.055} color="#fff176" sizeAttenuation transparent opacity={0.95} depthWrite={false} alphaTest={0.1} />
+          <pointsMaterial map={spriteTex} size={0.055} color="#ff4444" sizeAttenuation transparent opacity={0.95} depthWrite={false} alphaTest={0.1} />
         </points>
       )}
       {hasMales && (
