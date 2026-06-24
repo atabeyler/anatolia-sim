@@ -879,7 +879,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
       <div
         ref={scrubRef}
         title={`${step + 1} / ${TOTAL}`}
-        style={{ height:10, background:'rgba(79,110,247,0.1)', position:'relative', cursor:'pointer', flexShrink:0 }}
+        style={{ height:24, position:'relative', cursor:'pointer', flexShrink:0, display:'flex', alignItems:'center' }}
         onMouseDown={e => {
           scrubToX(e.clientX);
           const onMove = (ev: MouseEvent) => scrubToX(ev.clientX);
@@ -888,16 +888,25 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           window.addEventListener('mouseup', onUp);
         }}
       >
-        <div style={{ height:'100%', width:`${((step+1)/TOTAL)*100}%`,
-          background:'linear-gradient(90deg,#4f6ef7,#4f9ef7)', transition:'width 0.15s ease-out' }} />
+        {/* Track */}
+        <div style={{ position:'absolute', inset:0, top:'50%', transform:'translateY(-50%)', height:4,
+          background:'rgba(79,110,247,0.15)' }} />
+        {/* Fill */}
+        <div style={{ position:'absolute', left:0, top:'50%', transform:'translateY(-50%)', height:4,
+          width:`${((step+1)/TOTAL)*100}%`,
+          background:'linear-gradient(90deg,#4f6ef7,#4f9ef7)', transition:'width 0.12s ease-out' }} />
+        {/* Thumb */}
         <div style={{
           position:'absolute', top:'50%',
           left:`${((step+1)/TOTAL)*100}%`,
           transform:'translate(-50%,-50%)',
-          width:14, height:14,
-          background:'#4f9ef7', border:'2px solid #e0e0f0',
-          borderRadius:'50%', boxShadow:'0 0 8px #4f9ef780',
-          pointerEvents:'none', transition:'left 0.15s ease-out',
+          width:22, height:22,
+          background:'linear-gradient(135deg,#6f9ef7,#4f6ef7)',
+          border:'2.5px solid #c8dcff',
+          borderRadius:'50%',
+          boxShadow:'0 0 12px #4f9ef7aa, 0 2px 6px rgba(0,0,0,0.5)',
+          pointerEvents:'none', transition:'left 0.12s ease-out',
+          zIndex:1,
         }} />
       </div>
 
