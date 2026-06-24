@@ -543,6 +543,10 @@ const FOUNDER_COLOR = new THREE.Color('#fff176');
 const MALE_COLOR    = new THREE.Color('#90caff');
 const FEMALE_COLOR  = new THREE.Color('#ffaacc');
 
+// Module-level singleton — created once when the JS module is first imported,
+// guaranteeing the texture is ready before any component mounts.
+const DOT_SPRITE_TEX = makeSpriteTexture();
+
 function buildAllDots(individuals: any[], r: number): THREE.BufferGeometry {
   const alive = individuals.filter(i => !i.is_dead && i.alive !== false);
   if (alive.length === 0) {
@@ -575,7 +579,6 @@ function PopulationDots({
   groupRef: React.RefObject<THREE.Group | null>;
   onSelect?: (ind: any) => void;
 }) {
-  const spriteTex = useMemo(() => makeSpriteTexture(), []);
   const geo = useMemo(() => buildAllDots(individuals, 2.025), [individuals]);
 
   const handleClick = (e: import('@react-three/fiber').ThreeEvent<MouseEvent>) => {
@@ -600,14 +603,13 @@ function PopulationDots({
   return (
     <>
       <points geometry={geo} onClick={handleClick}>
-        <pointsMaterial map={spriteTex} vertexColors size={0.07} sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
+        <pointsMaterial map={DOT_SPRITE_TEX} vertexColors size={0.07} sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
       </points>
     </>
   );
 }
 
 function PopulationTrails({ snapshots }: { snapshots: { x: number; y: number }[][] }) {
-  const spriteTex = useMemo(() => makeSpriteTexture(), []);
   const layers = useMemo(() => snapshots.map((snapshot, idx) => {
     const age = snapshots.length - 1 - idx;
     return {
@@ -621,7 +623,7 @@ function PopulationTrails({ snapshots }: { snapshots: { x: number; y: number }[]
     <>
       {layers.map((layer, i) => (
         <points key={i} geometry={layer.geo}>
-          <pointsMaterial map={spriteTex} size={layer.size} color="#88aaee" sizeAttenuation transparent opacity={layer.opacity} depthWrite={false} alphaTest={0.01} />
+          <pointsMaterial map={DOT_SPRITE_TEX} size={layer.size} color="#88aaee" sizeAttenuation transparent opacity={layer.opacity} depthWrite={false} alphaTest={0.01} />
         </points>
       ))}
     </>
