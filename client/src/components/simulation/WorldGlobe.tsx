@@ -550,20 +550,22 @@ function PopulationDots({
 }) {
   const spriteTex = useMemo(() => makeSpriteTexture(), []);
 
-  const { founders, males, females } = useMemo(() => {
-    const founders: any[] = [], males: any[] = [], females: any[] = [];
+  const { founderMales, founderFemales, males, females } = useMemo(() => {
+    const founderMales: any[] = [], founderFemales: any[] = [], males: any[] = [], females: any[] = [];
     for (const ind of individuals) {
       if (ind.is_dead || ind.alive === false) continue;
-      if (ind.is_founder) founders.push(ind);
-      else if (ind.sex === 'male') males.push(ind);
+      if (ind.is_founder) {
+        if (ind.sex === 'female') founderFemales.push(ind); else founderMales.push(ind);
+      } else if (ind.sex === 'male') males.push(ind);
       else females.push(ind);
     }
-    return { founders, males, females };
+    return { founderMales, founderFemales, males, females };
   }, [individuals]);
 
-  const founderGeo = useMemo(() => buildPositions(founders, 2.025), [founders]);
-  const maleGeo    = useMemo(() => buildPositions(males,    2.025), [males]);
-  const femaleGeo  = useMemo(() => buildPositions(females,  2.025), [females]);
+  const founderMaleGeo   = useMemo(() => buildPositions(founderMales,   2.025), [founderMales]);
+  const founderFemaleGeo = useMemo(() => buildPositions(founderFemales, 2.025), [founderFemales]);
+  const maleGeo          = useMemo(() => buildPositions(males,          2.025), [males]);
+  const femaleGeo        = useMemo(() => buildPositions(females,        2.025), [females]);
 
   const handleClick = (e: import('@react-three/fiber').ThreeEvent<MouseEvent>) => {
     if (!onSelect || individuals.length === 0) return;
@@ -586,14 +588,17 @@ function PopulationDots({
 
   return (
     <>
-      <points geometry={founderGeo} onClick={handleClick}>
-        <pointsMaterial map={spriteTex} size={0.07} color="#fff176" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
-      </points>
       <points geometry={maleGeo} onClick={handleClick}>
         <pointsMaterial map={spriteTex} size={0.07} color="#90caff" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
       </points>
       <points geometry={femaleGeo} onClick={handleClick}>
         <pointsMaterial map={spriteTex} size={0.07} color="#ffaacc" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
+      </points>
+      <points geometry={founderMaleGeo} onClick={handleClick}>
+        <pointsMaterial map={spriteTex} size={0.07} color="#fff176" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
+      </points>
+      <points geometry={founderFemaleGeo} onClick={handleClick}>
+        <pointsMaterial map={spriteTex} size={0.07} color="#fff176" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
       </points>
     </>
   );

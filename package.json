@@ -1,6 +1,6 @@
 {
   "name": "anatolia-sim",
-  "version": "1.6.36",
+  "version": "1.6.37",
   "private": true,
   "main": "desktop/main.mjs",
   "engines": {
