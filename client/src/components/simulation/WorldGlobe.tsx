@@ -34,6 +34,9 @@ function getSharedSpriteTexture(): THREE.CanvasTexture {
   if (!sharedSpriteTexture) {
     sharedSpriteTexture = makeSpriteTexture();
     sharedSpriteTexture.needsUpdate = true;
+    // Prevent R3F auto-disposal from invalidating this shared texture when
+    // any one of the materials that reference it gets unmounted.
+    sharedSpriteTexture.dispose = () => {};
   }
   return sharedSpriteTexture;
 }
@@ -566,27 +569,20 @@ function PopulationDots({
   const founderGeo = useMemo(() => buildPositions(alive.filter(i => i.is_founder), 2.025), [alive]);
   const maleGeo    = useMemo(() => buildPositions(alive.filter(i => !i.is_founder && i.sex === 'male'), 2.025), [alive]);
   const femaleGeo  = useMemo(() => buildPositions(alive.filter(i => !i.is_founder && i.sex !== 'male'), 2.025), [alive]);
-  const hasFounders = alive.some(i => i.is_founder);
-  const hasMales    = alive.some(i => !i.is_founder && i.sex === 'male');
-  const hasFemales  = alive.some(i => !i.is_founder && i.sex !== 'male');
-
+  // Always keep all three <points> mounted — conditional unmounting causes R3F
+  // to dispose materials and can corrupt the shared sprite texture for siblings.
+  // Empty groups fall back to a single invisible point at [0,0,0] (inside globe).
   return (
     <>
-      {hasFounders && (
-        <points geometry={founderGeo}>
-          <pointsMaterial map={spriteTex} size={0.055} color="#ff4444" sizeAttenuation transparent opacity={0.95} depthWrite={false} alphaTest={0.1} />
-        </points>
-      )}
-      {hasMales && (
-        <points geometry={maleGeo}>
-          <pointsMaterial map={spriteTex} size={0.045} color="#90caff" sizeAttenuation transparent opacity={0.92} depthWrite={false} alphaTest={0.1} />
-        </points>
-      )}
-      {hasFemales && (
-        <points geometry={femaleGeo}>
-          <pointsMaterial map={spriteTex} size={0.045} color="#ffaacc" sizeAttenuation transparent opacity={0.92} depthWrite={false} alphaTest={0.1} />
-        </points>
-      )}
+      <points geometry={founderGeo}>
+        <pointsMaterial map={spriteTex} size={0.055} color="#ff4444" sizeAttenuation transparent opacity={0.95} depthWrite={false} alphaTest={0.1} />
+      </points>
+      <points geometry={maleGeo}>
+        <pointsMaterial map={spriteTex} size={0.045} color="#90caff" sizeAttenuation transparent opacity={0.92} depthWrite={false} alphaTest={0.1} />
+      </points>
+      <points geometry={femaleGeo}>
+        <pointsMaterial map={spriteTex} size={0.045} color="#ffaacc" sizeAttenuation transparent opacity={0.92} depthWrite={false} alphaTest={0.1} />
+      </points>
     </>
   );
 }
