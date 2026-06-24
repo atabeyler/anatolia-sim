@@ -16,11 +16,17 @@ function makeSpriteTexture(): THREE.CanvasTexture {
   canvas.height = size;
   const ctx = canvas.getContext('2d')!;
   const half = size / 2;
-  ctx.beginPath();
-  ctx.arc(half, half, half * 0.55, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(255,255,255,1)';
-  ctx.fill();
-  return new THREE.CanvasTexture(canvas);
+  const gradient = ctx.createRadialGradient(half, half, half * 0.08, half, half, half * 0.55);
+  gradient.addColorStop(0, 'rgba(255,255,255,1)');
+  gradient.addColorStop(0.72, 'rgba(255,255,255,1)');
+  gradient.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, size, size);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.needsUpdate = true;
+  return tex;
 }
 
 /** Jupiter: gradient bands + Great Red Spot */
@@ -618,7 +624,7 @@ function PopulationDots({
     <>
       {founderGeo && founders.length > 0 && (
         <points geometry={founderGeo} onClick={handleClick}>
-          <pointsMaterial map={DOT_SPRITE_TEX} size={0.11} color="#fff176" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
+          <pointsMaterial map={DOT_SPRITE_TEX} size={0.075} color="#fff176" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.3} />
         </points>
       )}
       {maleGeo && males.length > 0 && (
