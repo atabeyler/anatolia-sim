@@ -391,11 +391,11 @@ const CLIP = 'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(
 const inputBase: React.CSSProperties = {
   outline:'none', fontFamily:'Share Tech Mono,monospace',
   background:'rgba(7,7,26,0.9)', border:'1px solid rgba(79,110,247,0.25)',
-  padding:'9px 12px', fontSize:14, color:'#e0e0f0', clipPath:CLIP, width:'100%',
+  padding:'8px 11px', fontSize:13, color:'#e0e0f0', clipPath:CLIP, width:'100%',
 };
 const btnBase: React.CSSProperties = {
-  fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', fontSize:16,
-  clipPath:CLIP, cursor:'pointer', padding:'9px 20px',
+  fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', fontSize:14,
+  clipPath:CLIP, cursor:'pointer', padding:'8px 18px',
 };
 const btnNext  = { ...btnBase, background:'rgba(79,110,247,0.25)', border:'1px solid rgba(79,110,247,0.5)',  color:'#e0e0f0' };
 const btnBack  = { ...btnBase, background:'rgba(22,22,58,0.5)',    border:'1px solid rgba(79,110,247,0.2)',  color:'#e0e0f0' };
@@ -405,7 +405,7 @@ const btnStart = { ...btnBase, fontSize:14, background:'rgba(78,203,113,0.2)', b
 /* ── sub-components ──────────────────────────────────────────────────────── */
 function Lbl({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize:14, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace',
+    <div style={{ fontSize:13, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace',
       letterSpacing:'0.12em', marginBottom:6 }}>
       {children}
     </div>
@@ -442,10 +442,10 @@ function NumInput({ value, unit, min, max, color, onChange }: {
         onChange={e => setRaw(e.target.value)}
         onBlur={e => { commit(raw); e.currentTarget.style.borderColor = 'rgba(79,110,247,0.25)'; }}
         onKeyDown={e => e.key==='Enter' && commit((e.target as HTMLInputElement).value)}
-        style={{ ...inputBase, width:100, fontSize:20, color, textAlign:'center', padding:'8px' }}
+        style={{ ...inputBase, width:100, fontSize:14, color, textAlign:'center', padding:'7px 8px' }}
         onFocus={e => (e.currentTarget.style.borderColor = 'rgba(79,110,247,0.7)')}
       />
-      <span style={{ fontSize:16, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace' }}>{unit}</span>
+      <span style={{ fontSize:14, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace' }}>{unit}</span>
     </div>
   );
 }
@@ -476,7 +476,7 @@ function ColorPicker({ label, opts, value, onChange, lang }: any) {
               border: value===o.v ? '2px solid #4f9ef7' : '2px solid rgba(79,158,247,0.15)',
               boxShadow: value===o.v ? '0 0 10px #4f9ef780' : 'none', transition:'all 0.15s',
             }} />
-            <span style={{ fontSize:14, color: value===o.v ? '#4f9ef7' : '#e0e0f0',
+            <span style={{ fontSize:13, color: value===o.v ? '#4f9ef7' : '#e0e0f0',
               fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.04em', whiteSpace:'nowrap' }}>
               {(o as any)[lang] ?? o.en}
             </span>
@@ -491,8 +491,8 @@ function SumRow({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display:'flex', justifyContent:'space-between', padding:'4px 0',
       borderBottom:'1px solid rgba(79,110,247,0.1)' }}>
-      <span style={{ fontSize:14, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace' }}>{label}</span>
-      <span style={{ fontSize:14, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace' }}>{value}</span>
+      <span style={{ fontSize:13, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace' }}>{label}</span>
+      <span style={{ fontSize:13, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace' }}>{value}</span>
     </div>
   );
 }
@@ -716,7 +716,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           <div style={{ display:'flex', gap:8 }}>
             {[{ v:'male', tr:'ERKEK', en:'MALE', de:'MÄNNLICH', fr:'MÂLE', ar:'ذكر' }, { v:'female', tr:'KADIN', en:'FEMALE', de:'WEIBLICH', fr:'FEMELLE', ar:'أنثى' }].map(opt => (
               <button key={opt.v} onClick={() => setFd((p: any) => ({ ...p, sex: opt.v }))}
-                style={{ fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', padding:'8px 22px', fontSize:14,
+                style={{ fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', padding:'8px 22px', fontSize:13,
                   background: fd.sex===opt.v ? 'rgba(79,110,247,0.25)' : 'rgba(22,22,58,0.5)',
                   border: `1px solid ${fd.sex===opt.v ? 'rgba(79,110,247,0.6)' : 'rgba(79,110,247,0.15)'}`,
                   color:'#e0e0f0', clipPath:CLIP, cursor:'pointer' }}>
@@ -778,7 +778,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
         <div>
           {/* 1 — big percentage */}
           <div style={{ textAlign:'center', marginBottom:14 }}>
-            <div style={{ fontSize:52, color: trait.c, fontFamily:'Orbitron,monospace',
+            <div style={{ fontSize:44, color: trait.c, fontFamily:'Orbitron,monospace',
               fontWeight:900, lineHeight:1, textShadow:`0 0 24px ${trait.c}70` }}>
               {pct}
             </div>
@@ -787,7 +787,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           {/* 2 — slider + spectrum labels */}
           <SliderBar value={val} color={trait.c} onChange={v => setT(trait.id, v)} />
           <div style={{ display:'flex', justifyContent:'space-between', marginTop:5,
-            fontSize:14, fontFamily:'Share Tech Mono,monospace' }}>
+            fontSize:13, fontFamily:'Share Tech Mono,monospace' }}>
             <span style={{ color:'#e0e0f0' }}>{lang==='tr' ? tm.lo[0] : tm.lo[1]}</span>
             <span style={{ color:'#e0e0f0' }}>{lang==='tr' ? tm.hi[0] : tm.hi[1]}</span>
           </div>
@@ -796,7 +796,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           <div style={{ display:'flex', gap:7, flexWrap:'wrap', marginTop:18 }}>
             {tm.fx.map(fx => (
               <div key={fx[0]} style={{
-                padding:'3px 10px', fontSize:14, fontFamily:'Share Tech Mono,monospace',
+                padding:'3px 10px', fontSize:13, fontFamily:'Share Tech Mono,monospace',
                 color: trait.c, border:`1px solid ${trait.c}45`,
                 background:`${trait.c}12`, clipPath:CLIP, letterSpacing:'0.07em',
               }}>
@@ -806,7 +806,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           </div>
 
           {/* 4a — dynamic description */}
-          <div style={{ marginTop:14, fontSize:14, color:'#e0e0f0',
+          <div style={{ marginTop:14, fontSize:13, color:'#e0e0f0',
             fontFamily:'Share Tech Mono,monospace', lineHeight:1.65, letterSpacing:'0.03em' }}>
             {tm.d[tier][isTr ? 0 : 1]}
           </div>
@@ -814,11 +814,11 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           {/* 4b — historical reference card */}
           <div style={{ marginTop:12, padding:'10px 14px',
             background:'rgba(8,8,26,0.85)', border:`1px solid ${trait.c}28`, clipPath:CLIP }}>
-            <div style={{ fontSize:14, color: trait.c, fontFamily:'Share Tech Mono,monospace',
+            <div style={{ fontSize:13, color: trait.c, fontFamily:'Share Tech Mono,monospace',
               letterSpacing:'0.12em', marginBottom:6 }}>
               ◈ {isTr ? tm.r[tier][0] : tm.r[tier][1]}
             </div>
-            <div style={{ fontSize:14, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
+            <div style={{ fontSize:13, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
               lineHeight:1.55, letterSpacing:'0.03em' }}>
               {isTr ? tm.r[tier][2] : tm.r[tier][3]}
             </div>
@@ -831,7 +831,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
     if (meta.type === 'summary') return (
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
         <div style={{ gridColumn:'1/-1' }}>
-          <div style={{ fontSize:16, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace',
+          <div style={{ fontSize:14, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace',
             letterSpacing:'0.15em', marginBottom:8 }}>
             {t('SİMÜLASYON', 'SIMULATION', 'SIMULATION', 'SIMULATION', 'المحاكاة')}
           </div>
@@ -841,7 +841,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
         </div>
         {([{ fd: f1, sex: 'male' }, { fd: f2, sex: 'female' }] as { fd: any; sex: string }[]).map(({ fd: founder, sex }) => (
           <div key={sex}>
-            <div style={{ fontSize:16, color: sex==='male' ? '#4f9ef7' : '#ec4899',
+            <div style={{ fontSize:14, color: sex==='male' ? '#4f9ef7' : '#ec4899',
               fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.12em', marginBottom:8 }}>
               {sex==='male' ? t('KURUCU 1 — ERKEK', 'FOUNDER 1 — MALE', 'GRÜNDER 1 — MÄNNLICH', 'FONDATEUR 1 — MÂLE', 'المؤسس 1 — ذكر') : t('KURUCU 2 — KADIN', 'FOUNDER 2 — FEMALE', 'GRÜNDERIN 2 — WEIBLICH', 'FONDATRICE 2 — FEMELLE', 'المؤسسة 2 — أنثى')}
             </div>
@@ -878,13 +878,13 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
         display:'flex', alignItems:'center', justifyContent:'space-between' }}>
         <div>
           {founderLabel && (
-            <div style={{ fontSize:14, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace',
+            <div style={{ fontSize:13, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace',
               letterSpacing:'0.2em', marginBottom:3 }}>
               {founderLabel}
             </div>
           )}
           {subtitle && (
-            <div style={{ fontSize:14, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
+            <div style={{ fontSize:13, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
               letterSpacing:'0.15em', marginBottom:2 }}>
               {subtitle}
             </div>
@@ -899,7 +899,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
             {stepTitle()}
           </div>
         </div>
-        <div style={{ fontSize:14, color:'#e0e0f0', fontFamily:'Orbitron,monospace', letterSpacing:'0.1em' }}>
+        <div style={{ fontSize:13, color:'#e0e0f0', fontFamily:'Orbitron,monospace', letterSpacing:'0.1em' }}>
           {step+1} / {TOTAL}
         </div>
       </div>
@@ -915,7 +915,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           background:'rgba(0,0,10,0.82)', display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ maxWidth:400, width:'90%', background:'rgba(4,4,18,0.98)',
             border:'1px solid rgba(204,34,34,0.6)', clipPath:CLIP, padding:'28px 28px 24px' }}>
-            <div style={{ fontSize:20, color:'#cc2222', fontFamily:'Orbitron,monospace',
+            <div style={{ fontSize:14, color:'#cc2222', fontFamily:'Orbitron,monospace',
               letterSpacing:'0.2em', marginBottom:16, display:'flex', alignItems:'center', gap:10 }}>
               <span style={{
                 display:'inline-block',
@@ -926,7 +926,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
               }}>⚠</span>
               <span style={{ textShadow:'0 0 12px #cc222288' }}>{t('UYARI', 'WARNING', 'WARNUNG', 'AVERTISSEMENT', 'تحذير')}</span>
             </div>
-            <div style={{ fontSize:16, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
+            <div style={{ fontSize:13, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
               lineHeight:1.7, letterSpacing:'0.04em', marginBottom:24 }}>
               {t(
                 'Bu adım geri döndürülemez. Simülasyon başlatıldıktan sonra kurucu ayarları değiştirilemez.',
@@ -936,7 +936,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
                 'هذه الخطوة لا يمكن التراجع عنها. لا يمكن تغيير إعدادات المؤسس بعد إطلاق المحاكاة.'
               )}
             </div>
-            <div style={{ fontSize:16, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
+            <div style={{ fontSize:13, color:'#e0e0f0', fontFamily:'Share Tech Mono,monospace',
               letterSpacing:'0.12em', marginBottom:20, borderTop:'1px solid rgba(204,34,34,0.25)',
               paddingTop:16 }}>
               {t('Onaylıyor musunuz?', 'Do you confirm?', 'Bestätigen Sie?', 'Confirmez-vous?', 'هل تؤكد؟')}
@@ -944,14 +944,14 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
             <div style={{ display:'flex', gap:12 }}>
               <button
                 onClick={() => { setConfirmOpen(false); try { localStorage.setItem('anatolia-wizard-last', JSON.stringify({ simForm, f1, f2 })); } catch {} onSubmit(simForm, f1, f2); }}
-                style={{ ...btnBase, fontSize:16, flex:1,
+                style={{ ...btnBase, fontSize:14, flex:1,
                   background:'rgba(78,203,113,0.18)', border:'1px solid rgba(78,203,113,0.55)',
                   color:'#4ecb71' }}>
                 {t('ONAYLA', 'CONFIRM', 'BESTÄTIGEN', 'CONFIRMER', 'تأكيد')}
               </button>
               <button
                 onClick={() => setConfirmOpen(false)}
-                style={{ ...btnBase, fontSize:16, flex:1,
+                style={{ ...btnBase, fontSize:14, flex:1,
                   background:'rgba(204,34,34,0.15)', border:'1px solid rgba(204,34,34,0.45)',
                   color:'#e05555' }}>
                 {t('VAZGEÇ', 'CANCEL', 'ABBRECHEN', 'ANNULER', 'إلغاء')}
@@ -971,10 +971,10 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           padding:'10px 12px 12px',
         }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:8 }}>
-            <div style={{ fontSize:11, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.18em' }}>
+            <div style={{ fontSize:12, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.18em' }}>
               {t('HIZLI GEÇİŞ', 'WIZARD SCRUBBER', 'SCHNELLLAUF', 'SCRUBBER', 'شريط التنقل')}
             </div>
-            <div style={{ fontSize:11, color:'#a0b4ff', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.08em' }}>
+            <div style={{ fontSize:12, color:'#a0b4ff', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.08em' }}>
               {step + 1} / {TOTAL} · {stepTitle()}
             </div>
           </div>
