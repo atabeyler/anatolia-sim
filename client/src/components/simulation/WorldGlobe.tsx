@@ -620,13 +620,13 @@ function PopulationDots({
   return (
     <>
       {hasFounders && founders.map(({ ind, pos }) => (
-        <MarkerDot key={ind.id ?? `founder-${pos.join(',')}`} position={pos} color="#fff176" radius={0.045} />
+        <MarkerDot key={ind.id ?? `founder-${pos.join(',')}`} position={pos} color="#fff176" radius={0.004} />
       ))}
       {hasMales && males.map(({ ind, pos }) => (
-        <MarkerDot key={ind.id ?? `male-${pos.join(',')}`} position={pos} color="#90caff" radius={0.038} />
+        <MarkerDot key={ind.id ?? `male-${pos.join(',')}`} position={pos} color="#90caff" radius={0.003} />
       ))}
       {hasFemales && females.map(({ ind, pos }) => (
-        <MarkerDot key={ind.id ?? `female-${pos.join(',')}`} position={pos} color="#ffaacc" radius={0.038} />
+        <MarkerDot key={ind.id ?? `female-${pos.join(',')}`} position={pos} color="#ffaacc" radius={0.003} />
       ))}
     </>
   );
