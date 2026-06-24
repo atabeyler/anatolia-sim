@@ -875,51 +875,121 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
 
       {/* Scrubber */}
       <div style={{ padding:'8px 12px 0' }}>
+        <style>{`
+          .wizard-scrubber {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 100%;
+            height: 34px;
+            background: transparent;
+            margin: 0;
+            cursor: ew-resize;
+          }
+          .wizard-scrubber:focus {
+            outline: none;
+          }
+          .wizard-scrubber::-webkit-slider-runnable-track {
+            height: 18px;
+            background: transparent;
+            border: none;
+          }
+          .wizard-scrubber::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 32px;
+            height: 32px;
+            margin-top: -7px;
+            border-radius: 10px;
+            border: 1px solid rgba(165, 182, 255, 0.92);
+            background:
+              linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0)) top,
+              linear-gradient(135deg, #4ecb71 0%, #4f9ef7 100%);
+            box-shadow:
+              0 0 0 5px rgba(78,203,113,0.12),
+              0 0 18px rgba(79,158,247,0.35),
+              inset 0 1px 0 rgba(255,255,255,0.22);
+            cursor: grab;
+          }
+          .wizard-scrubber:active::-webkit-slider-thumb {
+            cursor: grabbing;
+            transform: scale(1.04);
+          }
+          .wizard-scrubber::-moz-range-track {
+            height: 18px;
+            background: transparent;
+            border: none;
+          }
+          .wizard-scrubber::-moz-range-thumb {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            border: 1px solid rgba(165, 182, 255, 0.92);
+            background: linear-gradient(135deg, #4ecb71 0%, #4f9ef7 100%);
+            box-shadow:
+              0 0 0 5px rgba(78,203,113,0.12),
+              0 0 18px rgba(79,158,247,0.35),
+              inset 0 1px 0 rgba(255,255,255,0.22);
+            cursor: grab;
+          }
+          .wizard-scrubber:active::-moz-range-thumb {
+            cursor: grabbing;
+          }
+        `}</style>
         <div style={{
           position:'relative',
-          background:'rgba(7,7,26,0.86)',
-          border:'1px solid rgba(79,110,247,0.18)',
+          background:'linear-gradient(180deg, rgba(10,10,34,0.94), rgba(7,7,26,0.88))',
+          border:'1px solid rgba(79,110,247,0.22)',
           clipPath:CLIP,
-          padding:'8px 12px 10px',
+          padding:'10px 12px 12px',
         }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:6 }}>
-            <div style={{ fontSize:12, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.18em' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:8 }}>
+            <div style={{ fontSize:13, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.18em' }}>
               {t('HIZLI GEÇİŞ', 'WIZARD SCRUBBER', 'SCHNELLLAUF', 'SCRUBBER', 'شريط التنقل')}
             </div>
-            <div style={{ fontSize:12, color:'#a0b4ff', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.08em' }}>
+            <div style={{ fontSize:13, color:'#a0b4ff', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.08em' }}>
               {step + 1} / {TOTAL} · {stepTitle()}
             </div>
           </div>
-          <div style={{ position:'relative', height:28, display:'flex', alignItems:'center' }}>
+          <div style={{ position:'relative', height:42, display:'flex', alignItems:'center' }}>
             <div style={{
               position:'absolute',
-              left:8,
-              right:8,
+              left:12,
+              right:12,
               top:'50%',
-              height:4,
+              height:8,
               transform:'translateY(-50%)',
-              background:'linear-gradient(90deg, rgba(79,110,247,0.18), rgba(78,203,113,0.20))',
+              background:'rgba(79,110,247,0.12)',
               borderRadius:999,
+              overflow:'hidden',
             }} />
+            <div
+              style={{
+                position:'absolute',
+                left:12,
+                right:12,
+                top:'50%',
+                height:8,
+                transform:`translateY(-50%) scaleX(${TOTAL === 1 ? 1 : step / (TOTAL - 1)})`,
+                transformOrigin:'left center',
+                background:'linear-gradient(90deg, rgba(78,203,113,0.32), rgba(79,158,247,0.72))',
+                borderRadius:999,
+                boxShadow:'0 0 10px rgba(79,158,247,0.18)',
+              }}
+            />
             {Array.from({ length: TOTAL }, (_, i) => (
-              <button
+              <div
                 key={i}
-                type="button"
-                onClick={() => jumpToStep(i)}
-                aria-label={`${i + 1} / ${TOTAL}: ${STEPS[i].type}`}
                 style={{
                   position:'absolute',
                   left:`${TOTAL === 1 ? 0 : (i / (TOTAL - 1)) * 100}%`,
                   top:'50%',
+                  width: i === step ? 16 : 8,
+                  height: i === step ? 16 : 8,
                   transform:'translate(-50%, -50%)',
-                  width:i === step ? 20 : 12,
-                  height:i === step ? 20 : 12,
                   borderRadius:999,
-                  border:`1px solid ${i === step ? 'rgba(78,203,113,0.95)' : 'rgba(79,110,247,0.45)'}`,
-                  background:i === step ? '#4ecb71' : 'rgba(12,12,36,0.95)',
-                  boxShadow:i === step ? '0 0 0 5px rgba(78,203,113,0.18), 0 0 14px rgba(78,203,113,0.5)' : '0 0 0 3px rgba(79,110,247,0.08)',
-                  cursor:'pointer',
-                  padding:0,
+                  background: i === step ? '#eaffef' : 'rgba(160,180,255,0.55)',
+                  boxShadow: i === step ? '0 0 0 6px rgba(78,203,113,0.14)' : 'none',
+                  pointerEvents:'none',
                 }}
               />
             ))}
@@ -931,16 +1001,22 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
               value={step}
               onChange={(e) => jumpToStep(Number(e.target.value))}
               aria-label={t('Adımlar arasında gez', 'Move through wizard steps', 'Zwischen Schritten springen', 'Naviguer entre les étapes', 'التنقل بين الخطوات')}
-              style={{
-                position:'absolute',
-                inset:0,
-                width:'100%',
-                height:'100%',
-                opacity:0,
-                cursor:'ew-resize',
-                margin:0,
-              }}
+              className="wizard-scrubber"
+              style={{ position:'absolute', inset:0 }}
             />
+          </div>
+          <div style={{
+            display:'flex',
+            justifyContent:'space-between',
+            marginTop:8,
+            color:'#90a4ff',
+            fontFamily:'Share Tech Mono,monospace',
+            fontSize:11,
+            letterSpacing:'0.08em',
+            opacity:0.9,
+          }}>
+            <span>{STEPS[0]?.type}</span>
+            <span>{STEPS[Math.max(0, TOTAL - 1)]?.type}</span>
           </div>
         </div>
       </div>
