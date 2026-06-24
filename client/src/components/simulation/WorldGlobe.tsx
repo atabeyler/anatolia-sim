@@ -539,6 +539,33 @@ function buildPositions(individuals: { x?: number; y?: number }[], r: number): T
   return g;
 }
 
+const FOUNDER_COLOR = new THREE.Color('#fff176');
+const MALE_COLOR    = new THREE.Color('#90caff');
+const FEMALE_COLOR  = new THREE.Color('#ffaacc');
+
+function buildAllDots(individuals: any[], r: number): THREE.BufferGeometry {
+  const alive = individuals.filter(i => !i.is_dead && i.alive !== false);
+  if (alive.length === 0) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0], 3));
+    g.setAttribute('color',    new THREE.Float32BufferAttribute([0, 0, 0], 3));
+    return g;
+  }
+  const positions: number[] = [];
+  const colors: number[] = [];
+  for (const ind of alive) {
+    const lat = ((ind.y ?? 0) * Math.PI) / 180;
+    const lon = ((ind.x ?? 0) * Math.PI) / 180;
+    positions.push(r * Math.cos(lat) * Math.cos(lon), r * Math.sin(lat), -r * Math.cos(lat) * Math.sin(lon));
+    const c = ind.is_founder ? FOUNDER_COLOR : ind.sex === 'male' ? MALE_COLOR : FEMALE_COLOR;
+    colors.push(c.r, c.g, c.b);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  g.setAttribute('color',    new THREE.Float32BufferAttribute(colors, 3));
+  return g;
+}
+
 function PopulationDots({
   individuals,
   groupRef,
@@ -549,23 +576,7 @@ function PopulationDots({
   onSelect?: (ind: any) => void;
 }) {
   const spriteTex = useMemo(() => makeSpriteTexture(), []);
-
-  const { founderMales, founderFemales, males, females } = useMemo(() => {
-    const founderMales: any[] = [], founderFemales: any[] = [], males: any[] = [], females: any[] = [];
-    for (const ind of individuals) {
-      if (ind.is_dead || ind.alive === false) continue;
-      if (ind.is_founder) {
-        if (ind.sex === 'female') founderFemales.push(ind); else founderMales.push(ind);
-      } else if (ind.sex === 'male') males.push(ind);
-      else females.push(ind);
-    }
-    return { founderMales, founderFemales, males, females };
-  }, [individuals]);
-
-  const founderMaleGeo   = useMemo(() => buildPositions(founderMales,   2.025), [founderMales]);
-  const founderFemaleGeo = useMemo(() => buildPositions(founderFemales, 2.025), [founderFemales]);
-  const maleGeo          = useMemo(() => buildPositions(males,          2.025), [males]);
-  const femaleGeo        = useMemo(() => buildPositions(females,        2.025), [females]);
+  const geo = useMemo(() => buildAllDots(individuals, 2.025), [individuals]);
 
   const handleClick = (e: import('@react-three/fiber').ThreeEvent<MouseEvent>) => {
     if (!onSelect || individuals.length === 0) return;
@@ -588,22 +599,9 @@ function PopulationDots({
 
   return (
     <>
-      <points geometry={maleGeo} onClick={handleClick}>
-        <pointsMaterial map={spriteTex} size={0.07} color="#90caff" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
+      <points geometry={geo} onClick={handleClick}>
+        <pointsMaterial map={spriteTex} vertexColors size={0.07} sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
       </points>
-      <points geometry={femaleGeo} onClick={handleClick}>
-        <pointsMaterial map={spriteTex} size={0.07} color="#ffaacc" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
-      </points>
-      {founderMales.length > 0 && (
-        <points geometry={founderMaleGeo} onClick={handleClick}>
-          <pointsMaterial map={spriteTex} size={0.07} color="#fff176" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
-        </points>
-      )}
-      {founderFemales.length > 0 && (
-        <points geometry={founderFemaleGeo} onClick={handleClick}>
-          <pointsMaterial map={spriteTex} size={0.07} color="#fff176" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
-        </points>
-      )}
     </>
   );
 }
