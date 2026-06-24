@@ -534,6 +534,15 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
   const stepRef = useRef(step);
   stepRef.current = step;
 
+  const scrubRef = useRef<HTMLDivElement>(null);
+  function scrubToX(clientX: number) {
+    const el = scrubRef.current;
+    if (!el) return;
+    const { left, width } = el.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - left) / width));
+    setStep(Math.min(TOTAL - 1, Math.max(0, Math.floor(ratio * TOTAL))));
+  }
+
   // Keep window globals in sync so AriaButton can send context to the API
   useEffect(() => {
     const cur = STEPS[step];
@@ -866,10 +875,30 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
       style={{ width:'min(580px, 92vw)', height:'min(80vh, 720px)', margin:'0 auto', background:'rgba(4,4,15,0.97)',
       border:'1px solid rgba(79,110,247,0.4)', animation:'boot-in 0.3s ease-out both', display:'flex', flexDirection:'column', overflow:'hidden' }}>
 
-      {/* Progress */}
-      <div style={{ height:2, background:'rgba(79,110,247,0.1)' }}>
+      {/* Progress — interactive scrubber */}
+      <div
+        ref={scrubRef}
+        title={`${step + 1} / ${TOTAL}`}
+        style={{ height:10, background:'rgba(79,110,247,0.1)', position:'relative', cursor:'pointer', flexShrink:0 }}
+        onMouseDown={e => {
+          scrubToX(e.clientX);
+          const onMove = (ev: MouseEvent) => scrubToX(ev.clientX);
+          const onUp   = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+          window.addEventListener('mousemove', onMove);
+          window.addEventListener('mouseup', onUp);
+        }}
+      >
         <div style={{ height:'100%', width:`${((step+1)/TOTAL)*100}%`,
-          background:'linear-gradient(90deg,#4f6ef7,#4f9ef7)', transition:'width 0.25s ease-out' }} />
+          background:'linear-gradient(90deg,#4f6ef7,#4f9ef7)', transition:'width 0.15s ease-out' }} />
+        <div style={{
+          position:'absolute', top:'50%',
+          left:`${((step+1)/TOTAL)*100}%`,
+          transform:'translate(-50%,-50%)',
+          width:14, height:14,
+          background:'#4f9ef7', border:'2px solid #e0e0f0',
+          borderRadius:'50%', boxShadow:'0 0 8px #4f9ef780',
+          pointerEvents:'none', transition:'left 0.15s ease-out',
+        }} />
       </div>
 
       {/* Header */}
