@@ -271,15 +271,6 @@ export default function SimulationPage() {
     if (navTarget && Number.isFinite(navTarget.lat) && Number.isFinite(navTarget.lon)) {
       return { lat: Number(navTarget.lat), lon: Number(navTarget.lon) };
     }
-    if (!simId) return null;
-    try {
-      const raw = localStorage.getItem(`anatolia-sim-intro:${simId}`);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      if (Number.isFinite(parsed?.lat) && Number.isFinite(parsed?.lon)) {
-        return { lat: Number(parsed.lat), lon: Number(parsed.lon) };
-      }
-    } catch {}
     return null;
   });
 
@@ -368,11 +359,30 @@ export default function SimulationPage() {
   }, []);
 
   useEffect(() => {
+    if (!simId) return;
+    const navTarget = (location.state as any)?.introTarget;
+    const nextTarget = (navTarget && Number.isFinite(navTarget.lat) && Number.isFinite(navTarget.lon))
+      ? { lat: Number(navTarget.lat), lon: Number(navTarget.lon) }
+      : null;
+    setIntroTarget(nextTarget);
+  }, [simId, location.key]);
+
+  useEffect(() => {
     if (!simId || !accessToken) return;
     // Clear previous sim's live data, then load this sim's persisted history
     resetLiveState();
     setIndividuals([]);
     const headers = { Authorization: `Bearer ${accessToken}` };
+    let cancelled = false;
+
+    const loadPopulation = () => {
+      axios.get(`/api/simulations/${simId}/population?alive=true&limit=500`, { headers })
+        .then(r => {
+          if (!cancelled) setIndividuals(r.data);
+        })
+        .catch(() => {});
+    };
+
     axios.get(`/api/simulations/${simId}`, { headers })
       .then(r => { setCurrentSim(r.data); setSpeed(r.data.speed_multiplier ?? 1); })
       .catch(() => {})
@@ -381,35 +391,15 @@ export default function SimulationPage() {
     axios.get(`/api/simulations/${simId}/events?limit=100`, { headers })
       .then(r => setEvents(r.data)) // DB returns newest-first; store keeps same order
       .catch(() => {});
-    const interval = setInterval(() => {
-      axios.get(`/api/simulations/${simId}/population?alive=true&limit=500`, { headers })
-        .then(r => setIndividuals(r.data));
-    }, 8000);
-    return () => clearInterval(interval);
-  }, [simId, accessToken]);
 
-  useEffect(() => {
-    if (!simId) return;
-    const navTarget = (location.state as any)?.introTarget;
-    let nextTarget: { lat: number; lon: number } | null = null;
-    if (navTarget && Number.isFinite(navTarget.lat) && Number.isFinite(navTarget.lon)) {
-      nextTarget = { lat: Number(navTarget.lat), lon: Number(navTarget.lon) };
-    } else {
-      try {
-        const raw = localStorage.getItem(`anatolia-sim-intro:${simId}`);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Number.isFinite(parsed?.lat) && Number.isFinite(parsed?.lon)) {
-            nextTarget = { lat: Number(parsed.lat), lon: Number(parsed.lon) };
-          }
-        }
-      } catch {}
+    // Fetch immediately so population is visible on first paint, then keep it fresh.
+    loadPopulation();
+    const interval = setInterval(loadPopulation, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
     }
-    setIntroTarget(nextTarget);
-    if (nextTarget) {
-      try { localStorage.removeItem(`anatolia-sim-intro:${simId}`); } catch {}
-    }
-  }, [simId, location.key]);
+  }, [simId, accessToken]);
 
   async function toggleSim() {
     if (!currentSim) { alert('Simülasyon yüklenmedi, sayfayı yenileyin.'); return; }
