@@ -562,26 +562,27 @@ function buildGeoFor(individuals: any[], r: number, predicate: (i: any) => boole
   return g;
 }
 
-function DotGroup({ geo, color, spriteTex, onClick }: { geo: THREE.BufferGeometry; color: string; spriteTex: THREE.CanvasTexture; onClick: (e: any) => void }) {
-  // Imperative material — bypasses R3F reconciler entirely so it can never lose
-  // the map prop during notification-triggered re-renders.
-  const mat = useMemo(() => new THREE.PointsMaterial({
-    map: spriteTex,
-    color: new THREE.Color(color),
-    size: 0.07,
-    sizeAttenuation: true,
-    transparent: true,
+function DotGroup({ geo, color, onClick }: { geo: THREE.BufferGeometry; color: string; onClick: (e: any) => void }) {
+  // ShaderMaterial draws circles via SDF — no texture map to ever lose.
+  const mat = useMemo(() => new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: new THREE.Color(color) } },
+    vertexShader: `
+      void main() {
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = 0.07 * projectionMatrix[1][1] * 280.0 / -mvPosition.z;
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 uColor;
+      void main() {
+        if (length(gl_PointCoord - vec2(0.5)) > 0.5) discard;
+        gl_FragColor = vec4(uColor, 1.0);
+      }
+    `,
     depthWrite: false,
-    alphaTest: 0.3,
-  }), [color, spriteTex]);
-  useFrame(() => {
-    if (mat.map !== spriteTex) { mat.map = spriteTex; mat.needsUpdate = true; }
-  });
-  return (
-    <points geometry={geo} material={mat} onClick={onClick}>
-      {/* material is applied imperatively via useMemo above */}
-    </points>
-  );
+  }), [color]);
+  return <points geometry={geo} material={mat} onClick={onClick} />;
 }
 
 function PopulationDots({
@@ -593,9 +594,6 @@ function PopulationDots({
   groupRef: React.RefObject<THREE.Group | null>;
   onSelect?: (ind: any) => void;
 }) {
-  const { gl } = useThree();
-  const spriteTex = useMemo(() => { const t = makeSpriteTexture(); t.needsUpdate = true; return t; }, [gl]);
-
   const alive = individuals.filter(i => !i.is_dead && i.alive !== false);
   const founderGeo = useMemo(() => buildGeoFor(individuals, 2.025, i => i.is_founder), [individuals]);
   const maleGeo    = useMemo(() => buildGeoFor(individuals, 2.025, i => !i.is_founder && i.sex === 'male'), [individuals]);
@@ -625,9 +623,9 @@ function PopulationDots({
 
   return (
     <>
-      {hasFounders && <DotGroup geo={founderGeo} color="#fff176" spriteTex={spriteTex} onClick={handleClick} />}
-      {hasMales    && <DotGroup geo={maleGeo}    color="#90caff" spriteTex={spriteTex} onClick={handleClick} />}
-      {hasFemales  && <DotGroup geo={femaleGeo}  color="#ffaacc" spriteTex={spriteTex} onClick={handleClick} />}
+      {hasFounders && <DotGroup geo={founderGeo} color="#fff176" onClick={handleClick} />}
+      {hasMales    && <DotGroup geo={maleGeo}    color="#90caff" onClick={handleClick} />}
+      {hasFemales  && <DotGroup geo={femaleGeo}  color="#ffaacc" onClick={handleClick} />}
     </>
   );
 }
