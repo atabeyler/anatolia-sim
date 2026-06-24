@@ -549,11 +549,26 @@ const FOUNDER_COLOR = new THREE.Color('#fff176');
 const MALE_COLOR    = new THREE.Color('#90caff');
 const FEMALE_COLOR  = new THREE.Color('#ffaacc');
 
-// Module-level singleton — created once when the JS module is first imported,
-// guaranteeing the texture is ready before any component mounts.
-const DOT_SPRITE_TEX = makeSpriteTexture();
+const DOT_VERT = `
+  attribute vec3 color;
+  varying vec3 vColor;
+  void main() {
+    vColor = color;
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    gl_PointSize = clamp(5.0 * (2.5 / -mv.z), 2.0, 12.0);
+    gl_Position = projectionMatrix * mv;
+  }
+`;
+const DOT_FRAG = `
+  varying vec3 vColor;
+  void main() {
+    float d = length(gl_PointCoord - vec2(0.5));
+    if (d > 0.5) discard;
+    gl_FragColor = vec4(vColor, 1.0);
+  }
+`;
 
-function buildAllDots(individuals: any[], r: number): THREE.BufferGeometry {
+function buildAllDots(individuals: any[], r: number, singleColor?: THREE.Color): THREE.BufferGeometry {
   const alive = individuals.filter(i => !i.is_dead && i.alive !== false);
   if (alive.length === 0) {
     const g = new THREE.BufferGeometry();
@@ -567,7 +582,7 @@ function buildAllDots(individuals: any[], r: number): THREE.BufferGeometry {
     const lat = ((ind.y ?? 0) * Math.PI) / 180;
     const lon = ((ind.x ?? 0) * Math.PI) / 180;
     positions.push(r * Math.cos(lat) * Math.cos(lon), r * Math.sin(lat), -r * Math.cos(lat) * Math.sin(lon));
-    const c = ind.is_founder ? FOUNDER_COLOR : ind.sex === 'male' ? MALE_COLOR : FEMALE_COLOR;
+    const c = singleColor ?? (ind.is_founder ? FOUNDER_COLOR : ind.sex === 'male' ? MALE_COLOR : FEMALE_COLOR);
     colors.push(c.r, c.g, c.b);
   }
   const g = new THREE.BufferGeometry();
@@ -585,29 +600,7 @@ function PopulationDots({
   groupRef: React.RefObject<THREE.Group | null>;
   onSelect?: (ind: any) => void;
 }) {
-  const { founders, males, females } = useMemo(() => {
-    const founders: any[] = [];
-    const males: any[] = [];
-    const females: any[] = [];
-    for (const ind of individuals) {
-      if (!ind.parent_1_id && !ind.parent_2_id) founders.push(ind);
-      else if (ind.sex === 'male') males.push(ind);
-      else females.push(ind);
-    }
-    return { founders, males, females };
-  }, [individuals]);
-
-  const founderPositions = useMemo(() => founders.map((ind) => {
-    const lat = ((ind.y ?? 0) * Math.PI) / 180;
-    const lon = ((ind.x ?? 0) * Math.PI) / 180;
-    return [
-      2.025 * Math.cos(lat) * Math.cos(lon),
-      2.025 * Math.sin(lat),
-      -2.025 * Math.cos(lat) * Math.sin(lon),
-    ] as [number, number, number];
-  }), [founders]);
-  const maleGeo = useMemo(() => buildAllDots(males, 2.025), [males]);
-  const femaleGeo = useMemo(() => buildAllDots(females, 2.025), [females]);
+  const geo = useMemo(() => buildAllDots(individuals, 2.025), [individuals]);
 
   const handleClick = (e: import('@react-three/fiber').ThreeEvent<MouseEvent>) => {
     if (!onSelect || individuals.length === 0) return;
@@ -629,31 +622,9 @@ function PopulationDots({
   };
 
   return (
-    <>
-      {founderPositions.map((pos, idx) => {
-        const ind = founders[idx];
-        return (
-          <sprite
-            key={ind.id ?? `founder-${idx}`}
-            position={pos}
-            scale={[0.12, 0.12, 0.12]}
-            onClick={handleClick}
-          >
-            <spriteMaterial map={DOT_SPRITE_TEX} color="#fff176" transparent opacity={1.0} depthWrite={false} alphaTest={0.1} />
-          </sprite>
-        );
-      })}
-      {maleGeo && males.length > 0 && (
-        <points geometry={maleGeo} onClick={handleClick}>
-          <pointsMaterial alphaMap={DOT_SPRITE_TEX} size={0.07} color="#90caff" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.1} />
-        </points>
-      )}
-      {femaleGeo && females.length > 0 && (
-        <points geometry={femaleGeo} onClick={handleClick}>
-          <pointsMaterial alphaMap={DOT_SPRITE_TEX} size={0.07} color="#ffaacc" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.1} />
-        </points>
-      )}
-    </>
+    <points geometry={geo} onClick={handleClick}>
+      <shaderMaterial vertexShader={DOT_VERT} fragmentShader={DOT_FRAG} depthWrite={false} />
+    </points>
   );
 }
 
@@ -671,7 +642,18 @@ function PopulationTrails({ snapshots }: { snapshots: { x: number; y: number }[]
     <>
       {layers.map((layer, i) => (
         <points key={i} geometry={layer.geo}>
-          <pointsMaterial alphaMap={DOT_SPRITE_TEX} size={layer.size} color="#88aaee" sizeAttenuation transparent opacity={layer.opacity} depthWrite={false} alphaTest={0.01} />
+          <shaderMaterial
+            vertexShader={DOT_VERT}
+            fragmentShader={`
+              varying vec3 vColor;
+              void main() {
+                if (length(gl_PointCoord - vec2(0.5)) > 0.5) discard;
+                gl_FragColor = vec4(0.533, 0.667, 0.933, ${layer.opacity.toFixed(3)});
+              }
+            `}
+            depthWrite={false}
+            transparent
+          />
         </points>
       ))}
     </>
