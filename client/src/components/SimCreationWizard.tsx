@@ -690,31 +690,6 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
   }
 
   /* ── step content ────────────────────────────────────────────────────── */
-  function stepScrubberLabel(stepDef: StepDef): string {
-    switch (stepDef.type) {
-      case 'sim-info':
-        return t('SİM BİLGİLERİ', 'SIM INFO', 'SIM-INFOS', 'INFOS SIM', 'معلومات المحاكاة');
-      case 'identity':
-        return stepDef.f === 1
-          ? t('KURUCU 1 KİMLİK', 'FOUNDER 1 ID', 'GRÜNDER 1 ID', 'FONDATEUR 1 ID', 'هوية المؤسس 1')
-          : t('KURUCU 2 KİMLİK', 'FOUNDER 2 ID', 'GRÜNDER 2 ID', 'FONDATRICE 2 ID', 'هوية المؤسِّسة 2');
-      case 'physical':
-        return stepDef.f === 1
-          ? t('KURUCU 1 BEDEN', 'FOUNDER 1 BODY', 'GRÜNDER 1 KÖRPER', 'FONDATEUR 1 CORPS', 'جسد المؤسس 1')
-          : t('KURUCU 2 BEDEN', 'FOUNDER 2 BODY', 'GRÜNDER 2 KÖRPER', 'FONDATRICE 2 CORPS', 'جسد المؤسِّسة 2');
-      case 'appearance':
-        return stepDef.f === 1
-          ? t('KURUCU 1 GÖRÜNÜŞ', 'FOUNDER 1 LOOK', 'GRÜNDER 1 AUSSEHEN', 'FONDATEUR 1 APPARENCE', 'مظهر المؤسس 1')
-          : t('KURUCU 2 GÖRÜNÜŞ', 'FOUNDER 2 LOOK', 'GRÜNDER 2 AUSSEHEN', 'FONDATRICE 2 APPARENCE', 'مظهر المؤسِّسة 2');
-      case 'trait': {
-        const tr = ALL_TRAITS[stepDef.idx];
-        return lang === 'tr' ? tr.tr.toUpperCase() : tr.en.toUpperCase();
-      }
-      case 'summary':
-        return t('ÖZET', 'SUMMARY', 'SUMMARY', 'RÉSUMÉ', 'ملخص');
-    }
-  }
-
   function renderContent() {
 
     /* Sim info */
@@ -905,50 +880,54 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
             appearance: none;
             -webkit-appearance: none;
             width: 100%;
-            height: 30px;
+            height: 34px;
             background: transparent;
             margin: 0;
             cursor: ew-resize;
           }
-          .wizard-scrubber:focus { outline: none; }
+          .wizard-scrubber:focus {
+            outline: none;
+          }
           .wizard-scrubber::-webkit-slider-runnable-track {
-            height: 16px;
+            height: 18px;
             background: transparent;
             border: none;
           }
           .wizard-scrubber::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 28px;
-            height: 28px;
-            margin-top: -6px;
-            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            margin-top: -7px;
+            border-radius: 10px;
             border: 1px solid rgba(165, 182, 255, 0.92);
-            background: linear-gradient(135deg, #4ecb71 0%, #4f9ef7 100%);
+            background:
+              linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0)) top,
+              linear-gradient(135deg, #4ecb71 0%, #4f9ef7 100%);
             box-shadow:
               0 0 0 5px rgba(78,203,113,0.12),
-              0 0 14px rgba(79,158,247,0.3),
+              0 0 18px rgba(79,158,247,0.35),
               inset 0 1px 0 rgba(255,255,255,0.22);
             cursor: grab;
           }
           .wizard-scrubber:active::-webkit-slider-thumb {
             cursor: grabbing;
-            transform: scale(1.02);
+            transform: scale(1.04);
           }
           .wizard-scrubber::-moz-range-track {
-            height: 16px;
+            height: 18px;
             background: transparent;
             border: none;
           }
           .wizard-scrubber::-moz-range-thumb {
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
             border: 1px solid rgba(165, 182, 255, 0.92);
             background: linear-gradient(135deg, #4ecb71 0%, #4f9ef7 100%);
             box-shadow:
               0 0 0 5px rgba(78,203,113,0.12),
-              0 0 14px rgba(79,158,247,0.3),
+              0 0 18px rgba(79,158,247,0.35),
               inset 0 1px 0 rgba(255,255,255,0.22);
             cursor: grab;
           }
@@ -961,25 +940,25 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
           background:'linear-gradient(180deg, rgba(10,10,34,0.94), rgba(7,7,26,0.88))',
           border:'1px solid rgba(79,110,247,0.22)',
           clipPath:CLIP,
-          padding:'10px 12px 10px',
+          padding:'10px 12px 12px',
         }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:6 }}>
-            <div style={{ fontSize:12, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.18em' }}>
-              {t('HIZLI GE???', 'WIZARD SCRUBBER', 'SCHNELLLAUF', 'SCRUBBER', '???? ??????')}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:8 }}>
+            <div style={{ fontSize:13, color:'#4f9ef7', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.18em' }}>
+              {t('HIZLI GEÇİŞ', 'WIZARD SCRUBBER', 'SCHNELLLAUF', 'SCRUBBER', 'شريط التنقل')}
             </div>
-            <div style={{ fontSize:12, color:'#a0b4ff', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.08em' }}>
-              {step + 1} / {TOTAL} ? {stepScrubberLabel(meta)}
+            <div style={{ fontSize:13, color:'#a0b4ff', fontFamily:'Share Tech Mono,monospace', letterSpacing:'0.08em' }}>
+              {step + 1} / {TOTAL} · {stepTitle()}
             </div>
           </div>
-          <div style={{ position:'relative', height:30, display:'flex', alignItems:'center' }}>
+          <div style={{ position:'relative', height:42, display:'flex', alignItems:'center' }}>
             <div style={{
               position:'absolute',
               left:12,
               right:12,
               top:'50%',
-              height:6,
+              height:8,
               transform:'translateY(-50%)',
-              background:'rgba(79,110,247,0.1)',
+              background:'rgba(79,110,247,0.12)',
               borderRadius:999,
               overflow:'hidden',
             }} />
@@ -989,14 +968,31 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
                 left:12,
                 right:12,
                 top:'50%',
-                height:6,
+                height:8,
                 transform:`translateY(-50%) scaleX(${TOTAL === 1 ? 1 : step / (TOTAL - 1)})`,
                 transformOrigin:'left center',
-                background:'linear-gradient(90deg, rgba(78,203,113,0.35), rgba(79,158,247,0.8))',
+                background:'linear-gradient(90deg, rgba(78,203,113,0.32), rgba(79,158,247,0.72))',
                 borderRadius:999,
-                boxShadow:'0 0 8px rgba(79,158,247,0.16)',
+                boxShadow:'0 0 10px rgba(79,158,247,0.18)',
               }}
             />
+            {Array.from({ length: TOTAL }, (_, i) => (
+              <div
+                key={i}
+                style={{
+                  position:'absolute',
+                  left:`${TOTAL === 1 ? 0 : (i / (TOTAL - 1)) * 100}%`,
+                  top:'50%',
+                  width: i === step ? 16 : 8,
+                  height: i === step ? 16 : 8,
+                  transform:'translate(-50%, -50%)',
+                  borderRadius:999,
+                  background: i === step ? '#eaffef' : 'rgba(160,180,255,0.55)',
+                  boxShadow: i === step ? '0 0 0 6px rgba(78,203,113,0.14)' : 'none',
+                  pointerEvents:'none',
+                }}
+              />
+            ))}
             <input
               type="range"
               min={0}
@@ -1004,14 +1000,27 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
               step={1}
               value={step}
               onChange={(e) => jumpToStep(Number(e.target.value))}
-              aria-label={t('Ad?mlar aras?nda gez', 'Move through wizard steps', 'Zwischen Schritten springen', 'Naviguer entre les ?tapes', '?????? ??? ???????')}
-              aria-valuetext={stepScrubberLabel(meta)}
+              aria-label={t('Adımlar arasında gez', 'Move through wizard steps', 'Zwischen Schritten springen', 'Naviguer entre les étapes', 'التنقل بين الخطوات')}
               className="wizard-scrubber"
               style={{ position:'absolute', inset:0 }}
             />
           </div>
+          <div style={{
+            display:'flex',
+            justifyContent:'space-between',
+            marginTop:8,
+            color:'#90a4ff',
+            fontFamily:'Share Tech Mono,monospace',
+            fontSize:11,
+            letterSpacing:'0.08em',
+            opacity:0.9,
+          }}>
+            <span>{STEPS[0]?.type}</span>
+            <span>{STEPS[Math.max(0, TOTAL - 1)]?.type}</span>
+          </div>
         </div>
       </div>
+
       {/* Header */}
       <div style={{ padding:'12px 20px', borderBottom:'1px solid rgba(79,110,247,0.2)',
         display:'flex', alignItems:'center', justifyContent:'space-between' }}>
