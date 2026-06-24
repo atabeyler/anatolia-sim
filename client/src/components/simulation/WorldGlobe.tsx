@@ -29,6 +29,15 @@ function makeSpriteTexture(): THREE.CanvasTexture {
   return tex;
 }
 
+let sharedSpriteTexture: THREE.CanvasTexture | null = null;
+function getSharedSpriteTexture(): THREE.CanvasTexture {
+  if (!sharedSpriteTexture) {
+    sharedSpriteTexture = makeSpriteTexture();
+    sharedSpriteTexture.needsUpdate = true;
+  }
+  return sharedSpriteTexture;
+}
+
 /** Jupiter: gradient bands + Great Red Spot */
 function makeJupiterTex(): THREE.CanvasTexture {
   const W = 1024, H = 512;
@@ -574,11 +583,8 @@ function DotGroup({ geo, color, spriteTex, onClick }: { geo: THREE.BufferGeometr
     depthWrite: false,
     alphaTest: 0.3,
   }), [color, spriteTex]);
-  useFrame(() => {
-    if (mat.map !== spriteTex) { mat.map = spriteTex; mat.needsUpdate = true; }
-  });
   return (
-    <points geometry={geo} material={mat} onClick={onClick}>
+    <points geometry={geo} material={mat} onClick={onClick} dispose={null}>
       {/* material is applied imperatively via useMemo above */}
     </points>
   );
@@ -593,8 +599,7 @@ function PopulationDots({
   groupRef: React.RefObject<THREE.Group | null>;
   onSelect?: (ind: any) => void;
 }) {
-  const { gl } = useThree();
-  const spriteTex = useMemo(() => { const t = makeSpriteTexture(); t.needsUpdate = true; return t; }, [gl]);
+  const spriteTex = useMemo(() => getSharedSpriteTexture(), []);
 
   const alive = individuals.filter(i => !i.is_dead && i.alive !== false);
   const founderGeo = useMemo(() => buildGeoFor(individuals, 2.025, i => i.is_founder), [individuals]);
@@ -633,8 +638,7 @@ function PopulationDots({
 }
 
 function PopulationTrails({ snapshots }: { snapshots: { x: number; y: number }[][] }) {
-  const { gl } = useThree();
-  const spriteTex = useMemo(() => { const t = makeSpriteTexture(); t.needsUpdate = true; return t; }, [gl]);
+  const spriteTex = useMemo(() => getSharedSpriteTexture(), []);
   const layers = useMemo(() => snapshots.map((snapshot, idx) => {
     const age = snapshots.length - 1 - idx;
     return {
