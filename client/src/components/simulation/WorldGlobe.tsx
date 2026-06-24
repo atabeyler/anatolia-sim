@@ -594,12 +594,16 @@ function PopulationDots({
       <points geometry={femaleGeo} onClick={handleClick}>
         <pointsMaterial map={spriteTex} size={0.07} color="#ffaacc" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
       </points>
-      <points geometry={founderMaleGeo} onClick={handleClick}>
-        <pointsMaterial map={spriteTex} size={0.07} color="#fff176" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
-      </points>
-      <points geometry={founderFemaleGeo} onClick={handleClick}>
-        <pointsMaterial map={spriteTex} size={0.07} color="#fff176" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
-      </points>
+      {founderMales.length > 0 && (
+        <points geometry={founderMaleGeo} onClick={handleClick}>
+          <pointsMaterial map={spriteTex} size={0.07} color="#fff176" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
+        </points>
+      )}
+      {founderFemales.length > 0 && (
+        <points geometry={founderFemaleGeo} onClick={handleClick}>
+          <pointsMaterial map={spriteTex} size={0.07} color="#fff176" sizeAttenuation transparent opacity={1.0} depthWrite={false} alphaTest={0.2} />
+        </points>
+      )}
     </>
   );
 }
