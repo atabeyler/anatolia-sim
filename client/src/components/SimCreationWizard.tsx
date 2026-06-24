@@ -669,7 +669,7 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
   /* step title */
   function stepTitle(): string {
     switch (meta.type) {
-      case 'sim-info':   return t('SİMÜLASYON BİLGİLERİ', 'SIMULATION INFO', 'SIMULATIONSINFOS', 'INFOS SIMULATION', 'معلومات المحاكاة');
+      case 'sim-info':   return t('S?M B?LG?LER?', 'SIM INFO', 'SIM-INFOS', 'INFOS SIM', '??????? ????????');
       case 'identity':   return t('KİMLİK BİLGİLERİ', 'IDENTITY', 'IDENTITÄT', 'IDENTITÉ', 'الهوية');
       case 'physical':   return t('FİZİKSEL ÖLÇÜLER', 'PHYSICAL', 'KÖRPERMASSE', 'PHYSIQUE', 'الجسد');
       case 'appearance': return t('DIŞ GÖRÜNÜŞ', 'APPEARANCE', 'AUSSEHEN', 'APPARENCE', 'المظهر');
@@ -695,11 +695,11 @@ export default function SimCreationWizard({ lang, loading, onSubmit, onExit }: P
     /* Sim info */
     if (meta.type === 'sim-info') return (
       <>
-        <HudInput label={t('SİMÜLASYON ADI', 'SIMULATION NAME', 'SIMULATIONSNAME', 'NOM DE SIMULATION', 'اسم المحاكاة')} value={simForm.name}
+        <HudInput label={t('S?M ADI', 'SIM NAME', 'SIM NAME', 'SIM NAME', '??? ????????')} value={simForm.name}
           onChange={(e: any) => setSimForm(p => ({ ...p, name: e.target.value }))} />
-        <HudInput label={t('ENLEM (°N)', 'LATITUDE (°N)', 'BREITENGRAD (°N)', 'LATITUDE (°N)', 'خط العرض (°N)')} type="number" step="0.0001" value={simForm.latitude}
+        <HudInput label={t('ENLEM (?N)', 'LATITUDE (?N)', 'BREITENGRAD (?N)', 'LATITUDE (?N)', '?? ????? (?N)')} type="number" step="0.0001" value={simForm.latitude}
           onChange={(e: any) => setSimForm(p => ({ ...p, latitude: e.target.value }))} />
-        <HudInput label={t('BOYLAM (°E)', 'LONGITUDE (°E)', 'LÄNGENGRAD (°E)', 'LONGITUDE (°E)', 'خط الطول (°E)')} type="number" step="0.0001" value={simForm.longitude}
+        <HudInput label={t('BOYLAM (?E)', 'LONGITUDE (?E)', 'L?NGENGRAD (?E)', 'LONGITUDE (?E)', '?? ????? (?E)')} type="number" step="0.0001" value={simForm.longitude}
           onChange={(e: any) => setSimForm(p => ({ ...p, longitude: e.target.value }))} />
       </>
     );
