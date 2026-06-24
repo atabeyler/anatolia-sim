@@ -558,35 +558,26 @@ const FOUNDER_COLOR = new THREE.Color('#fff176');
 const MALE_COLOR    = new THREE.Color('#90caff');
 const FEMALE_COLOR  = new THREE.Color('#ffaacc');
 
-function buildGeoFor(individuals: any[], r: number, predicate: (i: any) => boolean): THREE.BufferGeometry {
-  const pts = individuals.filter(i => !i.is_dead && i.alive !== false && predicate(i));
-  const pos: number[] = [];
-  for (const ind of pts) {
-    const lat = ((ind.y ?? 0) * Math.PI) / 180;
-    const lon = ((ind.x ?? 0) * Math.PI) / 180;
-    pos.push(r * Math.cos(lat) * Math.cos(lon), r * Math.sin(lat), -r * Math.cos(lat) * Math.sin(lon));
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos.length ? pos : [0, 0, 0], 3));
-  return g;
+function markerPosition(ind: { x?: number; y?: number }, r: number): [number, number, number] {
+  const lat = ((ind.y ?? 0) * Math.PI) / 180;
+  const lon = ((ind.x ?? 0) * Math.PI) / 180;
+  return [r * Math.cos(lat) * Math.cos(lon), r * Math.sin(lat), -r * Math.cos(lat) * Math.sin(lon)];
 }
 
-function DotGroup({ geo, color, spriteTex, onClick }: { geo: THREE.BufferGeometry; color: string; spriteTex: THREE.CanvasTexture; onClick: (e: any) => void }) {
-  // Imperative material — bypasses R3F reconciler entirely so it can never lose
-  // the map prop during notification-triggered re-renders.
-  const mat = useMemo(() => new THREE.PointsMaterial({
-    map: spriteTex,
-    color: new THREE.Color(color),
-    size: 0.07,
-    sizeAttenuation: true,
-    transparent: true,
-    depthWrite: false,
-    alphaTest: 0.3,
-  }), [color, spriteTex]);
+function MarkerDot({
+  position,
+  color,
+  radius,
+}: {
+  position: [number, number, number];
+  color: string;
+  radius: number;
+}) {
   return (
-    <points geometry={geo} material={mat} onClick={onClick} dispose={null}>
-      {/* material is applied imperatively via useMemo above */}
-    </points>
+    <mesh position={position} renderOrder={10}>
+      <sphereGeometry args={[radius, 10, 10]} />
+      <meshBasicMaterial color={color} toneMapped={false} />
+    </mesh>
   );
 }
 
@@ -599,12 +590,10 @@ function PopulationDots({
   groupRef: React.RefObject<THREE.Group | null>;
   onSelect?: (ind: any) => void;
 }) {
-  const spriteTex = useMemo(() => getSharedSpriteTexture(), []);
-
   const alive = individuals.filter(i => !i.is_dead && i.alive !== false);
-  const founderGeo = useMemo(() => buildGeoFor(individuals, 2.025, i => i.is_founder), [individuals]);
-  const maleGeo    = useMemo(() => buildGeoFor(individuals, 2.025, i => !i.is_founder && i.sex === 'male'), [individuals]);
-  const femaleGeo  = useMemo(() => buildGeoFor(individuals, 2.025, i => !i.is_founder && i.sex !== 'male'), [individuals]);
+  const founders = useMemo(() => alive.filter(i => i.is_founder).map(i => ({ ind: i, pos: markerPosition(i, 2.025) })), [alive]);
+  const males    = useMemo(() => alive.filter(i => !i.is_founder && i.sex === 'male').map(i => ({ ind: i, pos: markerPosition(i, 2.025) })), [alive]);
+  const females  = useMemo(() => alive.filter(i => !i.is_founder && i.sex !== 'male').map(i => ({ ind: i, pos: markerPosition(i, 2.025) })), [alive]);
   const hasFounders = alive.some(i => i.is_founder);
   const hasMales    = alive.some(i => !i.is_founder && i.sex === 'male');
   const hasFemales  = alive.some(i => !i.is_founder && i.sex !== 'male');
@@ -630,9 +619,15 @@ function PopulationDots({
 
   return (
     <>
-      {hasFounders && <DotGroup geo={founderGeo} color="#fff176" spriteTex={spriteTex} onClick={handleClick} />}
-      {hasMales    && <DotGroup geo={maleGeo}    color="#90caff" spriteTex={spriteTex} onClick={handleClick} />}
-      {hasFemales  && <DotGroup geo={femaleGeo}  color="#ffaacc" spriteTex={spriteTex} onClick={handleClick} />}
+      {hasFounders && founders.map(({ ind, pos }) => (
+        <MarkerDot key={ind.id ?? `founder-${pos.join(',')}`} position={pos} color="#fff176" radius={0.045} />
+      ))}
+      {hasMales && males.map(({ ind, pos }) => (
+        <MarkerDot key={ind.id ?? `male-${pos.join(',')}`} position={pos} color="#90caff" radius={0.038} />
+      ))}
+      {hasFemales && females.map(({ ind, pos }) => (
+        <MarkerDot key={ind.id ?? `female-${pos.join(',')}`} position={pos} color="#ffaacc" radius={0.038} />
+      ))}
     </>
   );
 }
