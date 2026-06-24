@@ -550,10 +550,10 @@ const MALE_COLOR    = new THREE.Color('#90caff');
 const FEMALE_COLOR  = new THREE.Color('#ffaacc');
 
 const DOT_VERT = `
-  attribute vec3 color;
+  attribute vec3 aColor;
   varying vec3 vColor;
   void main() {
-    vColor = color;
+    vColor = aColor;
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     gl_PointSize = clamp(5.0 * (2.5 / -mv.z), 2.0, 12.0);
     gl_Position = projectionMatrix * mv;
@@ -573,7 +573,7 @@ function buildAllDots(individuals: any[], r: number, singleColor?: THREE.Color):
   if (alive.length === 0) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0], 3));
-    g.setAttribute('color',    new THREE.Float32BufferAttribute([0, 0, 0], 3));
+    g.setAttribute('aColor',   new THREE.Float32BufferAttribute([0, 0, 0], 3));
     return g;
   }
   const positions: number[] = [];
@@ -587,7 +587,7 @@ function buildAllDots(individuals: any[], r: number, singleColor?: THREE.Color):
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  g.setAttribute('color',    new THREE.Float32BufferAttribute(colors, 3));
+  g.setAttribute('aColor',   new THREE.Float32BufferAttribute(colors, 3));
   return g;
 }
 
