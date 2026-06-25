@@ -597,6 +597,11 @@ export function translateEventDescription(desc: string, lang: LangCode, event?: 
       const settlementTr = settlement === 'The settlement' ? 'Yerleşim' : settlement;
       return `${settlementTr}, ${STRUCTURE_TR[sKey] ?? sKey} inşaatını tamamladı`;
     })
+    .replace(/^(.+) completed construction of (.+)$/, (_: string, settlement: string, structure: string) => {
+      const sKey = structure.replace(/-/g, ' ').replace(/_/g, ' ').trim();
+      const settlementTr = settlement === 'Settlement' || settlement === 'The settlement' ? 'Yerleşim' : settlement;
+      return `${settlementTr}, ${STRUCTURE_TR[sKey] ?? sKey} inşaatını tamamladı`;
+    })
     .replace(/^(.+) is overcrowded \((\d+) of (\d+) capacity\)$/, (_: string, settlement: string, cur: string, cap: string) => {
       const settlementTr = settlement === 'The settlement' ? 'Yerleşim' : settlement;
       return `${settlementTr} doldu taştı — ${cur} birey, kapasite: ${cap}`;
@@ -669,6 +674,11 @@ export function translateEventDescription(desc: string, lang: LangCode, event?: 
       const [, settlement, structure] = settlementMatch;
       return `${settlement} baute ein ${structure}`;
     }
+    const settlementMatch2 = desc.match(/^(.+) completed construction of (.+)$/);
+    if (settlementMatch2) {
+      const [, settlement, structure] = settlementMatch2;
+      return `${settlement} vollendete den Bau von ${structure}`;
+    }
     if (ritualMatch) {
       const key = ritualMatch[1].replace(/_/g, ' ').trim();
       return `Ein ${BELIEF_TYPE_DE[key] ?? BELIEF_TYPE_DE[ritualMatch[1]] ?? key}-Ritual entstand in der Gruppe`;
@@ -719,6 +729,11 @@ export function translateEventDescription(desc: string, lang: LangCode, event?: 
       const [, settlement, structure] = settlementMatch;
       return `${settlement} a construit un ${structure}`;
     }
+    const settlementMatch2Fr = desc.match(/^(.+) completed construction of (.+)$/);
+    if (settlementMatch2Fr) {
+      const [, settlement, structure] = settlementMatch2Fr;
+      return `${settlement} a achevé la construction de ${structure}`;
+    }
     if (ritualMatch) {
       const key = ritualMatch[1].replace(/_/g, ' ').trim();
       return `Un rituel ${BELIEF_TYPE_FR[key] ?? BELIEF_TYPE_FR[ritualMatch[1]] ?? key} est apparu dans le groupe`;
@@ -764,6 +779,11 @@ export function translateEventDescription(desc: string, lang: LangCode, event?: 
     if (settlementMatch) {
       const [, settlement, structure] = settlementMatch;
       return `أكمل ${settlement} بناء ${structure}`;
+    }
+    const settlementMatch2Ar = desc.match(/^(.+) completed construction of (.+)$/);
+    if (settlementMatch2Ar) {
+      const [, settlement, structure] = settlementMatch2Ar;
+      return `أتمّ ${settlement} بناء ${structure}`;
     }
     if (ritualMatch) {
       const key = ritualMatch[1].replace(/_/g, ' ').trim();

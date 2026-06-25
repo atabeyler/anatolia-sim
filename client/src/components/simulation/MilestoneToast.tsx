@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSimStore } from '../../store/simStore';
-import { text, translateEventDescription, CAUSE_LABELS, type LangCode } from '../../utils/i18n';
+import { text, translateEventDescription, translateStageName, CAUSE_LABELS, type LangCode } from '../../utils/i18n';
 
 interface Toast {
   id: string;
@@ -192,7 +192,8 @@ export default function MilestoneToast() {
         }, ev.description);
       }
       if (ev.event_type === 'language') {
-        const stageName = ev.data?.stage_name ?? `stage ${ev.data?.stage}`;
+        const rawStage = ev.data?.stage_name ?? `stage ${ev.data?.stage}`;
+        const stageName = translateStageName(rawStage, L);
         fireOnce('first_language', {
           icon: '◆', color: '#00d4ff',
           message: t(`İlk dil evrimi: ${stageName}`, `First language: ${stageName}`, `Erste Sprache: ${stageName}`, `Première langue: ${stageName}`, `أول لغة: ${stageName}`),
