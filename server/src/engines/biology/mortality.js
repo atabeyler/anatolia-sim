@@ -131,24 +131,18 @@ function determineCause(individual, currentDay, environment) {
   const toughness = ((phenotype?.endurance ?? 0.5) + (phenotype?.physical_strength ?? 0.5)) / 2;
   const traumaWeight = Math.max(0.05, 0.30 - (toughness - 0.5) * 0.20);
 
-  const hasInfection = (individual.infections?.length ?? 0) > 0;
+  // Severe infections (base_mortality >= 0.05) already returned INFECTION above.
+  // Any remaining infections are mild (respiratory_common 0.02, fungal_skin 0.01).
+  // Mild infections do NOT override the primary cause from rollDeath;
+  // their direct kill path is handled separately by the microbiome engine.
 
-  // Under-5: infection only if actually infected; otherwise trauma/genetic
-  if (age < 5) {
-    if (hasInfection) return DEATH_CAUSES.INFECTION;
-    return Math.random() < 0.55 ? DEATH_CAUSES.TRAUMA : DEATH_CAUSES.GENETIC;
-  }
-  // 5-15: infection only if infected
-  if (age < 15) {
-    if (hasInfection && Math.random() < 0.5) return DEATH_CAUSES.INFECTION;
-    return Math.random() < 0.65 ? DEATH_CAUSES.TRAUMA : DEATH_CAUSES.GENETIC;
-  }
+  if (age < 5)  return Math.random() < 0.55 ? DEATH_CAUSES.TRAUMA : DEATH_CAUSES.GENETIC;
+  if (age < 15) return Math.random() < 0.65 ? DEATH_CAUSES.TRAUMA : DEATH_CAUSES.GENETIC;
 
-  // Founders are constitutionally stronger — lower infection and trauma weights
+  // Founders are constitutionally stronger — lower trauma weights
   const founderFactor = isFounder ? 0.55 : 1.0;
   const adjustedTrauma = traumaWeight * founderFactor;
-  // Infection only enters the probability if the individual actually has an active infection
-  const infectionWeight = hasInfection ? (isFounder ? 0.28 : 0.45) : 0;
+  const infectionWeight = 0; // mild-only infections do not label death as infection
 
   if (age < 45) {
     const r = Math.random();

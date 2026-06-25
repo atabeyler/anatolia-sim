@@ -16,7 +16,7 @@ import { processCultureTick } from './culture/cultureEngine.js';
 import { processArtTick, applyArtEffects } from './art/artEngine.js';
 import { processArchitectureTick, createSettlement, checkSettlementOvercrowding } from './architecture/architectureEngine.js';
 import { processLawTick } from './law/lawEngine.js';
-import { processMicrobiomeTick, spreadInfection, updateGutMicrobiome, computeHealthStats } from './microbiome/microbiomeEngine.js';
+import { processMicrobiomeTick, spreadInfection, updateGutMicrobiome, computeHealthStats, PATHOGEN_TYPES } from './microbiome/microbiomeEngine.js';
 import { initializePsychology, updateMentalState, processBonding, computePopulationPsychStats } from './psychology/psychologyEngine.js';
 import { initializeEpigenome, updateEpigenome } from './epigenetics/epigeneticsEngine.js';
 import { processAstronomyTick, getAstronomyBonus } from './astronomy/astronomyEngine.js';
@@ -1244,11 +1244,16 @@ export class SimulationEngine {
       health.hp = Math.max(0, health.hp - (isFounder ? 0.001 : 0.003));
     }
 
-    // Infection burden — founders have stronger constitutions; 40% less HP drain
-    const infectionCount = individual.infections?.length ?? 0;
-    if (infectionCount > 0) {
-      const infectionDrain = isFounder ? 0.003 : 0.005;
-      health.hp = Math.max(0, health.hp - infectionDrain * infectionCount);
+    // Infection burden — drain scaled by pathogen severity so mild infections
+    // (respiratory_common 0.02, fungal_skin 0.01) don't cascade like severe ones.
+    // Baseline drain 0.005/day at severity 0.10; mild infections drain ~20% of that.
+    if (individual.infections?.length > 0) {
+      const drainBase = isFounder ? 0.003 : 0.005;
+      const totalDrain = individual.infections.reduce((sum, inf) => {
+        const severity = PATHOGEN_TYPES[inf.pathogen_id]?.base_mortality ?? 0.05;
+        return sum + drainBase * Math.min(1, severity / 0.10);
+      }, 0);
+      health.hp = Math.max(0, health.hp - totalDrain);
     }
 
     // Psychological state affects physical health — founders handle stress better
