@@ -1,14 +1,15 @@
 // Microbiome & Disease Engine
+// min_day: earliest simulation day this pathogen can first appear (staggers introduction)
 export const PATHOGEN_TYPES={
-  intestinal_parasite:{transmission:'fecal_oral',base_mortality:0.05,duration_days:30,immunity_duration:365*3,density_threshold:5},
-  cholera_like:       {transmission:'water',     base_mortality:0.3, duration_days:7, immunity_duration:365*5,density_threshold:20},
-  respiratory_common: {transmission:'airborne',  base_mortality:0.02,duration_days:14,immunity_duration:180,  density_threshold:4},
-  pneumonia_like:     {transmission:'airborne',  base_mortality:0.15,duration_days:21,immunity_duration:365*2,density_threshold:8},
-  plague_like:        {transmission:'airborne',  base_mortality:0.4, duration_days:10,immunity_duration:365*10,density_threshold:30},
-  malaria_like:       {transmission:'vector',    base_mortality:0.1, duration_days:14,immunity_duration:365,  density_threshold:3,biomes:['tropical_rainforest','tropical_savanna','coastal']},
-  fever_tick:         {transmission:'vector',    base_mortality:0.08,duration_days:10,immunity_duration:365*2,density_threshold:3,biomes:['grassland','temperate_forest']},
-  wound_infection:    {transmission:'contact',   base_mortality:0.12,duration_days:14,immunity_duration:60,  density_threshold:2},
-  fungal_skin:        {transmission:'contact',   base_mortality:0.01,duration_days:30,immunity_duration:180, density_threshold:4},
+  wound_infection:    {transmission:'contact',   base_mortality:0.12,duration_days:14,immunity_duration:60,   density_threshold:2, min_day:180},
+  intestinal_parasite:{transmission:'fecal_oral',base_mortality:0.05,duration_days:30,immunity_duration:365*3,density_threshold:5, min_day:365},
+  respiratory_common: {transmission:'airborne',  base_mortality:0.02,duration_days:14,immunity_duration:180,  density_threshold:4, min_day:365},
+  fungal_skin:        {transmission:'contact',   base_mortality:0.01,duration_days:30,immunity_duration:180,  density_threshold:4, min_day:500},
+  fever_tick:         {transmission:'vector',    base_mortality:0.08,duration_days:10,immunity_duration:365*2,density_threshold:3, min_day:730, biomes:['grassland','temperate_forest']},
+  malaria_like:       {transmission:'vector',    base_mortality:0.1, duration_days:14,immunity_duration:365,  density_threshold:3, min_day:730, biomes:['tropical_rainforest','tropical_savanna','coastal']},
+  pneumonia_like:     {transmission:'airborne',  base_mortality:0.15,duration_days:21,immunity_duration:365*2,density_threshold:8, min_day:1000},
+  cholera_like:       {transmission:'water',     base_mortality:0.3, duration_days:7, immunity_duration:365*5,density_threshold:20,min_day:1500},
+  plague_like:        {transmission:'airborne',  base_mortality:0.4, duration_days:10,immunity_duration:365*10,density_threshold:30,min_day:2000},
 };
 
 export function processMicrobiomeTick(population,worldState,simDay){
@@ -21,6 +22,7 @@ export function processMicrobiomeTick(population,worldState,simDay){
   if(simDay>=180&&density>=8){
     for(const[pathId,path]of Object.entries(PATHOGEN_TYPES)){
       if(density<path.density_threshold)continue;
+      if(simDay<(path.min_day??180))continue;
       if(path.biomes&&!path.biomes.includes(worldState.biome))continue;
       const sm=(worldState.season==='summer'&&path.transmission==='vector')?2.0:(worldState.season==='winter'&&path.transmission==='airborne')?1.5:1.0;
       let newCases=0;
