@@ -110,15 +110,6 @@ export default function MilestoneToast() {
     }
   }, [stats?.population]);
 
-  // First death
-  useEffect(() => {
-    if (!stats || !simIdRef.current || fired.current.has('first_death')) return;
-    if ((stats.deaths ?? 0) > 0) {
-      fired.current.add('first_death');
-      push({ icon: '†', color: '#e05a5a', message: t('İlk ölüm gerçekleşti', 'First death occurred', 'Erster Todesfall', 'Premier décès', 'أول وفاة') });
-    }
-  }, [stats?.deaths]);
-
   // First discovery beyond defaults (foraging + stone_tools = 2)
   useEffect(() => {
     if (!stats || !simIdRef.current || fired.current.has('first_tech')) return;
@@ -161,20 +152,18 @@ export default function MilestoneToast() {
         }
       }
       if (ev.event_type === 'birth' && !ev.data?.is_twin) {
-        const key = `birth_${ev.data?.individual_id}`;
-        if (!fired.current.has(key)) {
-          fired.current.add(key);
+        if (!fired.current.has('first_birth')) {
+          fired.current.add('first_birth');
           const name = ev.data?.name ?? '?';
-          push({ icon: '✦', color: '#ff8ab0', message: t(`Doğum: ${name}`, `Born: ${name}`) }, ev.description);
+          push({ icon: '✦', color: '#ff8ab0', message: t(`İlk doğum: ${name}`, `First birth: ${name}`) }, ev.description);
         }
       }
       if (ev.event_type === 'death') {
-        const key = `death_${ev.data?.individual_id}_${ev.sim_day}`;
-        if (!fired.current.has(key)) {
-          fired.current.add(key);
+        if (!fired.current.has('first_death')) {
+          fired.current.add('first_death');
           const name = ev.data?.name ?? '?';
           const cause = ev.data?.cause ?? '';
-          push({ icon: '†', color: '#e05a5a', message: t(`Ölüm: ${name}`, `Died: ${name}`), sub: cause ? t(`Sebep: ${cause}`, `Cause: ${cause}`) : undefined }, ev.description);
+          push({ icon: '†', color: '#e05a5a', message: t(`İlk ölüm: ${name}`, `First death: ${name}`), sub: cause ? t(`Sebep: ${cause}`, `Cause: ${cause}`) : undefined }, ev.description);
         }
       }
       if (ev.event_type === 'technology') {
