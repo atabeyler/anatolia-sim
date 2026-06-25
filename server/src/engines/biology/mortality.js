@@ -45,10 +45,12 @@ export function computeDailyDeathRisk(individual, currentDay, environment) {
     baseRisk *= 0.4;
   }
 
+  const isFounder = individual.is_founder === true;
   if (age >= (phenotype?.max_lifespan ?? 90)) baseRisk += 0.03;
-  if ((health?.hp ?? 1) < 0.2)                baseRisk *= 3;
-  if ((health?.calories ?? 1) < 0.1)          baseRisk *= 5;
-  if ((health?.hydration ?? 1) < 0.1)         baseRisk *= 10;
+  // Founders are hardier — extreme-condition multipliers are dampened
+  if ((health?.hp ?? 1) < 0.2)       baseRisk *= isFounder ? 1.8 : 3;
+  if ((health?.calories ?? 1) < 0.1) baseRisk *= isFounder ? 2.5 : 5;
+  if ((health?.hydration ?? 1) < 0.1) baseRisk *= isFounder ? 5   : 10;
 
   // ── Wizard phenotype fields → actual mortality impact ───────────────────────
   // immune_strength: reduces overall disease-related risk
@@ -77,8 +79,10 @@ export function computeDailyDeathRisk(individual, currentDay, environment) {
     baseRisk += 0.05 * (1 - waterSkill);
   }
   if (environment) {
-    baseRisk += (environment.predator_risk  ?? 0) * 0.0002;
-    baseRisk += (environment.disease_pressure ?? 0) * 0.0003;
+    // Founders are more alert and experienced — reduced exposure to predators and disease
+    const envMult = isFounder ? 0.4 : 1.0;
+    baseRisk += (environment.predator_risk   ?? 0) * 0.0002 * envMult;
+    baseRisk += (environment.disease_pressure ?? 0) * 0.0003 * envMult;
   }
   if ((individual.inbreeding_coeff ?? 0) > 0.50) baseRisk *= 1.25;
 
@@ -98,15 +102,17 @@ export function rollDeath(individual, currentDay, environment) {
 function determineCause(individual, currentDay, environment) {
   const { health, phenotype } = individual;
   const age = getAge(individual, currentDay);
+  const isFounder = individual.is_founder === true;
   if (individual._inWater)                                          return DEATH_CAUSES.DROWNING;
   if ((health?.hydration ?? 1) < 0.1)                              return DEATH_CAUSES.DEHYDRATION;
   if ((health?.calories  ?? 1) < 0.05)                             return DEATH_CAUSES.STARVATION;
   if (individual.infections?.length > 0)                            return DEATH_CAUSES.INFECTION;
   if (age >= (phenotype?.max_lifespan ?? 90) - 5)                  return DEATH_CAUSES.OLD_AGE;
-  if ((environment?.predator_risk ?? 0) > 0.5 && Math.random() < 0.3) return DEATH_CAUSES.PREDATOR;
+  // Founders are more alert and capable of evading predators
+  const predatorThreshold = isFounder ? 0.15 : 0.3;
+  if ((environment?.predator_risk ?? 0) > 0.5 && Math.random() < predatorThreshold) return DEATH_CAUSES.PREDATOR;
 
   // Founders never die of genetic disease — user designed their genome intentionally
-  const isFounder = individual.is_founder === true;
 
   // Genetic disease probability scales down with health_resilience + immune_strength
   const geneticResistance = ((phenotype?.health_resilience ?? 0.5) + (phenotype?.immune_strength ?? 0.5)) / 2;

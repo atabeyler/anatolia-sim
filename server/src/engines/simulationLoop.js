@@ -1234,23 +1234,26 @@ export class SimulationEngine {
     const ageYears = individual.age / 365;
 
     // Satiation-based health update
+    const isFounder = individual.is_founder === true;
     const satiationScore = individual.satiation ?? 0.5;
     if (satiationScore > 0.6) {
-      health.hp = Math.min(1, health.hp + 0.001);
+      // Founders recover HP faster due to superior constitution
+      health.hp = Math.min(1, health.hp + (isFounder ? 0.002 : 0.001));
     } else if (satiationScore < 0.2) {
-      health.hp = Math.max(0, health.hp - 0.003);
+      // Founders are more resilient to starvation
+      health.hp = Math.max(0, health.hp - (isFounder ? 0.001 : 0.003));
     }
 
     // Infection burden — founders have stronger constitutions; 40% less HP drain
     const infectionCount = individual.infections?.length ?? 0;
     if (infectionCount > 0) {
-      const infectionDrain = individual.is_founder ? 0.003 : 0.005;
+      const infectionDrain = isFounder ? 0.003 : 0.005;
       health.hp = Math.max(0, health.hp - infectionDrain * infectionCount);
     }
 
-    // Psychological state affects physical health
+    // Psychological state affects physical health — founders handle stress better
     const stressLoad = individual.psychology?.stress_level ?? 0.3;
-    health.hp = Math.max(0, health.hp - stressLoad * 0.0005);
+    health.hp = Math.max(0, health.hp - stressLoad * (isFounder ? 0.00025 : 0.0005));
 
     // Age-related decline
     if (ageYears > 50) health.hp = Math.max(0, health.hp - (ageYears - 50) * 0.00005);
@@ -1267,24 +1270,26 @@ export class SimulationEngine {
       // Heat tolerance (0–1): high metabolism + endurance helps
       const heatTolerance = metabolism * 0.3 + endurance * 0.4 + 0.3;
 
+      // Founders take 50% less weather damage across all conditions
+      const weatherMult = individual.is_founder ? 0.5 : 1.0;
       if (this.worldState.weather_cold_risk) {
         const temp = this.worldState.temperature ?? 10;
         // Damage scales with how far below the individual's cold threshold the temp drops
         const coldThreshold = coldTolerance * 15 - 5; // roughly -5°C to +10°C range
         if (temp < coldThreshold) {
           const coldStress = Math.min(1, (coldThreshold - temp) / 30);
-          health.hp = Math.max(0, health.hp + hpDelta * coldStress * (1.2 - coldTolerance));
+          health.hp = Math.max(0, health.hp + hpDelta * coldStress * (1.2 - coldTolerance) * weatherMult);
         }
       } else if (this.worldState.weather_heat_risk) {
         const temp = this.worldState.temperature ?? 25;
         const heatThreshold = 28 + heatTolerance * 12; // roughly 28–40°C range
         if (temp > heatThreshold) {
           const heatStress = Math.min(1, (temp - heatThreshold) / 20);
-          health.hp = Math.max(0, health.hp + hpDelta * heatStress * (1.2 - heatTolerance));
+          health.hp = Math.max(0, health.hp + hpDelta * heatStress * (1.2 - heatTolerance) * weatherMult);
         }
       } else {
         // Non-temperature weather (storm, heavy_rain, drought) — resilience reduces impact
-        health.hp = Math.max(0, health.hp + hpDelta * (1.0 - resilience * 0.5));
+        health.hp = Math.max(0, health.hp + hpDelta * (1.0 - resilience * 0.5) * weatherMult);
       }
     }
 
