@@ -16,28 +16,29 @@ export function processMicrobiomeTick(population,worldState,simDay){
   const alive=population.filter(i=>!i.is_dead);
   const density=alive.length;
   for(const ind of alive)dedupeInfections(ind);
-  // Grace period: no outbreaks before day 180 or below 8 people
-  if(simDay<180||density<8)return events;
-  for(const[pathId,path]of Object.entries(PATHOGEN_TYPES)){
-    if(density<path.density_threshold)continue;
-    if(path.biomes&&!path.biomes.includes(worldState.biome))continue;
-    const sm=(worldState.season==='summer'&&path.transmission==='vector')?2.0:(worldState.season==='winter'&&path.transmission==='airborne')?1.5:1.0;
-    // Each susceptible individual independently rolls their own environmental exposure.
-    // Who gets sick is determined by their personal vulnerability, not by us selecting them.
-    let newCases=0;
-    for(const ind of alive){
-      if(ind.infections?.some(i=>i.pathogen_id===pathId))continue;
-      if(ind.immunities?.[pathId]>simDay)continue;
-      if(Math.random()<envExposureProb(ind,path,sm,density)){
-        if(!ind.infections)ind.infections=[];
-        ind.infections.push({pathogen_id:pathId,days_remaining:path.duration_days,infected_day:simDay});
-        newCases++;
+  // Grace period: no NEW outbreaks before day 180 or below 8 people
+  // Existing infections are always processed (cleared + mortality) regardless of density.
+  if(simDay>=180&&density>=8){
+    for(const[pathId,path]of Object.entries(PATHOGEN_TYPES)){
+      if(density<path.density_threshold)continue;
+      if(path.biomes&&!path.biomes.includes(worldState.biome))continue;
+      const sm=(worldState.season==='summer'&&path.transmission==='vector')?2.0:(worldState.season==='winter'&&path.transmission==='airborne')?1.5:1.0;
+      let newCases=0;
+      for(const ind of alive){
+        if(ind.infections?.some(i=>i.pathogen_id===pathId))continue;
+        if(ind.immunities?.[pathId]>simDay)continue;
+        if(Math.random()<envExposureProb(ind,path,sm,density)){
+          if(!ind.infections)ind.infections=[];
+          ind.infections.push({pathogen_id:pathId,days_remaining:path.duration_days,infected_day:simDay});
+          newCases++;
+        }
+      }
+      if(newCases>0){
+        events.push({type:'epidemic_outbreak',pathogen_id:pathId,initial_cases:newCases,day:simDay,importance:path.base_mortality>0.2?'high':'medium',description:`A ${pathId.replace(/_/g,' ')} outbreak begins`});
       }
     }
-    if(newCases>0){
-      events.push({type:'epidemic_outbreak',pathogen_id:pathId,initial_cases:newCases,day:simDay,importance:path.base_mortality>0.2?'high':'medium',description:`A ${pathId.replace(/_/g,' ')} outbreak begins`});
-    }
   }
+  // Always process existing infections: decrement duration, apply mortality, clear when done.
   for(const ind of population){
     if(!ind.infections||ind.is_dead)continue;
     for(const inf of[...ind.infections]){
@@ -47,7 +48,6 @@ export function processMicrobiomeTick(population,worldState,simDay){
         if(inf.days_remaining<=0||ind.is_dead)ind.infections=ind.infections.filter(i=>i!==inf);
         continue;
       }
-      // Mortality reduced by immune strength and current health
       const totalImmunity=Math.min((ind.phenotype?.immune_strength??0.5)*0.7+(ind.health?.microbiome_immunity??0),0.95);
       const dailyMortality=path.base_mortality*(1-totalImmunity)*(1-(ind.health?.hp??0.5)*0.3)/path.duration_days;
       if(Math.random()<dailyMortality){
