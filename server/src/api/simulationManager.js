@@ -253,9 +253,10 @@ class SimulationManager {
 
   // Bulk UPSERT — one query per BATCH_SIZE individuals instead of N sequential queries
   async persistPopulation(simId, engine) {
-    // Only persist living individuals — dead ones are already written via onDeath
-    const all = [...engine.population.values()].filter(i => !i.is_dead);
-    if (all.length === 0) return;
+    const allIndividuals = [...engine.population.values()];
+    const all = allIndividuals.filter(i => !i.is_dead);
+    const dead = allIndividuals.filter(i => i.is_dead);
+    if (all.length === 0 && dead.length === 0) return;
 
     for (let start = 0; start < all.length; start += BATCH_SIZE) {
       const chunk = all.slice(start, start + BATCH_SIZE);
@@ -312,6 +313,23 @@ class SimulationManager {
       );
       // Yield to event loop between batches so health checks can respond
       await new Promise(resolve => setImmediate(resolve));
+    }
+
+    // Reconcile dead individuals — guarantee alive=false in DB even if onDeath write failed.
+    // onDeath is fire-and-forget; this catch-up runs at every checkpoint.
+    if (dead.length > 0) {
+      for (let start = 0; start < dead.length; start += BATCH_SIZE) {
+        const chunk = dead.slice(start, start + BATCH_SIZE);
+        const values = chunk.flatMap(d => [d.id, d.death_day ?? null, d.death_cause ?? null]);
+        const rows = chunk.map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`).join(', ');
+        await query(
+          `UPDATE individuals SET alive = false, is_dead = true, death_day = v.dd::integer, death_cause = v.dc
+           FROM (VALUES ${rows}) AS v(id, dd, dc)
+           WHERE individuals.id = v.id::uuid AND alive = true`,
+          values
+        );
+        await new Promise(resolve => setImmediate(resolve));
+      }
     }
   }
 
