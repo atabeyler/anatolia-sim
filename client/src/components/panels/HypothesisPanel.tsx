@@ -85,7 +85,7 @@ export default function HypothesisPanel() {
               { label: text(lang as LangCode, { en: 'QoL Index', tr: 'YYK Endeksi', de: 'Lebensqualität', fr: 'Indice Q.V.', ar: 'مؤشر جودة الحياة' }), value: ((stats.qol_index ?? 0) * 100).toFixed(1) + '%' },
             ].map(({ label, value }) => (
               <div key={label} className="bg-sim-bg rounded p-1.5">
-                <div className="text-sim-muted" style={{ fontSize: 10 }}>{label}</div>
+                <div className="text-sim-muted" style={{ fontSize: 12 }}>{label}</div>
                 <div className="text-sim-text font-medium text-sm">{value}</div>
               </div>
             ))}

@@ -52,19 +52,22 @@ export default function ArtPanel() {
         <div>
           <div className="text-pink-400 font-bold text-lg">{totalForms}</div>
           <div className="text-sim-muted text-sm">
-            {text(lang as LangCode, { en: 'Art Forms Discovered', tr: 'Keşfedilen Sanat Formları' })}
+            {text(lang as LangCode, { en: 'Art Forms Discovered', tr: 'Keşfedilen Sanat Formları', de: 'Kunstformen entdeckt', fr: 'Formes artistiques découvertes', ar: 'أشكال فنية مكتشفة' })}
           </div>
         </div>
       </div>
 
       <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {text(lang as LangCode, { en: 'Emergence Requirements', tr: 'Ortaya Çıkış Gereksinimleri' })}
+          {text(lang as LangCode, { en: 'Emergence Requirements', tr: 'Ortaya Çıkış Gereksinimleri', de: 'Entstehungsvoraussetzungen', fr: 'Conditions d\'émergence', ar: 'متطلبات الظهور' })}
         </h4>
         <p className="text-sim-muted text-sm italic">
           {text(lang as LangCode, {
             en: 'Art requires food surplus + artistic_sense gene × intelligence > threshold. Higher forms need cognitive prerequisites.',
             tr: 'Sanat; gıda fazlası + artistik_duyarlılık geni × zekâ > eşik gerektirir. Yüksek formlar bilişsel önkoşullar ister.',
+            de: 'Kunst erfordert Nahrungsüberschuss + Kunstsinn-Gen × Intelligenz > Schwelle. Höhere Formen benötigen kognitive Voraussetzungen.',
+            fr: 'L\'art requiert surplus alimentaire + gène sens_artistique × intelligence > seuil. Les formes supérieures nécessitent des prérequis cognitifs.',
+            ar: 'الفن يتطلب فائض غذائي + جين الحس الفني × الذكاء > العتبة. الأشكال الأعلى تحتاج متطلبات إدراكية.',
           })}
         </p>
       </div>
@@ -90,7 +93,7 @@ export default function ArtPanel() {
                     key={item.en}
                     className={`text-sm px-2 py-1 rounded ${isDiscovered ? 'text-sim-text bg-pink-500/10' : 'text-sim-muted opacity-40'}`}
                   >
-                    {isDiscovered ? '✓' : '○'} {text(lang as LangCode, { en: item.en, tr: item.tr })}
+                    {isDiscovered ? '✓' : '○'} {text(lang as LangCode, { en: item.en, tr: item.tr, de: item.de, fr: item.fr, ar: item.ar })}
                   </div>
                 );
               })}
@@ -101,11 +104,11 @@ export default function ArtPanel() {
 
       <div>
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
-          {text(lang as LangCode, { en: 'Art Events', tr: 'Sanat Olayları' })}
+          {text(lang as LangCode, { en: 'Art Events', tr: 'Sanat Olayları', de: 'Kunstereignisse', fr: 'Événements artistiques', ar: 'أحداث فنية' })}
         </h4>
         {artEvents.length === 0 ? (
           <p className="text-sim-muted italic text-sm">
-            {text(lang as LangCode, { en: 'No art events yet.', tr: 'Henüz sanat olayı yok.' })}
+            {text(lang as LangCode, { en: 'No art events yet.', tr: 'Henüz sanat olayı yok.', de: 'Noch keine Kunstereignisse.', fr: 'Pas encore d\'événements artistiques.', ar: 'لا أحداث فنية بعد.' })}
           </p>
         ) : (
           <div className="space-y-1 max-h-36 overflow-y-auto">

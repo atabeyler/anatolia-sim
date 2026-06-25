@@ -129,7 +129,7 @@ const ROLE_LABELS: Record<string, { tr: string; en: string; de: string; fr: stri
 
 function SectionHeader({ label }: { label: string }) {
   return (
-    <div className="font-share-tech tracking-widest mb-2" style={{ fontSize: 11, color: '#6a8878', letterSpacing: '0.12em', borderBottom: '1px solid rgba(0,232,135,0.1)', paddingBottom: 2 }}>
+    <div className="font-share-tech tracking-widest mb-2" style={{ fontSize: 12, color: '#6a8878', letterSpacing: '0.12em', borderBottom: '1px solid rgba(0,232,135,0.1)', paddingBottom: 2 }}>
       {label}
     </div>
   );
@@ -140,8 +140,8 @@ function TraitRow({ label, value, color, max = 1 }: { label: string; value: numb
   return (
     <div>
       <div className="flex justify-between mb-0.5">
-        <span className="font-share-tech" style={{ fontSize: 11, color: '#8898c8' }}>{label}</span>
-        <span className="font-share-tech" style={{ fontSize: 11, color }}>{pct}%</span>
+        <span className="font-share-tech" style={{ fontSize: 12, color: '#8898c8' }}>{label}</span>
+        <span className="font-share-tech" style={{ fontSize: 12, color }}>{pct}%</span>
       </div>
       <div style={{ height: 3, background: 'rgba(79,110,247,0.1)', borderRadius: 2, overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 2 }} />
@@ -153,8 +153,8 @@ function TraitRow({ label, value, color, max = 1 }: { label: string; value: numb
 function StatRow({ label, value, color = '#a0b4ff' }: { label: string; value: React.ReactNode; color?: string }) {
   return (
     <div className="flex justify-between">
-      <span className="font-share-tech" style={{ fontSize: 11, color: '#8898c8' }}>{label}</span>
-      <span className="font-share-tech" style={{ fontSize: 11, color }}>{value}</span>
+      <span className="font-share-tech" style={{ fontSize: 12, color: '#8898c8' }}>{label}</span>
+      <span className="font-share-tech" style={{ fontSize: 12, color }}>{value}</span>
     </div>
   );
 }
@@ -255,15 +255,15 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
           <div className="flex flex-col flex-1">
             <div className="flex items-center gap-2">
               <span className="font-orbitron font-bold tracking-wider" style={{ color: isDead ? '#a05050' : (ind.sex === 'male' ? '#6090ff' : '#ff8ab0'), fontSize: 14 }}>{name}</span>
-              {isFounder && <span className="font-share-tech" style={{ fontSize: 11, color: '#d4a838', border: '1px solid rgba(212,168,56,0.4)', padding: '1px 5px' }}>★ {tr('KURUCU', 'FOUNDER')}</span>}
-              {isDead && <span className="font-share-tech" style={{ fontSize: 11, color: '#a05050' }}>† {tr('HAYATINI KAYBETTİ', 'DECEASED')}</span>}
+              {isFounder && <span className="font-share-tech" style={{ fontSize: 12, color: '#d4a838', border: '1px solid rgba(212,168,56,0.4)', padding: '1px 5px' }}>★ {tr('KURUCU', 'FOUNDER')}</span>}
+              {isDead && <span className="font-share-tech" style={{ fontSize: 12, color: '#a05050' }}>† {tr('HAYATINI KAYBETTİ', 'DECEASED')}</span>}
             </div>
             <div className="flex items-center flex-wrap gap-1.5 mt-0.5">
-              {!isDead && <><span className="font-share-tech" style={{ fontSize: 11, color: stage.color }}>{tr(stage.label, stage.label)}</span><span className="font-share-tech text-sim-muted" style={{ fontSize: 11 }}>·</span></>}
-              <span className="font-share-tech text-sim-muted" style={{ fontSize: 11 }}>{age.toFixed(1)} {tr('yaş', 'yr')}</span>
-              <span className="font-share-tech text-sim-muted" style={{ fontSize: 11 }}>·</span>
-              <span className="font-share-tech" style={{ fontSize: 11, color: ind.sex === 'male' ? '#6090ff' : '#ff8ab0' }}>{ind.sex === 'male' ? tr('Erkek', 'Male') : tr('Kadın', 'Female')}</span>
-              {ind.group_role && <><span className="font-share-tech text-sim-muted" style={{ fontSize: 11 }}>·</span><span className="font-share-tech" style={{ fontSize: 11, color: '#d4a838' }}>{ind.group_role && ROLE_LABELS[ind.group_role] ? text(lang as LangCode, ROLE_LABELS[ind.group_role]) : ind.group_role}</span></>}
+              {!isDead && <><span className="font-share-tech" style={{ fontSize: 12, color: stage.color }}>{tr(stage.label, stage.label)}</span><span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>·</span></>}
+              <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>{age.toFixed(1)} {tr('yaş', 'yr')}</span>
+              <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>·</span>
+              <span className="font-share-tech" style={{ fontSize: 12, color: ind.sex === 'male' ? '#6090ff' : '#ff8ab0' }}>{ind.sex === 'male' ? tr('Erkek', 'Male') : tr('Kadın', 'Female')}</span>
+              {ind.group_role && <><span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>·</span><span className="font-share-tech" style={{ fontSize: 12, color: '#d4a838' }}>{ind.group_role && ROLE_LABELS[ind.group_role] ? text(lang as LangCode, ROLE_LABELS[ind.group_role]) : ind.group_role}</span></>}
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -274,7 +274,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
                 background: 'transparent',
                 border: '1px solid rgba(200,180,255,0.3)',
                 color: '#c8b4ff', cursor: 'pointer', padding: '2px 6px',
-                fontSize: 11, lineHeight: 1, fontFamily: 'Share Tech Mono, monospace', borderRadius: 2,
+                fontSize: 12, lineHeight: 1, fontFamily: 'Share Tech Mono, monospace', borderRadius: 2,
               }}>
               {text(lang as LangCode, { en: '💭 VOICE', tr: '💭 İÇ SES', de: '💭 STIMME', fr: '💭 VOIX', ar: '💭 الصوت' })}
             </button>
@@ -285,7 +285,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
                 background: 'transparent',
                 border: '1px solid rgba(160,200,176,0.3)',
                 color: '#a0c8b0', cursor: 'pointer', padding: '2px 6px',
-                fontSize: 11, lineHeight: 1, fontFamily: 'Share Tech Mono, monospace', borderRadius: 2,
+                fontSize: 12, lineHeight: 1, fontFamily: 'Share Tech Mono, monospace', borderRadius: 2,
               }}>
               {text(lang as LangCode, { en: '🌿 TREE', tr: '🌿 SOY', de: '🌿 BAUM', fr: '🌿 ARBRE', ar: '🌿 الشجرة' })}
             </button>
@@ -296,7 +296,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
                 background: watchedIndividualId === ind.id ? 'rgba(0,212,255,0.15)' : 'transparent',
                 border: `1px solid ${watchedIndividualId === ind.id ? 'rgba(0,212,255,0.6)' : 'rgba(160,200,176,0.3)'}`,
                 color: watchedIndividualId === ind.id ? '#00d4ff' : '#a0c8b0',
-                cursor: 'pointer', padding: '2px 6px', fontSize: 11, lineHeight: 1,
+                cursor: 'pointer', padding: '2px 6px', fontSize: 12, lineHeight: 1,
                 fontFamily: 'Share Tech Mono, monospace', borderRadius: 2,
               }}>
               {watchedIndividualId === ind.id ? text(lang as LangCode, { en: '👁 WATCHING', tr: '👁 TAKİPTE', de: '👁 VERFOLGT', fr: '👁 EN SURVEILLANCE', ar: '👁 قيد المتابعة' }) : text(lang as LangCode, { en: 'WATCH', tr: 'TAKİP ET', de: 'VERFOLGEN', fr: 'SUIVRE', ar: 'تابع' })}
@@ -313,23 +313,23 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             <SectionHeader label={tr('GÖRÜNÜM', 'APPEARANCE')} />
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="font-share-tech" style={{ fontSize: 11, color: '#8898c8' }}>{tr('Göz Rengi', 'Eye Color')}</span>
+                <span className="font-share-tech" style={{ fontSize: 12, color: '#8898c8' }}>{tr('Göz Rengi', 'Eye Color')}</span>
                 <div className="flex items-center gap-1.5">
                   <div style={{ width: 12, height: 12, borderRadius: '50%', background: eyeInfo.dot, border: '1px solid rgba(255,255,255,0.2)' }} />
-                  <span className="font-share-tech" style={{ fontSize: 11, color: '#c8d8e8' }}>{text(lang as LangCode, { tr: eyeInfo.labelTr, en: eyeInfo.labelEn, de: eyeInfo.labelDe, fr: eyeInfo.labelFr, ar: eyeInfo.labelAr })}</span>
+                  <span className="font-share-tech" style={{ fontSize: 12, color: '#c8d8e8' }}>{text(lang as LangCode, { tr: eyeInfo.labelTr, en: eyeInfo.labelEn, de: eyeInfo.labelDe, fr: eyeInfo.labelFr, ar: eyeInfo.labelAr })}</span>
                 </div>
               </div>
               <div className="flex justify-between items-center">
-                <span className="font-share-tech" style={{ fontSize: 11, color: '#8898c8' }}>{tr('Saç Rengi', 'Hair Color')}</span>
+                <span className="font-share-tech" style={{ fontSize: 12, color: '#8898c8' }}>{tr('Saç Rengi', 'Hair Color')}</span>
                 <div className="flex items-center gap-1.5">
                   <div style={{ width: 12, height: 12, borderRadius: '50%', background: hairInfo.dot, border: '1px solid rgba(255,255,255,0.2)' }} />
-                  <span className="font-share-tech" style={{ fontSize: 11, color: '#c8d8e8' }}>{text(lang as LangCode, { tr: hairInfo.labelTr, en: hairInfo.labelEn, de: hairInfo.labelDe, fr: hairInfo.labelFr, ar: hairInfo.labelAr })}</span>
+                  <span className="font-share-tech" style={{ fontSize: 12, color: '#c8d8e8' }}>{text(lang as LangCode, { tr: hairInfo.labelTr, en: hairInfo.labelEn, de: hairInfo.labelDe, fr: hairInfo.labelFr, ar: hairInfo.labelAr })}</span>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between mb-0.5">
-                  <span className="font-share-tech" style={{ fontSize: 11, color: '#8898c8' }}>{tr('Ten Tonu', 'Skin Tone')}</span>
-                  <span className="font-share-tech" style={{ fontSize: 11, color: '#c8a880' }}>{skinPct}%</span>
+                  <span className="font-share-tech" style={{ fontSize: 12, color: '#8898c8' }}>{tr('Ten Tonu', 'Skin Tone')}</span>
+                  <span className="font-share-tech" style={{ fontSize: 12, color: '#c8a880' }}>{skinPct}%</span>
                 </div>
                 <div style={{ height: 6, borderRadius: 3, overflow: 'hidden', background: 'linear-gradient(to right, #f5deb3, #8b4513)' }}>
                   <div style={{ width: `${skinPct}%`, height: '100%', background: 'transparent', borderRight: '2px solid rgba(255,255,255,0.8)' }} />
@@ -433,10 +433,10 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             <div>
               <SectionHeader label={tr('SOSYAL', 'SOCIAL')} />
               <div className="flex flex-wrap gap-1.5 mb-1.5">
-                {soc.has_mate && <span className="font-share-tech px-1.5 py-0.5" style={{ fontSize: 11, color: '#ff8ab0', border: '1px solid rgba(255,138,176,0.3)', background: 'rgba(255,138,176,0.08)' }}>{tr('Çift', 'Paired')}</span>}
-                {(soc.children_ids?.length > 0) && <span className="font-share-tech px-1.5 py-0.5" style={{ fontSize: 11, color: '#4ecb71', border: '1px solid rgba(78,203,113,0.3)', background: 'rgba(78,203,113,0.08)' }}>{soc.children_ids.length} {tr('Çocuk', 'Child.')}</span>}
-                {soc.group_id && <span className="font-share-tech px-1.5 py-0.5" style={{ fontSize: 11, color: '#4f6ef7', border: '1px solid rgba(79,110,247,0.3)', background: 'rgba(79,110,247,0.08)' }}>{tr('Grup', 'Group')}</span>}
-                {!soc.has_mate && !soc.group_id && <span className="font-share-tech" style={{ fontSize: 11, color: '#6a8878' }}>{tr('Yalnız', 'Alone')}</span>}
+                {soc.has_mate && <span className="font-share-tech px-1.5 py-0.5" style={{ fontSize: 12, color: '#ff8ab0', border: '1px solid rgba(255,138,176,0.3)', background: 'rgba(255,138,176,0.08)' }}>{tr('Çift', 'Paired')}</span>}
+                {(soc.children_ids?.length > 0) && <span className="font-share-tech px-1.5 py-0.5" style={{ fontSize: 12, color: '#4ecb71', border: '1px solid rgba(78,203,113,0.3)', background: 'rgba(78,203,113,0.08)' }}>{soc.children_ids.length} {tr('Çocuk', 'Child.')}</span>}
+                {soc.group_id && <span className="font-share-tech px-1.5 py-0.5" style={{ fontSize: 12, color: '#4f6ef7', border: '1px solid rgba(79,110,247,0.3)', background: 'rgba(79,110,247,0.08)' }}>{tr('Grup', 'Group')}</span>}
+                {!soc.has_mate && !soc.group_id && <span className="font-share-tech" style={{ fontSize: 12, color: '#6a8878' }}>{tr('Yalnız', 'Alone')}</span>}
               </div>
               {inbreedingPct > 0 && (
                 <StatRow label={tr('Akraba Evliliği', 'Inbreeding')} value={`${inbreedingPct}%`} color={inbreedingPct > 25 ? '#e05a5a' : '#d4a838'} />
@@ -449,7 +449,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             <SectionHeader label={tr('SOYAĞACI', 'FAMILY TREE')} />
 
             {isFounder && (
-              <div className="font-share-tech px-2 py-1 mb-3" style={{ fontSize: 11, color: '#d4a838', border: '1px solid rgba(212,168,56,0.3)', background: 'rgba(212,168,56,0.06)' }}>
+              <div className="font-share-tech px-2 py-1 mb-3" style={{ fontSize: 12, color: '#d4a838', border: '1px solid rgba(212,168,56,0.3)', background: 'rgba(212,168,56,0.06)' }}>
                 ★ {tr('Kurucu Birey — Medeniyetin Atası', 'Founding Individual — Ancestor of Civilization')}
               </div>
             )}
@@ -474,14 +474,14 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             {siblings.length > 0 && (
               <FamilySection label={tr(`KARDEŞLER (${siblings.length})`, `SIBLINGS (${siblings.length})`)} indent={2}>
                 {siblings.slice(0, 6).map(s => <PersonRow key={s.id} obj={s} lang={lang} />)}
-                {siblings.length > 6 && <div className="font-share-tech text-sim-muted" style={{ fontSize: 11, paddingLeft: 10 }}>+{siblings.length - 6} {tr('daha','more')}</div>}
+                {siblings.length > 6 && <div className="font-share-tech text-sim-muted" style={{ fontSize: 12, paddingLeft: 10 }}>+{siblings.length - 6} {tr('daha','more')}</div>}
               </FamilySection>
             )}
 
             <div className="flex items-center gap-2 my-1 px-1" style={{ borderLeft: '2px solid rgba(212,168,56,0.6)', marginLeft: 2 }}>
               <span style={{ fontSize: 12, color: '#d4a838' }}>★</span>
               <span className="font-orbitron font-bold" style={{ fontSize: 12, color: ind.sex === 'male' ? '#8ab0ff' : '#ffaac8' }}>{name}</span>
-              <span className="font-share-tech text-sim-muted" style={{ fontSize: 11 }}>
+              <span className="font-share-tech text-sim-muted" style={{ fontSize: 12 }}>
                 {isDead ? `† ${tr('ölü','dec.')}` : `${age.toFixed(0)} ${tr('yaş','yr')}`}
               </span>
             </div>
@@ -489,19 +489,19 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
             {children.length > 0 && (
               <FamilySection label={tr(`ÇOCUKLAR (${children.length})`, `CHILDREN (${children.length})`)} indent={1}>
                 {children.slice(0, 8).map(c => <PersonRow key={c.id} obj={c} lang={lang} />)}
-                {children.length > 8 && <div className="font-share-tech text-sim-muted" style={{ fontSize: 11, paddingLeft: 10 }}>+{children.length - 8} {tr('daha','more')}</div>}
+                {children.length > 8 && <div className="font-share-tech text-sim-muted" style={{ fontSize: 12, paddingLeft: 10 }}>+{children.length - 8} {tr('daha','more')}</div>}
               </FamilySection>
             )}
 
             {grandchildren.length > 0 && (
               <FamilySection label={tr(`TORUNLAR (${grandchildren.length})`, `GRANDCHILDREN (${grandchildren.length})`)} indent={2}>
                 {grandchildren.slice(0, 6).map(({ obj: gc, parentName }, idx) => <PersonRow key={idx} obj={gc} tag={parentName} lang={lang} />)}
-                {grandchildren.length > 6 && <div className="font-share-tech text-sim-muted" style={{ fontSize: 11, paddingLeft: 10 }}>+{grandchildren.length - 6} {tr('daha','more')}</div>}
+                {grandchildren.length > 6 && <div className="font-share-tech text-sim-muted" style={{ fontSize: 12, paddingLeft: 10 }}>+{grandchildren.length - 6} {tr('daha','more')}</div>}
               </FamilySection>
             )}
 
             {isFounder && children.length === 0 && (
-              <div className="font-share-tech text-sim-muted mt-2" style={{ fontSize: 11 }}>
+              <div className="font-share-tech text-sim-muted mt-2" style={{ fontSize: 12 }}>
                 {tr('Henüz çocuk yok.', 'No children yet.')}
               </div>
             )}
@@ -511,7 +511,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
           {(liveJournalEvents.length > 0 || archivedJournal.length > 0) && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span className="font-share-tech tracking-widest" style={{ fontSize: 11, color: '#6a8878', letterSpacing: '0.12em' }}>
+                <span className="font-share-tech tracking-widest" style={{ fontSize: 12, color: '#6a8878', letterSpacing: '0.12em' }}>
                   {tr('HAYAT HİKÂYESİ', 'LIFE STORY')}
                 </span>
                 {archivedJournal.length > 0 && (
@@ -521,7 +521,7 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
                       background: 'transparent',
                       border: '1px solid rgba(0,212,255,0.3)',
                       color: '#00d4ff',
-                      cursor: 'pointer', padding: '1px 7px', fontSize: 10,
+                      cursor: 'pointer', padding: '1px 7px', fontSize: 12,
                       fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.05em',
                     }}>
                     {tr('ARŞİV', 'ARCHIVE')} ({archivedJournal.length})
@@ -532,11 +532,11 @@ function IndividualDetail({ ind, allIndividuals, onClose }: { ind: any; allIndiv
               <div className="space-y-1">
                 {liveJournalEvents.map((ev, i) => (
                   <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'baseline' }}>
-                    <span style={{ fontSize: 11, color: '#6a8878', flexShrink: 0, fontFamily: 'Share Tech Mono, monospace' }}>
+                    <span style={{ fontSize: 12, color: '#6a8878', flexShrink: 0, fontFamily: 'Share Tech Mono, monospace' }}>
                       Y{ev.sim_year}G{ev.sim_day}
                     </span>
-                    <span style={{ fontSize: 10, flexShrink: 0 }}>{TYPE_ICON[ev.event_type] ?? '·'}</span>
-                    <span style={{ fontSize: 11, color: '#a0b4ff', lineHeight: 1.4, fontFamily: 'Share Tech Mono, monospace' }}>
+                    <span style={{ fontSize: 12, flexShrink: 0 }}>{TYPE_ICON[ev.event_type] ?? '·'}</span>
+                    <span style={{ fontSize: 12, color: '#a0b4ff', lineHeight: 1.4, fontFamily: 'Share Tech Mono, monospace' }}>
                       {(() => { const d = translateEventDescription(ev.description ?? '', lang as LangCode, ev); return d.length > 70 ? d.slice(0, 70) + '…' : d; })()}
                     </span>
                   </div>
@@ -782,11 +782,11 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
           {wordCount > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {Object.entries(vocab).slice(0, 14).map(([concept, word]) => (
-                <span key={concept} className="font-share-tech" style={{ fontSize: 11, color: '#8898a8', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', padding: '2px 5px', borderRadius: 2 }}>
+                <span key={concept} className="font-share-tech" style={{ fontSize: 12, color: '#8898a8', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', padding: '2px 5px', borderRadius: 2 }}>
                   {String(word)} <span style={{ color: '#4a5568' }}>[{conceptLabel(concept, lang)}]</span>
                 </span>
               ))}
-              {wordCount > 14 && <span className="font-share-tech" style={{ fontSize: 11, color: '#4a5568' }}>+{wordCount - 14}</span>}
+              {wordCount > 14 && <span className="font-share-tech" style={{ fontSize: 12, color: '#4a5568' }}>+{wordCount - 14}</span>}
             </div>
           )}
         </div>
@@ -801,7 +801,7 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
                 flex: 1, padding: '7px 0', background: 'transparent', border: 'none',
                 borderBottom: activeTab === tab ? `2px solid ${accentColor}` : '2px solid transparent',
                 color: activeTab === tab ? accentColor : '#4a5568',
-                fontFamily: 'Share Tech Mono, monospace', fontSize: 11, letterSpacing: '0.1em', cursor: 'pointer',
+                fontFamily: 'Share Tech Mono, monospace', fontSize: 12, letterSpacing: '0.1em', cursor: 'pointer',
               }}>
               {tab === 'log'
                 ? L('YAŞAM GÜNLÜĞÜ', 'LIFE LOG', 'LEBENSLOG', 'JOURNAL DE VIE', 'سجل الحياة')
@@ -849,10 +849,10 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
                 {lifelog.map((entry, i) => (
                   <div key={i} style={{ borderLeft: `2px solid ${kindColor(entry.kind)}50`, paddingLeft: 10 }}>
                     <div className="flex items-center gap-2">
-                      <span className="font-share-tech" style={{ fontSize: 10, color: kindColor(entry.kind), letterSpacing: '0.1em' }}>
+                      <span className="font-share-tech" style={{ fontSize: 12, color: kindColor(entry.kind), letterSpacing: '0.1em' }}>
                         {kindLabel(entry.kind)}
                       </span>
-                      <span className="font-share-tech" style={{ fontSize: 10, color: '#4a5568' }}>
+                      <span className="font-share-tech" style={{ fontSize: 12, color: '#4a5568' }}>
                         · {L('Gün', 'Day', 'Tag', 'Jour', 'يوم')} {entry.day}
                       </span>
                     </div>
@@ -862,7 +862,7 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
                       </p>
                     )}
                     {entry.thought?.annotated && (
-                      <p className="font-share-tech" style={{ fontSize: 11, color: '#4a5568', marginTop: 1 }}>
+                      <p className="font-share-tech" style={{ fontSize: 12, color: '#4a5568', marginTop: 1 }}>
                         {entry.thought.annotated}
                       </p>
                     )}
@@ -876,7 +876,7 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
                 <div className="flex justify-end mb-1">
                   <button
                     onClick={() => { setArchive([]); try { localStorage.removeItem(storageKey); } catch {} }}
-                    style={{ background: 'transparent', border: '1px solid rgba(160,80,80,0.3)', color: '#a05050', cursor: 'pointer', padding: '2px 8px', fontSize: 11, fontFamily: 'Share Tech Mono, monospace', borderRadius: 2 }}>
+                    style={{ background: 'transparent', border: '1px solid rgba(160,80,80,0.3)', color: '#a05050', cursor: 'pointer', padding: '2px 8px', fontSize: 12, fontFamily: 'Share Tech Mono, monospace', borderRadius: 2 }}>
                     {L('TEMİZLE', 'CLEAR', 'LÖSCHEN', 'EFFACER', 'مسح')}
                   </button>
                 </div>
@@ -894,7 +894,7 @@ function InnerVoiceModal({ ind, lang, onClose }: { ind: any; lang: string; onClo
                   <p className="font-share-tech" style={{ fontSize: 14, color: '#8898a8', letterSpacing: '0.06em', marginTop: 2 }}>
                     {entry.proto}
                   </p>
-                  <p className="font-share-tech" style={{ fontSize: 11, color: '#4a5568', marginTop: 1 }}>
+                  <p className="font-share-tech" style={{ fontSize: 12, color: '#4a5568', marginTop: 1 }}>
                     {entry.annotated}
                   </p>
                 </div>
@@ -940,10 +940,10 @@ function FamilyTreeModal({ ind, allIndividuals, lang, onClose }: {
         border: `1px solid ${star ? 'rgba(79,110,247,0.5)' : 'rgba(160,200,176,0.12)'}`,
         boxShadow: star ? '0 0 10px rgba(79,110,247,0.18)' : 'none',
       }}>
-        <div style={{ fontSize: 10, fontFamily: 'Orbitron, monospace', color: col, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ fontSize: 12, fontFamily: 'Orbitron, monospace', color: col, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {star && '★ '}{n}{dead ? ' †' : ''}
         </div>
-        <div style={{ fontSize: 9, color: '#4a6858', fontFamily: 'Share Tech Mono, monospace', marginTop: 1 }}>
+        <div style={{ fontSize: 12, color: '#4a6858', fontFamily: 'Share Tech Mono, monospace', marginTop: 1 }}>
           {age} {tr('yaş', 'yr')}
         </div>
       </div>
@@ -952,7 +952,7 @@ function FamilyTreeModal({ ind, allIndividuals, lang, onClose }: {
 
   function RowLabel({ label }: { label: string }) {
     return (
-      <div style={{ textAlign: 'center', fontSize: 9, color: '#4a5848', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.12em', marginBottom: 5 }}>
+      <div style={{ textAlign: 'center', fontSize: 12, color: '#4a5848', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.12em', marginBottom: 5 }}>
         {label}
       </div>
     );
@@ -1016,7 +1016,7 @@ function FamilyTreeModal({ ind, allIndividuals, lang, onClose }: {
           </div>
 
           {isFounder && (
-            <div style={{ textAlign: 'center', marginTop: 6, fontSize: 10, color: '#d4a838', fontFamily: 'Share Tech Mono, monospace' }}>
+            <div style={{ textAlign: 'center', marginTop: 6, fontSize: 12, color: '#d4a838', fontFamily: 'Share Tech Mono, monospace' }}>
               ★ {tr('Kurucu — bilinen atası yok', 'Founder — no known ancestors')}
             </div>
           )}
@@ -1027,7 +1027,7 @@ function FamilyTreeModal({ ind, allIndividuals, lang, onClose }: {
               <RowLabel label={`${tr('ÇOCUKLAR', 'CHILDREN')} (${children.length})`} />
               <ChipRow items={children.slice(0, 10)} />
               {children.length > 10 && (
-                <div style={{ textAlign: 'center', fontSize: 10, color: '#4a6858', fontFamily: 'Share Tech Mono, monospace', marginTop: 4 }}>
+                <div style={{ textAlign: 'center', fontSize: 12, color: '#4a6858', fontFamily: 'Share Tech Mono, monospace', marginTop: 4 }}>
                   +{children.length - 10} {tr('daha', 'more')}
                 </div>
               )}
@@ -1040,7 +1040,7 @@ function FamilyTreeModal({ ind, allIndividuals, lang, onClose }: {
               <RowLabel label={`${tr('TORUNLAR', 'GRANDCHILDREN')} (${grandchildren.length})`} />
               <ChipRow items={grandchildren.slice(0, 8)} />
               {grandchildren.length > 8 && (
-                <div style={{ textAlign: 'center', fontSize: 10, color: '#4a6858', fontFamily: 'Share Tech Mono, monospace', marginTop: 4 }}>
+                <div style={{ textAlign: 'center', fontSize: 12, color: '#4a6858', fontFamily: 'Share Tech Mono, monospace', marginTop: 4 }}>
                   +{grandchildren.length - 8} {tr('daha', 'more')}
                 </div>
               )}
@@ -1048,13 +1048,13 @@ function FamilyTreeModal({ ind, allIndividuals, lang, onClose }: {
           )}
 
           {!isFounder && !children.length && !grandchildren.length && (
-            <div style={{ textAlign: 'center', marginTop: 12, fontSize: 11, color: '#4a6858', fontFamily: 'Share Tech Mono, monospace' }}>
+            <div style={{ textAlign: 'center', marginTop: 12, fontSize: 12, color: '#4a6858', fontFamily: 'Share Tech Mono, monospace' }}>
               {tr('Henüz çocuğu yok', 'No children yet')}
             </div>
           )}
 
           {/* Stats footer */}
-          <div style={{ marginTop: 14, paddingTop: 10, borderTop: '1px solid rgba(79,110,247,0.1)', textAlign: 'center', fontSize: 10, color: '#4a5848', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.08em' }}>
+          <div style={{ marginTop: 14, paddingTop: 10, borderTop: '1px solid rgba(79,110,247,0.1)', textAlign: 'center', fontSize: 12, color: '#4a5848', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.08em' }}>
             {isFounder ? tr('Kurucu', 'Founder') : `${parents.length} ${tr('ebeveyn', 'parent(s)')}`}
             {children.length > 0 && ` · ${children.length} ${tr('çocuk', 'children')}`}
             {grandchildren.length > 0 && ` · ${grandchildren.length} ${tr('torun', 'grandchildren')}`}
@@ -1088,7 +1088,7 @@ function JournalArchiveModal({ name, entries, typeIcon, lang, onClear, onClose }
           <span style={{ fontSize: 12, color: '#00d4ff', fontFamily: 'Share Tech Mono, monospace', letterSpacing: '0.15em', flex: 1 }}>
             ◈ {tr('HAYAT HİKÂYESİ ARŞİVİ', 'LIFE STORY ARCHIVE')}
           </span>
-          <span style={{ fontSize: 11, color: '#4a6858', fontFamily: 'Share Tech Mono, monospace', marginRight: 8 }}>
+          <span style={{ fontSize: 12, color: '#4a6858', fontFamily: 'Share Tech Mono, monospace', marginRight: 8 }}>
             {name} · {entries.length} {tr('olay', 'events')}
           </span>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#6a8878', cursor: 'pointer', lineHeight: 0, padding: 2 }}>
@@ -1099,18 +1099,18 @@ function JournalArchiveModal({ name, entries, typeIcon, lang, onClear, onClose }
         {/* Entries */}
         <div className="flex-1 overflow-y-auto" style={{ padding: '10px 14px' }}>
           {entries.length === 0 ? (
-            <div style={{ fontSize: 11, color: '#4a6858', fontFamily: 'Share Tech Mono, monospace', textAlign: 'center', paddingTop: 24 }}>
+            <div style={{ fontSize: 12, color: '#4a6858', fontFamily: 'Share Tech Mono, monospace', textAlign: 'center', paddingTop: 24 }}>
               {tr('Henüz arşivlenmiş olay yok', 'No archived events yet')}
             </div>
           ) : (
             <div className="space-y-1">
               {entries.map((ev, i) => (
                 <div key={i} style={{ display: 'flex', gap: 7, alignItems: 'baseline', paddingBottom: 4, borderBottom: i < entries.length - 1 ? '1px solid rgba(0,212,255,0.04)' : 'none' }}>
-                  <span style={{ fontSize: 10, color: '#4a6858', flexShrink: 0, fontFamily: 'Share Tech Mono, monospace', minWidth: 64 }}>
+                  <span style={{ fontSize: 12, color: '#4a6858', flexShrink: 0, fontFamily: 'Share Tech Mono, monospace', minWidth: 64 }}>
                     Y{ev.sim_year}G{ev.sim_day}
                   </span>
-                  <span style={{ fontSize: 10, flexShrink: 0 }}>{typeIcon[ev.event_type] ?? '·'}</span>
-                  <span style={{ fontSize: 11, color: '#8898c8', lineHeight: 1.45, fontFamily: 'Share Tech Mono, monospace' }}>
+                  <span style={{ fontSize: 12, flexShrink: 0 }}>{typeIcon[ev.event_type] ?? '·'}</span>
+                  <span style={{ fontSize: 12, color: '#8898c8', lineHeight: 1.45, fontFamily: 'Share Tech Mono, monospace' }}>
                     {translateEventDescription(ev.description ?? ev.event_type ?? '', lang as LangCode, ev)}
                   </span>
                 </div>
@@ -1123,21 +1123,21 @@ function JournalArchiveModal({ name, entries, typeIcon, lang, onClear, onClose }
         <div className="flex-shrink-0 flex justify-end gap-2 px-4 py-2" style={{ borderTop: '1px solid rgba(0,212,255,0.1)' }}>
           {confirmClear ? (
             <>
-              <span style={{ fontSize: 11, color: '#e05a5a', fontFamily: 'Share Tech Mono, monospace', alignSelf: 'center' }}>
+              <span style={{ fontSize: 12, color: '#e05a5a', fontFamily: 'Share Tech Mono, monospace', alignSelf: 'center' }}>
                 {tr('Emin misin?', 'Are you sure?')}
               </span>
               <button onClick={() => setConfirmClear(false)}
-                style={{ fontSize: 10, fontFamily: 'Share Tech Mono, monospace', background: 'transparent', border: '1px solid rgba(160,200,176,0.25)', color: '#6a8878', cursor: 'pointer', padding: '2px 8px' }}>
+                style={{ fontSize: 12, fontFamily: 'Share Tech Mono, monospace', background: 'transparent', border: '1px solid rgba(160,200,176,0.25)', color: '#6a8878', cursor: 'pointer', padding: '2px 8px' }}>
                 {tr('İptal', 'Cancel')}
               </button>
               <button onClick={onClear}
-                style={{ fontSize: 10, fontFamily: 'Share Tech Mono, monospace', background: 'rgba(160,80,80,0.15)', border: '1px solid rgba(224,90,90,0.4)', color: '#e05a5a', cursor: 'pointer', padding: '2px 8px' }}>
+                style={{ fontSize: 12, fontFamily: 'Share Tech Mono, monospace', background: 'rgba(160,80,80,0.15)', border: '1px solid rgba(224,90,90,0.4)', color: '#e05a5a', cursor: 'pointer', padding: '2px 8px' }}>
                 {tr('Temizle', 'Clear')}
               </button>
             </>
           ) : (
             <button onClick={() => setConfirmClear(true)}
-              style={{ fontSize: 10, fontFamily: 'Share Tech Mono, monospace', background: 'transparent', border: '1px solid rgba(160,200,176,0.2)', color: '#4a6858', cursor: 'pointer', padding: '2px 8px' }}>
+              style={{ fontSize: 12, fontFamily: 'Share Tech Mono, monospace', background: 'transparent', border: '1px solid rgba(160,200,176,0.2)', color: '#4a6858', cursor: 'pointer', padding: '2px 8px' }}>
               {tr('Arşivi Temizle', 'Clear Archive')}
             </button>
           )}
@@ -1166,7 +1166,7 @@ function CompareModal({ indA, indB, onClose }: { indA: any; indB: any; onClose: 
       <div style={{ flex: 1, padding: '0 14px', overflowY: 'auto' }}>
         <div style={{ marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid rgba(79,110,247,0.15)' }}>
           <div style={{ fontFamily: 'Orbitron, monospace', fontWeight: 700, fontSize: 13, color: ind.sex === 'male' ? '#6090ff' : '#ff8ab0' }}>{name}</div>
-          <div style={{ fontSize: 11, color: '#a0b4ff', fontFamily: 'Share Tech Mono, monospace', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: '#a0b4ff', fontFamily: 'Share Tech Mono, monospace', marginTop: 2 }}>
             {age.toFixed(1)} {tr('yaş', 'yr')} · {ind.sex === 'male' ? tr('Erkek', 'Male') : tr('Kadın', 'Female')}
             {isFounder && <span style={{ color: '#d4a838', marginLeft: 6 }}>★ {tr('Kurucu', 'Founder')}</span>}
             {isDead && <span style={{ color: '#e05a5a', marginLeft: 6 }}>†</span>}
@@ -1305,12 +1305,12 @@ export default function PopulationPanel() {
       {/* Compare action bar */}
       {compareSet.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, padding: '6px 8px', background: 'rgba(79,110,247,0.08)', border: '1px solid rgba(79,110,247,0.3)' }}>
-          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#a0b4ff', flex: 1 }}>
+          <span style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 12, color: '#a0b4ff', flex: 1 }}>
             {compareSet.map(i => nameFromId(i.id, i.sex, i.phenotype?.name ?? i.name)).join(' vs ')}
           </span>
           {compareSet.length === 2 && (
             <button onClick={() => setShowCompare(true)}
-              style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#4f6ef7', background: 'rgba(79,110,247,0.15)', border: '1px solid rgba(79,110,247,0.5)', padding: '2px 8px', cursor: 'pointer' }}>
+              style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 12, color: '#4f6ef7', background: 'rgba(79,110,247,0.15)', border: '1px solid rgba(79,110,247,0.5)', padding: '2px 8px', cursor: 'pointer' }}>
               {text(lang as LangCode, { en: 'COMPARE', tr: 'KARŞILAŞTIR', de: 'VERGLEICHEN', fr: 'COMPARER', ar: 'مقارنة' })}
             </button>
           )}

@@ -48,8 +48,8 @@ function TreeNode({ node, lang }: { node: any; lang: string }) {
           maxWidth: 80,
         }}
       >
-        <div className="font-medium text-sim-text" style={{ fontSize: 10 }}>{node.name}</div>
-        <div className="text-sim-muted" style={{ fontSize: 9 }}>
+        <div className="font-medium text-sim-text" style={{ fontSize: 12 }}>{node.name}</div>
+        <div className="text-sim-muted" style={{ fontSize: 12 }}>
           {node.sex === 'male' ? text(lang as LangCode, { tr: 'E', en: 'M', de: 'M', fr: 'M', ar: 'ذ' }) : text(lang as LangCode, { tr: 'K', en: 'F', de: 'W', fr: 'F', ar: 'أ' })}
           {' · '}IQ {((node.iq ?? 0.5) * 100).toFixed(0)}
         </div>

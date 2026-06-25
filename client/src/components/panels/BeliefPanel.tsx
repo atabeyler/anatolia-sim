@@ -3,31 +3,61 @@ import { useSimStore } from '../../store/simStore';
 import { Flame } from 'lucide-react';
 import { translateEventDescription, text, type LangCode } from '../../utils/i18n';
 
-const BELIEF_INFO: Record<string, { stage: number; name: string; nameTr: string; desc: string; descTr: string; color: string }> = {
-  animism:        { stage: 1, name: 'Animism',        nameTr: 'Animizm',           desc: 'Spirits in all living things',      descTr: 'Her canlıda ruhlar var',             color: '#6b8e23' },
-  ancestor_cult:  { stage: 2, name: 'Ancestor Cult',  nameTr: 'Ata Kültü',         desc: 'Ancestor spirits guide the living', descTr: 'Ata ruhları rehberlik eder',         color: '#8b7355' },
-  shamanism:      { stage: 2, name: 'Shamanism',       nameTr: 'Şamanizm',          desc: 'Shamans commune with spirits',      descTr: 'Şamanlar ruhlarla iletişir',        color: '#9370db' },
-  polytheism:     { stage: 3, name: 'Polytheism',      nameTr: 'Çok Tanrıcılık',    desc: 'Multiple deities',                  descTr: 'Çok tanrılılık',                    color: '#daa520' },
-  monotheism:     { stage: 4, name: 'Monotheism',      nameTr: 'Tek Tanrıcılık',    desc: 'One all-powerful deity',            descTr: 'Tek güçlü tanrı',                   color: '#4682b4' },
-  philosophical:  { stage: 4, name: 'Philosophical',   nameTr: 'Felsefi Düşünce',   desc: 'Abstract reasoning about cosmos',   descTr: 'Kozmos üzerine soyut düşünce',      color: '#cd853f' },
+const BELIEF_INFO: Record<string, {
+  stage: number;
+  name: string; nameTr: string; nameDe: string; nameFr: string; nameAr: string;
+  desc: string; descTr: string; descDe: string; descFr: string; descAr: string;
+  color: string;
+}> = {
+  animism:       { stage: 1,
+    name: 'Animism',       nameTr: 'Animizm',         nameDe: 'Animismus',        nameFr: 'Animisme',              nameAr: 'الروحانية',
+    desc: 'Spirits in all living things',       descTr: 'Her canlıda ruhlar var',             descDe: 'Geister in allen Lebewesen',         descFr: 'Esprits dans tous les êtres vivants',  descAr: 'أرواح في كل الكائنات',
+    color: '#6b8e23' },
+  ancestor_cult: { stage: 2,
+    name: 'Ancestor Cult', nameTr: 'Ata Kültü',       nameDe: 'Ahnenkult',        nameFr: 'Culte des ancêtres',    nameAr: 'عبادة الأجداد',
+    desc: 'Ancestor spirits guide the living', descTr: 'Ata ruhları rehberlik eder',          descDe: 'Ahnengeister leiten die Lebenden',    descFr: 'Les esprits des ancêtres guident',     descAr: 'أرواح الأجداد ترشد الأحياء',
+    color: '#8b7355' },
+  shamanism:     { stage: 2,
+    name: 'Shamanism',     nameTr: 'Şamanizm',        nameDe: 'Schamanismus',     nameFr: 'Chamanisme',            nameAr: 'الشامانية',
+    desc: 'Shamans commune with spirits',      descTr: 'Şamanlar ruhlarla iletişir',         descDe: 'Schamanen kommunizieren mit Geistern',descFr: 'Chamanes communient avec les esprits', descAr: 'الشامان يتواصل مع الأرواح',
+    color: '#9370db' },
+  polytheism:    { stage: 3,
+    name: 'Polytheism',    nameTr: 'Çok Tanrıcılık',  nameDe: 'Polytheismus',     nameFr: 'Polythéisme',           nameAr: 'تعدد الآلهة',
+    desc: 'Multiple deities',                 descTr: 'Çok tanrılılık',                     descDe: 'Mehrere Gottheiten',                  descFr: 'Plusieurs divinités',                  descAr: 'آلهة متعددة',
+    color: '#daa520' },
+  monotheism:    { stage: 4,
+    name: 'Monotheism',    nameTr: 'Tek Tanrıcılık',  nameDe: 'Monotheismus',     nameFr: 'Monothéisme',           nameAr: 'التوحيد',
+    desc: 'One all-powerful deity',           descTr: 'Tek güçlü tanrı',                    descDe: 'Eine allmächtige Gottheit',           descFr: 'Une divinité toute-puissante',         descAr: 'إله واحد كلي القدرة',
+    color: '#4682b4' },
+  philosophical: { stage: 4,
+    name: 'Philosophical', nameTr: 'Felsefi Düşünce', nameDe: 'Philosophie',      nameFr: 'Philosophie',           nameAr: 'الفلسفة',
+    desc: 'Abstract reasoning about cosmos',  descTr: 'Kozmos üzerine soyut düşünce',       descDe: 'Abstrakte Überlegungen über den Kosmos',descFr: 'Réflexion abstraite sur le cosmos',  descAr: 'تأمل مجرد في الكون',
+    color: '#cd853f' },
 };
+
+function isBeliefDiscovered(id: string, events: any[]) {
+  return events.some(e => {
+    if (e.event_type !== 'belief') return false;
+    if (e.data?.belief_type === id) return true;
+    if (e.data?.type === id) return true;
+    const desc = (e.description ?? '').toLowerCase();
+    return desc.includes(id.replace('_', ' ')) || desc.includes(id.replace('_', ''));
+  });
+}
 
 export default function BeliefPanel() {
   const { events, lang } = useSimStore();
-  const t = (tr: string, en: string, de = en, fr = en, ar = en) => text(lang as LangCode, { tr, en, de, fr, ar });
+  const L = lang as LangCode;
+  const t = (tr: string, en: string, de = en, fr = en, ar = en) => text(L, { tr, en, de, fr, ar });
 
   const beliefEvents = events.filter(e => e.event_type === 'belief' || e.event_type === 'ritual');
-  const discoveredBeliefs = new Set(
-    beliefEvents
-      .filter(e => e.event_type === 'belief')
-      .map(e => e.description?.match(/\w+/g)?.[0] ?? '')
-  );
+  const discoveredCount = Object.keys(BELIEF_INFO).filter(id => isBeliefDiscovered(id, beliefEvents)).length;
 
   return (
     <DetailPanel panelId="belief" title="Belief" titleTr="İnanç">
       <div className="bg-sim-surface rounded-lg p-3 mb-2 text-center">
         <Flame size={24} className="text-orange-400 mx-auto mb-1" />
-        <div className="text-sim-gold font-bold text-lg">{discoveredBeliefs.size}</div>
+        <div className="text-sim-gold font-bold text-lg">{discoveredCount}</div>
         <div className="text-sim-muted text-sm">
           {t('Ortaya çıkan inanç sistemleri', 'Belief systems emerged', 'Aufgetauchte Glaubenssysteme', 'Systèmes de croyances apparus', 'الأنظمة العقدية الناشئة')}
         </div>
@@ -39,9 +69,7 @@ export default function BeliefPanel() {
         </h4>
         <div className="space-y-1.5">
           {Object.entries(BELIEF_INFO).map(([id, info]) => {
-            const discovered = discoveredBeliefs.has(id) || beliefEvents.some(e =>
-              e.description?.toLowerCase().includes(id.replace('_', ' '))
-            );
+            const discovered = isBeliefDiscovered(id, beliefEvents);
             return (
               <div
                 key={id}
@@ -53,14 +81,14 @@ export default function BeliefPanel() {
               >
                 <div className="flex justify-between items-center mb-0.5">
                   <span className="text-sm font-medium" style={{ color: discovered ? info.color : '#a0c8b0' }}>
-                    {text(lang as LangCode, { tr: info.nameTr, en: info.name, de: info.name, fr: info.name, ar: info.name })}
+                    {text(L, { tr: info.nameTr, en: info.name, de: info.nameDe, fr: info.nameFr, ar: info.nameAr })}
                   </span>
                   <span className="text-sm text-sim-muted">
-                    {text(lang as LangCode, { tr: `Aşama ${info.stage}`, en: `Stage ${info.stage}`, de: `Stufe ${info.stage}`, fr: `Étape ${info.stage}`, ar: `مرحلة ${info.stage}` })}
+                    {text(L, { tr: `Aşama ${info.stage}`, en: `Stage ${info.stage}`, de: `Stufe ${info.stage}`, fr: `Étape ${info.stage}`, ar: `مرحلة ${info.stage}` })}
                   </span>
                 </div>
                 <div className="text-sm text-sim-muted">
-                  {t(info.descTr, info.desc)}
+                  {text(L, { tr: info.descTr, en: info.desc, de: info.descDe, fr: info.descFr, ar: info.descAr })}
                 </div>
               </div>
             );
@@ -68,16 +96,16 @@ export default function BeliefPanel() {
         </div>
       </div>
 
-      <div>
+      <div className="mb-3">
         <h4 className="text-sim-gold text-sm font-semibold uppercase tracking-widest mb-2">
           {t('Ortaya Çıkış Koşulları', 'Emergence Conditions', 'Entstehungsbedingungen', 'Conditions d\'émergence', 'شروط الظهور')}
         </h4>
         <p className="text-sim-muted text-sm italic">
           {t('İnanç; dindar gen + kaygı + çevre stresi şüphecilik eşiğini aştığında oluşur. Yazı sistemi yüksek aşamaları açar.',
              'Belief forms when religiosity gene + anxiety + environmental stress overcome skepticism threshold. Writing unlocks higher stages.',
-             'Glaube entsteht wenn Religiosität + Angst + Umweltstress den Skeptizismuswert überschreiten.',
-             'La croyance se forme quand gène religiosité + anxiété + stress environnemental dépasse le seuil de scepticisme.',
-             'تتشكل المعتقدات عندما يتجاوز جين التدين + القلق + الضغط البيئي عتبة الشك.')}
+             'Glaube entsteht wenn Religiosität + Angst + Umweltstress den Skeptizismuswert überschreiten. Schrift schaltet höhere Stufen frei.',
+             'La croyance se forme quand gène religiosité + anxiété + stress dépasse le seuil de scepticisme. L\'écriture débloque les étapes supérieures.',
+             'تتشكل المعتقدات عندما يتجاوز جين التدين + القلق + الضغط البيئي عتبة الشك. الكتابة تفتح المراحل الأعلى.')}
         </p>
       </div>
 
@@ -94,7 +122,7 @@ export default function BeliefPanel() {
             {beliefEvents.slice(0, 8).map((ev, i) => (
               <div key={i} className="flex gap-2 py-0.5 border-b border-sim-border/30">
                 <span className="text-orange-400 font-mono text-sm">Y{ev.sim_year}</span>
-                <span className="text-sim-muted text-sm">{translateEventDescription(ev.description ?? '', lang as LangCode, ev)}</span>
+                <span className="text-sim-muted text-sm">{translateEventDescription(ev.description ?? '', L, ev)}</span>
               </div>
             ))}
           </div>

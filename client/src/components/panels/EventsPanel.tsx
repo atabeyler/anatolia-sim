@@ -156,7 +156,7 @@ function EventsArchiveModal({ simId, accessToken, lang: uiLang, initialFilter, o
           <span style={{ fontSize: 13, fontFamily: 'Orbitron, monospace', color: activeFilter.color, fontWeight: 700, letterSpacing: '0.1em', flex: 1 }}>
             📋 {text(uiLang as LangCode, { tr: 'OLAY KAYDI ARŞİVİ', en: 'EVENT LOG ARCHIVE', de: 'EREIGNISPROTOKOLL-ARCHIV', fr: 'ARCHIVE DES ÉVÉNEMENTS', ar: 'أرشيف سجل الأحداث' })}
           </span>
-          <span style={{ fontSize: 11, color: '#6a8878', fontFamily: 'Share Tech Mono, monospace' }}>
+          <span style={{ fontSize: 12, color: '#6a8878', fontFamily: 'Share Tech Mono, monospace' }}>
             {total > 0 ? `${total.toLocaleString()} ${text(uiLang as LangCode, { tr: 'kayıt', en: 'records', de: 'Einträge', fr: 'entrées', ar: 'سجلات' })}` : ''}
           </span>
           <button onClick={onClose} style={{ color: '#6a8878', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 4px' }}>✕</button>
@@ -167,7 +167,7 @@ function EventsArchiveModal({ simId, accessToken, lang: uiLang, initialFilter, o
           <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', paddingBottom: 6 }}>
             {FILTERS.map(f => (
               <button key={f.id} onClick={() => setFilter(f.id)} style={{
-                padding: '2px 7px', fontSize: 11,
+                padding: '2px 7px', fontSize: 12,
                 border: `1px solid ${filter === f.id ? f.color : 'rgba(160,200,176,0.2)'}`,
                 color: filter === f.id ? f.color : '#6a8878',
                 background: filter === f.id ? `${f.color}12` : 'transparent',
@@ -182,7 +182,7 @@ function EventsArchiveModal({ simId, accessToken, lang: uiLang, initialFilter, o
             value={search} onChange={e => setSearch(e.target.value)}
             placeholder={text(uiLang as LangCode, { tr: 'Açıklamada ara…', en: 'Search descriptions…', de: 'Beschreibungen suchen…', fr: 'Rechercher dans les descriptions…', ar: 'ابحث في الأوصاف…' })}
             style={{
-              width: '100%', boxSizing: 'border-box', marginBottom: 6, padding: '3px 8px', fontSize: 11,
+              width: '100%', boxSizing: 'border-box', marginBottom: 6, padding: '3px 8px', fontSize: 12,
               background: 'rgba(160,200,176,0.04)', border: '1px solid rgba(160,200,176,0.15)',
               color: '#a0c8b0', fontFamily: 'Share Tech Mono, monospace', outline: 'none',
             }}
@@ -210,15 +210,15 @@ function EventsArchiveModal({ simId, accessToken, lang: uiLang, initialFilter, o
               }}>
                 <span style={{ fontSize: 12, color, flexShrink: 0, marginTop: 2 }}>{icon}</span>
                 <div style={{ flexShrink: 0, width: 72 }}>
-                  <div style={{ fontSize: 10, color: '#4a6a6a', fontFamily: 'Orbitron, monospace' }}>
+                  <div style={{ fontSize: 12, color: '#4a6a6a', fontFamily: 'Orbitron, monospace' }}>
                     Y{String(ev.sim_year ?? 0).padStart(4,'0')}
                   </div>
-                  <div style={{ fontSize: 10, color: '#3a5a5a', fontFamily: 'Orbitron, monospace' }}>
+                  <div style={{ fontSize: 12, color: '#3a5a5a', fontFamily: 'Orbitron, monospace' }}>
                     G{String((ev.sim_day ?? 0) % 365).padStart(3,'0')}
                   </div>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: 10, color: `${color}88`, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: 2 }}>
+                  <span style={{ fontSize: 12, color: `${color}88`, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'block', marginBottom: 2 }}>
                     {translateEventType(ev.event_type, uiLang as LangCode)}
                   </span>
                   <div style={{ fontSize: 12, color: '#a0c8b0', lineHeight: 1.5, wordBreak: 'break-word' }}>
@@ -233,7 +233,7 @@ function EventsArchiveModal({ simId, accessToken, lang: uiLang, initialFilter, o
           {rows.length > 0 && rows.length < total && (
             <div style={{ textAlign: 'center', padding: '10px 0' }}>
               <button onClick={loadMore} disabled={loading} style={{
-                padding: '4px 16px', fontSize: 11,
+                padding: '4px 16px', fontSize: 12,
                 border: `1px solid ${activeFilter.color}55`, color: activeFilter.color,
                 background: 'transparent', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer',
                 opacity: loading ? 0.5 : 1,
@@ -248,7 +248,7 @@ function EventsArchiveModal({ simId, accessToken, lang: uiLang, initialFilter, o
 
         {/* Footer */}
         <div style={{ padding: '5px 14px', borderTop: `1px solid rgba(160,200,176,0.08)`, flexShrink: 0 }}>
-          <span style={{ fontSize: 10, color: '#3a5a5a', fontFamily: 'Share Tech Mono, monospace' }}>
+          <span style={{ fontSize: 12, color: '#3a5a5a', fontFamily: 'Share Tech Mono, monospace' }}>
             {filtered.length.toLocaleString()} / {rows.length.toLocaleString()} {text(uiLang as LangCode, { tr: 'gösteriliyor', en: 'shown', de: 'angezeigt', fr: 'affichés', ar: 'معروض' })} · {total.toLocaleString()} {text(uiLang as LangCode, { tr: 'toplam', en: 'total', de: 'gesamt', fr: 'total', ar: 'المجموع' })}
           </span>
         </div>
@@ -363,7 +363,7 @@ export default function EventsPanel() {
         </span>
         {currentSim && accessToken && (
           <button onClick={() => setArchiveOpen(true)} style={{
-            padding: '2px 10px', fontSize: 11,
+            padding: '2px 10px', fontSize: 12,
             border: `1px solid ${activeFilterObj.color}55`,
             color: activeFilterObj.color,
             background: `${activeFilterObj.color}08`,

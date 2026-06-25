@@ -11,13 +11,13 @@ export default function MomentsPanel() {
     <DetailPanel panelId="moments" title="Moments" titleTr="Anlar">
 
       <div className="flex items-center justify-between mb-3">
-        <span className="font-share-tech tracking-widest" style={{ fontSize: 11, color: '#6a8878' }}>
+        <span className="font-share-tech tracking-widest" style={{ fontSize: 12, color: '#6a8878' }}>
           {moments.length} {t('an kaydedildi', 'moments recorded')}
         </span>
         {moments.length > 0 && (
           <button onClick={clearMoments}
             className="font-share-tech"
-            style={{ fontSize: 11, color: '#6a8878', background: 'transparent', border: '1px solid rgba(160,200,176,0.2)', padding: '1px 6px', cursor: 'pointer' }}>
+            style={{ fontSize: 12, color: '#6a8878', background: 'transparent', border: '1px solid rgba(160,200,176,0.2)', padding: '1px 6px', cursor: 'pointer' }}>
             {t('Temizle', 'Clear')}
           </button>
         )}
@@ -26,10 +26,10 @@ export default function MomentsPanel() {
       {moments.length === 0 && (
         <div className="flex flex-col items-center py-8 gap-2">
           <Sparkles size={24} style={{ color: 'rgba(160,200,176,0.2)' }} />
-          <span className="font-share-tech tracking-widest" style={{ fontSize: 11, color: 'rgba(160,200,176,0.3)' }}>
+          <span className="font-share-tech tracking-widest" style={{ fontSize: 12, color: 'rgba(160,200,176,0.3)' }}>
             {t('Henüz önemli bir an yok', 'No moments yet')}
           </span>
-          <span className="font-share-tech" style={{ fontSize: 11, color: 'rgba(160,200,176,0.2)', textAlign: 'center', lineHeight: 1.5 }}>
+          <span className="font-share-tech" style={{ fontSize: 12, color: 'rgba(160,200,176,0.2)', textAlign: 'center', lineHeight: 1.5 }}>
             {t('İlk ölüm, teknoloji keşfi, afetler\nve dil evrimi burada görünür', 'First deaths, discoveries,\ndisasters and language milestones\nwill appear here')}
           </span>
         </div>
@@ -48,12 +48,12 @@ export default function MomentsPanel() {
               <div className="flex-1 min-w-0">
                 <div className="font-share-tech" style={{ fontSize: 12, color: m.color, lineHeight: 1.4 }}>{m.title}</div>
                 {m.description && (
-                  <div className="font-share-tech" style={{ fontSize: 11, color: '#8898c8', marginTop: 2, lineHeight: 1.4 }}>
+                  <div className="font-share-tech" style={{ fontSize: 12, color: '#8898c8', marginTop: 2, lineHeight: 1.4 }}>
                     {m.description.length > 80 ? m.description.slice(0, 80) + '…' : m.description}
                   </div>
                 )}
               </div>
-              <div className="font-share-tech flex-shrink-0 text-right" style={{ fontSize: 10, color: '#6a8878', lineHeight: 1.6 }}>
+              <div className="font-share-tech flex-shrink-0 text-right" style={{ fontSize: 12, color: '#6a8878', lineHeight: 1.6 }}>
                 <div>Y{m.year}</div>
                 <div>G{m.day}</div>
               </div>
@@ -63,7 +63,7 @@ export default function MomentsPanel() {
       </div>
 
       {stats && moments.length === 0 && (
-        <div className="mt-4 font-share-tech" style={{ fontSize: 11, color: '#6a8878', textAlign: 'center' }}>
+        <div className="mt-4 font-share-tech" style={{ fontSize: 12, color: '#6a8878', textAlign: 'center' }}>
           {t(`Simülasyon ${stats.year}. yılında`, `Simulation is in year ${stats.year}`)}
         </div>
       )}

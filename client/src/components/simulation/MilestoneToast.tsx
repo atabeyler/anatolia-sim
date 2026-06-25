@@ -126,14 +126,6 @@ export default function MilestoneToast() {
     fireOnce(`backend_${newest.key}`, { icon: newest.icon, color: '#fbbf24', message }, newest.description);
   }, [milestones.length]);
 
-  // First time population reaches 10
-  useEffect(() => {
-    if (!stats || !simIdRef.current) return;
-    if (stats.population >= 10) {
-      fireOnce('first_pop', { icon: '👥', color: '#4f6ef7', message: t('Topluluk büyüyor!', 'Community is growing!', 'Gemeinschaft wächst!', 'La communauté grandit!', 'المجتمع ينمو!') });
-    }
-  }, [stats?.population]);
-
   // First technology
   useEffect(() => {
     if (!stats || !simIdRef.current) return;
