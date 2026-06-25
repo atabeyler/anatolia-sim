@@ -1241,9 +1241,12 @@ export class SimulationEngine {
       health.hp = Math.max(0, health.hp - 0.003);
     }
 
-    // Infection burden
+    // Infection burden — founders have stronger constitutions; 40% less HP drain
     const infectionCount = individual.infections?.length ?? 0;
-    if (infectionCount > 0) health.hp = Math.max(0, health.hp - 0.005 * infectionCount);
+    if (infectionCount > 0) {
+      const infectionDrain = individual.is_founder ? 0.003 : 0.005;
+      health.hp = Math.max(0, health.hp - infectionDrain * infectionCount);
+    }
 
     // Psychological state affects physical health
     const stressLoad = individual.psychology?.stress_level ?? 0.3;

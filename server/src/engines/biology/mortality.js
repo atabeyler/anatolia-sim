@@ -81,6 +81,11 @@ export function computeDailyDeathRisk(individual, currentDay, environment) {
     baseRisk += (environment.disease_pressure ?? 0) * 0.0003;
   }
   if ((individual.inbreeding_coeff ?? 0) > 0.50) baseRisk *= 1.25;
+
+  // Founders are hand-selected survivors — they carry the strongest constitution
+  // the player could choose. Halve their base mortality to reflect this.
+  if (individual.is_founder) baseRisk *= 0.5;
+
   return Math.min(baseRisk, 0.99);
 }
 
@@ -120,10 +125,14 @@ function determineCause(individual, currentDay, environment) {
   if (age < 5)  return DEATH_CAUSES.INFECTION;
   if (age < 15) return Math.random() < 0.5 ? DEATH_CAUSES.INFECTION : DEATH_CAUSES.TRAUMA;
 
+  // Founders are constitutionally stronger — lower infection and trauma weights
+  const founderFactor = isFounder ? 0.55 : 1.0;
+  const adjustedTrauma = traumaWeight * founderFactor;
+
   if (age < 45) {
     const r = Math.random();
-    const infectionCut  = 0.45;
-    const traumaCut     = infectionCut + traumaWeight;
+    const infectionCut  = isFounder ? 0.28 : 0.45;
+    const traumaCut     = infectionCut + adjustedTrauma;
     const birthCompCut  = traumaCut + birthCompChance;
     const geneticCut    = birthCompCut + geneticChance;
     if (r < infectionCut) return DEATH_CAUSES.INFECTION;
@@ -134,9 +143,9 @@ function determineCause(individual, currentDay, environment) {
   }
   // 45+
   const r = Math.random();
-  const infectionCut = 0.45;
+  const infectionCut = isFounder ? 0.28 : 0.45;
   const oldAgeCut    = infectionCut + 0.20;
-  const traumaCut    = oldAgeCut + traumaWeight;
+  const traumaCut    = oldAgeCut + adjustedTrauma;
   const geneticCut   = traumaCut + geneticChance;
   if (r < infectionCut) return DEATH_CAUSES.INFECTION;
   if (r < oldAgeCut)    return DEATH_CAUSES.OLD_AGE;
