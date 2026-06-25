@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSimStore } from '../../store/simStore';
-import { text, type LangCode } from '../../utils/i18n';
+import { text, translateEventDescription, CAUSE_LABELS, type LangCode } from '../../utils/i18n';
 
 interface Toast {
   id: string;
@@ -162,30 +162,33 @@ export default function MilestoneToast() {
         fireOnce('first_twin', {
           icon: '✦', color: '#ff8ab0',
           message: t('İlk ikizler doğdu!', 'First twins born!', 'Erste Zwillinge geboren!', 'Premiers jumeaux nés!', 'وُلد أول توأم!'),
-          sub: ev.description,
+          sub: ev.description ? translateEventDescription(ev.description, L) : undefined,
         });
       }
       if (ev.event_type === 'death') {
         const name = ev.data?.name ?? '?';
-        const cause = ev.data?.cause ?? '';
+        const rawCause = ev.data?.cause ?? '';
+        const causeMap = rawCause ? CAUSE_LABELS[rawCause] : null;
+        const causeStr = causeMap ? text(L, causeMap) : (rawCause ? rawCause.replace(/_/g, ' ') : '');
+        const causePrefix = t('Sebep', 'Cause', 'Ursache', 'Cause', 'السبب');
         fireOnce('first_death', {
           icon: '†', color: '#e05a5a',
           message: t(`İlk ölüm: ${name}`, `First death: ${name}`, `Erster Todesfall: ${name}`, `Premier décès: ${name}`, `أول وفاة: ${name}`),
-          sub: cause ? t(`Sebep: ${cause}`, `Cause: ${cause}`, `Ursache: ${cause}`, `Cause: ${cause}`, `السبب: ${cause}`) : undefined,
+          sub: causeStr ? `${causePrefix}: ${causeStr}` : undefined,
         }, ev.description);
       }
       if (ev.event_type === 'disaster') {
         fireOnce('first_disaster', {
           icon: '⚠', color: '#f97316',
           message: t('İlk doğal afet!', 'First natural disaster!', 'Erste Naturkatastrophe!', 'Première catastrophe naturelle!', 'أول كارثة طبيعية!'),
-          sub: ev.description,
+          sub: ev.description ? translateEventDescription(ev.description, L) : undefined,
         }, ev.description);
       }
       if (ev.event_type === 'epidemic') {
         fireOnce('first_epidemic', {
           icon: '⊗', color: '#c084fc',
           message: t('İlk salgın hastalık!', 'First epidemic!', 'Erste Seuche!', 'Première épidémie!', 'أول وباء!'),
-          sub: ev.description,
+          sub: ev.description ? translateEventDescription(ev.description, L) : undefined,
         }, ev.description);
       }
       if (ev.event_type === 'language') {
@@ -199,35 +202,35 @@ export default function MilestoneToast() {
         fireOnce('first_belief', {
           icon: '◆', color: '#a78bfa',
           message: t('İlk inanç oluştu', 'First belief formed', 'Erster Glaube geformt', 'Première croyance formée', 'تشكّل أول معتقد'),
-          sub: ev.description,
+          sub: ev.description ? translateEventDescription(ev.description, L) : undefined,
         }, ev.description);
       }
       if (ev.event_type === 'art') {
         fireOnce('first_art', {
           icon: '◈', color: '#fb923c',
           message: t('İlk sanat eseri!', 'First art created!', 'Erstes Kunstwerk!', "Première œuvre d'art!", 'أول عمل فني!'),
-          sub: ev.description,
+          sub: ev.description ? translateEventDescription(ev.description, L) : undefined,
         }, ev.description);
       }
       if (ev.event_type === 'architecture') {
         fireOnce('first_architecture', {
           icon: '▣', color: '#94a3b8',
           message: t('İlk yapı inşa edildi!', 'First structure built!', 'Erstes Bauwerk errichtet!', 'Première structure construite!', 'أول مبنى شُيِّد!'),
-          sub: ev.description,
+          sub: ev.description ? translateEventDescription(ev.description, L) : undefined,
         }, ev.description);
       }
       if (ev.event_type === 'law') {
         fireOnce('first_law', {
           icon: '⊢', color: '#fbbf24',
           message: t('İlk yasa oluştu!', 'First law established!', 'Erstes Gesetz gegründet!', 'Première loi établie!', 'أول قانون أُسِّس!'),
-          sub: ev.description,
+          sub: ev.description ? translateEventDescription(ev.description, L) : undefined,
         }, ev.description);
       }
       if (ev.event_type === 'astronomy') {
         fireOnce('first_astronomy', {
           icon: '★', color: '#93c5fd',
           message: t('İlk astronomi keşfi!', 'First astronomy discovery!', 'Erste Astronomieentdeckung!', 'Première découverte astronomique!', 'أول اكتشاف فلكي!'),
-          sub: ev.description,
+          sub: ev.description ? translateEventDescription(ev.description, L) : undefined,
         }, ev.description);
       }
     }
