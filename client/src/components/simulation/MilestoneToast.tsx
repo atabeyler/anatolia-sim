@@ -160,6 +160,87 @@ export default function MilestoneToast() {
           push({ icon: '✦', color: '#ff8ab0', message: t('İkizler doğdu!', 'Twins born!', 'Zwillinge geboren!', 'Des jumeaux nés!', 'وُلد توأم!'), sub: ev.description });
         }
       }
+      if (ev.event_type === 'birth' && !ev.data?.is_twin) {
+        const key = `birth_${ev.data?.individual_id}`;
+        if (!fired.current.has(key)) {
+          fired.current.add(key);
+          const name = ev.data?.name ?? '?';
+          push({ icon: '✦', color: '#ff8ab0', message: t(`Doğum: ${name}`, `Born: ${name}`) }, ev.description);
+        }
+      }
+      if (ev.event_type === 'death') {
+        const key = `death_${ev.data?.individual_id}_${ev.sim_day}`;
+        if (!fired.current.has(key)) {
+          fired.current.add(key);
+          const name = ev.data?.name ?? '?';
+          const cause = ev.data?.cause ?? '';
+          push({ icon: '†', color: '#e05a5a', message: t(`Ölüm: ${name}`, `Died: ${name}`), sub: cause ? t(`Sebep: ${cause}`, `Cause: ${cause}`) : undefined }, ev.description);
+        }
+      }
+      if (ev.event_type === 'technology') {
+        const key = `tech_discovery_${ev.data?.tech_id ?? ''}_${ev.sim_day}`;
+        if (!fired.current.has(key)) {
+          fired.current.add(key);
+          const techName = ev.data?.tech_id ?? ev.data?.name ?? '';
+          push({ icon: '⚙', color: '#4ecb71', message: t(`Teknoloji: ${techName}`, `Tech: ${techName}`) }, ev.description);
+        }
+      }
+      if (ev.event_type === 'epidemic') {
+        const key = `epidemic_${ev.sim_day}`;
+        if (!fired.current.has(key)) {
+          fired.current.add(key);
+          push({ icon: '⊗', color: '#c084fc', message: t('Salgın hastalık!', 'Epidemic!'), sub: ev.description }, ev.description);
+        }
+      }
+      if (ev.event_type === 'weather' && (ev.importance ?? 0) >= 4) {
+        const key = `weather_${ev.sim_day}_${ev.data?.weather ?? ''}`;
+        if (!fired.current.has(key)) {
+          fired.current.add(key);
+          push({ icon: '≈', color: '#60a5fa', message: t('Hava olayı', 'Weather event'), sub: ev.description }, ev.description);
+        }
+      }
+      if (ev.event_type === 'belief' && (ev.importance ?? 0) >= 3) {
+        const key = `belief_${ev.sim_day}_${ev.data?.id ?? ev.data?.belief_id ?? ''}`;
+        if (!fired.current.has(key)) {
+          fired.current.add(key);
+          push({ icon: '◆', color: '#a78bfa', message: t('Yeni inanç', 'New belief'), sub: ev.description }, ev.description);
+        }
+      }
+      if (ev.event_type === 'ritual') {
+        const key = `ritual_${ev.sim_day}`;
+        if (!fired.current.has(key)) {
+          fired.current.add(key);
+          push({ icon: '◎', color: '#818cf8', message: t('Ritüel', 'Ritual emerged'), sub: ev.description }, ev.description);
+        }
+      }
+      if (ev.event_type === 'art' && (ev.importance ?? 0) >= 3) {
+        const key = `art_${ev.sim_day}_${ev.data?.id ?? ''}`;
+        if (!fired.current.has(key)) {
+          fired.current.add(key);
+          push({ icon: '◈', color: '#fb923c', message: t('Sanat eseri', 'Art created'), sub: ev.description }, ev.description);
+        }
+      }
+      if (ev.event_type === 'architecture' && (ev.importance ?? 0) >= 3) {
+        const key = `arch_${ev.sim_day}_${ev.data?.id ?? ''}`;
+        if (!fired.current.has(key)) {
+          fired.current.add(key);
+          push({ icon: '▣', color: '#94a3b8', message: t('Yapı inşa edildi', 'Structure built'), sub: ev.description }, ev.description);
+        }
+      }
+      if (ev.event_type === 'law' && (ev.importance ?? 0) >= 3) {
+        const key = `law_${ev.sim_day}_${ev.data?.norm_id ?? ''}`;
+        if (!fired.current.has(key)) {
+          fired.current.add(key);
+          push({ icon: '⊢', color: '#fbbf24', message: t('Yasa oluştu', 'Law established'), sub: ev.description }, ev.description);
+        }
+      }
+      if (ev.event_type === 'astronomy' && (ev.importance ?? 0) >= 3) {
+        const key = `astro_${ev.sim_day}`;
+        if (!fired.current.has(key)) {
+          fired.current.add(key);
+          push({ icon: '★', color: '#93c5fd', message: t('Astronomi keşfi', 'Astronomy discovery'), sub: ev.description }, ev.description);
+        }
+      }
     }
   }, [events.length]);
 
