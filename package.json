@@ -1,6 +1,6 @@
 {
   "name": "anatolia-sim",
-  "version": "1.6.84",
+  "version": "1.6.85",
   "private": true,
   "main": "desktop/main.mjs",
   "engines": {
@@ -22,7 +22,7 @@
   "build": {
     "appId": "com.atabeylers.anatoliasim",
     "productName": "Anatolia Sim",
-    "copyright": "Copyright \u00a9 2024 Atabeyler",
+    "copyright": "Copyright © 2024 Atabeyler",
     "files": [
       "desktop/**/*",
       "package.json",

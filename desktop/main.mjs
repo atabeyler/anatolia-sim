@@ -367,6 +367,17 @@ function createMainWindow() {
     return { action: 'deny' };
   });
 
+  // F5 and Ctrl+R / Cmd+R reload support (not available by default without a menu)
+  mainWindow.webContents.on('before-input-event', (_event, input) => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    const isReload = input.type === 'keyDown' && (
+      input.key === 'F5' ||
+      (input.control && input.key === 'r') ||
+      (input.meta && input.key === 'r')
+    );
+    if (isReload) mainWindow.reload();
+  });
+
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 

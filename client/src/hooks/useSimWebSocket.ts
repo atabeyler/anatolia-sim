@@ -66,9 +66,11 @@ export function useSimWebSocket(simId: string | null) {
 
       socket.onerror = (err) => { console.debug('[WS] socket error:', err); };
 
-      socket.onclose = () => {
+      socket.onclose = (event) => {
         isFirstConnect.current = false;
         if (unmounted.current) return;
+        // 1008 = simulation not found / policy violation — stop reconnecting
+        if (event.code === 1008) return;
         // Reconnect with capped exponential backoff (3s → 6s → 12s → 30s max)
         const delay = reconnectDelay.current;
         reconnectDelay.current = Math.min(delay * 2, 30000);

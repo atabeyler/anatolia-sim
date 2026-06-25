@@ -266,6 +266,7 @@ export default function SimulationPage() {
   const [speedBusy, setSpeedBusy] = useState(false);
   const [endModal, setEndModal] = useState<{ mode: 'natural' | 'manual'; reason?: string } | null>(null);
   const [ffTarget, setFfTarget] = useState('');
+  const [simNotFound, setSimNotFound] = useState(false);
   const [introTarget, setIntroTarget] = useState<{ lat: number; lon: number } | null>(() => {
     const navTarget = (location.state as any)?.introTarget;
     if (navTarget && Number.isFinite(navTarget.lat) && Number.isFinite(navTarget.lon)) {
@@ -372,20 +373,32 @@ export default function SimulationPage() {
     // Clear previous sim's live data, then load this sim's persisted history
     resetLiveState();
     setIndividuals([]);
+    setSimNotFound(false);
     const headers = { Authorization: `Bearer ${accessToken}` };
     let cancelled = false;
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+    const stopPolling = () => {
+      cancelled = true;
+      if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+      setSimNotFound(true);
+    };
 
     const loadPopulation = () => {
       axios.get(`/api/simulations/${simId}/population?alive=true&limit=500`, { headers })
         .then(r => {
           if (!cancelled) setIndividuals(r.data);
         })
-        .catch(() => {});
+        .catch((err: any) => {
+          if (!cancelled && err?.response?.status === 404) stopPolling();
+        });
     };
 
     axios.get(`/api/simulations/${simId}`, { headers })
       .then(r => { setCurrentSim(r.data); setSpeed(r.data.speed_multiplier ?? 1); })
-      .catch(() => {})
+      .catch((err: any) => {
+        if (err?.response?.status === 404) stopPolling();
+      })
       .finally(() => setLoading(false));
     // Load recent historical events from DB so the event log isn't empty
     axios.get(`/api/simulations/${simId}/events?limit=100`, { headers })
@@ -394,11 +407,11 @@ export default function SimulationPage() {
 
     // Fetch immediately so population is visible on first paint, then keep it fresh.
     loadPopulation();
-    const interval = setInterval(loadPopulation, 3000);
+    pollInterval = setInterval(loadPopulation, 3000);
     return () => {
       cancelled = true;
-      clearInterval(interval);
-    }
+      if (pollInterval) clearInterval(pollInterval);
+    };
   }, [simId, accessToken]);
 
   async function toggleSim() {
@@ -515,6 +528,21 @@ export default function SimulationPage() {
 
   const sidebarW = sidebarExpanded ? 180 : 44;
   const rightPanelW = rightPanelExpanded ? 120 : 36;
+
+  if (simNotFound) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100vw', height: '100vh', background: '#040412', fontFamily: 'Share Tech Mono, monospace', gap: 16 }}>
+        <div style={{ fontSize: 16, color: '#e05a5a', letterSpacing: '0.08em' }}>
+          {text(lang as LangCode, { tr: 'Simülasyon bulunamadı veya silinmiş.', en: 'Simulation not found or deleted.', de: 'Simulation nicht gefunden.', fr: 'Simulation introuvable.', ar: 'المحاكاة غير موجودة أو محذوفة.' })}
+        </div>
+        <button
+          onClick={() => navigate('/')}
+          style={{ padding: '8px 24px', background: 'rgba(0,232,135,0.12)', border: '1px solid #00e887', color: '#00e887', cursor: 'pointer', fontFamily: 'Share Tech Mono, monospace', fontSize: 14, letterSpacing: '0.1em' }}>
+          {text(lang as LangCode, { tr: '← Dashboard\'a Dön', en: '← Back to Dashboard', de: '← Zurück', fr: '← Tableau de bord', ar: '← لوحة التحكم' })}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', overflow: 'hidden', background: '#000', color: '#fff', fontFamily: 'Share Tech Mono, monospace' }}>
