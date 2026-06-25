@@ -1,6 +1,6 @@
 {
   "name": "anatolia-sim-server",
-  "version": "1.6.81",
+  "version": "1.6.82",
   "type": "module",
   "main": "src/index.js",
   "scripts": {

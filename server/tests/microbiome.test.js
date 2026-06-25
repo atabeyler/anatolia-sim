@@ -38,6 +38,7 @@ describe('microbiome infection dedupe', () => {
     processMicrobiomeTick([individual], { biome: 'mediterranean', season: 'spring' }, 200);
 
     expect(individual.infections.map(i => i.pathogen_id).sort()).toEqual(['fungal_skin', 'respiratory_common']);
-    expect(individual.infections.find(i => i.pathogen_id === 'respiratory_common').days_remaining).toBe(9);
+    // After dedupe (keeps higher days_remaining=9) + one tick decrement → 8
+    expect(individual.infections.find(i => i.pathogen_id === 'respiratory_common').days_remaining).toBe(8);
   });
 });
