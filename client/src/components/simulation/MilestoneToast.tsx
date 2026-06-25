@@ -42,33 +42,32 @@ function ToastItem({ toast }: { toast: Toast }) {
   );
 }
 
-const POP_MILESTONES = [10, 25, 50, 100, 250, 500, 1000];
 const TOAST_DURATION = 5000;
 
 export default function MilestoneToast() {
   const { stats, events, lang, addMoment, currentSim, milestones } = useSimStore();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const fired = useRef<Set<string>>(new Set());
-  const prevEventCount = useRef(-1); // -1 = initial load not yet seen
+  const prevEventCount = useRef(-1);
   const simIdRef = useRef<string | null>(null);
 
-  // When simId becomes available, load persisted fired-set and mark current events as historical.
-  // This runs after the async DB fetch settles, preventing historical events from triggering toasts.
+  const L = lang as LangCode;
+  const t = (tr: string, en: string, de = en, fr = en, ar = en) => text(L, { tr, en, de, fr, ar });
+
   useEffect(() => {
     if (!currentSim?.id) return;
-    if (simIdRef.current === currentSim.id) return; // already initialized for this sim
+    if (simIdRef.current === currentSim.id) return;
     simIdRef.current = currentSim.id;
     try {
       const saved = JSON.parse(sessionStorage.getItem(`milestones_${currentSim.id}`) ?? '[]');
       fired.current = new Set(saved);
     } catch { fired.current = new Set(); }
-    // Stamp current event count so historical events are skipped
     prevEventCount.current = events.length;
   }, [currentSim?.id, events.length]);
 
-  function push(t: Omit<Toast, 'id'>, momentTitle?: string) {
+  function push(toast: Omit<Toast, 'id'>, momentTitle?: string) {
     const id = Math.random().toString(36).slice(2);
-    setToasts(prev => [...prev.slice(-2), { ...t, id }]);
+    setToasts(prev => [...prev.slice(-2), { ...toast, id }]);
     setTimeout(() => setToasts(prev => prev.filter(x => x.id !== id)), TOAST_DURATION);
     if (simIdRef.current) {
       try { sessionStorage.setItem(`milestones_${simIdRef.current}`, JSON.stringify([...fired.current])); } catch {}
@@ -77,51 +76,48 @@ export default function MilestoneToast() {
       addMoment({
         day: stats.day,
         year: stats.year,
-        icon: t.icon,
-        title: momentTitle ?? t.message,
-        description: t.sub,
-        color: t.color,
+        icon: toast.icon,
+        title: momentTitle ?? toast.message,
+        description: toast.sub,
+        color: toast.color,
       });
     }
   }
 
-  const t = (tr: string, en: string, de = en, fr = en, ar = en) => text(lang as LangCode, { tr, en, de, fr, ar });
+  function fireOnce(key: string, toast: Omit<Toast, 'id'>, momentTitle?: string) {
+    if (fired.current.has(key)) return;
+    fired.current.add(key);
+    push(toast, momentTitle);
+  }
 
-  // Backend milestone events (from WebSocket milestone messages)
+  // Backend milestone events (from WebSocket — server already curates these)
   const prevMilestoneCount = useRef(0);
   useEffect(() => {
     if (milestones.length <= prevMilestoneCount.current) { prevMilestoneCount.current = milestones.length; return; }
-    const newest = milestones[0]; // addMilestone prepends
+    const newest = milestones[0];
     prevMilestoneCount.current = milestones.length;
-    if (!newest || fired.current.has(`backend_${newest.key}_${newest.day}`)) return;
-    fired.current.add(`backend_${newest.key}_${newest.day}`);
-    push({ icon: newest.icon, color: '#fbbf24', message: newest.description }, newest.description);
+    if (!newest) return;
+    fireOnce(`backend_${newest.key}`, { icon: newest.icon, color: '#fbbf24', message: newest.description }, newest.description);
   }, [milestones.length]);
 
-  // Population milestones
+  // First time population reaches 10
   useEffect(() => {
     if (!stats || !simIdRef.current) return;
-    for (const n of POP_MILESTONES) {
-      const key = `pop_${n}`;
-      if (!fired.current.has(key) && stats.population >= n) {
-        fired.current.add(key);
-        push({ icon: '👥', color: '#4f6ef7', message: t(`Nüfus ${n}'e ulaştı!`, `Population reached ${n}!`, `Bevölkerung erreicht ${n}!`, `Population atteint ${n}!`, `وصل السكان إلى ${n}!`) });
-      }
+    if (stats.population >= 10) {
+      fireOnce('first_pop', { icon: '👥', color: '#4f6ef7', message: t('Topluluk büyüyor!', 'Community is growing!', 'Gemeinschaft wächst!', 'La communauté grandit!', 'المجتمع ينمو!') });
     }
   }, [stats?.population]);
 
-  // First discovery beyond defaults (foraging + stone_tools = 2)
+  // First technology
   useEffect(() => {
-    if (!stats || !simIdRef.current || fired.current.has('first_tech')) return;
+    if (!stats || !simIdRef.current) return;
     if ((stats.technologies ?? 0) > 2) {
-      fired.current.add('first_tech');
-      push({ icon: '⚙', color: '#4ecb71', message: t('İlk teknoloji keşfedildi!', 'First technology discovered!', 'Erste Technologie entdeckt!', 'Première technologie découverte!', 'اكتُشفت أول تقنية!') });
+      fireOnce('first_tech', { icon: '⚙', color: '#4ecb71', message: t('İlk teknoloji keşfedildi!', 'First technology discovered!', 'Erste Technologie entdeckt!', 'Première technologie découverte!', 'اكتُشفت أول تقنية!') });
     }
   }, [stats?.technologies]);
 
-  // New events: disasters, significant language stages, births, deaths
+  // Event-based first-only notifications
   useEffect(() => {
-    // -1 means simId not yet loaded; skip until initialized
     if (prevEventCount.current === -1) return;
     const newCount = events.length;
     if (newCount <= prevEventCount.current) { prevEventCount.current = newCount; return; }
@@ -129,84 +125,84 @@ export default function MilestoneToast() {
     prevEventCount.current = newCount;
 
     for (const ev of newEvents) {
-      if (ev.event_type === 'disaster') {
-        const key = `disaster_${ev.sim_day}`;
-        if (!fired.current.has(key)) {
-          fired.current.add(key);
-          push({ icon: '⚠', color: '#f97316', message: t('Doğal afet!', 'Natural disaster!', 'Naturkatastrophe!', 'Catastrophe naturelle!', 'كارثة طبيعية!'), sub: ev.description }, ev.description);
-        }
-      }
-      if (ev.event_type === 'language' && (ev.data?.stage ?? 0) >= 3) {
-        const key = `lang_stage_${ev.data?.stage}`;
-        if (!fired.current.has(key)) {
-          fired.current.add(key);
-          const stageName = ev.data?.stage_name ?? `stage ${ev.data?.stage}`;
-          push({ icon: '◆', color: '#00d4ff', message: t(`Dil evrimi: ${stageName}`, `Language: ${stageName}`, `Sprache: ${stageName}`, `Langue: ${stageName}`, `اللغة: ${stageName}`) });
-        }
+      if (ev.event_type === 'birth' && !ev.data?.is_twin) {
+        const name = ev.data?.name ?? '?';
+        fireOnce('first_birth', {
+          icon: '✦', color: '#ff8ab0',
+          message: t(`İlk doğum: ${name}`, `First birth: ${name}`, `Erste Geburt: ${name}`, `Première naissance: ${name}`, `أول مولود: ${name}`),
+        }, ev.description);
       }
       if (ev.event_type === 'birth' && ev.data?.is_twin) {
-        const key = `twin_${ev.sim_day}_${ev.data?.individual_id}`;
-        if (!fired.current.has(key)) {
-          fired.current.add(key);
-          push({ icon: '✦', color: '#ff8ab0', message: t('İkizler doğdu!', 'Twins born!', 'Zwillinge geboren!', 'Des jumeaux nés!', 'وُلد توأم!'), sub: ev.description });
-        }
-      }
-      if (ev.event_type === 'birth' && !ev.data?.is_twin) {
-        if (!fired.current.has('first_birth')) {
-          fired.current.add('first_birth');
-          const name = ev.data?.name ?? '?';
-          push({ icon: '✦', color: '#ff8ab0', message: t(`İlk doğum: ${name}`, `First birth: ${name}`, `Erste Geburt: ${name}`, `Première naissance: ${name}`, `أول مولود: ${name}`) }, ev.description);
-        }
+        fireOnce('first_twin', {
+          icon: '✦', color: '#ff8ab0',
+          message: t('İlk ikizler doğdu!', 'First twins born!', 'Erste Zwillinge geboren!', 'Premiers jumeaux nés!', 'وُلد أول توأم!'),
+          sub: ev.description,
+        });
       }
       if (ev.event_type === 'death') {
-        if (!fired.current.has('first_death')) {
-          fired.current.add('first_death');
-          const name = ev.data?.name ?? '?';
-          const cause = ev.data?.cause ?? '';
-          push({ icon: '†', color: '#e05a5a', message: t(`İlk ölüm: ${name}`, `First death: ${name}`, `Erster Todesfall: ${name}`, `Premier décès: ${name}`, `أول وفاة: ${name}`), sub: cause ? t(`Sebep: ${cause}`, `Cause: ${cause}`, `Ursache: ${cause}`, `Cause: ${cause}`, `السبب: ${cause}`) : undefined }, ev.description);
-        }
+        const name = ev.data?.name ?? '?';
+        const cause = ev.data?.cause ?? '';
+        fireOnce('first_death', {
+          icon: '†', color: '#e05a5a',
+          message: t(`İlk ölüm: ${name}`, `First death: ${name}`, `Erster Todesfall: ${name}`, `Premier décès: ${name}`, `أول وفاة: ${name}`),
+          sub: cause ? t(`Sebep: ${cause}`, `Cause: ${cause}`, `Ursache: ${cause}`, `Cause: ${cause}`, `السبب: ${cause}`) : undefined,
+        }, ev.description);
+      }
+      if (ev.event_type === 'disaster') {
+        fireOnce('first_disaster', {
+          icon: '⚠', color: '#f97316',
+          message: t('İlk doğal afet!', 'First natural disaster!', 'Erste Naturkatastrophe!', 'Première catastrophe naturelle!', 'أول كارثة طبيعية!'),
+          sub: ev.description,
+        }, ev.description);
       }
       if (ev.event_type === 'epidemic') {
-        const key = `epidemic_${ev.sim_day}`;
-        if (!fired.current.has(key)) {
-          fired.current.add(key);
-          push({ icon: '⊗', color: '#c084fc', message: t('Salgın hastalık!', 'Epidemic!', 'Seuche!', 'Épidémie!', 'وباء!'), sub: ev.description }, ev.description);
-        }
+        fireOnce('first_epidemic', {
+          icon: '⊗', color: '#c084fc',
+          message: t('İlk salgın hastalık!', 'First epidemic!', 'Erste Seuche!', 'Première épidémie!', 'أول وباء!'),
+          sub: ev.description,
+        }, ev.description);
       }
-      if (ev.event_type === 'belief' && (ev.importance ?? 0) >= 4) {
-        const key = `belief_${ev.sim_day}_${ev.data?.id ?? ev.data?.belief_id ?? ''}`;
-        if (!fired.current.has(key)) {
-          fired.current.add(key);
-          push({ icon: '◆', color: '#a78bfa', message: t('Yeni inanç', 'New belief', 'Neuer Glaube', 'Nouvelle croyance', 'معتقد جديد'), sub: ev.description }, ev.description);
-        }
+      if (ev.event_type === 'language') {
+        const stageName = ev.data?.stage_name ?? `stage ${ev.data?.stage}`;
+        fireOnce('first_language', {
+          icon: '◆', color: '#00d4ff',
+          message: t(`İlk dil evrimi: ${stageName}`, `First language: ${stageName}`, `Erste Sprache: ${stageName}`, `Première langue: ${stageName}`, `أول لغة: ${stageName}`),
+        });
       }
-      if (ev.event_type === 'art' && (ev.importance ?? 0) >= 4) {
-        const key = `art_${ev.sim_day}_${ev.data?.id ?? ''}`;
-        if (!fired.current.has(key)) {
-          fired.current.add(key);
-          push({ icon: '◈', color: '#fb923c', message: t('Sanat eseri', 'Art created', 'Kunstwerk', "Œuvre d'art", 'عمل فني'), sub: ev.description }, ev.description);
-        }
+      if (ev.event_type === 'belief') {
+        fireOnce('first_belief', {
+          icon: '◆', color: '#a78bfa',
+          message: t('İlk inanç oluştu', 'First belief formed', 'Erster Glaube geformt', 'Première croyance formée', 'تشكّل أول معتقد'),
+          sub: ev.description,
+        }, ev.description);
       }
-      if (ev.event_type === 'architecture' && (ev.importance ?? 0) >= 4) {
-        const key = `arch_${ev.sim_day}_${ev.data?.id ?? ''}`;
-        if (!fired.current.has(key)) {
-          fired.current.add(key);
-          push({ icon: '▣', color: '#94a3b8', message: t('Yapı inşa edildi', 'Structure built', 'Bauwerk errichtet', 'Structure construite', 'مبنى شيد'), sub: ev.description }, ev.description);
-        }
+      if (ev.event_type === 'art') {
+        fireOnce('first_art', {
+          icon: '◈', color: '#fb923c',
+          message: t('İlk sanat eseri!', 'First art created!', 'Erstes Kunstwerk!', "Première œuvre d'art!", 'أول عمل فني!'),
+          sub: ev.description,
+        }, ev.description);
       }
-      if (ev.event_type === 'law' && (ev.importance ?? 0) >= 4) {
-        const key = `law_${ev.sim_day}_${ev.data?.norm_id ?? ''}`;
-        if (!fired.current.has(key)) {
-          fired.current.add(key);
-          push({ icon: '⊢', color: '#fbbf24', message: t('Yasa oluştu', 'Law established', 'Gesetz gegründet', 'Loi établie', 'قانون أُسس'), sub: ev.description }, ev.description);
-        }
+      if (ev.event_type === 'architecture') {
+        fireOnce('first_architecture', {
+          icon: '▣', color: '#94a3b8',
+          message: t('İlk yapı inşa edildi!', 'First structure built!', 'Erstes Bauwerk errichtet!', 'Première structure construite!', 'أول مبنى شُيِّد!'),
+          sub: ev.description,
+        }, ev.description);
       }
-      if (ev.event_type === 'astronomy' && (ev.importance ?? 0) >= 4) {
-        const key = `astro_${ev.sim_day}`;
-        if (!fired.current.has(key)) {
-          fired.current.add(key);
-          push({ icon: '★', color: '#93c5fd', message: t('Astronomi keşfi', 'Astronomy discovery', 'Astronomieentdeckung', 'Découverte astronomique', 'اكتشاف فلكي'), sub: ev.description }, ev.description);
-        }
+      if (ev.event_type === 'law') {
+        fireOnce('first_law', {
+          icon: '⊢', color: '#fbbf24',
+          message: t('İlk yasa oluştu!', 'First law established!', 'Erstes Gesetz gegründet!', 'Première loi établie!', 'أول قانون أُسِّس!'),
+          sub: ev.description,
+        }, ev.description);
+      }
+      if (ev.event_type === 'astronomy') {
+        fireOnce('first_astronomy', {
+          icon: '★', color: '#93c5fd',
+          message: t('İlk astronomi keşfi!', 'First astronomy discovery!', 'Erste Astronomieentdeckung!', 'Première découverte astronomique!', 'أول اكتشاف فلكي!'),
+          sub: ev.description,
+        }, ev.description);
       }
     }
   }, [events.length]);
