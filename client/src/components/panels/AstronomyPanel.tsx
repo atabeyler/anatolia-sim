@@ -23,8 +23,8 @@ const OBSERVABLES: { tr: string; en: string; de: string; fr: string; ar: string 
 export default function AstronomyPanel() {
   const { events, stats, lang } = useSimStore();
 
-  const astroEvents = events.filter(e => e.event_type === 'celestial_observation' || e.event_type === 'astronomy_discovery');
-  const discoveries = events.filter(e => e.event_type === 'astronomy_discovery');
+  const astroEvents = events.filter(e => e.event_type === 'astronomy');
+  const discoveries = astroEvents.filter(e => e.data?.type === 'astronomy_discovery');
 
   return (
     <DetailPanel panelId="astronomy" title="Astronomy" titleTr="Astronomi">
@@ -44,7 +44,7 @@ export default function AstronomyPanel() {
         </h4>
         <div className="space-y-1.5">
           {KNOWLEDGE_ITEMS.map(item => {
-            const discovered = discoveries.some(e => (e as any).event_id === item.id || e.description?.toLowerCase().includes(item.id.replace(/_/g, ' ')));
+            const discovered = discoveries.some(e => e.data?.knowledge_id === item.id || e.description?.toLowerCase().includes(item.id.replace(/_/g, ' ')));
             return (
               <div
                 key={item.id}
