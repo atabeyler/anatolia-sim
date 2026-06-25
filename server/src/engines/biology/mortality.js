@@ -1,5 +1,6 @@
 import { getAge, getLifeStage } from './individual.js';
 import { computeEpigeneticAge } from '../epigenetics/epigeneticsEngine.js';
+import { PATHOGEN_TYPES } from '../microbiome/microbiomeEngine.js';
 
 const DEATH_CAUSES = {
   INFECTION: 'infection', TRAUMA: 'trauma', STARVATION: 'starvation',
@@ -106,7 +107,9 @@ function determineCause(individual, currentDay, environment) {
   if (individual._inWater)                                          return DEATH_CAUSES.DROWNING;
   if ((health?.hydration ?? 1) < 0.1)                              return DEATH_CAUSES.DEHYDRATION;
   if ((health?.calories  ?? 1) < 0.05)                             return DEATH_CAUSES.STARVATION;
-  if (individual.infections?.length > 0)                            return DEATH_CAUSES.INFECTION;
+  // Only attribute death to infection if a genuinely lethal pathogen is active (base_mortality >= 0.05).
+  // Mild infections (fungal_skin, respiratory_common) should not override the actual cause.
+  if (individual.infections?.some(inf => (PATHOGEN_TYPES[inf.pathogen_id]?.base_mortality ?? 0) >= 0.05)) return DEATH_CAUSES.INFECTION;
   if (age >= (phenotype?.max_lifespan ?? 90) - 5)                  return DEATH_CAUSES.OLD_AGE;
   // Founders are more alert and capable of evading predators
   const predatorThreshold = isFounder ? 0.15 : 0.3;
