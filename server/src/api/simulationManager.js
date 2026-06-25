@@ -137,22 +137,22 @@ class SimulationManager {
     };
 
     // Persist deaths immediately so WitnessPanel shows correct dead state without waiting for checkpoint.
-    // Fire-and-forget batch UPDATE — non-critical if it fails (checkpoint will catch up).
+    // Retried up to 3 times — checkpoint reconciliation is the final safety net if all retries fail.
     engine.onDeath = (dead) => {
       if (dead.length === 0) return;
       const deathPersistStart = Date.now();
       const values = dead.flatMap(d => [d.id, d.death_day ?? null, d.death_cause ?? null]);
       const rows = dead.map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`).join(', ');
-      query(
-        `UPDATE individuals SET alive = false, death_day = v.dd::integer, death_cause = v.dc
+      withRetry(() => query(
+        `UPDATE individuals SET alive = false, is_dead = true, death_day = v.dd::integer, death_cause = v.dc
          FROM (VALUES ${rows}) AS v(id, dd, dc)
          WHERE individuals.id = v.id::uuid`,
         values
-      ).then(() => {
+      )).then(() => {
         engine._runtimeDiagnostics.last_death_persist_ms = Date.now() - deathPersistStart;
       }).catch(err => {
         engine._runtimeDiagnostics.death_persist_error_count++;
-        console.warn('[onDeath] persist error:', err.message);
+        console.warn('[onDeath] persist error after retries:', err.message);
       });
       // Free large heap objects from dead individuals — they stay in population Map
       // for parent-id lookups and posthumous births. Keep genetic/phenotype data:
