@@ -131,16 +131,28 @@ function determineCause(individual, currentDay, environment) {
   const toughness = ((phenotype?.endurance ?? 0.5) + (phenotype?.physical_strength ?? 0.5)) / 2;
   const traumaWeight = Math.max(0.05, 0.30 - (toughness - 0.5) * 0.20);
 
-  if (age < 5)  return DEATH_CAUSES.INFECTION;
-  if (age < 15) return Math.random() < 0.5 ? DEATH_CAUSES.INFECTION : DEATH_CAUSES.TRAUMA;
+  const hasInfection = (individual.infections?.length ?? 0) > 0;
+
+  // Under-5: infection only if actually infected; otherwise trauma/genetic
+  if (age < 5) {
+    if (hasInfection) return DEATH_CAUSES.INFECTION;
+    return Math.random() < 0.55 ? DEATH_CAUSES.TRAUMA : DEATH_CAUSES.GENETIC;
+  }
+  // 5-15: infection only if infected
+  if (age < 15) {
+    if (hasInfection && Math.random() < 0.5) return DEATH_CAUSES.INFECTION;
+    return Math.random() < 0.65 ? DEATH_CAUSES.TRAUMA : DEATH_CAUSES.GENETIC;
+  }
 
   // Founders are constitutionally stronger — lower infection and trauma weights
   const founderFactor = isFounder ? 0.55 : 1.0;
   const adjustedTrauma = traumaWeight * founderFactor;
+  // Infection only enters the probability if the individual actually has an active infection
+  const infectionWeight = hasInfection ? (isFounder ? 0.28 : 0.45) : 0;
 
   if (age < 45) {
     const r = Math.random();
-    const infectionCut  = isFounder ? 0.28 : 0.45;
+    const infectionCut  = infectionWeight;
     const traumaCut     = infectionCut + adjustedTrauma;
     const birthCompCut  = traumaCut + birthCompChance;
     const geneticCut    = birthCompCut + geneticChance;
@@ -152,7 +164,7 @@ function determineCause(individual, currentDay, environment) {
   }
   // 45+
   const r = Math.random();
-  const infectionCut = isFounder ? 0.28 : 0.45;
+  const infectionCut = infectionWeight;
   const oldAgeCut    = infectionCut + 0.20;
   const traumaCut    = oldAgeCut + adjustedTrauma;
   const geneticCut   = traumaCut + geneticChance;
