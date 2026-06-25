@@ -128,6 +128,14 @@ export const CAUSE_LABELS: Record<string, TranslationMap> = {
   trauma:              { tr: 'travma',                 en: 'trauma',              de: 'Trauma',               fr: 'traumatisme',         ar: 'صدمة' },
   birth_complications: { tr: 'doğum komplikasyonu',   en: 'birth complications', de: 'Geburtskomplikationen',fr: 'complications à la naissance', ar: 'مضاعفات الولادة' },
   conflict:            { tr: 'çatışma',               en: 'conflict',            de: 'Konflikt',             fr: 'conflit',             ar: 'نزاع' },
+  flood:               { tr: 'sel felaketi',           en: 'flood',               de: 'Überschwemmung',       fr: 'inondation',          ar: 'فيضان' },
+  earthquake:          { tr: 'deprem',                 en: 'earthquake',          de: 'Erdbeben',             fr: 'séisme',              ar: 'زلزال' },
+  drought:             { tr: 'kuraklık',               en: 'drought',             de: 'Dürre',                fr: 'sécheresse',          ar: 'جفاف' },
+  fire:                { tr: 'yangın',                 en: 'fire',                de: 'Feuer',                fr: 'incendie',            ar: 'حريق' },
+  volcano:             { tr: 'yanardağ patlaması',     en: 'volcanic eruption',   de: 'Vulkanausbruch',       fr: 'éruption volcanique', ar: 'ثوران بركاني' },
+  storm:               { tr: 'fırtına',               en: 'storm',               de: 'Sturm',                fr: 'tempête',             ar: 'عاصفة' },
+  tsunami:             { tr: 'tsunami',               en: 'tsunami',             de: 'Tsunami',              fr: 'tsunami',             ar: 'تسونامي' },
+  landslide:           { tr: 'heyelan',               en: 'landslide',           de: 'Erdrutsch',            fr: 'glissement de terrain', ar: 'انهيار أرضي' },
   unknown:             { tr: 'bilinmeyen neden',       en: 'unknown cause',       de: 'unbekannte Ursache',   fr: 'cause inconnue',      ar: 'سبب مجهول' },
 };
 
