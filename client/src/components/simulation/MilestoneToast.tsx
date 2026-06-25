@@ -166,14 +166,6 @@ export default function MilestoneToast() {
           push({ icon: '†', color: '#e05a5a', message: t(`İlk ölüm: ${name}`, `First death: ${name}`, `Erster Todesfall: ${name}`, `Premier décès: ${name}`, `أول وفاة: ${name}`), sub: cause ? t(`Sebep: ${cause}`, `Cause: ${cause}`, `Ursache: ${cause}`, `Cause: ${cause}`, `السبب: ${cause}`) : undefined }, ev.description);
         }
       }
-      if (ev.event_type === 'technology') {
-        const key = `tech_discovery_${ev.data?.tech_id ?? ''}_${ev.sim_day}`;
-        if (!fired.current.has(key)) {
-          fired.current.add(key);
-          const techName = ev.data?.tech_id ?? ev.data?.name ?? '';
-          push({ icon: '⚙', color: '#4ecb71', message: t(`Teknoloji: ${techName}`, `Tech: ${techName}`, `Technologie: ${techName}`, `Technologie: ${techName}`, `تقنية: ${techName}`) }, ev.description);
-        }
-      }
       if (ev.event_type === 'epidemic') {
         const key = `epidemic_${ev.sim_day}`;
         if (!fired.current.has(key)) {
@@ -181,49 +173,35 @@ export default function MilestoneToast() {
           push({ icon: '⊗', color: '#c084fc', message: t('Salgın hastalık!', 'Epidemic!', 'Seuche!', 'Épidémie!', 'وباء!'), sub: ev.description }, ev.description);
         }
       }
-      if (ev.event_type === 'weather' && (ev.importance ?? 0) >= 4) {
-        const key = `weather_${ev.sim_day}_${ev.data?.weather ?? ''}`;
-        if (!fired.current.has(key)) {
-          fired.current.add(key);
-          push({ icon: '≈', color: '#60a5fa', message: t('Hava olayı', 'Weather event', 'Wetterereignis', 'Événement météo', 'حدث مناخي'), sub: ev.description }, ev.description);
-        }
-      }
-      if (ev.event_type === 'belief' && (ev.importance ?? 0) >= 3) {
+      if (ev.event_type === 'belief' && (ev.importance ?? 0) >= 4) {
         const key = `belief_${ev.sim_day}_${ev.data?.id ?? ev.data?.belief_id ?? ''}`;
         if (!fired.current.has(key)) {
           fired.current.add(key);
           push({ icon: '◆', color: '#a78bfa', message: t('Yeni inanç', 'New belief', 'Neuer Glaube', 'Nouvelle croyance', 'معتقد جديد'), sub: ev.description }, ev.description);
         }
       }
-      if (ev.event_type === 'ritual') {
-        const key = `ritual_${ev.sim_day}`;
-        if (!fired.current.has(key)) {
-          fired.current.add(key);
-          push({ icon: '◎', color: '#818cf8', message: t('Ritüel', 'Ritual emerged', 'Ritual entstanden', 'Rituel apparu', 'ظهر طقس'), sub: ev.description }, ev.description);
-        }
-      }
-      if (ev.event_type === 'art' && (ev.importance ?? 0) >= 3) {
+      if (ev.event_type === 'art' && (ev.importance ?? 0) >= 4) {
         const key = `art_${ev.sim_day}_${ev.data?.id ?? ''}`;
         if (!fired.current.has(key)) {
           fired.current.add(key);
           push({ icon: '◈', color: '#fb923c', message: t('Sanat eseri', 'Art created', 'Kunstwerk', "Œuvre d'art", 'عمل فني'), sub: ev.description }, ev.description);
         }
       }
-      if (ev.event_type === 'architecture' && (ev.importance ?? 0) >= 3) {
+      if (ev.event_type === 'architecture' && (ev.importance ?? 0) >= 4) {
         const key = `arch_${ev.sim_day}_${ev.data?.id ?? ''}`;
         if (!fired.current.has(key)) {
           fired.current.add(key);
           push({ icon: '▣', color: '#94a3b8', message: t('Yapı inşa edildi', 'Structure built', 'Bauwerk errichtet', 'Structure construite', 'مبنى شيد'), sub: ev.description }, ev.description);
         }
       }
-      if (ev.event_type === 'law' && (ev.importance ?? 0) >= 3) {
+      if (ev.event_type === 'law' && (ev.importance ?? 0) >= 4) {
         const key = `law_${ev.sim_day}_${ev.data?.norm_id ?? ''}`;
         if (!fired.current.has(key)) {
           fired.current.add(key);
           push({ icon: '⊢', color: '#fbbf24', message: t('Yasa oluştu', 'Law established', 'Gesetz gegründet', 'Loi établie', 'قانون أُسس'), sub: ev.description }, ev.description);
         }
       }
-      if (ev.event_type === 'astronomy' && (ev.importance ?? 0) >= 3) {
+      if (ev.event_type === 'astronomy' && (ev.importance ?? 0) >= 4) {
         const key = `astro_${ev.sim_day}`;
         if (!fired.current.has(key)) {
           fired.current.add(key);
