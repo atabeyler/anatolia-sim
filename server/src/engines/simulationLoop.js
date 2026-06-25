@@ -107,6 +107,10 @@ export class SimulationEngine {
     // BUG-05: cached word count — expensive O(n×v) calc, updated only at checkpoints
     this._wordCountCache = 0;
     this._wordCountCacheDay = -1;
+
+    // Diagnostic system: startup validation results + runtime error circular buffer (max 20)
+    this._startupLog = null;
+    this._errorLog = [];
   }
 
   destroy() {
@@ -165,8 +169,31 @@ export class SimulationEngine {
     this._deathStats = ds;
   }
 
+  _runStartupValidation() {
+    const checks = [];
+    const check = (name, fn) => {
+      try { const detail = fn(); checks.push({ ok: true, name, detail: detail ?? '' }); }
+      catch (e) { checks.push({ ok: false, name, detail: e.message }); }
+    };
+    check('PATHOGEN_TYPES', () => `${Object.keys(PATHOGEN_TYPES).length} patogen yüklendi`);
+    check('population',     () => `toplam ${this.population.size}, yaşayan ${this._aliveIds.size}`);
+    check('world_state',    () => {
+      if (!this.worldState?.biome) throw new Error('biome eksik');
+      return `biome=${this.worldState.biome}, mevsim=${this.worldState.season ?? '?'}`;
+    });
+    check('sim_day',        () => `gün ${this.currentDay} (yıl ${Math.floor(this.currentDay / 365)})`);
+    this._startupLog = { ts: Date.now(), day: this.currentDay, checks };
+    const failed = checks.filter(c => !c.ok);
+    if (failed.length) {
+      console.warn(`[Diagnostics] ${this.simId} başlangıç uyarısı:`, failed.map(f => `${f.name}: ${f.detail}`).join(', '));
+    } else {
+      console.log(`[Diagnostics] ${this.simId} başlangıç OK (${checks.length} kontrol)`);
+    }
+  }
+
   async start() {
     if (this.running) return;
+    this._runStartupValidation();
     this.running = true;
     let ticksSinceBroadcast = 0;
     while (this.running) {
@@ -957,6 +984,14 @@ export class SimulationEngine {
     } catch (err) {
       this._consecutiveErrors = (this._consecutiveErrors ?? 0) + 1;
       console.error(`[SimulationEngine] tick() error on day ${this.currentDay} (${this._consecutiveErrors}/5):`, err);
+      // Record in diagnostic error log (circular buffer, max 20 entries)
+      this._errorLog.push({
+        day: this.currentDay,
+        ts: Date.now(),
+        msg: err.message ?? String(err),
+        stack: err.stack?.split('\n').slice(0, 4).join(' | ') ?? '',
+      });
+      if (this._errorLog.length > 20) this._errorLog.shift();
       this.currentDay++;
       if (this._consecutiveErrors >= 5) {
         console.error('[SimulationEngine] 5 consecutive errors — simulation paused.');
@@ -1751,6 +1786,17 @@ export class SimulationEngine {
       tickEvents.push({ type: 'milestone', key: m.key, description: m.desc, icon: m.icon, day, importance: 'high' });
       this.logEvent(day, 'milestone', m.desc, { key: m.key, icon: m.icon }, 5);
     }
+  }
+
+  getDiagnostics() {
+    return {
+      sim_id: this.simId,
+      current_day: this.currentDay,
+      running: this.running,
+      consecutive_errors: this._consecutiveErrors ?? 0,
+      startup: this._startupLog,
+      error_log: this._errorLog,
+    };
   }
 
   // Feature 14: return performance metrics for the metrics API endpoint

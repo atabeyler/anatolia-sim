@@ -1,23 +1,34 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import DetailPanel from './DetailPanel';
 import { useSimStore } from '../../store/simStore';
 import { text, type LangCode } from '../../utils/i18n';
 
+interface DiagCheck { ok: boolean; name: string; detail: string; }
+interface DiagEntry { day: number; ts: number; msg: string; stack: string; }
+interface Diagnostics {
+  sim_id: string; current_day: number; running: boolean; consecutive_errors: number;
+  startup: { ts: number; day: number; checks: DiagCheck[] } | null;
+  error_log: DiagEntry[];
+}
+
 export default function PerformancePanel() {
   const { activePanel, currentSim, accessToken, engineMetrics, setEngineMetrics, lang, isWarping, fastForwardTarget } = useSimStore();
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [diag, setDiag] = useState<Diagnostics | null>(null);
 
   useEffect(() => {
     if (activePanel !== 'performance' || !currentSim || !accessToken) {
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
       return;
     }
-    const fetch = () => axios.get(`/api/simulations/${currentSim.id}/metrics`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }).then(r => setEngineMetrics(r.data)).catch(() => {});
-    fetch();
-    pollRef.current = setInterval(fetch, 3000);
+    const headers = { Authorization: `Bearer ${accessToken}` };
+    const fetchAll = () => {
+      axios.get(`/api/simulations/${currentSim.id}/metrics`, { headers }).then(r => setEngineMetrics(r.data)).catch(() => {});
+      axios.get(`/api/simulations/${currentSim.id}/diagnostics`, { headers }).then(r => setDiag(r.data)).catch(() => {});
+    };
+    fetchAll();
+    pollRef.current = setInterval(fetchAll, 5000);
     return () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
   }, [activePanel, currentSim?.id, accessToken]);
 
@@ -146,6 +157,65 @@ export default function PerformancePanel() {
       ) : (
         <div style={{ fontSize: 13, color: '#6090a0', fontStyle: 'italic' }}>
           {t('Metrikler yükleniyor...', 'Loading metrics...', 'Metriken laden...', 'Chargement...', 'جارٍ التحميل...')}
+        </div>
+      )}
+
+      {/* ── Diagnostics ── */}
+      {diag && (
+        <div style={{ marginTop: 14, borderTop: '1px solid rgba(79,110,247,0.2)', paddingTop: 12 }}>
+          <div style={{ fontSize: 12, color: '#4f6ef7', letterSpacing: '0.14em', marginBottom: 8 }}>
+            {t('BAŞLANGIÇ KONTROLÜ', 'STARTUP CHECKS', 'STARTUP-CHECKS', 'VÉRIF. DÉMARRAGE', 'فحوصات البدء')}
+          </div>
+
+          {diag.startup ? (
+            <div style={{ marginBottom: 10 }}>
+              {diag.startup.checks.map((c, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 4, fontSize: 12 }}>
+                  <span style={{ color: c.ok ? '#00e887' : '#e05a5a', flexShrink: 0, lineHeight: '1.4' }}>{c.ok ? '✓' : '✗'}</span>
+                  <div>
+                    <span style={{ color: c.ok ? '#8abda0' : '#e05a5a' }}>{c.name}</span>
+                    {c.detail && <span style={{ color: '#6090a0', marginLeft: 5 }}>{c.detail}</span>}
+                  </div>
+                </div>
+              ))}
+              <div style={{ fontSize: 11, color: '#4a6060', marginTop: 4 }}>
+                {t('Gün', 'Day', 'Tag', 'Jour', 'يوم')} {diag.startup.day} — {new Date(diag.startup.ts).toLocaleTimeString()}
+              </div>
+            </div>
+          ) : (
+            <div style={{ fontSize: 12, color: '#6090a0', fontStyle: 'italic', marginBottom: 10 }}>
+              {t('Simülasyon henüz başlamadı', 'Simulation not started yet', 'Noch nicht gestartet', 'Pas encore démarré', 'لم يبدأ بعد')}
+            </div>
+          )}
+
+          <div style={{ fontSize: 12, color: '#4f6ef7', letterSpacing: '0.14em', marginBottom: 8 }}>
+            {t('HATA KAYDI', 'ERROR LOG', 'FEHLERPROTOKOLL', 'JOURNAL D\'ERREURS', 'سجل الأخطاء')}
+            {diag.consecutive_errors > 0 && (
+              <span style={{ marginLeft: 8, color: '#e05a5a', background: 'rgba(224,90,90,0.15)', padding: '1px 6px', borderRadius: 3 }}>
+                {diag.consecutive_errors}/5
+              </span>
+            )}
+          </div>
+
+          {diag.error_log.length === 0 ? (
+            <div style={{ fontSize: 12, color: '#4ecb71' }}>
+              {t('✓ Hata yok', '✓ No errors', '✓ Keine Fehler', '✓ Aucune erreur', '✓ لا أخطاء')}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {[...diag.error_log].reverse().map((e, i) => (
+                <div key={i} style={{ background: 'rgba(224,90,90,0.08)', border: '1px solid rgba(224,90,90,0.25)', padding: '5px 8px' }}>
+                  <div style={{ fontSize: 12, color: '#e05a5a', marginBottom: 2 }}>
+                    {t('Gün', 'Day', 'Tag', 'Jour', 'يوم')} {e.day} — {new Date(e.ts).toLocaleTimeString()}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#e0b0b0', wordBreak: 'break-word' }}>{e.msg}</div>
+                  {e.stack && (
+                    <div style={{ fontSize: 10, color: '#8a5050', marginTop: 3, wordBreak: 'break-word', opacity: 0.8 }}>{e.stack}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </DetailPanel>

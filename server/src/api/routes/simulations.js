@@ -796,4 +796,11 @@ router.get('/:id/metrics', authenticate, requireSimulationOwner, async (req, res
   } catch (err) { console.error(err); res.status(500).json({ error: 'Metrics fetch failed' }); }
 });
 
+// Diagnostics: startup validation + runtime error log
+router.get('/:id/diagnostics', authenticate, requireSimulationOwner, (req, res) => {
+  const engine = simulationManager.getEngine(req.params.id);
+  if (!engine) return res.status(404).json({ error: 'Engine not running' });
+  res.json(engine.getDiagnostics());
+});
+
 export default router;
