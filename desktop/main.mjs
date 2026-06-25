@@ -367,6 +367,8 @@ function createMainWindow() {
     return { action: 'deny' };
   });
 
+  mainWindow.maximize();
+
   // F5 and Ctrl+R / Cmd+R reload support (not available by default without a menu)
   mainWindow.webContents.on('before-input-event', (_event, input) => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
