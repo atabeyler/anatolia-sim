@@ -1,14 +1,14 @@
 // Microbiome & Disease Engine
 export const PATHOGEN_TYPES={
-  intestinal_parasite:{transmission:'fecal_oral',base_mortality:0.05,duration_days:30,immunity_duration:365*3,density_threshold:10},
+  intestinal_parasite:{transmission:'fecal_oral',base_mortality:0.05,duration_days:30,immunity_duration:365*3,density_threshold:5},
   cholera_like:       {transmission:'water',     base_mortality:0.3, duration_days:7, immunity_duration:365*5,density_threshold:20},
-  respiratory_common: {transmission:'airborne',  base_mortality:0.02,duration_days:14,immunity_duration:180,  density_threshold:8},
+  respiratory_common: {transmission:'airborne',  base_mortality:0.02,duration_days:14,immunity_duration:180,  density_threshold:4},
   pneumonia_like:     {transmission:'airborne',  base_mortality:0.15,duration_days:21,immunity_duration:365*2,density_threshold:8},
   plague_like:        {transmission:'airborne',  base_mortality:0.4, duration_days:10,immunity_duration:365*10,density_threshold:30},
   malaria_like:       {transmission:'vector',    base_mortality:0.1, duration_days:14,immunity_duration:365,  density_threshold:3,biomes:['tropical_rainforest','tropical_savanna','coastal']},
   fever_tick:         {transmission:'vector',    base_mortality:0.08,duration_days:10,immunity_duration:365*2,density_threshold:3,biomes:['grassland','temperate_forest']},
-  wound_infection:    {transmission:'contact',   base_mortality:0.12,duration_days:14,immunity_duration:60,  density_threshold:10},
-  fungal_skin:        {transmission:'contact',   base_mortality:0.01,duration_days:30,immunity_duration:180, density_threshold:8},
+  wound_infection:    {transmission:'contact',   base_mortality:0.12,duration_days:14,immunity_duration:60,  density_threshold:2},
+  fungal_skin:        {transmission:'contact',   base_mortality:0.01,duration_days:30,immunity_duration:180, density_threshold:4},
 };
 
 export function processMicrobiomeTick(population,worldState,simDay){
@@ -49,9 +49,7 @@ export function processMicrobiomeTick(population,worldState,simDay){
       }
       // Mortality reduced by immune strength and current health
       const totalImmunity=Math.min((ind.phenotype?.immune_strength??0.5)*0.7+(ind.health?.microbiome_immunity??0),0.95);
-      // Small-population guard: tiny bands have attentive care; mirrors rollDeath extinction guard
-      const popScale=Math.max(0.3,Math.min(1.0,(population.filter(i=>!i.is_dead).length)/20));
-      const dailyMortality=path.base_mortality*(1-totalImmunity)*(1-(ind.health?.hp??0.5)*0.3)/path.duration_days*popScale;
+      const dailyMortality=path.base_mortality*(1-totalImmunity)*(1-(ind.health?.hp??0.5)*0.3)/path.duration_days;
       if(Math.random()<dailyMortality){
         ind.is_dead=true;ind.death_cause='infection';ind.death_day=simDay;
       }
