@@ -247,8 +247,11 @@ if (SELF_URL) {
   }, 4 * 60 * 1000);
 }
 
-function shutdown(signal) {
+async function shutdown(signal) {
   console.log(`${signal} alındı — graceful shutdown başlıyor`);
+  // Flush dead individuals to DB before closing so a restart doesn't resurrect them.
+  try { await simulationManager.flushDeadOnShutdown(); }
+  catch (err) { console.error('[shutdown] dead flush error:', err.message); }
   server.close(() => {
     pool.end(() => {
       console.log('Sunucu ve veritabanı bağlantısı kapatıldı.');

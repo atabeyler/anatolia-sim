@@ -333,6 +333,26 @@ class SimulationManager {
     }
   }
 
+  async flushDeadOnShutdown() {
+    const promises = [];
+    for (const [simId, engine] of this.engines) {
+      const dead = [...engine.population.values()].filter(i => i.is_dead);
+      if (dead.length === 0) continue;
+      for (let start = 0; start < dead.length; start += BATCH_SIZE) {
+        const chunk = dead.slice(start, start + BATCH_SIZE);
+        const values = chunk.flatMap(d => [d.id, d.death_day ?? null, d.death_cause ?? null]);
+        const rows = chunk.map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`).join(', ');
+        promises.push(query(
+          `UPDATE individuals SET alive = false, is_dead = true, death_day = v.dd::integer, death_cause = v.dc
+           FROM (VALUES ${rows}) AS v(id, dd, dc)
+           WHERE individuals.id = v.id::uuid AND alive = true`,
+          values
+        ).catch(err => console.warn(`[shutdown] flush dead ${simId}:`, err.message)));
+      }
+    }
+    await Promise.all(promises);
+  }
+
   registerWs(simId, ws) {
     if (!this.wsClients.has(simId)) this.wsClients.set(simId, new Set());
     this.wsClients.get(simId).add(ws);
@@ -348,7 +368,7 @@ class SimulationManager {
 }
 
 function parseIndividual(row) {
-  const isDead = row.is_dead ?? row.alive === false;
+  const isDead = row.alive === false || row.is_dead === true;
   // is_founder=false may be the ALTER TABLE default for pre-migration rows; check birth_day too
   const isFounder = row.is_founder === true || (row.birth_day ?? 0) < 0;
   const social = row.social ?? {};
