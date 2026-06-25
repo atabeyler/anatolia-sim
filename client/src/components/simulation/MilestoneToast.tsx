@@ -44,6 +44,30 @@ function ToastItem({ toast }: { toast: Toast }) {
 
 const TOAST_DURATION = 5000;
 
+const MILESTONE_I18N: Record<string, { tr: string; en: string; de: string; fr: string; ar: string }> = {
+  pop_10:        { tr: 'Nüfus 10\'a ulaştı!',          en: 'Population reached 10!',             de: 'Bevölkerung erreicht 10!',            fr: 'Population atteint 10!',             ar: 'بلغ عدد السكان 10!' },
+  pop_25:        { tr: 'Nüfus 25\'e ulaştı!',          en: 'Population reached 25!',             de: 'Bevölkerung erreicht 25!',            fr: 'Population atteint 25!',             ar: 'بلغ عدد السكان 25!' },
+  pop_50:        { tr: 'Nüfus 50\'ye ulaştı!',         en: 'Population reached 50!',             de: 'Bevölkerung erreicht 50!',            fr: 'Population atteint 50!',             ar: 'بلغ عدد السكان 50!' },
+  pop_100:       { tr: 'Nüfus 100\'e ulaştı!',         en: 'Population reached 100!',            de: 'Bevölkerung erreicht 100!',           fr: 'Population atteint 100!',            ar: 'بلغ عدد السكان 100!' },
+  pop_250:       { tr: 'Nüfus 250\'ye ulaştı!',        en: 'Population reached 250!',            de: 'Bevölkerung erreicht 250!',           fr: 'Population atteint 250!',            ar: 'بلغ عدد السكان 250!' },
+  pop_500:       { tr: 'Nüfus 500\'e ulaştı!',         en: 'Population reached 500!',            de: 'Bevölkerung erreicht 500!',           fr: 'Population atteint 500!',            ar: 'بلغ عدد السكان 500!' },
+  tech_5:        { tr: '5 teknoloji keşfedildi!',      en: '5 technologies discovered!',         de: '5 Technologien entdeckt!',            fr: '5 technologies découvertes!',        ar: 'اكتُشفت 5 تقنيات!' },
+  tech_10:       { tr: '10 teknoloji keşfedildi!',     en: '10 technologies discovered!',        de: '10 Technologien entdeckt!',           fr: '10 technologies découvertes!',       ar: 'اكتُشفت 10 تقنيات!' },
+  tech_15:       { tr: '15 teknoloji keşfedildi!',     en: '15 technologies discovered!',        de: '15 Technologien entdeckt!',           fr: '15 technologies découvertes!',       ar: 'اكتُشفت 15 تقنية!' },
+  belief_first:  { tr: 'İlk inanç sistemi doğdu!',     en: 'First belief system emerged!',       de: 'Erstes Glaubenssystem entstanden!',   fr: 'Premier système de croyances né!',   ar: 'ظهر أول نظام عقيدي!' },
+  belief_5:      { tr: '5 inanç sistemi kaydedildi!',  en: '5 belief systems recorded!',         de: '5 Glaubenssysteme erfasst!',          fr: '5 systèmes de croyances enregistrés!', ar: 'سُجِّلت 5 أنظمة عقائدية!' },
+  art_first:     { tr: 'İlk sanat eseri yaratıldı!',   en: 'First art form created!',            de: 'Erste Kunstform erschaffen!',         fr: 'Première forme d\'art créée!',       ar: 'خُلق أول شكل فني!' },
+  lang_stage2:   { tr: 'İlk fonemik dil aşaması!',     en: 'First phonemic language stage!',     de: 'Erste phonemische Sprachstufe!',      fr: 'Premier stade phonémique!',          ar: 'أول مرحلة لغوية صوتية!' },
+  lang_stage3:   { tr: 'Morfolojik dil bilgisi gelişti!', en: 'Morphemic grammar emerged!',      de: 'Morphemische Grammatik entstanden!',  fr: 'Grammaire morphémique apparue!',     ar: 'نشأت قواعد صرفية!' },
+  lang_stage4:   { tr: 'Karmaşık sözdizimi gelişti!',  en: 'Complex syntax achieved!',           de: 'Komplexe Syntax erreicht!',           fr: 'Syntaxe complexe atteinte!',         ar: 'تحقّق تركيب نحوي معقد!' },
+  lang_stage5:   { tr: 'Yazı sistemi icat edildi!',    en: 'Writing system invented!',           de: 'Schriftsystem erfunden!',             fr: 'Système d\'écriture inventé!',       ar: 'اختُرع نظام كتابة!' },
+  lang_stage6:   { tr: 'Edebiyat çağı başladı!',       en: 'Literature era begins!',             de: 'Literaturzeitalter beginnt!',         fr: 'L\'ère de la littérature commence!', ar: 'بدأ عصر الأدب!' },
+  year_10:       { tr: 'Uygarlık 10 yıl ayakta!',      en: 'Civilization survived 10 years!',    de: 'Zivilisation überlebt 10 Jahre!',     fr: 'Civilisation survit 10 ans!',        ar: 'الحضارة أتمّت 10 سنوات!' },
+  year_100:      { tr: 'Uygarlık 100 yıl ayakta!',     en: 'Civilization survived 100 years!',   de: 'Zivilisation überlebt 100 Jahre!',    fr: 'Civilisation survit 100 ans!',       ar: 'الحضارة أتمّت 100 عام!' },
+  year_500:      { tr: 'Uygarlık 500 yıl ayakta!',     en: 'Civilization survived 500 years!',   de: 'Zivilisation überlebt 500 Jahre!',    fr: 'Civilisation survit 500 ans!',       ar: 'الحضارة أتمّت 500 عام!' },
+  year_1000:     { tr: 'Uygarlık 1000 yıl ayakta!',    en: 'Civilization survived 1000 years!',  de: 'Zivilisation überlebt 1000 Jahre!',   fr: 'Civilisation survit 1000 ans!',      ar: 'الحضارة أتمّت 1000 عام!' },
+};
+
 export default function MilestoneToast() {
   const { stats, events, lang, addMoment, currentSim, milestones } = useSimStore();
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -97,7 +121,9 @@ export default function MilestoneToast() {
     const newest = milestones[0];
     prevMilestoneCount.current = milestones.length;
     if (!newest) return;
-    fireOnce(`backend_${newest.key}`, { icon: newest.icon, color: '#fbbf24', message: newest.description }, newest.description);
+    const label = MILESTONE_I18N[newest.key];
+    const message = label ? text(L, label) : newest.description;
+    fireOnce(`backend_${newest.key}`, { icon: newest.icon, color: '#fbbf24', message }, newest.description);
   }, [milestones.length]);
 
   // First time population reaches 10
