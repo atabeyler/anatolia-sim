@@ -30,11 +30,11 @@ function ToastItem({ toast }: { toast: Toast }) {
       transition: 'opacity 0.25s ease, transform 0.25s ease',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 14, lineHeight: 1, flexShrink: 0 }}>{toast.icon}</span>
-        <span style={{ fontSize: 11, color: toast.color, letterSpacing: '0.05em', lineHeight: 1.4 }}>{toast.message}</span>
+        <span style={{ fontSize: 16, lineHeight: 1, flexShrink: 0 }}>{toast.icon}</span>
+        <span style={{ fontSize: 14, color: toast.color, letterSpacing: '0.05em', lineHeight: 1.4 }}>{toast.message}</span>
       </div>
       {toast.sub && (
-        <div style={{ fontSize: 11, color: '#8898c8', marginTop: 4, paddingLeft: 22, lineHeight: 1.3 }}>
+        <div style={{ fontSize: 12, color: '#8898c8', marginTop: 4, paddingLeft: 24, lineHeight: 1.3 }}>
           {toast.sub.length > 60 ? toast.sub.slice(0, 60) + '…' : toast.sub}
         </div>
       )}
@@ -155,7 +155,7 @@ export default function MilestoneToast() {
         if (!fired.current.has('first_birth')) {
           fired.current.add('first_birth');
           const name = ev.data?.name ?? '?';
-          push({ icon: '✦', color: '#ff8ab0', message: t(`İlk doğum: ${name}`, `First birth: ${name}`) }, ev.description);
+          push({ icon: '✦', color: '#ff8ab0', message: t(`İlk doğum: ${name}`, `First birth: ${name}`, `Erste Geburt: ${name}`, `Première naissance: ${name}`, `أول مولود: ${name}`) }, ev.description);
         }
       }
       if (ev.event_type === 'death') {
@@ -163,7 +163,7 @@ export default function MilestoneToast() {
           fired.current.add('first_death');
           const name = ev.data?.name ?? '?';
           const cause = ev.data?.cause ?? '';
-          push({ icon: '†', color: '#e05a5a', message: t(`İlk ölüm: ${name}`, `First death: ${name}`), sub: cause ? t(`Sebep: ${cause}`, `Cause: ${cause}`) : undefined }, ev.description);
+          push({ icon: '†', color: '#e05a5a', message: t(`İlk ölüm: ${name}`, `First death: ${name}`, `Erster Todesfall: ${name}`, `Premier décès: ${name}`, `أول وفاة: ${name}`), sub: cause ? t(`Sebep: ${cause}`, `Cause: ${cause}`, `Ursache: ${cause}`, `Cause: ${cause}`, `السبب: ${cause}`) : undefined }, ev.description);
         }
       }
       if (ev.event_type === 'technology') {
@@ -171,63 +171,63 @@ export default function MilestoneToast() {
         if (!fired.current.has(key)) {
           fired.current.add(key);
           const techName = ev.data?.tech_id ?? ev.data?.name ?? '';
-          push({ icon: '⚙', color: '#4ecb71', message: t(`Teknoloji: ${techName}`, `Tech: ${techName}`) }, ev.description);
+          push({ icon: '⚙', color: '#4ecb71', message: t(`Teknoloji: ${techName}`, `Tech: ${techName}`, `Technologie: ${techName}`, `Technologie: ${techName}`, `تقنية: ${techName}`) }, ev.description);
         }
       }
       if (ev.event_type === 'epidemic') {
         const key = `epidemic_${ev.sim_day}`;
         if (!fired.current.has(key)) {
           fired.current.add(key);
-          push({ icon: '⊗', color: '#c084fc', message: t('Salgın hastalık!', 'Epidemic!'), sub: ev.description }, ev.description);
+          push({ icon: '⊗', color: '#c084fc', message: t('Salgın hastalık!', 'Epidemic!', 'Seuche!', 'Épidémie!', 'وباء!'), sub: ev.description }, ev.description);
         }
       }
       if (ev.event_type === 'weather' && (ev.importance ?? 0) >= 4) {
         const key = `weather_${ev.sim_day}_${ev.data?.weather ?? ''}`;
         if (!fired.current.has(key)) {
           fired.current.add(key);
-          push({ icon: '≈', color: '#60a5fa', message: t('Hava olayı', 'Weather event'), sub: ev.description }, ev.description);
+          push({ icon: '≈', color: '#60a5fa', message: t('Hava olayı', 'Weather event', 'Wetterereignis', 'Événement météo', 'حدث مناخي'), sub: ev.description }, ev.description);
         }
       }
       if (ev.event_type === 'belief' && (ev.importance ?? 0) >= 3) {
         const key = `belief_${ev.sim_day}_${ev.data?.id ?? ev.data?.belief_id ?? ''}`;
         if (!fired.current.has(key)) {
           fired.current.add(key);
-          push({ icon: '◆', color: '#a78bfa', message: t('Yeni inanç', 'New belief'), sub: ev.description }, ev.description);
+          push({ icon: '◆', color: '#a78bfa', message: t('Yeni inanç', 'New belief', 'Neuer Glaube', 'Nouvelle croyance', 'معتقد جديد'), sub: ev.description }, ev.description);
         }
       }
       if (ev.event_type === 'ritual') {
         const key = `ritual_${ev.sim_day}`;
         if (!fired.current.has(key)) {
           fired.current.add(key);
-          push({ icon: '◎', color: '#818cf8', message: t('Ritüel', 'Ritual emerged'), sub: ev.description }, ev.description);
+          push({ icon: '◎', color: '#818cf8', message: t('Ritüel', 'Ritual emerged', 'Ritual entstanden', 'Rituel apparu', 'ظهر طقس'), sub: ev.description }, ev.description);
         }
       }
       if (ev.event_type === 'art' && (ev.importance ?? 0) >= 3) {
         const key = `art_${ev.sim_day}_${ev.data?.id ?? ''}`;
         if (!fired.current.has(key)) {
           fired.current.add(key);
-          push({ icon: '◈', color: '#fb923c', message: t('Sanat eseri', 'Art created'), sub: ev.description }, ev.description);
+          push({ icon: '◈', color: '#fb923c', message: t('Sanat eseri', 'Art created', 'Kunstwerk', "Œuvre d'art", 'عمل فني'), sub: ev.description }, ev.description);
         }
       }
       if (ev.event_type === 'architecture' && (ev.importance ?? 0) >= 3) {
         const key = `arch_${ev.sim_day}_${ev.data?.id ?? ''}`;
         if (!fired.current.has(key)) {
           fired.current.add(key);
-          push({ icon: '▣', color: '#94a3b8', message: t('Yapı inşa edildi', 'Structure built'), sub: ev.description }, ev.description);
+          push({ icon: '▣', color: '#94a3b8', message: t('Yapı inşa edildi', 'Structure built', 'Bauwerk errichtet', 'Structure construite', 'مبنى شيد'), sub: ev.description }, ev.description);
         }
       }
       if (ev.event_type === 'law' && (ev.importance ?? 0) >= 3) {
         const key = `law_${ev.sim_day}_${ev.data?.norm_id ?? ''}`;
         if (!fired.current.has(key)) {
           fired.current.add(key);
-          push({ icon: '⊢', color: '#fbbf24', message: t('Yasa oluştu', 'Law established'), sub: ev.description }, ev.description);
+          push({ icon: '⊢', color: '#fbbf24', message: t('Yasa oluştu', 'Law established', 'Gesetz gegründet', 'Loi établie', 'قانون أُسس'), sub: ev.description }, ev.description);
         }
       }
       if (ev.event_type === 'astronomy' && (ev.importance ?? 0) >= 3) {
         const key = `astro_${ev.sim_day}`;
         if (!fired.current.has(key)) {
           fired.current.add(key);
-          push({ icon: '★', color: '#93c5fd', message: t('Astronomi keşfi', 'Astronomy discovery'), sub: ev.description }, ev.description);
+          push({ icon: '★', color: '#93c5fd', message: t('Astronomi keşfi', 'Astronomy discovery', 'Astronomieentdeckung', 'Découverte astronomique', 'اكتشاف فلكي'), sub: ev.description }, ev.description);
         }
       }
     }
