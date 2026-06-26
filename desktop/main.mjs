@@ -5,10 +5,11 @@ import { cpus } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
+import net from 'node:net';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PORT = Number(process.env.PORT ?? 3001);
-const LOCAL_URL = `http://127.0.0.1:${PORT}`;
+let PORT = Number(process.env.PORT ?? 3001);
+let LOCAL_URL = `http://127.0.0.1:${PORT}`;
 
 const isPackaged = app.isPackaged;
 const RESOURCES = isPackaged ? process.resourcesPath : resolve(__dirname, '..');
@@ -28,16 +29,25 @@ let knownVersion = null;
 // ─── Config ────────────────────────────────────────────────────────────────────
 
 function loadConfig() {
+  const isLegacyRenderDbUrl = (url) => {
+    if (!url || typeof url !== 'string') return false;
+    return /render\.com|onrender\.com/i.test(url);
+  };
+
   // Önce kullanıcının kaydettiği config'e bak
   try {
     if (existsSync(CONFIG_PATH)) {
-      return JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
+      const cfg = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
+      if (isLegacyRenderDbUrl(cfg?.DATABASE_URL)) return null;
+      return cfg;
     }
   } catch {}
   // Sonra exe'ye gömülü config'e bak (setup ekranı gösterilmez)
   try {
     if (existsSync(BUNDLED_CONFIG_PATH)) {
-      return JSON.parse(readFileSync(BUNDLED_CONFIG_PATH, 'utf8'));
+      const cfg = JSON.parse(readFileSync(BUNDLED_CONFIG_PATH, 'utf8'));
+      if (isLegacyRenderDbUrl(cfg?.DATABASE_URL)) return null;
+      return cfg;
     }
   } catch {}
   return null;
@@ -45,6 +55,40 @@ function loadConfig() {
 
 function saveConfig(cfg) {
   writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2), 'utf8');
+}
+
+async function pickDesktopPort(preferredPort = 3001) {
+  if (process.env.PORT) return Number(process.env.PORT);
+
+  const probe = (port) => new Promise((resolvePort) => {
+    const server = net.createServer();
+    server.unref();
+    server.on('error', () => resolvePort(false));
+    server.listen({ host: '127.0.0.1', port }, () => {
+      const addr = server.address();
+      server.close(() => {
+        if (addr && typeof addr === 'object') resolvePort(addr.port);
+        else resolvePort(false);
+      });
+    });
+  });
+
+  const preferred = await probe(preferredPort);
+  if (preferred) return preferred;
+
+  const ephemeral = await new Promise((resolvePort) => {
+    const server = net.createServer();
+    server.unref();
+    server.on('error', () => resolvePort(preferredPort));
+    server.listen({ host: '127.0.0.1', port: 0 }, () => {
+      const addr = server.address();
+      server.close(() => {
+        if (addr && typeof addr === 'object') resolvePort(addr.port);
+        else resolvePort(preferredPort);
+      });
+    });
+  });
+  return ephemeral;
 }
 
 // ─── Auto Updater ──────────────────────────────────────────────────────────────
@@ -274,6 +318,7 @@ function buildServerEnv(cfg) {
     env.PGLITE_DATA_DIR = join(app.getPath('userData'), 'db');
   } else {
     env.DATABASE_URL = cfg.DATABASE_URL;
+    env.PGSSLMODE = 'require';
   }
 
   const secretsPath = join(app.getPath('userData'), 'secrets.json');
@@ -308,7 +353,9 @@ async function ensureLocalServer(cfg) {
     windowsHide: true,
   });
 
+  let serverExited = null;
   serverProcess.on('exit', (code, signal) => {
+    serverExited = { code, signal };
     if (!app.isQuiting && code !== 0 && signal !== 'SIGTERM') {
       console.warn(`[desktop] sunucu kapandı (${code ?? 'null'}, ${signal ?? '-'}) — yeniden başlatılıyor`);
       setTimeout(async () => {
@@ -322,13 +369,28 @@ async function ensureLocalServer(cfg) {
     }
   });
 
-  const ready = await waitForServer();
+  const ready = await (async () => {
+    const start = Date.now();
+    while (Date.now() - start < 90000) {
+      if (serverExited) {
+        throw new Error(`Sunucu erken kapandı (${serverExited.code ?? 'null'}, ${serverExited.signal ?? '-'})`);
+      }
+      try {
+        const res = await fetch(`${LOCAL_URL}/api/health`, { cache: 'no-store' });
+        if (res.ok) return true;
+      } catch {}
+      await sleep(500);
+    }
+    return false;
+  })();
   if (!ready) throw new Error('Sunucu zamanında başlamadı.');
 }
 
 // ─── Main window ───────────────────────────────────────────────────────────────
 
 function createMainWindow() {
+  const localOrigin = new URL(LOCAL_URL).origin;
+  const localWsOrigin = localOrigin.replace(/^http/, 'ws');
   mainWindow = new BrowserWindow({
     width: 1600,
     height: 1000,
@@ -356,7 +418,7 @@ function createMainWindow() {
           "font-src 'self' https://fonts.gstatic.com; " +
           "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
           "img-src 'self' data: blob: https://raw.githubusercontent.com; " +
-          "connect-src 'self' http://127.0.0.1:3001 ws://127.0.0.1:3001;"
+          `connect-src 'self' ${localOrigin} ${localWsOrigin};`
         ],
       },
     });
@@ -419,6 +481,9 @@ async function boot() {
     app.quit();
     return;
   }
+
+  PORT = await pickDesktopPort(PORT);
+  LOCAL_URL = `http://127.0.0.1:${PORT}`;
 
   let cfg = loadConfig();
   if (!cfg) {

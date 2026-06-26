@@ -62,15 +62,17 @@
     .tag { display: inline-block; background: #1e2a4a; color: #7c3aed; font-size: 10px; padding: 2px 8px; border-radius: 4px; vertical-align: middle; margin-left: 6px; }
   </style>
 </head>
-<body>
-  <div class="card">
-    <h1>🌍 Anatolia Sim <span class="tag">Setup</span></h1>
+  <body>
+    <div class="card">
+      <h1>🌍 Anatolia Sim <span class="tag">Setup</span></h1>
     <p class="subtitle">Bulut veritabanınızı bağlayın — web'deki simülasyonlarınız masaüstünde de görünür. Simülasyon hesaplamaları her zaman bu bilgisayarda çalışır.</p>
+    <p class="subtitle" style="margin-top: 8px;">Configure your PostgreSQL connection. Simulation calculations always run on this computer.</p>
 
     <div class="field">
       <label>Supabase / PostgreSQL — DATABASE_URL</label>
       <textarea id="dbUrl" placeholder="postgresql://user:pass@hostname/dbname?sslmode=require"></textarea>
       <p class="hint">Supabase → Project Settings → Database → Connection string → URI</p>
+      <p class="hint">Paste the external connection string from Supabase or another hosted PostgreSQL provider.</p>
     </div>
 
     <div class="field">
@@ -95,7 +97,9 @@
 
     <hr class="divider" />
     <p class="offline-note">DATABASE_URL girmeden de kullanabilirsiniz — veriler yalnızca bu bilgisayarda saklanır, web ile senkron olmaz.</p>
-    <button class="btn btn-secondary" onclick="useOffline()">Yerel Mod (Çevrimdışı)</button>
+    <p class="offline-note" style="margin-top: 8px;">You can also use the app without DATABASE_URL — data will be stored locally on this computer.</p>
+    <p class="offline-note" style="margin-top: 8px;">If you previously used Render, replace that old URL with your new Supabase string before launching.</p>
+    <button class="btn btn-secondary" onclick="useOffline()">Yerel Mod / Offline Local Mode</button>
   </div>
 
   <script>
