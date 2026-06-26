@@ -294,20 +294,31 @@ button:hover{background:rgba(224,90,90,0.25)}
 // Cleanup form POST handler — form submission from cleanup-page
 router.post('/cleanup-page', async (req, res) => {
   const seedToken = process.env.ADMIN_SEED_TOKEN;
-  const { token } = req.body ?? {};
+  const token = (req.body ?? {}).token ?? (req.query.token ?? '');
   if (!seedToken || token !== seedToken) {
     return res.redirect('/api/admin/cleanup-page?err=' + encodeURIComponent('Geçersiz token.'));
   }
+  const lines = [];
+  // Each step in its own try-catch — disk-full won't abort the whole run
   try {
-    const evRes  = await query(`DELETE FROM simulation_events WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY simulation_id ORDER BY sim_day DESC) AS rn FROM simulation_events) t WHERE rn > 500)`);
-    const cpRes  = await query('DELETE FROM checkpoints');
-    const indRes = await query(`DELETE FROM individuals WHERE alive = false AND id IN (SELECT i.id FROM individuals i JOIN simulations s ON s.id = i.simulation_id WHERE i.alive = false AND i.death_day < (s.current_day - 1000))`);
-    await query('VACUUM');
-    const msg = `Checkpoint: ${cpRes.rowCount} · Event: ${evRes.rowCount} · Ölü birey: ${indRes.rowCount}`;
-    res.redirect('/api/admin/cleanup-page?done=' + encodeURIComponent(msg));
-  } catch (err) {
-    res.redirect('/api/admin/cleanup-page?err=' + encodeURIComponent(err.message));
-  }
+    const r = await query('DELETE FROM checkpoints');
+    lines.push(`Checkpoint: ${r.rowCount} silindi`);
+  } catch (e) { lines.push(`Checkpoint hatası: ${e.message}`); }
+
+  try {
+    const r = await query('DELETE FROM simulation_events WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY simulation_id ORDER BY sim_day DESC) AS rn FROM simulation_events) t WHERE rn > 200)');
+    lines.push(`Event: ${r.rowCount} silindi`);
+  } catch (e) { lines.push(`Event hatası: ${e.message}`); }
+
+  try {
+    const r = await query('DELETE FROM individuals WHERE alive = false');
+    lines.push(`Ölü birey: ${r.rowCount} silindi`);
+  } catch (e) { lines.push(`Birey hatası: ${e.message}`); }
+
+  try { await query('VACUUM'); lines.push('VACUUM tamam'); }
+  catch (e) { lines.push(`VACUUM atlandı: ${e.message}`); }
+
+  res.redirect('/api/admin/cleanup-page?done=' + encodeURIComponent(lines.join(' · ')));
 });
 
 // Emergency disk cleanup — deletes old events/checkpoints/dead individuals to free space
