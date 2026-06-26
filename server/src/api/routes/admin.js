@@ -249,6 +249,67 @@ router.post('/seed-admin', async (req, res) => {
   }
 });
 
+// Cleanup form page — accessible from mobile without login
+router.get('/cleanup-page', (req, res) => {
+  const done = req.query.done;
+  const err  = req.query.err;
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(`<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DB Temizle — Anatolia-Sim</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#030310;color:#c8d4f0;font-family:'Courier New',monospace;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#0a0a1e;border:1px solid rgba(79,110,247,0.35);padding:32px 28px;max-width:400px;width:100%}
+h1{font-size:11px;letter-spacing:.3em;color:#4f6ef7;margin-bottom:6px;text-transform:uppercase}
+p{font-size:12px;color:#6070a0;margin-bottom:24px;line-height:1.6}
+label{display:block;font-size:10px;letter-spacing:.2em;color:#8a9ab0;margin-bottom:6px}
+input{width:100%;background:#030310;border:1px solid rgba(79,110,247,0.3);color:#e0e8ff;padding:10px 12px;font-family:inherit;font-size:13px;margin-bottom:16px;outline:none}
+input:focus{border-color:rgba(79,110,247,0.7)}
+button{width:100%;padding:12px;background:rgba(224,90,90,0.15);border:1px solid rgba(224,90,90,0.5);color:#e05a5a;font-family:inherit;font-size:11px;letter-spacing:.2em;cursor:pointer}
+button:hover{background:rgba(224,90,90,0.25)}
+.ok{padding:12px;background:rgba(78,203,113,0.08);border:1px solid rgba(78,203,113,0.3);color:#4ecb71;font-size:12px;margin-bottom:16px;line-height:1.7}
+.er{padding:12px;background:rgba(224,90,90,0.08);border:1px solid rgba(224,90,90,0.3);color:#e05a5a;font-size:12px;margin-bottom:16px}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>⬡ Anatolia-Sim — Veritabanı Temizle</h1>
+  <p>Checkpoint'ler, eski event'ler ve ölü bireyler silinir.<br>Bu işlem geri alınamaz.</p>
+  ${done ? `<div class="ok">✓ Temizleme tamamlandı!<br>${decodeURIComponent(done)}</div>` : ''}
+  ${err  ? `<div class="er">✗ Hata: ${decodeURIComponent(err)}</div>` : ''}
+  <form method="POST" action="/api/admin/cleanup-page">
+    <label>ADMIN_SEED_TOKEN</label>
+    <input type="password" name="token" placeholder="Render'dan kopyalayın" required autofocus />
+    <button type="submit">TEMİZLE</button>
+  </form>
+</div>
+</body>
+</html>`);
+});
+
+// Cleanup form POST handler — form submission from cleanup-page
+router.post('/cleanup-page', async (req, res) => {
+  const seedToken = process.env.ADMIN_SEED_TOKEN;
+  const { token } = req.body ?? {};
+  if (!seedToken || token !== seedToken) {
+    return res.redirect('/api/admin/cleanup-page?err=' + encodeURIComponent('Geçersiz token.'));
+  }
+  try {
+    const evRes  = await query(`DELETE FROM simulation_events WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY simulation_id ORDER BY sim_day DESC) AS rn FROM simulation_events) t WHERE rn > 500)`);
+    const cpRes  = await query('DELETE FROM checkpoints');
+    const indRes = await query(`DELETE FROM individuals WHERE alive = false AND id IN (SELECT i.id FROM individuals i JOIN simulations s ON s.id = i.simulation_id WHERE i.alive = false AND i.death_day < (s.current_day - 1000))`);
+    await query('VACUUM');
+    const msg = `Checkpoint: ${cpRes.rowCount} · Event: ${evRes.rowCount} · Ölü birey: ${indRes.rowCount}`;
+    res.redirect('/api/admin/cleanup-page?done=' + encodeURIComponent(msg));
+  } catch (err) {
+    res.redirect('/api/admin/cleanup-page?err=' + encodeURIComponent(err.message));
+  }
+});
+
 // Emergency disk cleanup — deletes old events/checkpoints/dead individuals to free space
 // curl -X POST /api/admin/cleanup -H "x-seed-token: $ADMIN_SEED_TOKEN"
 router.post('/cleanup', async (req, res) => {

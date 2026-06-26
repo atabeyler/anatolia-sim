@@ -80,6 +80,7 @@ app.use(rateLimit({
   },
 }));
 app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use('/api/auth', authRouter);
