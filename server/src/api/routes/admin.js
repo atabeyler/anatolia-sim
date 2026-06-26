@@ -251,11 +251,12 @@ router.post('/seed-admin', async (req, res) => {
 
 // One-click cleanup via GET — /api/admin/do-cleanup?t=TOKEN
 router.get('/do-cleanup', async (req, res) => {
-  const seedToken = process.env.ADMIN_SEED_TOKEN;
-  const token = req.query.t ?? '';
+  const seedToken = (process.env.ADMIN_SEED_TOKEN ?? '').trim();
+  const token = (req.query.t ?? '').trim();
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   if (!seedToken || token !== seedToken) {
-    return res.status(403).send('<pre style="color:red;background:#000;padding:20px">Geçersiz token.</pre>');
+    const hint = seedToken ? `(env uzunluğu: ${seedToken.length}, gelen uzunluğu: ${token.length})` : '(ADMIN_SEED_TOKEN env yok!)';
+    return res.status(403).send(`<pre style="color:red;background:#000;padding:20px">Geçersiz token. ${hint}</pre>`);
   }
   const lines = [];
   try { const r = await query('DELETE FROM checkpoints'); lines.push(`✓ Checkpoint: ${r.rowCount} silindi`); }
