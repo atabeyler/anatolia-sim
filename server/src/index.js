@@ -257,7 +257,7 @@ async function shutdown(signal) {
     pool.end(() => {
       console.log('Sunucu ve veritabanı bağlantısı kapatıldı.');
       process.exit(0);
-    });
+    }).catch(() => process.exit(0));
   });
   setTimeout(() => { console.error('Zorla kapatılıyor'); process.exit(1); }, 8000);
 }

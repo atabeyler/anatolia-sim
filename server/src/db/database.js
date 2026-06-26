@@ -1,4 +1,5 @@
 import pg from 'pg';
+import dns from 'dns';
 import { mkdirSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join, resolve } from 'path';
@@ -76,36 +77,61 @@ function createDesktopPoolAdapter() {
   };
 }
 
-let pool;
-
-if (useDesktopLocalDb) {
-  pool = createDesktopPoolAdapter();
-} else {
-  const isRemoteDb = process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost') && !process.env.DATABASE_URL.includes('127.0.0.1');
-
-  pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: isRemoteDb ? { rejectUnauthorized: false } : false,
-    max: 5,
-    idleTimeoutMillis: 60000,
-    connectionTimeoutMillis: 15000,
-    options: '-c search_path=antsim,public',
-  });
-
-  pool.on('error', (err) => console.error('Unexpected error on idle client', err));
+// Resolve remote hostname to IPv4 — Render free tier has no IPv6 outbound support
+async function resolveIPv4(connStr) {
+  try {
+    const url = new URL(connStr);
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return connStr;
+    const ipv4 = await new Promise((res, rej) =>
+      dns.lookup(url.hostname, { family: 4 }, (err, addr) => err ? rej(err) : res(addr))
+    );
+    url.hostname = ipv4;
+    return url.toString();
+  } catch {
+    return connStr;
+  }
 }
 
-export const query = (text, params) => pool.query(text, params);
-export const getClient = () => pool.connect();
+let _pool = null;
+let _poolPromise = null;
+
+async function getPool() {
+  if (_pool) return _pool;
+  if (_poolPromise) return _poolPromise;
+  _poolPromise = (async () => {
+    if (useDesktopLocalDb) {
+      _pool = createDesktopPoolAdapter();
+      return _pool;
+    }
+    const rawUrl = process.env.DATABASE_URL ?? '';
+    const isRemote = rawUrl && !rawUrl.includes('localhost') && !rawUrl.includes('127.0.0.1');
+    const connStr = isRemote ? await resolveIPv4(rawUrl) : rawUrl;
+    _pool = new Pool({
+      connectionString: connStr,
+      ssl: isRemote ? { rejectUnauthorized: false } : false,
+      max: 5,
+      idleTimeoutMillis: 60000,
+      connectionTimeoutMillis: 15000,
+      options: '-c search_path=antsim,public',
+    });
+    _pool.on('error', (err) => console.error('Unexpected error on idle client', err));
+    return _pool;
+  })();
+  return _poolPromise;
+}
+
+export const query = async (text, params) => (await getPool()).query(text, params);
+export const getClient = async () => (await getPool()).connect();
 
 export async function migrate() {
+  const p = await getPool();
   if (useDesktopLocalDb) {
     const db = await getDesktopDb();
     await db.exec(schemaSql);
   } else {
-    await pool.query(schemaSql);
+    await p.query(schemaSql);
   }
   console.log('✅ Database schema migrated');
 }
 
-export default pool;
+export default { query, end: async (cb) => { if (_pool) await _pool.end(cb); else if (cb) cb(); } };
