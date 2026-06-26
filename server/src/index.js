@@ -18,7 +18,7 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { migrate } from './db/database.js';
 import authRouter from './api/routes/auth.js';
 import simulationsRouter from './api/routes/simulations.js';
@@ -91,7 +91,8 @@ app.use('/api/god', godRouter);
 app.use('/api/analysis', analysisRouter);
 app.use('/api/aria', ariaRouter);
 app.use('/api/admin', adminRouter);
-const BUILD_VERSION = process.env.RENDER_GIT_COMMIT ?? process.env.BUILD_VERSION ?? 'v1.7.7';
+const serverPackageVersion = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8')).version;
+const BUILD_VERSION = process.env.RENDER_GIT_COMMIT ?? process.env.BUILD_VERSION ?? `v${serverPackageVersion}`;
 app.get('/api/health', (_, res) => res.json({ status: 'ok', version: BUILD_VERSION }));
 
 // Public system status — no auth required; consumed by the login page status panel
