@@ -1,0 +1,45 @@
+name: Build Desktop
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Root bağımlılıkları kur
+        run: npm install
+
+      - name: Bundled config enjekte et
+        env:
+          BUNDLED_DATABASE_URL: ${{ secrets.BUNDLED_DATABASE_URL }}
+        run: node desktop/inject-config.mjs
+
+      - name: Client build + Server bağımlılıkları
+        run: cd client && npm install --include=dev && npm run build && cd ../server && npm install --include=dev
+
+      - name: Windows installer oluştur
+        run: npx electron-builder --win nsis
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: GitHub Release'e yükle
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/installer/*.exe
+          name: Anatolia Sim ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
