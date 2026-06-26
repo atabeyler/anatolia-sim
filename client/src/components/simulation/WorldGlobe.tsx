@@ -4,173 +4,9 @@ import { OrbitControls, Stars } from '@react-three/drei';
 import * as THREE from 'three';
 import { useSimStore, type CentroidPoint } from '../../store/simStore';
 
+const EARTH_MAP  = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/textures/planets/earth_atmos_2048.jpg';
 const EARTH_BUMP = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/textures/planets/earth_normal_2048.jpg';
 const EARTH_SPEC = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/textures/planets/earth_specular_2048.jpg';
-
-/**
- * Procedural Earth texture at 4096×2048 — no CDN dependency, no blur at any zoom.
- * Continent outlines are hand-coded in equirectangular (lon/lat) coordinates.
- */
-function makeEarthTex(): THREE.CanvasTexture {
-  const W = 4096, H = 2048;
-  const c = document.createElement('canvas');
-  c.width = W; c.height = H;
-  const ctx = c.getContext('2d')!;
-
-  // lon/lat → pixel helpers
-  const px = (lon: number) => (lon + 180) / 360 * W;
-  const py = (lat: number) => (90 - lat) / 180 * H;
-
-  function poly(pts: [number, number][], fill: string, alpha = 1) {
-    ctx.globalAlpha = alpha;
-    ctx.beginPath();
-    ctx.moveTo(px(pts[0][0]), py(pts[0][1]));
-    for (let i = 1; i < pts.length; i++) ctx.lineTo(px(pts[i][0]), py(pts[i][1]));
-    ctx.closePath();
-    ctx.fillStyle = fill;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  }
-
-  // ── Ocean base ────────────────────────────────────────────────────────────
-  const ocn = ctx.createLinearGradient(0, 0, 0, H);
-  ocn.addColorStop(0,    '#0a1e38'); ocn.addColorStop(0.15, '#112d54');
-  ocn.addColorStop(0.5,  '#163d6c'); ocn.addColorStop(0.85, '#112d54');
-  ocn.addColorStop(1,    '#0a1e38');
-  ctx.fillStyle = ocn; ctx.fillRect(0, 0, W, H);
-
-  // Ocean shimmer
-  ctx.globalAlpha = 0.05;
-  for (let y = 0; y < H; y += 5)
-    for (let x = 0; x < W; x += 7)
-      if (Math.sin(x * 0.018 + y * 0.013) * Math.cos(x * 0.009 - y * 0.021) > 0.62) {
-        ctx.fillStyle = '#3a7aaa'; ctx.fillRect(x, y, 4, 2);
-      }
-  ctx.globalAlpha = 1;
-
-  // ── Continents ────────────────────────────────────────────────────────────
-  const LAND  = '#3a6830';
-  const TNDRA = '#7a8f6a';
-  const DSRT  = '#c4a45a';
-
-  // North America
-  poly([[-168,65],[-155,60],[-140,58],[-130,54],[-125,48],[-120,35],
-        [-117,30],[-105,20],[-85,10],[-75,8],[-60,10],[-65,18],
-        [-60,25],[-55,47],[-53,55],[-60,63],[-75,68],[-95,72],
-        [-120,71],[-140,70],[-155,68]], LAND);
-  // Greenland
-  poly([[-70,83],[-20,83],[-18,76],[-24,68],[-45,60],[-65,60],[-75,65],[-70,75]], TNDRA);
-  // Cuba / Caribbean islands (small blob)
-  poly([[-85,23],[-74,20],[-66,17],[-62,16],[-73,20],[-85,22]], LAND);
-
-  // South America
-  poly([[-82,12],[-78,10],[-65,1],[-50,-1],[-36,-3],[-35,-10],
-        [-38,-20],[-42,-30],[-48,-38],[-55,-55],[-65,-55],
-        [-72,-50],[-70,-30],[-76,-14],[-80,0]], LAND);
-
-  // Europe (west)
-  poly([[-10,36],[0,36],[8,38],[15,38],[18,42],[25,44],[30,46],
-        [30,60],[28,71],[20,71],[15,69],[8,63],[2,57],[0,50],
-        [-5,44],[-9,43]], LAND);
-  // Scandinavia
-  poly([[5,58],[8,57],[14,57],[18,59],[26,70],[30,71],[25,72],
-        [18,71],[12,69],[8,63]], LAND);
-  // British Isles
-  poly([[-6,50],[2,51],[2,58],[-2,59],[-5,58],[-7,54],[-6,50]], LAND);
-  // Iceland
-  poly([[-24,63],[-14,63],[-13,66],[-20,66],[-24,64]], TNDRA);
-
-  // Africa
-  poly([[-18,15],[-5,35],[10,37],[20,38],[35,30],[42,12],
-        [52,12],[50,0],[44,-13],[35,-25],[27,-35],[18,-35],
-        [10,-18],[0,-2],[-5,5],[-18,5]], LAND);
-  // Sahara overlay (desert)
-  poly([[-18,30],[-5,35],[15,37],[25,32],[35,30],[40,20],
-        [30,15],[10,15],[-5,15],[-18,20]], DSRT);
-  // Madagascar
-  poly([[44,-13],[46,-13],[50,-22],[48,-26],[44,-24]], LAND);
-
-  // Arabia
-  poly([[32,30],[38,22],[42,12],[52,12],[58,22],[58,28],
-        [50,30],[40,30]], DSRT);
-  // Turkey / Anatolia — highlight
-  poly([[26,42],[36,37],[42,37],[44,40],[40,42],[30,42]], LAND);
-
-  // Asia (main)
-  poly([[28,42],[35,30],[42,12],[52,12],[58,22],[65,22],
-        [72,20],[80,8],[100,5],[105,18],[110,20],[120,22],
-        [130,32],[142,47],[140,55],[132,62],[118,65],[100,70],
-        [80,73],[60,73],[40,70],[32,60]], LAND);
-  // Central Asia deserts
-  poly([[58,22],[65,22],[80,26],[85,40],[65,45],[58,38]], DSRT);
-  // Indian subcontinent
-  poly([[65,22],[72,20],[80,8],[78,8],[70,15]], LAND);
-  // SE Asia
-  poly([[100,5],[105,5],[115,2],[120,5],[126,18],[120,22],
-        [110,20],[100,15]], LAND);
-  // Japan
-  poly([[130,32],[134,34],[141,44],[140,46],[136,44],[130,36]], LAND);
-  // Sri Lanka
-  poly([[80,9],[82,6],[82,9],[80,9]], LAND);
-
-  // Australia
-  poly([[114,-22],[124,-14],[136,-12],[140,-12],[146,-14],
-        [154,-25],[152,-38],[142,-38],[132,-33],[118,-30]], LAND);
-  // Australian interior (desert)
-  poly([[118,-20],[130,-18],[140,-20],[146,-26],[140,-35],
-        [128,-33],[118,-26]], DSRT);
-  // New Zealand (N island)
-  poly([[173,-36],[178,-37],[178,-40],[174,-41],[172,-40]], LAND);
-  // New Zealand (S island)
-  poly([[168,-44],[173,-44],[172,-46],[168,-46]], LAND);
-
-  // Antarctica
-  poly([[-180,-70],[180,-70],[180,-90],[-180,-90]], '#d8e8f0');
-
-  // ── Tundra belt (60°N–72°N smear) ────────────────────────────────────────
-  ctx.globalAlpha = 0.35;
-  const tund = ctx.createLinearGradient(0, py(72), 0, py(60));
-  tund.addColorStop(0, TNDRA); tund.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = tund; ctx.fillRect(0, py(72), W, py(60) - py(72));
-  ctx.globalAlpha = 1;
-
-  // Tropical lush-green tint over land in 15°S–15°N belt
-  ctx.globalAlpha = 0.12;
-  const trop = ctx.createLinearGradient(0, py(15), 0, py(-15));
-  trop.addColorStop(0, 'rgba(0,0,0,0)');
-  trop.addColorStop(0.5, 'rgba(20,70,10,1)');
-  trop.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = trop; ctx.fillRect(0, py(15), W, py(-15) - py(15));
-  ctx.globalAlpha = 1;
-
-  // ── Polar ice caps ────────────────────────────────────────────────────────
-  const nIce = ctx.createLinearGradient(0, 0, 0, py(60));
-  nIce.addColorStop(0, 'rgba(230,242,255,0.97)');
-  nIce.addColorStop(0.65, 'rgba(225,238,252,0.82)');
-  nIce.addColorStop(1, 'rgba(210,230,248,0)');
-  ctx.fillStyle = nIce; ctx.fillRect(0, 0, W, py(58));
-
-  const sIce = ctx.createLinearGradient(0, py(-60), 0, H);
-  sIce.addColorStop(0, 'rgba(210,230,248,0)');
-  sIce.addColorStop(0.35, 'rgba(225,238,252,0.85)');
-  sIce.addColorStop(1, 'rgba(230,242,255,0.97)');
-  ctx.fillStyle = sIce; ctx.fillRect(0, py(-58), W, H - py(-58));
-
-  // ── Subtle cloud wisps ────────────────────────────────────────────────────
-  ctx.globalAlpha = 0.09;
-  for (let y = 0; y < H; y += 4) {
-    const w = Math.sin(y * 0.007) * 250;
-    for (let x = 0; x < W; x += 5) {
-      const v = Math.sin((x + w) * 0.007 + y * 0.004) * Math.cos((x - w) * 0.005 - y * 0.003);
-      if (v > 0.6) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x, y, 4, 2); }
-    }
-  }
-  ctx.globalAlpha = 1;
-
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
-}
 
 /** Build a round soft-glow sprite texture via the Canvas 2D API. */
 function makeSpriteTexture(): THREE.CanvasTexture {
@@ -458,16 +294,14 @@ function makeNeptuneTex(): THREE.CanvasTexture {
 function GlobeMesh() {
   const { gl } = useThree();
   const [earthTex, bumpTex, specTex] = useMemo(() => {
-    const maxAniso = gl.capabilities.getMaxAnisotropy();
-    const et = makeEarthTex();
-    et.anisotropy = maxAniso;
     const loader = new THREE.TextureLoader();
+    const maxAniso = gl.capabilities.getMaxAnisotropy();
     const load = (url: string) => {
       const t = loader.load(url);
       t.anisotropy = maxAniso;
       return t;
     };
-    return [et, load(EARTH_BUMP), load(EARTH_SPEC)];
+    return [load(EARTH_MAP), load(EARTH_BUMP), load(EARTH_SPEC)];
   }, [gl]);
 
   return (
