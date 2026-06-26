@@ -240,6 +240,21 @@ async function main() {
 
 main();
 
+// Automatic disk cleanup — runs every 7 days to prevent DB quota overflow
+async function autoCleanup() {
+  try {
+    const cp  = await query('DELETE FROM checkpoints');
+    const ev  = await query('DELETE FROM simulation_events WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY simulation_id ORDER BY sim_day DESC) AS rn FROM simulation_events) t WHERE rn > 300)');
+    const ind = await query('DELETE FROM individuals WHERE alive = false');
+    console.log(`[auto-cleanup] checkpoint:${cp.rowCount} event:${ev.rowCount} dead:${ind.rowCount}`);
+    try { await query('VACUUM'); } catch (_) {}
+  } catch (err) {
+    console.error('[auto-cleanup] error:', err.message);
+  }
+}
+// Run once 10 minutes after startup, then every 7 days
+setTimeout(() => { autoCleanup(); setInterval(autoCleanup, 7 * 24 * 60 * 60 * 1000); }, 10 * 60 * 1000);
+
 // Keep Render free-tier instance awake — ping self every 4 minutes to prevent spin-down
 const SELF_URL = process.env.RENDER_EXTERNAL_URL;
 if (SELF_URL) {
