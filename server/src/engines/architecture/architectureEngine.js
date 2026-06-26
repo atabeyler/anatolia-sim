@@ -130,7 +130,11 @@ export function processArchitectureTick(settlement, population, discoveredTechs,
   if (!settlement.structures) settlement.structures = [];
   if (!settlement.labor_pool) settlement.labor_pool = 0;
   if (!settlement.stockpile) settlement.stockpile = {};
-  settlement.labor_pool += members.filter(i => i.life_stage === 'ADULT').length * 0.1;
+  // Labor varies by individual health — sick or injured adults contribute less
+  for (const m of members.filter(i => i.life_stage === 'ADULT')) {
+    const vitality = 0.5 + (m.health?.hp ?? 1.0) * 0.5;
+    settlement.labor_pool += 0.1 * vitality;
+  }
   // Collect surplus building materials from group members into settlement stockpile
   for (const ind of members) {
     if (!ind.inventory) continue;
@@ -178,11 +182,14 @@ export function processArchitectureTick(settlement, population, discoveredTechs,
 function getBuildPriority(s, gs, ws) {
   const ex = new Set(s.structures?.map(x => x.type) ?? []);
   const cap = (s.structures ?? []).reduce((c, x) => c + (STRUCTURE_TYPES[x.type]?.capacity ?? 0), 0);
-  // Overcrowding response: build post_frame_hut (wood only, stone_tools) until cap ≥ 70% of group
+  // No shelter yet → lean_to first (no tech required, minimal materials)
+  // Cave dwellings count as existing shelter.
+  const hasAnyShelter = ex.has('lean_to') || ex.has('pit_house') || ex.has('mud_brick_house') ||
+                        ex.has('post_frame_hut') || ex.has('cave_dwelling') || ex.has('stone_house');
+  if (!hasAnyShelter) return { id: 'lean_to', requires_tech: [] };
+  // Overcrowding response: existing shelter insufficient for group → expand with post_frame_hut
   if (cap < gs * 0.7) return { id: 'post_frame_hut', requires_tech: ['stone_tools'] };
-  if (!ex.has('lean_to') && !ex.has('pit_house') && !ex.has('mud_brick_house') && !ex.has('post_frame_hut')) {
-    return { id: 'lean_to', requires_tech: [] };
-  }
+
   if (gs >= 6 && !ex.has('storage_pit')) return { id: 'storage_pit', requires_tech: ['stone_tools'] };
   if (gs >= 8 && !ex.has('mud_brick_house')) return { id: 'mud_brick_house', requires_tech: ['pottery'] };
   if (gs >= 10 && !ex.has('granary')) return { id: 'granary', requires_tech: ['plant_cultivation'] };
