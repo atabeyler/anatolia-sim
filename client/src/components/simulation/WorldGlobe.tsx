@@ -4,10 +4,7 @@ import { OrbitControls, Stars } from '@react-three/drei';
 import * as THREE from 'three';
 import { useSimStore, type CentroidPoint } from '../../store/simStore';
 
-// NASA Blue Marble 2004 (5400×2700) — 2.7× the resolution of the old 2048 source.
-// Freely available from NASA Earth Observatory (public domain).
-// Falls back gracefully to grey sphere if the CDN is unreachable.
-const EARTH_MAP  = 'https://eoimages.gsfc.nasa.gov/images/imagerecords/73000/73909/world.200412.3x5400x2700.jpg';
+const EARTH_MAP  = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/textures/planets/earth_atmos_2048.jpg';
 const EARTH_BUMP = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/textures/planets/earth_normal_2048.jpg';
 const EARTH_SPEC = 'https://raw.githubusercontent.com/mrdoob/three.js/r128/examples/textures/planets/earth_specular_2048.jpg';
 
@@ -298,17 +295,13 @@ function GlobeMesh() {
   const { gl } = useThree();
   const [earthTex, bumpTex, specTex] = useMemo(() => {
     const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin('anonymous');
     const maxAniso = gl.capabilities.getMaxAnisotropy();
     const load = (url: string) => {
       const t = loader.load(url);
       t.anisotropy = maxAniso;
       return t;
     };
-    const et = load(EARTH_MAP);
-    // Correct gamma so colours render at true brightness instead of washed out
-    et.colorSpace = THREE.SRGBColorSpace;
-    return [et, load(EARTH_BUMP), load(EARTH_SPEC)];
+    return [load(EARTH_MAP), load(EARTH_BUMP), load(EARTH_SPEC)];
   }, [gl]);
 
   return (
