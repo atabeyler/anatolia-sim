@@ -274,6 +274,8 @@ function buildServerEnv(cfg) {
     env.PGLITE_DATA_DIR = join(app.getPath('userData'), 'db');
   } else {
     env.DATABASE_URL = cfg.DATABASE_URL;
+    env.DESKTOP_SIM_LOCAL = '1';
+    env.PGLITE_DATA_DIR = join(app.getPath('userData'), 'db');
   }
 
   const secretsPath = join(app.getPath('userData'), 'secrets.json');

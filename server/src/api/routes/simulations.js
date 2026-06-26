@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, requireSimulationOwner } from '../middleware/auth.js';
-import { query } from '../../db/database.js';
+import { simQuery as query } from '../../db/database.js';
 import { createWorldState } from '../../engines/environment/environmentEngine.js';
 import { createFounder } from '../../engines/biology/individual.js';
 import { simulationManager } from '../simulationManager.js';

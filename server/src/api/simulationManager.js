@@ -1,5 +1,5 @@
 import { SimulationEngine } from '../engines/simulationLoop.js';
-import { query } from '../db/database.js';
+import { simQuery as query } from '../db/database.js';
 
 const BATCH_SIZE = 200; // max individuals per bulk upsert
 

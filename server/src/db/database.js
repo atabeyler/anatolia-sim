@@ -5,11 +5,19 @@ import { dirname, join, resolve } from 'path';
 
 const { Pool } = pg;
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const schemaSql = readFileSync(join(__dirname, 'schema.sql'), 'utf8');
-const useDesktopLocalDb = process.env.DESKTOP_LOCAL_DB === '1' || process.env.DESKTOP_LOCAL_DB === 'true';
+const fullSchemaSql   = readFileSync(join(__dirname, 'schema.sql'), 'utf8');
+const cloudSchemaSql  = readFileSync(join(__dirname, 'schema-cloud.sql'), 'utf8');
+const localSchemaSql  = readFileSync(join(__dirname, 'schema-local.sql'), 'utf8');
 
-let desktopDbInitPromise = null;
-let desktopDb = null;
+// DESKTOP_LOCAL_DB=1  → full offline (PGlite for everything)
+// DESKTOP_SIM_LOCAL=1 → hybrid (Render for users, PGlite for sim data)
+// neither              → web mode (Render for everything)
+const useLocalDb  = process.env.DESKTOP_LOCAL_DB  === '1' || process.env.DESKTOP_LOCAL_DB  === 'true';
+const useSimLocal = process.env.DESKTOP_SIM_LOCAL === '1' || process.env.DESKTOP_SIM_LOCAL === 'true';
+
+// ─── PGlite (local sim storage) ────────────────────────────────────────────────
+
+let pgliteInitPromise = null;
 
 function normalizeQueryResult(result) {
   if (!result || typeof result !== 'object') return result;
@@ -17,95 +25,106 @@ function normalizeQueryResult(result) {
   return { ...result, rowCount: result.affectedRows ?? 0 };
 }
 
-async function getDesktopDb() {
-  if (!desktopDbInitPromise) {
-    desktopDbInitPromise = (async () => {
+async function getPgliteDb() {
+  if (!pgliteInitPromise) {
+    pgliteInitPromise = (async () => {
       const [{ PGlite }, { pgcrypto }] = await Promise.all([
         import('@electric-sql/pglite'),
         import('@electric-sql/pglite/contrib/pgcrypto'),
       ]);
-
       const dataDir = resolve(
         process.env.PGLITE_DATA_DIR || join(process.cwd(), '.anatolia-sim', 'pgdata')
       );
       mkdirSync(dataDir, { recursive: true });
-
-      const db = await PGlite.create(dataDir, {
-        extensions: { pgcrypto },
-        relaxedDurability: true,
-      });
-
-      desktopDb = db;
-      return db;
+      return PGlite.create(dataDir, { extensions: { pgcrypto }, relaxedDurability: true });
     })();
   }
-
-  return desktopDbInitPromise;
+  return pgliteInitPromise;
 }
 
-function createDesktopPoolAdapter() {
-  // PGlite is single-connection — serialize all queries to prevent concurrent access errors
-  let queryQueue = Promise.resolve();
-  function serialQuery(db, text, params) {
-    const result = queryQueue.then(() => db.query(text, params));
-    queryQueue = result.catch(() => {});
-    return result;
+function createPgliteAdapter() {
+  let queue = Promise.resolve();
+  function serial(db, text, params) {
+    const r = queue.then(() => db.query(text, params));
+    queue = r.catch(() => {});
+    return r;
   }
-
   return {
     async query(text, params) {
-      const db = await getDesktopDb();
-      return normalizeQueryResult(await serialQuery(db, text, params));
+      const db = await getPgliteDb();
+      return normalizeQueryResult(await serial(db, text, params));
     },
     async connect() {
-      const db = await getDesktopDb();
+      const db = await getPgliteDb();
       return {
-        query: async (text, params) => normalizeQueryResult(await serialQuery(db, text, params)),
+        query: async (t, p) => normalizeQueryResult(await serial(db, t, p)),
         release: () => {},
       };
     },
-    async end(callback) {
-      try {
-        const db = await getDesktopDb();
-        if (db && !db.closed) await db.close();
-      } finally {
-        if (typeof callback === 'function') callback();
-      }
+    async end(cb) {
+      try { const db = await getPgliteDb(); if (db && !db.closed) await db.close(); } finally { cb?.(); }
     },
     on() {},
   };
 }
 
-let pool;
+// ─── PostgreSQL pool ────────────────────────────────────────────────────────────
 
-if (useDesktopLocalDb) {
-  pool = createDesktopPoolAdapter();
-} else {
-  const isRemoteDb = process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost') && !process.env.DATABASE_URL.includes('127.0.0.1');
-
-  pool = new Pool({
+function createPgPool() {
+  const isRemote = process.env.DATABASE_URL &&
+    !process.env.DATABASE_URL.includes('localhost') &&
+    !process.env.DATABASE_URL.includes('127.0.0.1');
+  const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: isRemoteDb ? { rejectUnauthorized: false } : false,
+    ssl: isRemote ? { rejectUnauthorized: false } : false,
     max: 5,
     idleTimeoutMillis: 60000,
     connectionTimeoutMillis: 15000,
     options: '-c search_path=antsim,public',
   });
-
   pool.on('error', (err) => console.error('Unexpected error on idle client', err));
+  return pool;
 }
 
-export const query = (text, params) => pool.query(text, params);
-export const getClient = () => pool.connect();
+// ─── Pool selection ─────────────────────────────────────────────────────────────
+
+let cloudPool; // users/auth → always pg (Render)
+let simPool;   // simulation data → PGlite in hybrid/offline, pg in web
+
+if (useLocalDb) {
+  // Full offline: PGlite for everything
+  const pglite = createPgliteAdapter();
+  cloudPool = pglite;
+  simPool   = pglite;
+} else if (useSimLocal) {
+  // Desktop hybrid: Render for auth, PGlite for sim data
+  cloudPool = createPgPool();
+  simPool   = createPgliteAdapter();
+} else {
+  // Web: Render PostgreSQL for everything
+  cloudPool = createPgPool();
+  simPool   = cloudPool;
+}
+
+// ─── Exports ────────────────────────────────────────────────────────────────────
+
+export const cloudQuery = (text, params) => cloudPool.query(text, params);
+export const simQuery   = (text, params) => simPool.query(text, params);
+export const query      = cloudQuery; // backward compat (auth routes)
+export const getClient  = () => cloudPool.connect();
 
 export async function migrate() {
-  if (useDesktopLocalDb) {
-    const db = await getDesktopDb();
-    await db.exec(schemaSql);
+  if (useLocalDb) {
+    const db = await getPgliteDb();
+    await db.exec(fullSchemaSql);
+  } else if (useSimLocal) {
+    await cloudPool.query(cloudSchemaSql);
+    const db = await getPgliteDb();
+    await db.exec(localSchemaSql);
   } else {
-    await pool.query(schemaSql);
+    await cloudPool.query(fullSchemaSql);
   }
   console.log('✅ Database schema migrated');
 }
 
-export default pool;
+export default cloudPool;
