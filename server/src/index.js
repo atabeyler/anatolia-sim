@@ -89,7 +89,7 @@ app.use('/api/god', godRouter);
 app.use('/api/analysis', analysisRouter);
 app.use('/api/aria', ariaRouter);
 app.use('/api/admin', adminRouter);
-const BUILD_VERSION = process.env.RENDER_GIT_COMMIT ?? process.env.BUILD_VERSION ?? Date.now().toString();
+const BUILD_VERSION = process.env.RENDER_GIT_COMMIT ?? process.env.BUILD_VERSION ?? 'v1.7.7';
 app.get('/api/health', (_, res) => res.json({ status: 'ok', version: BUILD_VERSION }));
 
 // Public system status — no auth required; consumed by the login page status panel
