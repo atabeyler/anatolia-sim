@@ -23,7 +23,7 @@ jobs:
 
       - name: Bundled config enjekte et
         env:
-          BUNDLED_DATABASE_URL: ${{ secrets.BUNDLED_DATABASE_URL }}
+          BUNDLED_DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node desktop/inject-config.mjs
 
       - name: Client build + Server bağımlılıkları
