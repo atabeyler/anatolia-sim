@@ -35,9 +35,12 @@ jobs:
       - name: Root bağımlılıklarını yükle
         run: npm ci
 
-      # bundled-config.json yok — ilk açılışta setup ekranı gösterilir.
-      # Kullanıcı Supabase DATABASE_URL girer veya Yerel Mod seçer.
-      # Seçim %APPDATA%\Anatolia Sim\config.json'a kaydedilir; bir daha sorulmaz.
+      # DATABASE_URL'yi installer'a göm — kodda görünmez, sadece build sırasında yazılır.
+      # GitHub → Settings → Secrets → DATABASE_URL değerini Supabase URI ile güncelle.
+      - name: Uygulama config dosyasını oluştur
+        shell: bash
+        run: |
+          echo '{"DATABASE_URL":"${{ secrets.DATABASE_URL }}"}' > desktop/bundled-config.json
 
       - name: Versiyon kontrolü — zaten yayınlandıysa atla
         id: check
