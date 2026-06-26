@@ -65,12 +65,12 @@
 <body>
   <div class="card">
     <h1>🌍 Anatolia Sim <span class="tag">Setup</span></h1>
-    <p class="subtitle">Configure your cloud database connection. Simulation calculations always run on this computer.</p>
+    <p class="subtitle">Bulut veritabanınızı bağlayın — web'deki simülasyonlarınız masaüstünde de görünür. Simülasyon hesaplamaları her zaman bu bilgisayarda çalışır.</p>
 
     <div class="field">
-      <label>Render PostgreSQL — DATABASE_URL</label>
+      <label>Supabase / PostgreSQL — DATABASE_URL</label>
       <textarea id="dbUrl" placeholder="postgresql://user:pass@hostname/dbname?sslmode=require"></textarea>
-      <p class="hint">Render → Postgres → Connection String → External URL</p>
+      <p class="hint">Supabase → Project Settings → Database → Connection string → URI</p>
     </div>
 
     <div class="field">
@@ -94,8 +94,8 @@
     <button class="btn btn-primary" onclick="saveConfig()">Save & Launch</button>
 
     <hr class="divider" />
-    <p class="offline-note">You can also use the app without DATABASE_URL — data will be stored locally on this computer.</p>
-    <button class="btn btn-secondary" onclick="useOffline()">Offline / Local Mode</button>
+    <p class="offline-note">DATABASE_URL girmeden de kullanabilirsiniz — veriler yalnızca bu bilgisayarda saklanır, web ile senkron olmaz.</p>
+    <button class="btn btn-secondary" onclick="useOffline()">Yerel Mod (Çevrimdışı)</button>
   </div>
 
   <script>
