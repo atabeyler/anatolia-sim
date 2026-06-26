@@ -1,11 +1,11 @@
 {
   "name": "anatolia-sim-server",
-  "version": "1.6.97",
+  "version": "1.6.98",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
     "dev": "nodemon src/index.js",
-    "start": "node --max-old-space-size=350 src/index.js",
+    "start": "node --dns-result-order=ipv4first --max-old-space-size=350 src/index.js",
     "db:migrate": "node src/db/migrate.js",
     "test": "vitest run",
     "test:watch": "vitest"
