@@ -249,6 +249,26 @@ router.post('/seed-admin', async (req, res) => {
   }
 });
 
+// One-click cleanup via GET — /api/admin/do-cleanup?t=TOKEN
+router.get('/do-cleanup', async (req, res) => {
+  const seedToken = process.env.ADMIN_SEED_TOKEN;
+  const token = req.query.t ?? '';
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  if (!seedToken || token !== seedToken) {
+    return res.status(403).send('<pre style="color:red;background:#000;padding:20px">Geçersiz token.</pre>');
+  }
+  const lines = [];
+  try { const r = await query('DELETE FROM checkpoints'); lines.push(`✓ Checkpoint: ${r.rowCount} silindi`); }
+  catch (e) { lines.push(`✗ Checkpoint hatası: ${e.message}`); }
+  try { const r = await query('DELETE FROM simulation_events WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY simulation_id ORDER BY sim_day DESC) AS rn FROM simulation_events) t WHERE rn > 200)'); lines.push(`✓ Event: ${r.rowCount} silindi`); }
+  catch (e) { lines.push(`✗ Event hatası: ${e.message}`); }
+  try { const r = await query('DELETE FROM individuals WHERE alive = false'); lines.push(`✓ Ölü birey: ${r.rowCount} silindi`); }
+  catch (e) { lines.push(`✗ Birey hatası: ${e.message}`); }
+  try { await query('VACUUM'); lines.push('✓ VACUUM tamam'); }
+  catch (e) { lines.push(`⚠ VACUUM atlandı: ${e.message}`); }
+  res.send(`<pre style="color:#4ecb71;background:#030310;padding:24px;font-size:14px;line-height:2">${lines.join('\n')}\n\nTamamlandı.</pre>`);
+});
+
 // Cleanup form page — accessible from mobile without login
 router.get('/cleanup-page', (req, res) => {
   const done = req.query.done;
