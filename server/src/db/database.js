@@ -77,11 +77,17 @@ function createDesktopPoolAdapter() {
   };
 }
 
-// Resolve remote hostname to IPv4 — Render free tier has no IPv6 outbound support
+// Resolve remote hostname to IPv4 only for Render hosts.
+// Supabase and other providers must use their hostname as-is for SSL SNI to work.
+// Note: --dns-result-order=ipv4first is already set globally in index.js and package.json,
+// so all pg Pool connections already prefer IPv4 without hostname rewriting.
 async function resolveIPv4(connStr) {
   try {
     const url = new URL(connStr);
     if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return connStr;
+    // Only rewrite for Render — all other providers (Supabase, Neon, Railway, etc.)
+    // require the original hostname for SSL certificate validation and SNI.
+    if (!/render\.com|onrender\.com/i.test(url.hostname)) return connStr;
     const ipv4 = await new Promise((res, rej) =>
       dns.lookup(url.hostname, { family: 4 }, (err, addr) => err ? rej(err) : res(addr))
     );
