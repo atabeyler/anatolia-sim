@@ -249,6 +249,19 @@ router.post('/seed-admin', async (req, res) => {
   }
 });
 
+// Cleanup via admin JWT — no seed token needed, just be logged in as admin
+router.post('/cleanup-admin', authenticate, requireAdmin, async (req, res) => {
+  const results = { checkpoints_deleted: 0, events_deleted: 0, dead_individuals_deleted: 0, errors: [] };
+  try { const r = await query('DELETE FROM checkpoints'); results.checkpoints_deleted = r.rowCount; }
+  catch (e) { results.errors.push(`checkpoint: ${e.message}`); }
+  try { const r = await query('DELETE FROM simulation_events WHERE id IN (SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY simulation_id ORDER BY sim_day DESC) AS rn FROM simulation_events) t WHERE rn > 200)'); results.events_deleted = r.rowCount; }
+  catch (e) { results.errors.push(`events: ${e.message}`); }
+  try { const r = await query('DELETE FROM individuals WHERE alive = false'); results.dead_individuals_deleted = r.rowCount; }
+  catch (e) { results.errors.push(`individuals: ${e.message}`); }
+  try { await query('VACUUM'); } catch (e) { results.errors.push(`vacuum: ${e.message}`); }
+  res.json({ success: true, ...results });
+});
+
 // One-click cleanup via GET — /api/admin/do-cleanup?t=TOKEN
 router.get('/do-cleanup', async (req, res) => {
   const seedToken = (process.env.ADMIN_SEED_TOKEN ?? '').trim();

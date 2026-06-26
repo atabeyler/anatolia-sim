@@ -28,7 +28,6 @@ export default function AdminPage() {
   const [banReason, setBanReason] = useState('');
   const [banTarget, setBanTarget] = useState<string | null>(null);
   const [showCleanup, setShowCleanup] = useState(false);
-  const [seedToken, setSeedToken] = useState('');
   const [cleanupResult, setCleanupResult] = useState<{ success: boolean; msg: string } | null>(null);
   const [cleanupLoading, setCleanupLoading] = useState(false);
   const headers = { Authorization: `Bearer ${accessToken}` };
@@ -66,14 +65,14 @@ export default function AdminPage() {
   }
 
   async function runCleanup() {
-    if (!seedToken.trim()) return;
     setCleanupLoading(true);
     setCleanupResult(null);
     try {
-      const { data } = await axios.post('/api/admin/cleanup', {}, { headers: { 'x-seed-token': seedToken } });
+      const { data } = await axios.post('/api/admin/cleanup-admin', {}, { headers });
+      const errors = data.errors?.length ? ` (Uyarı: ${data.errors.join(', ')})` : '';
       setCleanupResult({
         success: true,
-        msg: `✓ Checkpoint: ${data.checkpoints_deleted} silindi · Event: ${data.events_deleted} silindi · Ölü birey: ${data.dead_individuals_deleted} silindi`,
+        msg: `✓ Checkpoint: ${data.checkpoints_deleted} · Event: ${data.events_deleted} · Ölü birey: ${data.dead_individuals_deleted} silindi${errors}`,
       });
     } catch (err: any) {
       setCleanupResult({ success: false, msg: err?.response?.data?.error ?? 'Temizleme başarısız.' });
@@ -182,18 +181,8 @@ export default function AdminPage() {
             <div className="w-[420px] p-6" style={{ background: 'rgba(4,4,15,0.98)', border: '1px solid rgba(224,90,90,0.4)' }}>
               <div className="font-orbitron font-bold tracking-widest mb-1" style={{ fontSize: 12, color: '#e05a5a' }}>VERİTABANI TEMİZLE</div>
               <div className="font-share-tech mb-4" style={{ fontSize: 11, color: '#6090a0', lineHeight: 1.6 }}>
-                Tüm checkpoint'ler, simülasyon başına 500'den eski event'ler ve 1000 günden eski ölü bireyler silinir. Bu işlem geri alınamaz.
+                Tüm checkpoint'ler, simülasyon başına son 200 event dışındakiler ve tüm ölü bireyler silinir. Bu işlem geri alınamaz.
               </div>
-              <div className="font-share-tech mb-1" style={{ fontSize: 10, color: '#8a9ab0', letterSpacing: '0.1em' }}>ADMIN_SEED_TOKEN</div>
-              <input
-                type="password"
-                className="w-full bg-sim-bg border border-sim-border px-3 py-2 font-share-tech text-sim-text focus:outline-none focus:border-sim-red mb-4"
-                style={{ fontSize: 13 }}
-                placeholder="Render env'den ADMIN_SEED_TOKEN değerini girin"
-                value={seedToken}
-                onChange={e => setSeedToken(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && !cleanupLoading && runCleanup()}
-              />
               {cleanupResult && (
                 <div className="mb-4 px-3 py-2 font-share-tech" style={{
                   fontSize: 11, lineHeight: 1.5,
@@ -205,12 +194,12 @@ export default function AdminPage() {
                 </div>
               )}
               <div className="flex gap-2">
-                <button onClick={runCleanup} disabled={cleanupLoading || !seedToken.trim()}
+                <button onClick={runCleanup} disabled={cleanupLoading}
                   className="flex-1 py-2 font-share-tech tracking-widest transition-all"
                   style={{
                     fontSize: 10, color: cleanupLoading ? '#6090a0' : '#e05a5a',
                     background: 'rgba(224,90,90,0.15)', border: '1px solid rgba(224,90,90,0.4)',
-                    opacity: !seedToken.trim() ? 0.5 : 1, cursor: !seedToken.trim() ? 'not-allowed' : 'pointer',
+                    opacity: cleanupLoading ? 0.5 : 1, cursor: cleanupLoading ? 'not-allowed' : 'pointer',
                   }}>
                   {cleanupLoading ? 'TEMİZLENİYOR...' : 'TEMİZLE'}
                 </button>
