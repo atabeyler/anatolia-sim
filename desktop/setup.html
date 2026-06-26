@@ -84,8 +84,8 @@
     </div>
 
     <div class="field">
-      <label>Anthropic API Key (optional)</label>
-      <input id="anthropicKey" type="password" placeholder="sk-ant-..." />
+      <label>Gemini API Key (optional)</label>
+      <input id="geminiKey" type="password" placeholder="AIzaSy..." />
       <p class="hint">Required for the ARIA assistant feature</p>
     </div>
 
@@ -109,7 +109,7 @@
         DATABASE_URL: dbUrl,
         JWT_SECRET: document.getElementById('jwtSecret').value.trim() || undefined,
         JWT_REFRESH_SECRET: document.getElementById('jwtRefresh').value.trim() || undefined,
-        ANTHROPIC_API_KEY: document.getElementById('anthropicKey').value.trim() || undefined,
+        GEMINI_API_KEY: document.getElementById('geminiKey').value.trim() || undefined,
       };
       Object.keys(config).forEach(k => config[k] === undefined && delete config[k]);
       window.electronSetup.save(config);

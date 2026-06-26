@@ -286,7 +286,7 @@ function buildServerEnv(cfg) {
   env.JWT_SECRET = cfg?.JWT_SECRET || secrets.JWT_SECRET;
   env.JWT_REFRESH_SECRET = cfg?.JWT_REFRESH_SECRET || secrets.JWT_REFRESH_SECRET;
 
-  if (cfg?.ANTHROPIC_API_KEY) env.ANTHROPIC_API_KEY = cfg.ANTHROPIC_API_KEY;
+  if (cfg?.GEMINI_API_KEY) env.GEMINI_API_KEY = cfg.GEMINI_API_KEY;
 
   return env;
 }
