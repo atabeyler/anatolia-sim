@@ -113,7 +113,7 @@ export default function AdminPage() {
                 <span className="font-share-tech text-sim-gold tracking-widest" style={{ fontSize: 10 }}>{pending.length} BEKLEYEN</span>
               </div>
             )}
-            <button onClick={() => { setShowCleanup(true); setCleanupResult(null); setSeedToken(''); }}
+            <button onClick={() => { setShowCleanup(true); setCleanupResult(null); }}
               className="flex items-center gap-2 px-3 py-1 font-share-tech tracking-widest transition-all"
               style={{ fontSize: 10, background: 'rgba(224,90,90,0.1)', border: '1px solid rgba(224,90,90,0.3)', color: '#e05a5a' }}
               title="Veritabanını temizle">
@@ -203,7 +203,7 @@ export default function AdminPage() {
                   }}>
                   {cleanupLoading ? 'TEMİZLENİYOR...' : 'TEMİZLE'}
                 </button>
-                <button onClick={() => { setShowCleanup(false); setCleanupResult(null); setSeedToken(''); }}
+                <button onClick={() => { setShowCleanup(false); setCleanupResult(null); }}
                   className="flex-1 py-2 font-share-tech tracking-widest text-sim-muted"
                   style={{ fontSize: 10, background: 'rgba(22,22,58,0.5)', border: '1px solid rgba(79,110,247,0.15)' }}>
                   KAPAT
