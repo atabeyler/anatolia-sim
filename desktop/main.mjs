@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import { spawn, execFile } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, createWriteStream } from 'node:fs';
 import { cpus } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -291,23 +291,34 @@ function buildServerEnv(cfg) {
   return env;
 }
 
-async function ensureLocalServer(cfg) {
-  try {
-    const res = await fetch(`${LOCAL_URL}/api/health`, { cache: 'no-store' });
-    if (res.ok) return;
-  } catch {}
+let serverLogStream = null;
 
-  if (!existsSync(SERVER_ENTRY)) {
-    throw new Error(`Sunucu dosyası bulunamadı: ${SERVER_ENTRY}`);
+function getServerLogStream() {
+  if (!serverLogStream) {
+    const logPath = join(app.getPath('userData'), 'server.log');
+    serverLogStream = createWriteStream(logPath, { flags: 'a' });
   }
+  return serverLogStream;
+}
 
+function spawnServer(envCfg) {
+  if (serverProcess && !serverProcess.killed) {
+    serverProcess.removeAllListeners('exit');
+    try { serverProcess.kill('SIGTERM'); } catch {}
+  }
+  const log = getServerLogStream();
+  log.write(`\n=== ${new Date().toISOString()} ===\n`);
   serverProcess = spawn(process.execPath, [SERVER_ENTRY], {
     cwd: SERVER_ROOT,
-    env: buildServerEnv(cfg),
-    stdio: 'inherit',
+    env: buildServerEnv(envCfg),
+    stdio: ['ignore', log, log],
     windowsHide: true,
   });
+  return serverProcess;
+}
 
+function registerExitHandler(cfg) {
+  if (!serverProcess) return;
   serverProcess.on('exit', (code, signal) => {
     if (!app.isQuiting && code !== 0 && signal !== 'SIGTERM') {
       console.warn(`[desktop] sunucu kapandı (${code ?? 'null'}, ${signal ?? '-'}) — yeniden başlatılıyor`);
@@ -321,9 +332,61 @@ async function ensureLocalServer(cfg) {
       }, 2000);
     }
   });
+}
 
-  const ready = await waitForServer();
-  if (!ready) throw new Error('Sunucu zamanında başlamadı.');
+async function ensureLocalServer(cfg) {
+  try {
+    const res = await fetch(`${LOCAL_URL}/api/health`, { cache: 'no-store' });
+    if (res.ok) return;
+  } catch {}
+
+  if (!existsSync(SERVER_ENTRY)) {
+    throw new Error(`Sunucu dosyası bulunamadı: ${SERVER_ENTRY}`);
+  }
+
+  const hasRemoteDb = !!(cfg?.DATABASE_URL) && cfg?.DESKTOP_LOCAL_DB !== '1';
+
+  spawnServer(cfg);
+
+  // For remote DB configs try a shorter first window; if the server never
+  // responds the DATABASE_URL is likely invalid/unreachable, so fall back to
+  // local PGlite automatically.
+  const firstTimeout = hasRemoteDb ? 25000 : 90000;
+  const ready = await waitForServer(firstTimeout);
+
+  if (!ready && hasRemoteDb) {
+    const logPath = join(app.getPath('userData'), 'server.log');
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      dialog.showMessageBox(mainWindow, {
+        type: 'warning',
+        title: 'Veritabanı Bağlantısı Başarısız',
+        message: 'Uzak veritabanına bağlanılamadı.',
+        detail: `Uygulama yerel modda başlatılıyor — veriler bu bilgisayarda saklanacak.\n\nHata günlüğü: ${logPath}`,
+        buttons: ['Tamam'],
+      }).catch(() => {});
+    }
+
+    const localCfg = {
+      DESKTOP_LOCAL_DB: '1',
+      JWT_SECRET: cfg.JWT_SECRET,
+      JWT_REFRESH_SECRET: cfg.JWT_REFRESH_SECRET,
+      ANTHROPIC_API_KEY: cfg.ANTHROPIC_API_KEY,
+    };
+    spawnServer(localCfg);
+    const localReady = await waitForServer(90000);
+    if (!localReady) {
+      throw new Error(`Sunucu zamanında başlamadı.\nHata günlüğü: ${logPath}`);
+    }
+    registerExitHandler(localCfg);
+    return;
+  }
+
+  if (!ready) {
+    const logPath = join(app.getPath('userData'), 'server.log');
+    throw new Error(`Sunucu zamanında başlamadı.\nHata günlüğü: ${logPath}`);
+  }
+
+  registerExitHandler(cfg);
 }
 
 // ─── Main window ───────────────────────────────────────────────────────────────
