@@ -9,9 +9,9 @@
   "scripts": {
     "build": "cd client && npm install --include=dev && npm run build && cd ../server && npm install --include=dev",
     "desktop": "npm run build && electron desktop/main.mjs",
-    "dist": "npm run build && electron-builder --win nsis",
-    "dist:mac": "npm run build && electron-builder --mac dmg",
-    "dist:linux": "npm run build && electron-builder --linux AppImage",
+    "dist": "node desktop/inject-config.mjs && npm run build && electron-builder --win nsis",
+    "dist:mac": "node desktop/inject-config.mjs && npm run build && electron-builder --mac dmg",
+    "dist:linux": "node desktop/inject-config.mjs && npm run build && electron-builder --linux AppImage",
     "start": "cd server && npm start",
     "test": "cd server && npm test && cd ../client && npm test"
   },
