@@ -1,5 +1,4 @@
 # Bundled secrets (build sırasında oluşturulur, repoda olmaz)
-desktop/bundled-config.json
 
 # Logs
 logs
