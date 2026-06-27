@@ -107,13 +107,13 @@ export default function AdminPage() {
               </div>
             )}
             <button onClick={() => { logout(); navigate('/login'); }}
-              className="flex items-center gap-1.5 px-2 py-1 transition-colors"
-              style={{ fontFamily: 'Share Tech Mono,monospace', fontSize: 14, fontWeight: 700, letterSpacing: '0.1em', color: '#ffffff', border: '1px solid rgba(200,34,34,0.6)', background: 'rgba(200,34,34,0.08)', boxShadow: '0 0 8px rgba(200,34,34,0.35)', padding: '4px 10px' }}>
+              className="flex items-center gap-1.5 transition-colors"
+              style={{ fontFamily: 'Share Tech Mono,monospace', fontSize: 14, fontWeight: 700, letterSpacing: '0.1em', color: '#ffffff', border: '1px solid rgba(0,229,255,0.7)', background: 'rgba(0,229,255,0.08)', boxShadow: '0 0 10px rgba(0,229,255,0.4)', padding: '4px 10px' }}>
               <LogOut size={13} />
               <span className="hidden sm:inline">ÇIKIŞ</span>
             </button>
             <button onClick={() => navigate('/')}
-              style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '4px 10px', border: '1px solid rgba(200,34,34,0.6)', color: '#ffffff', background: 'rgba(200,34,34,0.08)', boxShadow: '0 0 8px rgba(200,34,34,0.35)', fontSize: 14, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '4px 10px', border: '1px solid rgba(0,229,255,0.7)', color: '#ffffff', background: 'rgba(0,229,255,0.08)', boxShadow: '0 0 10px rgba(0,229,255,0.4)', fontSize: 14, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
               ☰ MENÜ
             </button>
           </div>
@@ -133,9 +133,9 @@ export default function AdminPage() {
               style={{
                 fontSize: 13,
                 color: '#ffffff',
-                background: tab === key ? 'rgba(200,34,34,0.18)' : 'rgba(200,34,34,0.06)',
-                border: `1px solid ${tab === key ? 'rgba(200,34,34,0.8)' : 'rgba(200,34,34,0.3)'}`,
-                boxShadow: tab === key ? '0 0 12px rgba(200,34,34,0.5), inset 0 0 8px rgba(200,34,34,0.1)' : 'none',
+                background: tab === key ? 'rgba(0,229,255,0.15)' : 'rgba(0,229,255,0.04)',
+                border: `1px solid ${tab === key ? 'rgba(0,229,255,0.9)' : 'rgba(0,229,255,0.3)'}`,
+                boxShadow: tab === key ? '0 0 14px rgba(0,229,255,0.5), inset 0 0 8px rgba(0,229,255,0.08)' : 'none',
                 clipPath: 'polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px))',
               }}>
               {label} ({count})
@@ -147,9 +147,9 @@ export default function AdminPage() {
             style={{
               fontSize: 13,
               color: '#ffffff',
-              background: 'rgba(200,34,34,0.06)',
-              border: '1px solid rgba(200,34,34,0.3)',
-              boxShadow: '0 0 8px rgba(200,34,34,0.2)',
+              background: 'rgba(0,229,255,0.04)',
+              border: '1px solid rgba(0,229,255,0.3)',
+              boxShadow: '0 0 8px rgba(0,229,255,0.2)',
               clipPath: 'polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px))',
             }}>
             ← SİMÜLASYONLAR
@@ -187,8 +187,8 @@ export default function AdminPage() {
         {/* User table */}
         {displayed.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20"
-            style={{ border: '1px solid rgba(200,34,34,0.4)', background: 'rgba(4,4,15,0.6)', boxShadow: '0 0 16px rgba(200,34,34,0.15)' }}>
-            <Users size={28} style={{ color: 'rgba(200,34,34,0.4)' }} className="mb-3" />
+            style={{ border: '1px solid rgba(0,229,255,0.4)', background: 'rgba(4,4,15,0.6)', boxShadow: '0 0 16px rgba(0,229,255,0.15)' }}>
+            <Users size={28} style={{ color: 'rgba(0,229,255,0.4)' }} className="mb-3" />
             <p className="font-share-tech tracking-widest" style={{ fontSize: 14, color: '#ffffff' }}>KAYIT BULUNAMADI</p>
           </div>
         ) : (
