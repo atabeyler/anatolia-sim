@@ -27,7 +27,7 @@ import analysisRouter from './api/routes/analysis.js';
 import ariaRouter from './api/routes/aria.js';
 import adminRouter from './api/routes/admin.js';
 import { simulationManager } from './api/simulationManager.js';
-import pool, { query } from './db/database.js';
+import pool, { query, simQuery } from './db/database.js';
 import { verifyAccessToken } from './api/middleware/auth.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -138,7 +138,7 @@ wss.on('connection', (ws, req) => {
       const { type, token } = JSON.parse(raw);
       if (type !== 'auth' || !token) return ws.close(1008, 'Authentication required');
       const user = verifyAccessToken(token);
-      const { rows } = await query('SELECT id FROM simulations WHERE id = $1 AND user_id = $2', [simId, user.id]);
+      const { rows } = await simQuery('SELECT id FROM simulations WHERE id = $1 AND user_id = $2', [simId, user.id]);
       if (!rows[0]) return ws.close(1008, 'Simulation not found');
       simulationManager.registerWs(simId, ws);
       // BUG-11: Tell the client the actual engine state so it can auto-recover after restart.
