@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { query } from '../../db/database.js';
+import { query, simQuery } from '../../db/database.js';
 
 export function verifyAccessToken(token) {
   return jwt.verify(token, process.env.JWT_SECRET);
@@ -28,7 +28,7 @@ export async function requireSimulationOwner(req, res, next) {
       req.simulation = cached.sim;
       return next();
     }
-    const { rows } = await query(
+    const { rows } = await simQuery(
       'SELECT * FROM simulations WHERE id = $1 AND user_id = $2',
       [simId, req.user.id]
     );
