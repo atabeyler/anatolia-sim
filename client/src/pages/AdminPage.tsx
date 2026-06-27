@@ -14,7 +14,7 @@ type UserRow = {
 
 function Badge({ label, color }: { label: string; color: string }) {
   return (
-    <span className="font-share-tech tracking-widest px-2 py-0.5" style={{ fontSize: 9, color, border: `1px solid ${color}55`, background: `${color}11` }}>
+    <span className="font-share-tech tracking-widest px-2 py-0.5" style={{ fontSize: 11, color, border: `1px solid ${color}55`, background: `${color}11` }}>
       {label}
     </span>
   );
@@ -72,7 +72,7 @@ export default function AdminPage() {
   const displayed = tab === 'pending' ? pending : tab === 'approved' ? approved : users;
 
   return (
-    <div className="min-h-screen text-sim-text overflow-auto" style={{ background: '#030310' }}>
+    <div className="min-h-screen text-sim-text flex flex-col" style={{ background: '#030310' }}>
       <div className="pointer-events-none fixed inset-0"
         style={{ background: 'repeating-linear-gradient(to bottom, transparent 0, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px)' }} />
 
@@ -82,30 +82,30 @@ export default function AdminPage() {
           <div className="flex items-center gap-3">
             <div className="w-1 h-5 bg-sim-accent" style={{ boxShadow: '0 0 8px rgba(79,110,247,0.8)' }} />
             <div>
-              <div className="font-orbitron text-sim-accent font-bold tracking-[0.2em]" style={{ fontSize: 12 }}>ANATOLİA-SİM</div>
-              <div className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 8 }}>YÖNETİM PANELİ</div>
+              <div className="font-orbitron text-sim-accent font-bold tracking-[0.2em]" style={{ fontSize: 14 }}>ANATOLİA-SİM</div>
+              <div className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 11 }}>YÖNETİM PANELİ</div>
             </div>
           </div>
           <div className="flex items-center gap-4">
             {pending.length > 0 && (
               <div className="flex items-center gap-2 px-3 py-1" style={{ background: 'rgba(212,168,56,0.1)', border: '1px solid rgba(212,168,56,0.3)' }}>
-                <Clock size={12} className="text-sim-gold" />
-                <span className="font-share-tech text-sim-gold tracking-widest" style={{ fontSize: 10 }}>{pending.length} BEKLEYEN</span>
+                <Clock size={14} className="text-sim-gold" />
+                <span className="font-share-tech text-sim-gold tracking-widest" style={{ fontSize: 13 }}>{pending.length} BEKLEYEN</span>
               </div>
             )}
-            <button onClick={() => { logout(); navigate('/login'); }} className="p-2 text-sim-muted hover:text-red-400 transition-colors"><LogOut size={14} /></button>
+            <button onClick={() => { logout(); navigate('/login'); }} className="p-2 text-sim-muted hover:text-red-400 transition-colors"><LogOut size={16} /></button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-8 relative">
+      <div className="max-w-6xl mx-auto px-6 py-8 relative flex-1 w-full pb-16">
         {/* Tabs */}
         <div className="flex gap-1 mb-6">
           {([['pending', 'BEKLEYEN', pending.length], ['approved', 'ONAYLANANLAR', approved.length], ['all', 'TÜMÜ', users.length]] as const).map(([key, label, count]) => (
             <button key={key} onClick={() => setTab(key)}
               className="font-share-tech tracking-widest px-4 py-2 transition-all"
               style={{
-                fontSize: 10,
+                fontSize: 13,
                 background: tab === key ? 'rgba(79,110,247,0.2)' : 'rgba(22,22,58,0.4)',
                 border: `1px solid ${tab === key ? 'rgba(79,110,247,0.5)' : 'rgba(79,110,247,0.1)'}`,
                 color: tab === key ? '#a0b4ff' : '#6070a0',
@@ -117,7 +117,7 @@ export default function AdminPage() {
           <div className="flex-1" />
           <button onClick={() => navigate('/')}
             className="font-share-tech tracking-widest px-4 py-2 transition-all text-sim-muted hover:text-sim-accent"
-            style={{ fontSize: 10, background: 'rgba(22,22,58,0.4)', border: '1px solid rgba(79,110,247,0.1)' }}>
+            style={{ fontSize: 13, background: 'rgba(22,22,58,0.4)', border: '1px solid rgba(79,110,247,0.1)' }}>
             ← SİMÜLASYONLAR
           </button>
         </div>
@@ -126,9 +126,10 @@ export default function AdminPage() {
         {banTarget && (
           <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
             <div className="w-96 p-6" style={{ background: 'rgba(4,4,15,0.98)', border: '1px solid rgba(224,90,90,0.4)' }}>
-              <div className="font-orbitron text-sim-red font-bold tracking-widest mb-4" style={{ fontSize: 12 }}>KULLANICI ENGELLE</div>
+              <div className="font-orbitron text-sim-red font-bold tracking-widest mb-4" style={{ fontSize: 14 }}>KULLANICI ENGELLE</div>
               <input
-                className="w-full bg-sim-bg border border-sim-border px-3 py-2 text-sm font-share-tech text-sim-text focus:outline-none focus:border-sim-red mb-4"
+                className="w-full bg-sim-bg border border-sim-border px-3 py-2 font-share-tech text-sim-text focus:outline-none focus:border-sim-red mb-4"
+                style={{ fontSize: 14 }}
                 placeholder="Engelleme sebebi (opsiyonel)"
                 value={banReason}
                 onChange={e => setBanReason(e.target.value)}
@@ -136,12 +137,12 @@ export default function AdminPage() {
               <div className="flex gap-2">
                 <button onClick={() => ban(banTarget)}
                   className="flex-1 py-2 font-share-tech tracking-widest text-sim-red"
-                  style={{ fontSize: 10, background: 'rgba(224,90,90,0.15)', border: '1px solid rgba(224,90,90,0.4)' }}>
+                  style={{ fontSize: 13, background: 'rgba(224,90,90,0.15)', border: '1px solid rgba(224,90,90,0.4)' }}>
                   ENGELLE
                 </button>
                 <button onClick={() => { setBanTarget(null); setBanReason(''); }}
                   className="flex-1 py-2 font-share-tech tracking-widest text-sim-muted"
-                  style={{ fontSize: 10, background: 'rgba(22,22,58,0.5)', border: '1px solid rgba(79,110,247,0.15)' }}>
+                  style={{ fontSize: 13, background: 'rgba(22,22,58,0.5)', border: '1px solid rgba(79,110,247,0.15)' }}>
                   İPTAL
                 </button>
               </div>
@@ -152,8 +153,8 @@ export default function AdminPage() {
         {/* User table */}
         {displayed.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20" style={{ border: '1px solid rgba(79,110,247,0.1)', background: 'rgba(4,4,15,0.6)' }}>
-            <Users size={24} className="text-sim-muted/30 mb-3" />
-            <p className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 10 }}>KAYIT BULUNAMADI</p>
+            <Users size={28} className="text-sim-muted/30 mb-3" />
+            <p className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 14 }}>KAYIT BULUNAMADI</p>
           </div>
         ) : (
           <div style={{ border: '1px solid rgba(79,110,247,0.18)', background: 'rgba(4,4,15,0.9)' }}>
@@ -162,7 +163,7 @@ export default function AdminPage() {
                 <tr style={{ borderBottom: '1px solid rgba(79,110,247,0.2)' }}>
                   {['KOD', 'AD SOYAD', 'TC NO', 'E-POSTA', 'DURUM', 'TARİH', 'İŞLEMLER'].map(h => (
                     <th key={h} className="text-left px-4 py-3">
-                      <span className="font-share-tech text-sim-muted tracking-widest" style={{ fontSize: 9 }}>{h}</span>
+                      <span className="font-share-tech tracking-widest" style={{ fontSize: 11, color: '#4f6ef7' }}>{h}</span>
                     </th>
                   ))}
                 </tr>
@@ -172,16 +173,16 @@ export default function AdminPage() {
                   <tr key={u.id} style={{ borderBottom: '1px solid rgba(79,110,247,0.06)' }}
                     className="hover:bg-sim-border/10 transition-colors">
                     <td className="px-4 py-3">
-                      <span className="font-orbitron font-bold text-sim-accent" style={{ fontSize: 11 }}>{u.user_code}</span>
+                      <span className="font-orbitron font-bold text-sim-accent" style={{ fontSize: 13 }}>{u.user_code}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-share-tech text-sim-text" style={{ fontSize: 11 }}>{u.first_name} {u.last_name}</span>
+                      <span className="font-share-tech text-sim-text" style={{ fontSize: 14 }}>{u.first_name} {u.last_name}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-share-tech text-sim-muted" style={{ fontSize: 10 }}>{u.tc_no}</span>
+                      <span className="font-share-tech" style={{ fontSize: 13, color: '#8abda0' }}>{u.tc_no}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-share-tech text-sim-muted" style={{ fontSize: 10 }}>{u.email}</span>
+                      <span className="font-share-tech" style={{ fontSize: 13, color: '#8abda0' }}>{u.email}</span>
                     </td>
                     <td className="px-4 py-3">
                       {u.is_banned
@@ -192,7 +193,7 @@ export default function AdminPage() {
                       {u.role === 'admin' && <Badge label="ADMİN" color="#00d4ff" />}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-share-tech text-sim-muted/50" style={{ fontSize: 9 }}>
+                      <span className="font-share-tech" style={{ fontSize: 13, color: '#6090a0' }}>
                         {new Date(u.created_at).toLocaleDateString('tr-TR')}
                       </span>
                     </td>
@@ -201,28 +202,28 @@ export default function AdminPage() {
                         {!u.is_approved && u.role !== 'admin' && (<>
                           <button onClick={() => approve(u.id)} title="Onayla"
                             className="p-1.5 text-sim-green hover:bg-sim-green/10 transition-colors rounded">
-                            <CheckCircle size={14} />
+                            <CheckCircle size={16} />
                           </button>
                           <button onClick={() => reject(u.id)} title="Reddet"
                             className="p-1.5 text-sim-red hover:bg-sim-red/10 transition-colors rounded">
-                            <XCircle size={14} />
+                            <XCircle size={16} />
                           </button>
                         </>)}
                         {u.is_approved && u.role !== 'admin' && (
                           u.is_banned
                             ? <button onClick={() => unban(u.id)} title="Engeli Kaldır"
                                 className="p-1.5 text-sim-gold hover:bg-sim-gold/10 transition-colors rounded">
-                                <ShieldOff size={14} />
+                                <ShieldOff size={16} />
                               </button>
                             : <button onClick={() => setBanTarget(u.id)} title="Engelle"
                                 className="p-1.5 text-sim-red hover:bg-sim-red/10 transition-colors rounded">
-                                <Ban size={14} />
+                                <Ban size={16} />
                               </button>
                         )}
                         {u.role !== 'admin' && (
                           <button onClick={() => deleteUser(u.id)} title="Sil"
                             className="p-1.5 text-sim-muted hover:text-sim-red hover:bg-sim-red/10 transition-colors rounded">
-                            <Trash2 size={14} />
+                            <Trash2 size={16} />
                           </button>
                         )}
                       </div>
@@ -233,9 +234,9 @@ export default function AdminPage() {
             </table>
           </div>
         )}
-
-        <FooterBar mode="inline" className="mt-8" />
       </div>
+
+      <FooterBar mode="fixed" />
     </div>
   );
 }
