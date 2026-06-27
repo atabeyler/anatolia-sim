@@ -4,16 +4,18 @@ const PREGNANCY_MIN = 266;
 const MATING_RADIUS  = 2; // degrees (~220 km) — matches SOCIAL_INTERACTION_RADIUS
 
 // BUG-01: accepts optional nearbyMalesFn callback for O(n) spatial lookup from simulationLoop
-export function checkReproduction(population, currentDay, simulationId, communityLangStage = 0, phonology = null, nearbyMalesFn = null) {
+// alive: pre-filtered array of living individuals (avoids O(N_total) Map spread every tick)
+export function checkReproduction(population, currentDay, simulationId, communityLangStage = 0, phonology = null, nearbyMalesFn = null, alive = null) {
   const newborns = [];
+  const aliveArr = alive ?? [...population.values()].filter(i => i.alive && !i.is_dead);
 
   // Only build the O(n) full scan when no spatial grid callback is provided (fallback)
-  const fertileMales = nearbyMalesFn ? null : [...population.values()].filter(i =>
-    i.alive && i.sex === 'male' && isFertile(i, currentDay)
+  const fertileMales = nearbyMalesFn ? null : aliveArr.filter(i =>
+    i.sex === 'male' && isFertile(i, currentDay)
   );
 
-  const females = [...population.values()].filter(i =>
-    i.alive && i.sex === 'female' && isFertile(i, currentDay) && !(i.health?.pregnancy)
+  const females = aliveArr.filter(i =>
+    i.sex === 'female' && isFertile(i, currentDay) && !(i.health?.pregnancy)
   );
 
   for (const female of females) {
@@ -38,7 +40,7 @@ export function checkReproduction(population, currentDay, simulationId, communit
     }
   }
 
-  for (const female of [...population.values()].filter(i => i.alive && i.health?.pregnancy)) {
+  for (const female of aliveArr.filter(i => i.health?.pregnancy)) {
     const preg = female.health.pregnancy;
     if (currentDay >= preg.due_day) {
       const father = population.get(preg.father_id);

@@ -542,7 +542,7 @@ export class SimulationEngine {
     // 8. Reproduction — BUG-01: pass spatial grid callback for O(n) male lookup
     const communityLangStage = alive.length ? Math.max(...alive.map(i => i.language?.stage ?? 0)) : 0;
     const _repNearbyMalesFn = (female) => getNeighbours(female, spatialGrid);
-    const newborns = checkReproduction(this.population, day, this.simId, communityLangStage, this.phonology, _repNearbyMalesFn);
+    const newborns = checkReproduction(this.population, day, this.simId, communityLangStage, this.phonology, _repNearbyMalesFn, alive);
     for (const nb of newborns) {
       nb.inventory = initializeInventory();
       nb.beliefs = new Set(); // must be Set in-memory
