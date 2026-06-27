@@ -158,8 +158,8 @@ class SimulationManager {
         console.warn('[onDeath] persist error after retries:', err.message);
       });
       // Free large heap objects from dead individuals — they stay in population Map
-      // for parent-id lookups and posthumous births. Keep genetic/phenotype data:
-      // pregnancies conceived before a disease death still need the dead parent genome.
+      // for parent-id lookups and posthumous births. genome/epigenome kept for up
+      // to 365 days (max gestation 270d) then stripped at checkpoint.
       for (const ind of dead) {
         ind.mind = null;
         ind.social = null;
@@ -170,6 +170,7 @@ class SimulationManager {
         ind.language = null;
         ind.skills = null;
         ind.health = null;
+        ind.phenotype = null;  // not used by createChild — safe to free immediately
       }
     };
 
@@ -240,6 +241,18 @@ class SimulationManager {
         engine._runtimeDiagnostics.checkpoint_in_progress = false;
         engine._runtimeDiagnostics.last_checkpoint_ms = Date.now() - checkpointStart;
         engine._runtimeDiagnostics.last_checkpoint_at = new Date().toISOString();
+
+        // Strip genome/epigenome from individuals dead 365+ days ago.
+        // Max gestation is 270 days so no posthumous birth can reference them.
+        const currentDay = cp.sim_day;
+        for (const ind of engine.population.values()) {
+          if (ind.is_dead && ind.genome && (currentDay - (ind.death_day ?? 0)) > 365) {
+            ind.genome = null;
+            ind.epigenome = null;
+            ind._waterFear = null;
+            ind._experience = null;
+          }
+        }
       }
     };
 

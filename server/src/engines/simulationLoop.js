@@ -883,13 +883,17 @@ export class SimulationEngine {
     // 20. Update human environmental impact
     this.worldState.human_impact = Math.min(1, alive.filter(i => !i.is_dead).length / 1000);
 
-    // 21. Compute stats
+    // 21. Compute stats — throttled to every 5 ticks; always fresh at checkpoint
     const currentAlive = alive.filter(i => !i.is_dead);
-    const stats = this.computeStats(day, currentAlive);
+    const isCheckpointDay = day > 0 && day % CHECKPOINT_INTERVAL === 0;
+    if (isCheckpointDay || day % 5 === 0 || !this._lastStats) {
+      this._lastStats = this.computeStats(day, currentAlive);
+    }
+    const stats = this._lastStats;
 
     // 22. Checkpoint (fire-and-forget — never block the simulation loop)
     // BUG-08: skip day 0 — would checkpoint only 2 founders with no history yet
-    if (day > 0 && day % CHECKPOINT_INTERVAL === 0 && this.onCheckpoint) {
+    if (isCheckpointDay && this.onCheckpoint) {
       this.onCheckpoint({
         sim_day: day,
         sim_year: Math.floor(day / 365),
