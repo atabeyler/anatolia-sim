@@ -70,6 +70,7 @@ export function processAstronomyTick(population, observations, astronomyKnowledg
       continue;
     }
     if (
+      simDay > 0 &&
       simDay % Math.round(ev.period_days) < 1 &&
       Math.random() < ev.observability
     ) {
