@@ -188,7 +188,23 @@ export default function AdminPage() {
         {displayed.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20"
             style={{ border: '1px solid rgba(0,229,255,0.4)', background: 'rgba(4,4,15,0.6)', boxShadow: '0 0 16px rgba(0,229,255,0.15)' }}>
-            <Users size={28} style={{ color: 'rgba(0,229,255,0.4)' }} className="mb-3" />
+            <div className="relative w-16 h-16 flex items-center justify-center mb-5">
+              <div className="absolute inset-0 rounded-full" style={{
+                border: '1.5px solid rgba(200,34,34,0.7)',
+                boxShadow: '0 0 10px rgba(200,34,34,0.5), inset 0 0 10px rgba(200,34,34,0.1)',
+                animation: 'ring-expand 2.4s ease-out infinite',
+              }} />
+              <div className="absolute inset-0 rounded-full" style={{
+                border: '1px solid rgba(200,34,34,0.45)',
+                boxShadow: '0 0 14px rgba(200,34,34,0.35)',
+                animation: 'ring-expand 2.4s ease-out 0.8s infinite',
+              }} />
+              <div className="absolute inset-0 rounded-full" style={{
+                border: '1px solid rgba(200,34,34,0.25)',
+                animation: 'ring-expand 2.4s ease-out 1.6s infinite',
+              }} />
+              <Globe size={26} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 8px rgba(79,158,247,0.9)) drop-shadow(0 0 16px rgba(79,158,247,0.5))' }} />
+            </div>
             <p className="font-share-tech tracking-widest" style={{ fontSize: 14, color: '#ffffff' }}>KAYIT BULUNAMADI</p>
           </div>
         ) : (
