@@ -116,7 +116,7 @@ export function processArtTick(population, discoveredArts, discoveredTechs, worl
   const events = [];
   const surplus = worldState.food_abundance;
   for (const individual of population) {
-    if (individual.life_stage === 'infant' || individual.life_stage === 'child') continue;
+    if (individual.life_stage === 'INFANT' || individual.life_stage === 'CHILD') continue;
     const p = individual.phenotype;
     const a = p.artistic_sense ?? 0.3;
     const foxp2 = individual.language?.foxp2_expression ?? 0;

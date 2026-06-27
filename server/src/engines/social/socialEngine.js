@@ -42,7 +42,7 @@ export function computeSocialStatus(individual, group) {
 export function processGroupDynamics(population, groups, simDay) {
   const popMap = new Map(population.map(i => [i.id, i]));
   const events = [];
-  const ungrouped = population.filter(i => !i.group_id && i.life_stage !== 'infant');
+  const ungrouped = population.filter(i => !i.group_id && i.life_stage !== 'INFANT');
   for (const ind of ungrouped) {
     const nearbyGroup = findNearbyGroup(ind, groups, 5);
     if (nearbyGroup && canJoinGroup(ind, nearbyGroup)) {

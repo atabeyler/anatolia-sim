@@ -28,13 +28,13 @@ export const ASTRONOMY_KNOWLEDGE = {
     foxp2_min: 0.55
   },
   eclipse_prediction: {
-    requires_obs: ['eclipse_solar', 'eclipse_lunar', 'lunar_tracking'],
+    requires_obs: ['eclipse_solar', 'eclipse_lunar', 'lunar_cycle'],
     iq_min: 0.65,
     foxp2_min: 0.65,
     requires_tech: ['mathematics_basic']
   },
   planetary_model: {
-    requires_obs: ['planet_motion', 'star_map'],
+    requires_obs: ['planet_motion', 'star_rising'],
     iq_min: 0.7,
     foxp2_min: 0.7,
     requires_tech: ['mathematics_basic', 'writing_system']
@@ -86,8 +86,8 @@ export function processAstronomyTick(population, observations, astronomyKnowledg
   const obs = population.filter(
     i =>
       !i.is_dead &&
-      i.life_stage !== 'infant' &&
-      i.life_stage !== 'child' &&
+      i.life_stage !== 'INFANT' &&
+      i.life_stage !== 'CHILD' &&
       i.phenotype.curiosity > 0.5
   );
   for (const o of obs) {
