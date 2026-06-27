@@ -15,6 +15,7 @@ export default function DashboardPage() {
   const [menuPage, setMenuPage] = useState<'language' | 'guide' | 'about' | 'mission' | 'contact' | null>(null);
   const [sims, setSims]             = useState<any[]>([]);
   const [cloudSims, setCloudSims]   = useState<any[]>([]);
+  const [liveSims, setLiveSims]     = useState<any[]>([]);
   const [showNew, setShowNew]       = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [loading, setLoading]       = useState(false);
@@ -24,6 +25,10 @@ export default function DashboardPage() {
   useEffect(() => {
     axios.get('/api/simulations', { headers }).then(r => setSims(r.data));
     axios.get('/api/simulations/cloud', { headers }).then(r => setCloudSims(r.data)).catch(() => {});
+    const fetchLive = () => axios.get('/api/simulations/live', { headers }).then(r => setLiveSims(r.data)).catch(() => {});
+    fetchLive();
+    const liveInterval = setInterval(fetchLive, 20000);
+    return () => clearInterval(liveInterval);
   }, []);
 
   // Keep ARIA informed of wizard open/closed state
@@ -269,6 +274,35 @@ export default function DashboardPage() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            )}
+
+            {/* Canlı simülasyonlar (masaüstünde şu an çalışan) */}
+            {liveSims.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3" style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.15em', color: '#22c55e' }}>
+                  <div className="w-2 h-2 rounded-full bg-sim-green pulse-live" />
+                  <span>CANLI SİMÜLASYONLAR</span>
+                </div>
+                <div className="grid gap-2">
+                  {liveSims.map(ls => (
+                    <div key={ls.simulation_id} className="flex items-center justify-between gap-4"
+                      style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.3)', padding: '12px 16px', borderRadius: 8 }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0' }}>{ls.simulation_name}</div>
+                        <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+                          Gün {ls.current_day} · Yıl {ls.current_year} · {ls.population_count} birey
+                          {' · '}{new Date(ls.updated_at).toLocaleTimeString('tr-TR')}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => navigate(`/watch/${ls.simulation_id}`)}
+                        style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.5)', color: '#86efac', padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        📺 Canlı İzle
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

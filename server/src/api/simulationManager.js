@@ -97,6 +97,7 @@ class SimulationManager {
       // Simülasyon kapanmadan önce bekleyen tüm olayları flush et (kaybetme)
       await flushEvents().catch(() => {});
       await query("UPDATE simulations SET status = 'completed', updated_at = NOW() WHERE id = $1", [simulation.id]).catch(() => {});
+      this._stopLiveSync(simulation.id);
       this.broadcast(simulation.id, { type: 'simulation_ended', reason });
     };
 
@@ -234,6 +235,9 @@ class SimulationManager {
     };
 
     this.engines.set(simulation.id, engine);
+    if (useSimLocal && simulation.user_id) {
+      this._startLiveSync(simulation.id, simulation.user_id, simulation.name, engine);
+    }
     this.runEngine(simulation.id, engine);
   }
 
@@ -249,7 +253,68 @@ class SimulationManager {
 
   pause(simId) { this.engines.get(simId)?.pause(); }
   getEngine(simId) { return this.engines.get(simId); }
-  removeEngine(simId) { this.engines.get(simId)?.pause(); this.engines.delete(simId); this.wsClients.delete(simId); }
+  removeEngine(simId) {
+    this.engines.get(simId)?.pause();
+    this.engines.delete(simId);
+    this.wsClients.delete(simId);
+    this._stopLiveSync(simId);
+  }
+
+  _startLiveSync(simId, userId, simName, engine) {
+    if (!this._liveSyncIntervals) this._liveSyncIntervals = new Map();
+    const existing = this._liveSyncIntervals.get(simId);
+    if (existing) clearInterval(existing.interval);
+
+    const interval = setInterval(async () => {
+      if (!engine.running) return;
+      try {
+        const alive = [...engine.population.values()].filter(i => !i.is_dead);
+        const agents = alive.map(i => ({ id: i.id, x: i.x, y: i.y, sex: i.sex, group_id: i.group_id ?? null }));
+        const groups = (engine.groups ?? []).map(g => ({
+          id: g.id, name: g.name ?? null,
+          size: g.members?.size ?? g.member_ids?.length ?? 0,
+        }));
+        const stats = {
+          population: alive.length,
+          total_ever: engine.population.size,
+          total_births: engine.totalBirths ?? alive.length,
+          total_deaths: engine.population.size - alive.length,
+          year: Math.floor(engine.currentDay / 365),
+          day: engine.currentDay,
+        };
+        await cloudQuery(
+          `INSERT INTO live_snapshots
+             (user_id, simulation_id, simulation_name, current_day, current_year,
+              population_count, agents_snapshot, stats, groups, is_running, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,true,NOW())
+           ON CONFLICT (user_id, simulation_id) DO UPDATE SET
+             simulation_name=EXCLUDED.simulation_name,
+             current_day=EXCLUDED.current_day, current_year=EXCLUDED.current_year,
+             population_count=EXCLUDED.population_count,
+             agents_snapshot=EXCLUDED.agents_snapshot,
+             stats=EXCLUDED.stats, groups=EXCLUDED.groups,
+             is_running=true, updated_at=NOW()`,
+          [userId, simId, simName,
+           engine.currentDay, Math.floor(engine.currentDay / 365),
+           alive.length, JSON.stringify(agents), JSON.stringify(stats), JSON.stringify(groups)]
+        );
+      } catch (err) {
+        console.warn('[live-sync]', err.message);
+      }
+    }, 20000);
+    this._liveSyncIntervals.set(simId, { interval, userId });
+  }
+
+  _stopLiveSync(simId) {
+    const entry = this._liveSyncIntervals?.get(simId);
+    if (!entry) return;
+    clearInterval(entry.interval);
+    this._liveSyncIntervals.delete(simId);
+    cloudQuery(
+      'UPDATE live_snapshots SET is_running=false, updated_at=NOW() WHERE simulation_id=$1 AND user_id=$2',
+      [simId, entry.userId]
+    ).catch(() => {});
+  }
   setSpeed(simId, speed) { const engine = this.engines.get(simId); if (engine) engine.speedMultiplier = speed; }
 
   // Feature 5: fast-forward — set engine warp target; engine skips sleep until day reached

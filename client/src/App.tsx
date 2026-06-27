@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import SimulationPage from './pages/SimulationPage';
 import AdminPage from './pages/AdminPage';
+import WatchPage from './pages/WatchPage';
 import AriaButton from './components/layout/AriaButton';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -134,6 +135,7 @@ export default function App() {
         <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
         <Route path="/" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
         <Route path="/simulation/:simId" element={<PrivateRoute><SimulationPage /></PrivateRoute>} />
+        <Route path="/watch/:simId" element={<PrivateRoute><WatchPage /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

@@ -205,6 +205,47 @@ router.post('/', authenticate, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to create simulation' }); }
 });
 
+// ─── Canlı izleme (/live öncesinde tanımlanmalı /:id'den) ──────────────────────
+
+router.get('/live', authenticate, async (req, res) => {
+  try {
+    const { rows } = await cloudQuery(
+      `SELECT simulation_id, simulation_name, current_day, current_year, population_count,
+              stats, groups, is_running, updated_at
+       FROM live_snapshots WHERE user_id = $1 AND is_running = true ORDER BY updated_at DESC`,
+      [req.user.id]
+    );
+    res.json(rows);
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Live snapshots alınamadı' }); }
+});
+
+router.get('/live/:simId', authenticate, async (req, res) => {
+  try {
+    const { rows } = await cloudQuery(
+      'SELECT * FROM live_snapshots WHERE simulation_id = $1 AND user_id = $2',
+      [req.params.simId, req.user.id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Canlı snapshot bulunamadı' });
+    res.json(rows[0]);
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Live snapshot alınamadı' }); }
+});
+
+// ─── Cloud checkpoint sync (/cloud da /:id'den önce tanımlanmalı) ─────────────
+
+router.get('/cloud', authenticate, async (req, res) => {
+  try {
+    const { rows } = await cloudQuery(
+      `SELECT id, simulation_id, simulation_name, current_day, current_year,
+              population_count, stats, updated_at
+       FROM cloud_checkpoints WHERE user_id = $1 ORDER BY updated_at DESC`,
+      [req.user.id]
+    );
+    res.json(rows);
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Cloud sim listesi alınamadı' }); }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const { rows } = await query(`SELECT s.*,
@@ -810,20 +851,7 @@ router.get('/:id/diagnostics', authenticate, requireSimulationOwner, (req, res) 
   res.json(engine.getDiagnostics());
 });
 
-// ─── Cloud checkpoint sync (çapraz cihaz) ──────────────────────────────────────
-
-// Kullanıcının cloud'daki simülasyonlarını listele
-router.get('/cloud', authenticate, async (req, res) => {
-  try {
-    const { rows } = await cloudQuery(
-      `SELECT id, simulation_id, simulation_name, current_day, current_year,
-              population_count, stats, updated_at
-       FROM cloud_checkpoints WHERE user_id = $1 ORDER BY updated_at DESC`,
-      [req.user.id]
-    );
-    res.json(rows);
-  } catch (err) { console.error(err); res.status(500).json({ error: 'Cloud sim listesi alınamadı' }); }
-});
+// ─── Cloud checkpoint restore ──────────────────────────────────────────────────
 
 // Cloud checkpoint'i yerel PGlite'a restore et
 router.post('/cloud/:cloudId/restore', authenticate, async (req, res) => {
