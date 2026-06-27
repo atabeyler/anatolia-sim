@@ -3,7 +3,7 @@ import FooterBar from '../components/layout/FooterBar';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
-import { LogOut, CheckCircle, XCircle, Ban, Trash2, ShieldOff, Users, Clock } from 'lucide-react';
+import { LogOut, CheckCircle, XCircle, Ban, Trash2, ShieldOff, Users, Clock, Globe } from 'lucide-react';
 
 type UserRow = {
   id: string; user_code: string; first_name: string; last_name: string;
@@ -76,24 +76,47 @@ export default function AdminPage() {
       <div className="pointer-events-none fixed inset-0"
         style={{ background: 'repeating-linear-gradient(to bottom, transparent 0, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px)' }} />
 
-      {/* Header */}
-      <div className="sticky top-0 z-10" style={{ background: 'rgba(3,3,16,0.97)', borderBottom: '1px solid rgba(79,110,247,0.3)', backdropFilter: 'blur(20px)' }}>
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-1 h-5 bg-sim-accent" style={{ boxShadow: '0 0 8px rgba(79,110,247,0.8)' }} />
-            <div>
-              <div className="font-orbitron text-sim-accent font-bold tracking-[0.2em]" style={{ fontSize: 14 }}>ANATOLİA-SİM</div>
-              <div className="font-share-tech text-sim-muted tracking-[0.3em]" style={{ fontSize: 11 }}>YÖNETİM PANELİ</div>
+      {/* Header — dashboard ile aynı stil */}
+      <div className="sticky top-0 z-10"
+        style={{
+          background: 'rgba(3,3,16,0.97)',
+          borderBottom: '1px solid rgba(200,34,34,0.7)',
+          backdropFilter: 'blur(20px)',
+          boxShadow: '0 2px 20px rgba(200,34,34,0.5), 0 0 8px rgba(200,34,34,0.3)',
+        }}>
+        <div className="w-full px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
+          {/* Brand */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="relative w-7 h-7 flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full border border-sim-accent/50 neon-breathe" />
+              <Globe size={14} style={{ color: '#4f9ef7', filter: 'drop-shadow(0 0 4px rgba(79,158,247,0.8))' }} />
+            </div>
+            <div className="flex flex-col leading-none gap-0.5 items-center">
+              <span className="font-orbitron font-bold tracking-[0.2em]" style={{ fontSize: 'clamp(12px, 3.8vw, 18px)', color: '#e0e0f0' }}>ANATOLİA-SİM</span>
+              <span className="font-share-tech tracking-[0.25em]" style={{ fontSize: 'clamp(10px, 3vw, 16px)', color: '#cc2222' }}>YÖNETİM PANELİ</span>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+
+          {/* Right actions */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             {pending.length > 0 && (
-              <div className="flex items-center gap-2 px-3 py-1" style={{ background: 'rgba(212,168,56,0.1)', border: '1px solid rgba(212,168,56,0.3)' }}>
-                <Clock size={14} className="text-sim-gold" />
+              <div className="flex items-center gap-2 px-3 py-1"
+                style={{ background: 'rgba(212,168,56,0.1)', border: '1px solid rgba(212,168,56,0.3)' }}>
+                <Clock size={13} className="text-sim-gold" />
                 <span className="font-share-tech text-sim-gold tracking-widest" style={{ fontSize: 13 }}>{pending.length} BEKLEYEN</span>
               </div>
             )}
-            <button onClick={() => { logout(); navigate('/login'); }} className="p-2 text-sim-muted hover:text-red-400 transition-colors"><LogOut size={16} /></button>
+            <button onClick={() => navigate('/')}
+              className="font-share-tech tracking-widest text-sim-muted hover:text-sim-accent transition-colors"
+              style={{ fontSize: 13, letterSpacing: '0.1em' }}>
+              ← SİMÜLASYONLAR
+            </button>
+            <button onClick={() => { logout(); navigate('/login'); }}
+              className="flex items-center gap-1.5 px-2 py-1 text-sim-muted hover:text-red-400 transition-colors"
+              style={{ fontFamily: 'Share Tech Mono,monospace', fontSize: 14, fontWeight: 700, letterSpacing: '0.1em' }}>
+              <LogOut size={13} />
+              <span className="hidden sm:inline">ÇIKIŞ</span>
+            </button>
           </div>
         </div>
       </div>
@@ -115,11 +138,6 @@ export default function AdminPage() {
             </button>
           ))}
           <div className="flex-1" />
-          <button onClick={() => navigate('/')}
-            className="font-share-tech tracking-widest px-4 py-2 transition-all text-sim-muted hover:text-sim-accent"
-            style={{ fontSize: 13, background: 'rgba(22,22,58,0.4)', border: '1px solid rgba(79,110,247,0.1)' }}>
-            ← SİMÜLASYONLAR
-          </button>
         </div>
 
         {/* Ban modal */}
