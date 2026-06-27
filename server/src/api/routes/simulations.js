@@ -293,6 +293,8 @@ router.post('/:id/complete', authenticate, requireSimulationOwner, async (req, r
     await query('DELETE FROM publications WHERE simulation_id = $1', [req.params.id]);
     await query('DELETE FROM individuals WHERE simulation_id = $1', [req.params.id]);
     await query('DELETE FROM simulations WHERE id = $1', [req.params.id]);
+    cloudQuery('DELETE FROM cloud_checkpoints WHERE simulation_id = $1 AND user_id = $2', [req.params.id, req.user.id]).catch(() => {});
+    cloudQuery('DELETE FROM live_snapshots WHERE simulation_id = $1 AND user_id = $2', [req.params.id, req.user.id]).catch(() => {});
     res.json({ message: 'Simulation completed and removed' });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to complete simulation' }); }
 });
@@ -602,6 +604,8 @@ router.post('/:id/terminate', authenticate, requireSimulationOwner, async (req, 
     await query('DELETE FROM checkpoints WHERE simulation_id = $1', [req.params.id]);
     await query('DELETE FROM individuals WHERE simulation_id = $1', [req.params.id]);
     await query('DELETE FROM simulations WHERE id = $1', [req.params.id]);
+    cloudQuery('DELETE FROM cloud_checkpoints WHERE simulation_id = $1 AND user_id = $2', [req.params.id, req.user.id]).catch(() => {});
+    cloudQuery('DELETE FROM live_snapshots WHERE simulation_id = $1 AND user_id = $2', [req.params.id, req.user.id]).catch(() => {});
     res.json({ message: 'Simulation terminated' });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to terminate simulation' }); }
 });
@@ -615,6 +619,8 @@ router.delete('/:id', authenticate, async (req, res) => {
     await query('DELETE FROM checkpoints WHERE simulation_id = $1', [req.params.id]);
     await query('DELETE FROM individuals WHERE simulation_id = $1', [req.params.id]);
     await query('DELETE FROM simulations WHERE id = $1', [req.params.id]);
+    cloudQuery('DELETE FROM cloud_checkpoints WHERE simulation_id = $1 AND user_id = $2', [req.params.id, req.user.id]).catch(() => {});
+    cloudQuery('DELETE FROM live_snapshots WHERE simulation_id = $1 AND user_id = $2', [req.params.id, req.user.id]).catch(() => {});
     res.json({ message: 'Simulation deleted' });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to delete simulation' }); }
 });

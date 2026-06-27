@@ -116,7 +116,7 @@ router.post('/:simId', authenticate, requireSimulationOwner, async (req, res) =>
     res.json({ response, language: responseLang });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Analysis failed' });
+    res.status(err.status ?? 500).json({ error: err.message ?? 'Analysis failed' });
   }
 });
 
@@ -153,7 +153,7 @@ router.post('/:simId/hypothesis', authenticate, requireSimulationOwner, async (r
     res.json({ ...json, ci_lower, ci_upper, n_evidence: n });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Hypothesis test failed' });
+    res.status(err.status ?? 500).json({ error: err.message ?? 'Hypothesis test failed' });
   }
 });
 
