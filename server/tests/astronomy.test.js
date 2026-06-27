@@ -64,9 +64,9 @@ describe('processAstronomyTick — celestial events', () => {
     expect(knowledge.size).toBe(0);
   });
 
-  it('low-curiosity observer cannot unlock knowledge', () => {
+  it('zero-curiosity observer cannot unlock knowledge', () => {
     const observer = makeObs('o1', {
-      phenotype: { curiosity: 0.3, fluid_intelligence: 0.8 },
+      phenotype: { curiosity: 0.0, fluid_intelligence: 0.8 },
     });
     const obs = new Set(['lunar_cycle']);
     const knowledge = new Set();
