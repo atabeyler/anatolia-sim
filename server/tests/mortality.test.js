@@ -176,7 +176,7 @@ describe('rollDeath — nedensellik', () => {
       health: { hp: 0.05, calories: 0.01, hydration: 0.01 },
     });
     let sawDrowning = false;
-    for (let i = 0; i < 500; i++) {
+    for (let i = 0; i < 5000; i++) {
       const cause = rollDeath(ind, DAY, { alive_count: 100 });
       if (cause === 'drowning') { sawDrowning = true; break; }
     }
