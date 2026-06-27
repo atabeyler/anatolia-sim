@@ -192,6 +192,15 @@ class SimulationManager {
            JSON.stringify(cp.belief_state ?? []), JSON.stringify(cp.art_state ?? []),
            JSON.stringify(cp.groups ?? [])]
         ));
+        // Eski checkpoint'lerin population_snapshot'ını NULL yap — sadece en son kalır.
+        // Stats/metadata korunur (rapor/zaman makinesi için), sadece 4MB'lık bloklar temizlenir.
+        query(
+          `UPDATE checkpoints SET population_snapshot = NULL
+           WHERE simulation_id = $1
+             AND population_snapshot IS NOT NULL
+             AND id != (SELECT id FROM checkpoints WHERE simulation_id = $1 ORDER BY sim_day DESC LIMIT 1)`,
+          [simulation.id]
+        ).catch(err => console.warn('[checkpoint-cleanup]', err.message));
         const stateStart = Date.now();
         await withRetry(() => this.persistState(simulation.id, engine));
         engine._runtimeDiagnostics.persist_state_ms = Date.now() - stateStart;
