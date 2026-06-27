@@ -14,12 +14,17 @@ export default function DashboardPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPage, setMenuPage] = useState<'language' | 'guide' | 'about' | 'mission' | 'contact' | null>(null);
   const [sims, setSims]             = useState<any[]>([]);
+  const [cloudSims, setCloudSims]   = useState<any[]>([]);
   const [showNew, setShowNew]       = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [loading, setLoading]       = useState(false);
+  const [restoring, setRestoring]   = useState<string | null>(null);
   const headers = { Authorization: `Bearer ${accessToken}` };
 
-  useEffect(() => { axios.get('/api/simulations', { headers }).then(r => setSims(r.data)); }, []);
+  useEffect(() => {
+    axios.get('/api/simulations', { headers }).then(r => setSims(r.data));
+    axios.get('/api/simulations/cloud', { headers }).then(r => setCloudSims(r.data)).catch(() => {});
+  }, []);
 
   // Keep ARIA informed of wizard open/closed state
   useEffect(() => {
@@ -264,6 +269,47 @@ export default function DashboardPage() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            )}
+
+            {/* Cloud simulations (masaüstünden sync edilmiş) */}
+            {cloudSims.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3" style={{ color: '#7c3aed', fontSize: 12, fontWeight: 700, letterSpacing: '0.15em' }}>
+                  <span>☁️</span>
+                  <span>BULUT SİMÜLASYONLARI</span>
+                </div>
+                <div className="grid gap-2">
+                  {cloudSims.map(cs => (
+                    <div key={cs.id} className="flex items-center justify-between gap-4"
+                      style={{ background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.3)', padding: '12px 16px', borderRadius: 8 }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0' }}>{cs.simulation_name}</div>
+                        <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+                          Gün {cs.current_day} · Yıl {cs.current_year} · {cs.population_count} birey
+                          {' · '}{new Date(cs.updated_at).toLocaleDateString('tr-TR')}
+                        </div>
+                      </div>
+                      <button
+                        disabled={restoring === cs.id}
+                        onClick={async () => {
+                          setRestoring(cs.id);
+                          try {
+                            const { data } = await axios.post(`/api/simulations/cloud/${cs.id}/restore`, {}, { headers });
+                            setSims(prev => {
+                              const exists = prev.find(s => s.id === data.simulation_id);
+                              if (exists) return prev.map(s => s.id === data.simulation_id ? { ...s, current_day: data.current_day } : s);
+                              return [...prev, { id: data.simulation_id, name: data.name, current_day: data.current_day, status: 'paused' }];
+                            });
+                          } catch { alert('Restore başarısız'); }
+                          finally { setRestoring(null); }
+                        }}
+                        style={{ background: 'rgba(124,58,237,0.2)', border: '1px solid rgba(124,58,237,0.5)', color: '#a78bfa', padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        {restoring === cs.id ? '⏳ Yükleniyor...' : '📥 Yükle'}
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
