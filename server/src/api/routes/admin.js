@@ -258,18 +258,30 @@ router.post('/cleanup', async (req, res) => {
   }
   try {
     const results = {};
+    const errors = [];
 
-    // Her simülasyonun son checkpoint'i hariç population_snapshot'ı NULL yap
-    // (stats, world_state vb. korunur — sadece dev blob temizlenir)
-    const cpNullRes = await simQuery(`
-      UPDATE checkpoints SET population_snapshot = '[]'::jsonb
+    // Her simülasyonun son 5 checkpoint'i dışındakileri tamamen sil.
+    // UPDATE NULL yerine DELETE — dead tuple boyutunu dramatik küçültür.
+    const cpDelRes = await simQuery(`
+      DELETE FROM checkpoints
       WHERE id NOT IN (
-        SELECT DISTINCT ON (simulation_id) id
-        FROM checkpoints
-        ORDER BY simulation_id, sim_day DESC
+        SELECT id FROM (
+          SELECT id, ROW_NUMBER() OVER (PARTITION BY simulation_id ORDER BY sim_day DESC) AS rn
+          FROM checkpoints
+        ) t WHERE rn <= 5
       )
     `);
-    results.checkpoint_snapshots_cleared = cpNullRes.rowCount;
+    results.checkpoints_deleted = cpDelRes.rowCount;
+
+    // Kalan checkpoint'lerin snapshot blob'larını da temizle (alan tasarrufu)
+    await simQuery(`
+      UPDATE checkpoints SET population_snapshot = NULL
+      WHERE population_snapshot IS NOT NULL
+        AND id NOT IN (
+          SELECT DISTINCT ON (simulation_id) id
+          FROM checkpoints ORDER BY simulation_id, sim_day DESC
+        )
+    `).catch(() => {});
 
     // Her simülasyonda en fazla 200 event tut (en yeniler kalır)
     const evRes = await simQuery(`
@@ -283,19 +295,6 @@ router.post('/cleanup', async (req, res) => {
     `);
     results.events_deleted = evRes.rowCount;
 
-    // Önemsiz (importance=1) ve eski eventleri sil
-    const evLowRes = await simQuery(`
-      DELETE FROM simulation_events
-      WHERE importance = 1
-      AND id IN (
-        SELECT id FROM (
-          SELECT id, ROW_NUMBER() OVER (PARTITION BY simulation_id ORDER BY sim_day DESC) AS rn
-          FROM simulation_events WHERE importance = 1
-        ) t WHERE rn > 50
-      )
-    `);
-    results.low_importance_events_deleted = evLowRes.rowCount;
-
     // 1000 günden eski ölü bireyleri sil
     const indRes = await simQuery(`
       DELETE FROM individuals
@@ -308,10 +307,17 @@ router.post('/cleanup', async (req, res) => {
     `);
     results.dead_individuals_deleted = indRes.rowCount;
 
-    // VACUUM ile disk alanını geri al
-    await simQuery('VACUUM');
+    // VACUUM FULL — dead tuple'ları fiziksel olarak siler, disk alanını OS'a geri verir.
+    // Normal VACUUM sadece işaretler, alan geri gitmez.
+    for (const tbl of ['checkpoints', 'simulation_events', 'individuals']) {
+      await simQuery(`VACUUM FULL ${tbl}`).catch(err => {
+        errors.push(`VACUUM FULL ${tbl}: ${err.message}`);
+        // Fallback: normal VACUUM
+        return simQuery(`VACUUM ANALYZE ${tbl}`).catch(() => {});
+      });
+    }
 
-    res.json({ success: true, ...results });
+    res.json({ success: true, ...results, errors });
   } catch (err) {
     console.error('cleanup error:', err);
     res.status(500).json({ error: err.message });
