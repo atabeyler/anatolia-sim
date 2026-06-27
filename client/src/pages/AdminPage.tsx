@@ -106,6 +106,7 @@ export default function AdminPage() {
                 <span className="font-share-tech text-sim-gold tracking-widest" style={{ fontSize: 13 }}>{pending.length} BEKLEYEN</span>
               </div>
             )}
+            <span className="hidden sm:block font-share-tech tracking-widest font-bold" style={{ fontSize: 14, color: '#ffffff' }}>{user?.username?.toUpperCase()}</span>
             <button onClick={() => { logout(); navigate('/login'); }}
               className="flex items-center gap-1.5 transition-colors"
               style={{ fontFamily: 'Share Tech Mono,monospace', fontSize: 14, fontWeight: 700, letterSpacing: '0.1em', color: '#ffffff', border: '1px solid rgba(0,229,255,0.7)', background: 'rgba(0,229,255,0.08)', boxShadow: '0 0 10px rgba(0,229,255,0.4)', padding: '4px 10px' }}>

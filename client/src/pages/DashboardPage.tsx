@@ -156,15 +156,15 @@ export default function DashboardPage() {
                 </span>
               </div>
             )}
-            <span className="hidden sm:block font-share-tech text-sim-muted tracking-widest font-bold" style={{ fontSize: 14 }}>{user?.username?.toUpperCase()}</span>
+            <span className="hidden sm:block font-share-tech tracking-widest font-bold" style={{ fontSize: 14, color: '#ffffff' }}>{user?.username?.toUpperCase()}</span>
             <button onClick={() => { logout(); navigate('/login'); }}
-              className="flex items-center gap-1 sm:gap-1.5 px-2 py-1 text-sim-muted hover:text-red-400 transition-colors"
-              style={{ fontFamily:'Share Tech Mono,monospace', fontSize:14, fontWeight:700, letterSpacing:'0.1em' }}>
+              className="flex items-center gap-1.5 transition-colors"
+              style={{ fontFamily: 'Share Tech Mono,monospace', fontSize: 14, fontWeight: 700, letterSpacing: '0.1em', color: '#ffffff', border: '1px solid rgba(0,229,255,0.7)', background: 'rgba(0,229,255,0.08)', boxShadow: '0 0 10px rgba(0,229,255,0.4)', padding: '4px 10px' }}>
               <LogOut size={13} />
               <span className="hidden sm:inline">{text(lang as LangCode, { tr: 'ÇIKIŞ', en: 'EXIT', de: 'AUSGANG', fr: 'QUITTER', ar: 'خروج' })}</span>
             </button>
             <button onClick={() => setMenuOpen(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '2px 8px', border: '1px solid rgba(160,200,176,0.35)', color: '#a0c8b0', background: 'transparent', fontSize: 14, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '4px 10px', border: '1px solid rgba(0,229,255,0.7)', color: '#ffffff', background: 'rgba(0,229,255,0.08)', boxShadow: '0 0 10px rgba(0,229,255,0.4)', fontSize: 14, letterSpacing: '0.08em', fontFamily: 'Share Tech Mono, monospace', cursor: 'pointer', flexShrink: 0 }}>
               ☰ {text(lang as LangCode, { tr: 'MENÜ', en: 'MENU', de: 'MENÜ', fr: 'MENU', ar: 'القائمة' })}
             </button>
           </div>
