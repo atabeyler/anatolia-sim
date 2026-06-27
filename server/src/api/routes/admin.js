@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import { authenticate } from '../middleware/auth.js';
-import { query } from '../../db/database.js';
+import { query, simQuery } from '../../db/database.js';
 import { sendApprovalEmail, sendRejectionEmail, sendTestEmail, APP_URL } from '../../utils/email.js';
 
 const router = Router();
@@ -259,24 +259,45 @@ router.post('/cleanup', async (req, res) => {
   try {
     const results = {};
 
-    // Keep only last 500 events per simulation
-    const evRes = await query(`
+    // Her simülasyonun son checkpoint'i hariç population_snapshot'ı NULL yap
+    // (stats, world_state vb. korunur — sadece dev blob temizlenir)
+    const cpNullRes = await simQuery(`
+      UPDATE checkpoints SET population_snapshot = '[]'::jsonb
+      WHERE id NOT IN (
+        SELECT DISTINCT ON (simulation_id) id
+        FROM checkpoints
+        ORDER BY simulation_id, sim_day DESC
+      )
+    `);
+    results.checkpoint_snapshots_cleared = cpNullRes.rowCount;
+
+    // Her simülasyonda en fazla 200 event tut (en yeniler kalır)
+    const evRes = await simQuery(`
       DELETE FROM simulation_events
       WHERE id IN (
         SELECT id FROM (
           SELECT id, ROW_NUMBER() OVER (PARTITION BY simulation_id ORDER BY sim_day DESC) AS rn
           FROM simulation_events
-        ) t WHERE rn > 500
+        ) t WHERE rn > 200
       )
     `);
     results.events_deleted = evRes.rowCount;
 
-    // Delete all checkpoints (they're big JSON blobs)
-    const cpRes = await query('DELETE FROM checkpoints');
-    results.checkpoints_deleted = cpRes.rowCount;
+    // Önemsiz (importance=1) ve eski eventleri sil
+    const evLowRes = await simQuery(`
+      DELETE FROM simulation_events
+      WHERE importance = 1
+      AND id IN (
+        SELECT id FROM (
+          SELECT id, ROW_NUMBER() OVER (PARTITION BY simulation_id ORDER BY sim_day DESC) AS rn
+          FROM simulation_events WHERE importance = 1
+        ) t WHERE rn > 50
+      )
+    `);
+    results.low_importance_events_deleted = evLowRes.rowCount;
 
-    // Delete dead individuals older than 1000 days from the newest living individual per sim
-    const indRes = await query(`
+    // 1000 günden eski ölü bireyleri sil
+    const indRes = await simQuery(`
       DELETE FROM individuals
       WHERE alive = false
       AND id IN (
@@ -287,8 +308,8 @@ router.post('/cleanup', async (req, res) => {
     `);
     results.dead_individuals_deleted = indRes.rowCount;
 
-    // VACUUM to actually reclaim disk space
-    await query('VACUUM');
+    // VACUUM ile disk alanını geri al
+    await simQuery('VACUUM');
 
     res.json({ success: true, ...results });
   } catch (err) {
