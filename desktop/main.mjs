@@ -134,6 +134,39 @@ async function setupAutoUpdater() {
   }
 }
 
+// ─── Mode select window ────────────────────────────────────────────────────────
+
+function showModeSelectWindow() {
+  return new Promise(resolve => {
+    const win = new BrowserWindow({
+      width: 560,
+      height: 420,
+      resizable: false,
+      backgroundColor: '#040412',
+      autoHideMenuBar: true,
+      title: 'Anatolia Sim',
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+        preload: join(__dirname, 'preload.cjs'),
+      },
+    });
+
+    win.loadFile(join(__dirname, 'mode-select.html'));
+
+    const onSelect = (_event, mode) => {
+      win.close();
+      resolve(mode);
+    };
+    ipcMain.once('mode-select', onSelect);
+
+    win.on('closed', () => {
+      ipcMain.removeListener('mode-select', onSelect);
+      resolve(null);
+    });
+  });
+}
+
 // ─── Setup window ──────────────────────────────────────────────────────────────
 
 function showSetupWindow() {
@@ -250,7 +283,7 @@ async function waitForServer(timeoutMs = 90000) {
   return false;
 }
 
-function buildServerEnv(cfg) {
+function buildServerEnv(cfg, mode = 'local') {
   const useLocalDb = cfg?.DESKTOP_LOCAL_DB === '1' || !cfg?.DATABASE_URL;
   const desktopHeapMb = String(cfg?.DESKTOP_SERVER_HEAP_MB || process.env.DESKTOP_SERVER_HEAP_MB || 768);
   const defaultDesktopWorkers = Math.max(1, cpus().length);
@@ -272,10 +305,13 @@ function buildServerEnv(cfg) {
   if (useLocalDb) {
     env.DESKTOP_LOCAL_DB = '1';
     env.PGLITE_DATA_DIR = join(app.getPath('userData'), 'db');
-  } else {
+  } else if (mode === 'local') {
     env.DATABASE_URL = cfg.DATABASE_URL;
     env.DESKTOP_SIM_LOCAL = '1';
     env.PGLITE_DATA_DIR = join(app.getPath('userData'), 'db');
+  } else {
+    // cloud mode: everything on Render
+    env.DATABASE_URL = cfg.DATABASE_URL;
   }
 
   const secretsPath = join(app.getPath('userData'), 'secrets.json');
@@ -293,7 +329,7 @@ function buildServerEnv(cfg) {
   return env;
 }
 
-async function ensureLocalServer(cfg) {
+async function ensureLocalServer(cfg, mode = 'local') {
   try {
     const res = await fetch(`${LOCAL_URL}/api/health`, { cache: 'no-store' });
     if (res.ok) return;
@@ -305,7 +341,7 @@ async function ensureLocalServer(cfg) {
 
   serverProcess = spawn(process.execPath, [SERVER_ENTRY], {
     cwd: SERVER_ROOT,
-    env: buildServerEnv(cfg),
+    env: buildServerEnv(cfg, mode),
     stdio: 'inherit',
     windowsHide: true,
   });
@@ -428,16 +464,21 @@ async function boot() {
     if (!cfg) { app.quit(); return; }
   }
 
-  if (cfg.DESKTOP_LOCAL_DB === '1' || !cfg.DATABASE_URL) {
+  // Her açılışta mod seçimi sor (yerel mi bulut mu)
+  let mode = 'local';
+  if (cfg.DATABASE_URL) {
+    mode = await showModeSelectWindow();
+    if (!mode) { app.quit(); return; }
+  }
+
+  if (cfg.DESKTOP_LOCAL_DB === '1' || !cfg.DATABASE_URL || mode === 'local') {
     mkdirSync(join(app.getPath('userData'), 'db'), { recursive: true });
   }
 
-  // Show main window immediately with a loading screen so the user sees feedback
-  // while the server subprocess starts (can take up to 90 s on first PGLite boot).
   createMainWindow();
   await mainWindow.loadFile(join(__dirname, 'loading.html'));
 
-  await ensureLocalServer(cfg);
+  await ensureLocalServer(cfg, mode);
   await mainWindow.loadURL(LOCAL_URL);
   startVersionWatcher();
   setupAutoUpdater();

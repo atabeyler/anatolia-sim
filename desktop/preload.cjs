@@ -4,6 +4,10 @@ contextBridge.exposeInMainWorld('electronSetup', {
   save: (config) => ipcRenderer.send('setup-save', config),
 });
 
+contextBridge.exposeInMainWorld('electronMode', {
+  select: (mode) => ipcRenderer.send('mode-select', mode),
+});
+
 contextBridge.exposeInMainWorld('electronUpdater', {
   onDownloadProgress: (cb) => {
     const listener = (_e, data) => cb(data);

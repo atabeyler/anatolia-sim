@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, requireSimulationOwner } from '../middleware/auth.js';
-import { simQuery as query } from '../../db/database.js';
+import { simQuery as query, cloudQuery } from '../../db/database.js';
 import { createWorldState } from '../../engines/environment/environmentEngine.js';
 import { createFounder } from '../../engines/biology/individual.js';
 import { simulationManager } from '../simulationManager.js';
@@ -808,6 +808,72 @@ router.get('/:id/diagnostics', authenticate, requireSimulationOwner, (req, res) 
   const engine = simulationManager.getEngine(req.params.id);
   if (!engine) return res.status(404).json({ error: 'Engine not running' });
   res.json(engine.getDiagnostics());
+});
+
+// ─── Cloud checkpoint sync (çapraz cihaz) ──────────────────────────────────────
+
+// Kullanıcının cloud'daki simülasyonlarını listele
+router.get('/cloud', authenticate, async (req, res) => {
+  try {
+    const { rows } = await cloudQuery(
+      `SELECT id, simulation_id, simulation_name, current_day, current_year,
+              population_count, stats, updated_at
+       FROM cloud_checkpoints WHERE user_id = $1 ORDER BY updated_at DESC`,
+      [req.user.id]
+    );
+    res.json(rows);
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Cloud sim listesi alınamadı' }); }
+});
+
+// Cloud checkpoint'i yerel PGlite'a restore et
+router.post('/cloud/:cloudId/restore', authenticate, async (req, res) => {
+  try {
+    const { rows } = await cloudQuery(
+      'SELECT * FROM cloud_checkpoints WHERE id = $1 AND user_id = $2',
+      [req.params.cloudId, req.user.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Cloud sim bulunamadı' });
+    const cp = rows[0];
+
+    // Yerel DB'de aynı simulation_id var mı kontrol et
+    const { rows: existing } = await query(
+      'SELECT id FROM simulations WHERE id = $1', [cp.simulation_id]
+    );
+
+    if (!existing.length) {
+      // Simülasyonu yerel DB'ye oluştur
+      await query(
+        `INSERT INTO simulations (id, user_id, name, status, current_day, current_year,
+          start_latitude, start_longitude, world_state, founder_1, founder_2)
+         VALUES ($1,$2,$3,'paused',$4,$5,0,0,$6,'{}','{}')`,
+        [cp.simulation_id, req.user.id, cp.simulation_name,
+         cp.current_day, cp.current_year, JSON.stringify(cp.world_state)]
+      );
+    } else {
+      // Mevcut simülasyonu güncelle
+      await query(
+        `UPDATE simulations SET current_day=$1, current_year=$2, world_state=$3,
+          status='paused', updated_at=NOW() WHERE id=$4`,
+        [cp.current_day, cp.current_year, JSON.stringify(cp.world_state), cp.simulation_id]
+      );
+      // Eski checkpoint'leri temizle
+      await query('DELETE FROM checkpoints WHERE simulation_id=$1', [cp.simulation_id]);
+    }
+
+    // Checkpoint'i yerel DB'ye kaydet
+    await query(
+      `INSERT INTO checkpoints
+         (simulation_id, sim_day, sim_year, population_count, population_snapshot,
+          world_state, cultural_state, tech_state, stats, belief_state, art_state, groups)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      [cp.simulation_id, cp.current_day, cp.current_year, cp.population_count,
+       JSON.stringify(cp.population_snapshot), JSON.stringify(cp.world_state),
+       JSON.stringify(cp.cultural_state), JSON.stringify(cp.tech_state), JSON.stringify(cp.stats),
+       JSON.stringify(cp.belief_state), JSON.stringify(cp.art_state), JSON.stringify(cp.groups)]
+    );
+
+    res.json({ simulation_id: cp.simulation_id, name: cp.simulation_name, current_day: cp.current_day });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Restore başarısız' }); }
 });
 
 export default router;

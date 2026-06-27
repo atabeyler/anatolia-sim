@@ -1,5 +1,7 @@
 import { SimulationEngine } from '../engines/simulationLoop.js';
-import { simQuery as query } from '../db/database.js';
+import { simQuery as query, cloudQuery } from '../db/database.js';
+
+const useSimLocal = process.env.DESKTOP_SIM_LOCAL === '1';
 
 const BATCH_SIZE = 200; // max individuals per bulk upsert
 
@@ -196,6 +198,30 @@ class SimulationManager {
         await withRetry(() => this.persistPopulation(simulation.id, engine));
         engine._runtimeDiagnostics.persist_population_ms = Date.now() - populationStart;
         engine._runtimeDiagnostics.last_checkpoint_day = cp.sim_day;
+
+        // Yerel modda Render'a son checkpoint'i sync et (çapraz cihaz erişimi için)
+        if (useSimLocal && simulation.user_id) {
+          cloudQuery(
+            `INSERT INTO cloud_checkpoints
+               (user_id, simulation_id, simulation_name, current_day, current_year,
+                population_count, population_snapshot, world_state, cultural_state,
+                tech_state, belief_state, art_state, groups, stats, updated_at)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW())
+             ON CONFLICT (user_id, simulation_id) DO UPDATE SET
+               simulation_name=EXCLUDED.simulation_name, current_day=EXCLUDED.current_day,
+               current_year=EXCLUDED.current_year, population_count=EXCLUDED.population_count,
+               population_snapshot=EXCLUDED.population_snapshot, world_state=EXCLUDED.world_state,
+               cultural_state=EXCLUDED.cultural_state, tech_state=EXCLUDED.tech_state,
+               belief_state=EXCLUDED.belief_state, art_state=EXCLUDED.art_state,
+               groups=EXCLUDED.groups, stats=EXCLUDED.stats, updated_at=NOW()`,
+            [simulation.user_id, simulation.id, simulation.name,
+             cp.sim_day, cp.sim_year, cp.population_count,
+             JSON.stringify(cp.population_snapshot), JSON.stringify(cp.world_state),
+             JSON.stringify(cp.cultural_state), JSON.stringify(cp.tech_state),
+             JSON.stringify(cp.belief_state ?? []), JSON.stringify(cp.art_state ?? []),
+             JSON.stringify(cp.groups ?? []), JSON.stringify(cp.stats)]
+          ).catch(err => console.warn('[cloud-sync] checkpoint sync failed:', err.message));
+        }
       } catch (err) {
         engine._runtimeDiagnostics.checkpoint_error_count++;
         console.error(`[SimulationEngine] checkpoint error: ${err.message}`);
