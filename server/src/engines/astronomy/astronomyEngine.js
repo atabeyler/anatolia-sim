@@ -88,8 +88,7 @@ export function processAstronomyTick(population, observations, astronomyKnowledg
     i =>
       !i.is_dead &&
       i.life_stage !== 'INFANT' &&
-      i.life_stage !== 'CHILD' &&
-      i.phenotype.curiosity > 0.5
+      i.life_stage !== 'CHILD'
   );
   for (const o of obs) {
     const foxp2 = o.language?.foxp2_expression ?? 0;
