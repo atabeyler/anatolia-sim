@@ -25,3 +25,7 @@ contextBridge.exposeInMainWorld('electronUpdater', {
 contextBridge.exposeInMainWorld('electronLocation', {
   getCoords: () => ipcRenderer.invoke('get-location'),
 });
+
+contextBridge.exposeInMainWorld('electronConfig', {
+  update: (updates) => ipcRenderer.invoke('update-config', updates),
+});

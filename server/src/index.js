@@ -91,6 +91,21 @@ app.use('/api/admin', adminRouter);
 const BUILD_VERSION = process.env.RENDER_GIT_COMMIT ?? process.env.BUILD_VERSION ?? Date.now().toString();
 app.get('/api/health', (_, res) => res.json({ status: 'ok', version: BUILD_VERSION }));
 
+// Desktop-only: let the Electron main process push config updates to the running server.
+// Only accepted from loopback so it's never reachable from the internet.
+app.post('/api/internal/update-env', (req, res) => {
+  const ip = req.ip ?? '';
+  if (!['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(ip)) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const { key, value } = req.body ?? {};
+  if (typeof key !== 'string' || typeof value !== 'string') {
+    return res.status(400).json({ error: 'key and value required' });
+  }
+  process.env[key] = value;
+  res.json({ ok: true });
+});
+
 // Public system status — no auth required; consumed by the login page status panel
 app.get('/api/system/status', async (_, res) => {
   try {

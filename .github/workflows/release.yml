@@ -35,11 +35,11 @@ jobs:
       - name: Root bağımlılıklarını yükle
         run: npm ci
 
-      # DATABASE_URL'yi exe'ye göm — kodda görünmez, sadece build sırasında yazılır
+      # DATABASE_URL ve GEMINI_API_KEY'i exe'ye göm — kodda görünmez, sadece build sırasında yazılır
       - name: Uygulama config dosyasını oluştur
         shell: bash
         run: |
-          echo '{"DATABASE_URL":"${{ secrets.DATABASE_URL }}"}' > desktop/bundled-config.json
+          echo '{"DATABASE_URL":"${{ secrets.DATABASE_URL }}","GEMINI_API_KEY":"${{ secrets.GEMINI_API_KEY }}"}' > desktop/bundled-config.json
 
       - name: Versiyon kontrolü — zaten yayınlandıysa atla
         id: check

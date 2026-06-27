@@ -203,6 +203,23 @@ function showSetupWindow() {
 
 // ─── Location ──────────────────────────────────────────────────────────────────
 
+ipcMain.handle('update-config', async (_event, updates) => {
+  let cfg = loadConfig() ?? {};
+  cfg = { ...cfg, ...updates };
+  saveConfig(cfg);
+  // Hot-push to the running server (no restart needed)
+  for (const [key, value] of Object.entries(updates)) {
+    try {
+      await fetch(`http://127.0.0.1:${PORT}/api/internal/update-env`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value }),
+      });
+    } catch {}
+  }
+  return true;
+});
+
 ipcMain.handle('get-location', () => new Promise(resolve => {
   dialog.showMessageBox({
     type: 'question',
