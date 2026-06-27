@@ -1,3 +1,5 @@
+import { TECH_TREE } from '../technology/technologyEngine.js';
+
 /**
  * Activity Engine — Physical Experience & Emergent Technology
  *
@@ -55,17 +57,6 @@ export const TECH_SKILLS = {
   swimming:           { prereqs: [],                              skills: { water_carrying: 2000 } },
 };
 
-const IQ_MINIMUMS = {
-  fire_making: 0.3, stone_tools: 0.25, foraging: 0.2,
-  hunting_spear: 0.35, shelter_basic: 0.3, water_container: 0.3,
-  animal_trap: 0.4, clothing_basic: 0.3, fishing: 0.4,
-  plant_cultivation: 0.5, animal_herding: 0.55, food_preservation: 0.45,
-  bow_arrow: 0.5, pottery: 0.55, weaving: 0.5,
-  metallurgy_copper: 0.6, writing_system: 0.7, calendar: 0.6,
-  mathematics_basic: 0.65, architecture_stone: 0.65, wheel: 0.65,
-  irrigation: 0.65, sailing: 0.65, metallurgy_iron: 0.7,
-  swimming: 0.2,
-};
 
 /**
  * Accumulate physical experience from today's action and environment.
@@ -210,7 +201,7 @@ export function checkTechEmergence(ind, discoveredTechs) {
     // Kardinal Kural: önkoşullar bireyin kendi bilgisinde olmalı (global havuzda değil).
     if (req.prereqs?.some(p => !known.has(p))) continue;
     if (req.langMin && (ind.language?.stage ?? 0) < req.langMin) continue;
-    if ((iq) < (IQ_MINIMUMS[techId] ?? 0)) continue;
+    if (iq < (TECH_TREE[techId]?.iq_min ?? 0)) continue;
 
     const allMet = Object.entries(req.skills).every(([skill, base]) =>
       (exp[skill] ?? 0) >= base / factor
