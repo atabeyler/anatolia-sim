@@ -77,7 +77,7 @@ export function computeDailyDeathRisk(individual, currentDay, environment) {
   // Drowning risk — reduced by accumulated water experience (observational learning)
   if (individual._inWater) {
     const waterSkill = Math.min(0.9, (individual._waterExperience ?? 0) * 0.9);
-    baseRisk += 0.05 * (1 - waterSkill);
+    baseRisk += 0.003 * (1 - waterSkill);
   }
   if (environment) {
     // Founders are more alert and experienced — reduced exposure to predators and disease

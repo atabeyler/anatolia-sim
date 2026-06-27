@@ -469,9 +469,9 @@ export class SimulationEngine {
         ind.x = newX;
         ind.y = newY;
         ind._inWater = false;
-      } else {
-        ind._inWater = true;
       }
+      // If snap target is water, don't move and don't touch _inWater —
+      // the child physically didn't go anywhere.
     }
 
     // 4c. All fears diminish over time (forgetting / re-adaptation)

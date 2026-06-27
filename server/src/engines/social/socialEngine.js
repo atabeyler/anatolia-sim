@@ -105,7 +105,7 @@ export function processGroupDynamics(population, groups, simDay) {
       }
     }
   }
-  if (groups.length >= 2 && Math.random() < 0.001) {
+  if (groups.length >= 2 && Math.random() < 0.0003) {
     const [a, b] = pickTwoRivals(groups, population);
     if (a && b) events.push({ ...resolveConflict(a, b, population, simDay), day: simDay });
   }
