@@ -577,13 +577,13 @@ function PopulationDots({
   return (
     <>
       <points renderOrder={2} geometry={founderGeo}>
-        <pointsMaterial map={spriteTex} size={0.055} color="#ff4444" sizeAttenuation transparent opacity={0.95} depthWrite={false} alphaTest={0.1} />
+        <pointsMaterial map={spriteTex} size={0.12} color="#ff4444" sizeAttenuation transparent opacity={0.95} depthWrite={false} alphaTest={0.1} />
       </points>
       <points renderOrder={2} geometry={maleGeo}>
-        <pointsMaterial map={spriteTex} size={0.045} color="#90caff" sizeAttenuation transparent opacity={0.92} depthWrite={false} alphaTest={0.1} />
+        <pointsMaterial map={spriteTex} size={0.09} color="#90caff" sizeAttenuation transparent opacity={0.92} depthWrite={false} alphaTest={0.1} />
       </points>
       <points renderOrder={2} geometry={femaleGeo}>
-        <pointsMaterial map={spriteTex} size={0.045} color="#ffaacc" sizeAttenuation transparent opacity={0.92} depthWrite={false} alphaTest={0.1} />
+        <pointsMaterial map={spriteTex} size={0.09} color="#ffaacc" sizeAttenuation transparent opacity={0.92} depthWrite={false} alphaTest={0.1} />
       </points>
     </>
   );
