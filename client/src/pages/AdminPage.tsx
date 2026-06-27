@@ -123,35 +123,33 @@ export default function AdminPage() {
 
       <div className="max-w-6xl mx-auto px-6 py-8 relative flex-1 w-full pb-16">
         {/* Tabs */}
-        <div className="flex flex-wrap gap-1 mb-6">
+        <div className="hud-panel mb-6 relative flex flex-wrap items-stretch">
+          <span className="hud-corner-tr" /><span className="hud-corner-bl" />
           {([
             ['pending',  'BEKLEYEN',     pending.length],
             ['approved', 'ONAYLANANLAR', approved.length],
             ['all',      'TÜMÜ',         users.length],
           ] as const).map(([key, label, count]) => (
             <button key={key} onClick={() => setTab(key)}
-              className="font-share-tech tracking-widest px-4 py-2 transition-all"
+              className="font-share-tech tracking-widest px-5 py-3 transition-all"
               style={{
                 fontSize: 13,
-                color: '#ffffff',
-                background: tab === key ? 'rgba(0,229,255,0.15)' : 'rgba(0,229,255,0.04)',
-                border: `1px solid ${tab === key ? 'rgba(0,229,255,0.9)' : 'rgba(0,229,255,0.3)'}`,
-                boxShadow: tab === key ? '0 0 14px rgba(0,229,255,0.5), inset 0 0 8px rgba(0,229,255,0.08)' : 'none',
-                clipPath: 'polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px))',
+                color: tab === key ? '#ffffff' : 'rgba(255,255,255,0.45)',
+                background: tab === key ? 'rgba(200,34,34,0.18)' : 'transparent',
+                borderRight: '1px solid rgba(200,34,34,0.25)',
+                boxShadow: tab === key ? 'inset 0 -2px 0 rgba(200,34,34,0.8)' : 'none',
               }}>
               {label} ({count})
             </button>
           ))}
           <div className="flex-1" />
           <button onClick={() => navigate('/')}
-            className="font-share-tech tracking-widest px-4 py-2 transition-all"
+            className="font-share-tech tracking-widest px-5 py-3 transition-all"
             style={{
               fontSize: 13,
-              color: '#ffffff',
-              background: 'rgba(0,229,255,0.04)',
-              border: '1px solid rgba(0,229,255,0.3)',
-              boxShadow: '0 0 8px rgba(0,229,255,0.2)',
-              clipPath: 'polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px))',
+              color: 'rgba(255,255,255,0.55)',
+              background: 'transparent',
+              borderLeft: '1px solid rgba(200,34,34,0.25)',
             }}>
             ← SİMÜLASYONLAR
           </button>
