@@ -106,9 +106,9 @@ describe('learnTechFromObservation — basic learning', () => {
     const teacher = makeInd();
     teacher.known_techs = new Set(['hunting_spear']);
 
-    // rate = (1.0 × 0.9) / (1.2 × 2000) = 0.000375/day → P(≥1 in 20000) ≈ 99.9%
+    // rate includes learning_rate factor → P(≥1 in 100000) > 99.9999%
     let learned = false;
-    for (let i = 0; i < 20000; i++) {
+    for (let i = 0; i < 100000; i++) {
       learnTechFromObservation(learner, [teacher], new Set(['stone_tools', 'hunting_spear']));
       if (learner.known_techs.has('hunting_spear')) { learned = true; break; }
     }
