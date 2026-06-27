@@ -857,6 +857,70 @@ router.get('/:id/diagnostics', authenticate, requireSimulationOwner, (req, res) 
   res.json(engine.getDiagnostics());
 });
 
+// ─── DB Status ────────────────────────────────────────────────────────────────
+
+router.get('/:id/db-status', authenticate, requireSimulationOwner, async (req, res) => {
+  const simId = req.params.id;
+  try {
+    const [indRes, cpRes, evRes, techRes, beliefRes, langRes, groupRes, convRes, pubRes, simRes] = await Promise.all([
+      query('SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE alive=true) AS alive FROM individuals WHERE simulation_id=$1', [simId]),
+      query('SELECT COUNT(*) AS total FROM checkpoints WHERE simulation_id=$1', [simId]),
+      query('SELECT COUNT(*) AS total FROM simulation_events WHERE simulation_id=$1', [simId]),
+      query('SELECT COUNT(*) AS total FROM technologies WHERE simulation_id=$1', [simId]),
+      query('SELECT COUNT(*) AS total FROM belief_systems WHERE simulation_id=$1', [simId]),
+      query('SELECT COUNT(*) AS total FROM language_records WHERE simulation_id=$1', [simId]),
+      query('SELECT COUNT(*) AS total FROM social_groups WHERE simulation_id=$1', [simId]),
+      query('SELECT COUNT(*) AS total FROM individual_conversations WHERE simulation_id=$1', [simId]),
+      query('SELECT COUNT(*) AS total FROM publications WHERE simulation_id=$1', [simId]).catch(() => ({ rows: [{ total: 0 }] })),
+      query('SELECT current_day FROM simulations WHERE id=$1', [simId]),
+    ]);
+
+    // DB size — PGlite may not support pg_database_size
+    let simDbSizeBytes = null;
+    try {
+      const sz = await query("SELECT pg_database_size(current_database()) AS s");
+      simDbSizeBytes = parseInt(sz.rows[0]?.s ?? 0, 10);
+    } catch {}
+
+    // Cloud DB counts
+    let cloudCheckpoints = 0, liveSnapshots = 0, cloudDbSizeBytes = null;
+    try {
+      const [ccRes, lsRes] = await Promise.all([
+        cloudQuery('SELECT COUNT(*) AS total FROM cloud_checkpoints WHERE simulation_id=$1', [simId]),
+        cloudQuery('SELECT COUNT(*) AS total FROM live_snapshots WHERE simulation_id=$1', [simId]),
+      ]);
+      cloudCheckpoints = parseInt(ccRes.rows[0]?.total ?? 0, 10);
+      liveSnapshots    = parseInt(lsRes.rows[0]?.total ?? 0, 10);
+      const csz = await cloudQuery("SELECT pg_database_size(current_database()) AS s");
+      cloudDbSizeBytes = parseInt(csz.rows[0]?.s ?? 0, 10);
+    } catch {}
+
+    res.json({
+      sim_db: {
+        size_bytes: simDbSizeBytes,
+        individuals:   { total: parseInt(indRes.rows[0]?.total ?? 0, 10), alive: parseInt(indRes.rows[0]?.alive ?? 0, 10) },
+        checkpoints:   parseInt(cpRes.rows[0]?.total ?? 0, 10),
+        events:        parseInt(evRes.rows[0]?.total ?? 0, 10),
+        technologies:  parseInt(techRes.rows[0]?.total ?? 0, 10),
+        beliefs:       parseInt(beliefRes.rows[0]?.total ?? 0, 10),
+        languages:     parseInt(langRes.rows[0]?.total ?? 0, 10),
+        groups:        parseInt(groupRes.rows[0]?.total ?? 0, 10),
+        conversations: parseInt(convRes.rows[0]?.total ?? 0, 10),
+        publications:  parseInt(pubRes.rows[0]?.total ?? 0, 10),
+        current_day:   simRes.rows[0]?.current_day ?? null,
+      },
+      cloud_db: {
+        size_bytes:       cloudDbSizeBytes,
+        cloud_checkpoints: cloudCheckpoints,
+        live_snapshots:    liveSnapshots,
+      },
+    });
+  } catch (err) {
+    console.error('db-status error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Cloud checkpoint restore ──────────────────────────────────────────────────
 
 // Cloud checkpoint'i yerel PGlite'a restore et

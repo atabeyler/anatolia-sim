@@ -11,11 +11,22 @@ interface Diagnostics {
   startup: { ts: number; day: number; checks: DiagCheck[] } | null;
   error_log: DiagEntry[];
 }
+interface DbStatus {
+  sim_db: {
+    size_bytes: number | null;
+    individuals: { total: number; alive: number };
+    checkpoints: number; events: number; technologies: number;
+    beliefs: number; languages: number; groups: number;
+    conversations: number; publications: number; current_day: number | null;
+  };
+  cloud_db: { size_bytes: number | null; cloud_checkpoints: number; live_snapshots: number };
+}
 
 export default function PerformancePanel() {
   const { activePanel, currentSim, accessToken, engineMetrics, setEngineMetrics, lang, isWarping, fastForwardTarget } = useSimStore();
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [diag, setDiag] = useState<Diagnostics | null>(null);
+  const [dbStatus, setDbStatus] = useState<DbStatus | null>(null);
 
   useEffect(() => {
     if (activePanel !== 'performance' || !currentSim || !accessToken) {
@@ -26,9 +37,10 @@ export default function PerformancePanel() {
     const fetchAll = () => {
       axios.get(`/api/simulations/${currentSim.id}/metrics`, { headers }).then(r => setEngineMetrics(r.data)).catch(() => {});
       axios.get(`/api/simulations/${currentSim.id}/diagnostics`, { headers }).then(r => setDiag(r.data)).catch(() => {});
+      axios.get(`/api/simulations/${currentSim.id}/db-status`, { headers }).then(r => setDbStatus(r.data)).catch(() => {});
     };
     fetchAll();
-    pollRef.current = setInterval(fetchAll, 5000);
+    pollRef.current = setInterval(fetchAll, 10000);
     return () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
   }, [activePanel, currentSim?.id, accessToken]);
 
@@ -157,6 +169,67 @@ export default function PerformancePanel() {
       ) : (
         <div style={{ fontSize: 13, color: '#6090a0', fontStyle: 'italic' }}>
           {t('Metrikler yükleniyor...', 'Loading metrics...', 'Metriken laden...', 'Chargement...', 'جارٍ التحميل...')}
+        </div>
+      )}
+
+      {/* ── DB Status ── */}
+      {dbStatus && (
+        <div style={{ marginTop: 14, borderTop: '1px solid rgba(79,110,247,0.2)', paddingTop: 12, marginBottom: 4 }}>
+          <div style={{ fontSize: 12, color: '#4f6ef7', letterSpacing: '0.14em', marginBottom: 8 }}>
+            {t('VERİTABANI DURUMU', 'DATABASE STATUS', 'DATENBANK STATUS', 'ÉTAT BASE DE DONNÉES', 'حالة قاعدة البيانات')}
+          </div>
+
+          {/* Sim DB */}
+          <div style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 11, color: '#a0b4ff', letterSpacing: '0.1em', marginBottom: 5 }}>
+              {t('SİM DB (yerel)', 'SIM DB (local)', 'SIM DB (lokal)', 'SIM DB (local)', 'قاعدة بيانات المحاكاة')}
+              {dbStatus.sim_db.size_bytes !== null && (
+                <span style={{ float: 'right', color: '#6090a0' }}>
+                  {dbStatus.sim_db.size_bytes > 1048576
+                    ? `${(dbStatus.sim_db.size_bytes / 1048576).toFixed(1)} MB`
+                    : `${(dbStatus.sim_db.size_bytes / 1024).toFixed(0)} KB`}
+                </span>
+              )}
+            </div>
+            {[
+              { label: t('Birey (toplam/yaşayan)', 'Individuals (total/alive)', 'Individuen', 'Individus', 'الأفراد'), value: `${dbStatus.sim_db.individuals.total} / ${dbStatus.sim_db.individuals.alive}`, color: '#00e887' },
+              { label: t('Checkpoint', 'Checkpoints', 'Checkpoints', 'Sauvegardes', 'نقاط حفظ'), value: dbStatus.sim_db.checkpoints, color: '#7dd3fc' },
+              { label: t('Olay', 'Events', 'Ereignisse', 'Événements', 'أحداث'), value: dbStatus.sim_db.events, color: '#7dd3fc' },
+              { label: t('Teknoloji', 'Technologies', 'Technologien', 'Technologies', 'تقنيات'), value: dbStatus.sim_db.technologies, color: '#d4a838' },
+              { label: t('İnanç', 'Beliefs', 'Glaubenssätze', 'Croyances', 'معتقدات'), value: dbStatus.sim_db.beliefs, color: '#d4a838' },
+              { label: t('Dil kaydı', 'Language records', 'Sprachaufzeichnungen', 'Enreg. langue', 'سجلات اللغة'), value: dbStatus.sim_db.languages, color: '#d4a838' },
+              { label: t('Grup', 'Groups', 'Gruppen', 'Groupes', 'مجموعات'), value: dbStatus.sim_db.groups, color: '#a0b4ff' },
+              { label: t('Konuşma', 'Conversations', 'Gespräche', 'Conversations', 'محادثات'), value: dbStatus.sim_db.conversations, color: '#a0b4ff' },
+            ].map(({ label, value, color }) => (
+              <div key={String(label)} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 12 }}>
+                <span style={{ color: '#6090a0' }}>{label}</span>
+                <span style={{ color, fontFamily: 'Orbitron, monospace', fontWeight: 700, fontSize: 11 }}>{value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Cloud DB */}
+          <div>
+            <div style={{ fontSize: 11, color: '#a0b4ff', letterSpacing: '0.1em', marginBottom: 5 }}>
+              {t('BULUT DB (Render)', 'CLOUD DB (Render)', 'CLOUD DB (Render)', 'CLOUD DB (Render)', 'قاعدة بيانات السحاب')}
+              {dbStatus.cloud_db.size_bytes !== null && (
+                <span style={{ float: 'right', color: '#6090a0' }}>
+                  {dbStatus.cloud_db.size_bytes > 1048576
+                    ? `${(dbStatus.cloud_db.size_bytes / 1048576).toFixed(1)} MB`
+                    : `${(dbStatus.cloud_db.size_bytes / 1024).toFixed(0)} KB`}
+                </span>
+              )}
+            </div>
+            {[
+              { label: t('Bulut checkpoint', 'Cloud checkpoints', 'Cloud-Checkpoints', 'Sauvegardes cloud', 'نقاط حفظ السحاب'), value: dbStatus.cloud_db.cloud_checkpoints, color: '#7dd3fc' },
+              { label: t('Canlı anlık görüntü', 'Live snapshots', 'Live-Snapshots', 'Instantanés live', 'لقطات مباشرة'), value: dbStatus.cloud_db.live_snapshots, color: '#7dd3fc' },
+            ].map(({ label, value, color }) => (
+              <div key={String(label)} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 12 }}>
+                <span style={{ color: '#6090a0' }}>{label}</span>
+                <span style={{ color, fontFamily: 'Orbitron, monospace', fontWeight: 700, fontSize: 11 }}>{value}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
