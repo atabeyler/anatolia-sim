@@ -240,12 +240,19 @@ router.post('/:id/pause', authenticate, requireSimulationOwner, async (req, res)
 
 router.post('/:id/complete', authenticate, requireSimulationOwner, async (req, res) => {
   try {
-    const engine = simulationManager.getEngine(req.params.id);
     simulationManager.pause(req.params.id);
-    await simulationManager.persistState(req.params.id, engine);
-    if (engine) await simulationManager.persistPopulation(req.params.id, engine);
-    await query("UPDATE simulations SET status = 'completed', updated_at = NOW() WHERE id = $1", [req.params.id]);
-    res.json({ message: 'Simulation completed' });
+    await query('DELETE FROM simulation_events WHERE simulation_id = $1', [req.params.id]);
+    await query('DELETE FROM checkpoints WHERE simulation_id = $1', [req.params.id]);
+    await query('DELETE FROM individual_conversations WHERE simulation_id = $1', [req.params.id]);
+    await query('DELETE FROM god_interventions WHERE simulation_id = $1', [req.params.id]);
+    await query('DELETE FROM technologies WHERE simulation_id = $1', [req.params.id]);
+    await query('DELETE FROM belief_systems WHERE simulation_id = $1', [req.params.id]);
+    await query('DELETE FROM language_records WHERE simulation_id = $1', [req.params.id]);
+    await query('DELETE FROM social_groups WHERE simulation_id = $1', [req.params.id]);
+    await query('DELETE FROM publications WHERE simulation_id = $1', [req.params.id]);
+    await query('DELETE FROM individuals WHERE simulation_id = $1', [req.params.id]);
+    await query('DELETE FROM simulations WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Simulation completed and removed' });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to complete simulation' }); }
 });
 
