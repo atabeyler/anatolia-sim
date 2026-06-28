@@ -250,12 +250,8 @@ router.post('/seed-admin', async (req, res) => {
 });
 
 // Emergency disk cleanup — deletes old events/checkpoints/dead individuals and runs VACUUM FULL
-// curl -X POST /api/admin/cleanup -H "x-seed-token: $ADMIN_SEED_TOKEN"
-router.post('/cleanup', async (req, res) => {
-  const seedToken = process.env.ADMIN_SEED_TOKEN;
-  if (!seedToken || req.headers['x-seed-token'] !== seedToken) {
-    return res.status(403).json({ error: 'Invalid token.' });
-  }
+// Accepts admin JWT or x-seed-token header
+router.post('/cleanup', authenticate, requireAdmin, async (req, res) => {
   try {
     const results = {};
 
