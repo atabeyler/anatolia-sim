@@ -87,6 +87,7 @@ export interface EngineMetrics {
   tick_avg_ms: number;
   tick_max_ms: number;
   tick_min_ms: number;
+  tick_last_ms: number | null;
   ticks_per_second: number;
   speed_multiplier: number;
   population: number;
@@ -96,6 +97,7 @@ export interface EngineMetrics {
   centroid_trail: CentroidPoint[];
   fast_forward_target: number | null;
   is_warping: boolean;
+  heavy_mode: boolean;
 }
 
 interface SimEvent {
