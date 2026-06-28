@@ -279,6 +279,11 @@ export class SimulationEngine {
     const T3 = hi ? 6  : 3;
     const T5 = hi ? 10 : 5;
     const T7 = hi ? 14 : 7;
+    // Stagger offsets — spread same-interval subsystems across different days to avoid spikes
+    // Without stagger, day % LCM(2,3,5,7)=210 fires all 15+ systems at once → 600ms+ spike
+    const S1 = T2 > 2 ? 2 : 1; // second slot within T2 window
+    const S2 = T3 > 3 ? 2 : 1; // second slot within T3 window
+    const S3 = T3 > 3 ? 4 : 2; // third slot within T3 window
     let alive = [...this._aliveIds].map(id => this.population.get(id)).filter(Boolean);
     for (const ind of alive) {
       ind.alive = true;
@@ -737,34 +742,29 @@ export class SimulationEngine {
       this._lastLoggedWeather = this.worldState.current_weather;
     }
 
-    // 12. Language evolution
-    const genCount = this.estimateGenerations();
-    for (const ind of alive) {
-      const langResult = updateLanguageStage(ind, alive.length, genCount, ind.group_id ?? 'global');
-      if (langResult?.upgraded) {
-        // Vocabulary grows organically via tryAcquireWordFromEnvironment (step 12d below).
-        // No scripted word injection here — words emerge from genetics + foxp2 expression only.
-        const name = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
-        const stageName = langResult.stageName ?? ind.language?.stage_name ?? 'language';
-        tickEvents.push({
-          type: 'language',
-          individual_id: ind.id,
-          day,
-          importance: langResult.newStage >= 4 ? 'high' : 'medium',
-          stage: langResult.newStage,
-          stage_name: stageName,
-          name,
-        });
-        this.logEvent(
-          day,
-          'language',
-          `${name} language stage advanced to ${stageName}`,
-          { individual_id: ind.id, name, stage: langResult.newStage, stage_name: stageName },
-          langResult.newStage >= 4 ? 3 : 2
-        );
+    // 12. Language evolution — stage upgrades are rare; every 3 days misses nothing meaningful
+    if (day % T3 === 0) {
+      const genCount = this.estimateGenerations();
+      for (const ind of alive) {
+        const langResult = updateLanguageStage(ind, alive.length, genCount, ind.group_id ?? 'global');
+        if (langResult?.upgraded) {
+          const name = ind.phenotype?.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${ind.id.slice(-4).toUpperCase()}`;
+          const stageName = langResult.stageName ?? ind.language?.stage_name ?? 'language';
+          tickEvents.push({
+            type: 'language', individual_id: ind.id, day,
+            importance: langResult.newStage >= 4 ? 'high' : 'medium',
+            stage: langResult.newStage, stage_name: stageName, name,
+          });
+          this.logEvent(
+            day, 'language', `${name} language stage advanced to ${stageName}`,
+            { individual_id: ind.id, name, stage: langResult.newStage, stage_name: stageName },
+            langResult.newStage >= 4 ? 3 : 2
+          );
+        }
       }
     }
-    this.processLanguageLearning(alive, spatialGrid);
+    // Language peer learning — every 2 days (staggered: slot S1 within T2)
+    if (day % T2 === S1) this.processLanguageLearning(alive, spatialGrid);
 
     // 12b. Social learning: children near parents learn faster
     this.processFamilyLearning(alive, day, tickEvents);
@@ -793,8 +793,9 @@ export class SimulationEngine {
       }
     }
 
-    // 13. Technology emergence — experience already accumulated in worker pool; check thresholds here
-    for (const ind of alive) {
+    // 13. Technology emergence — thresholds don't change daily; every 3 days catches all discoveries
+    // Staggered to S2 slot so it doesn't collide with language stage check (both T3)
+    if (day % T3 === S2) for (const ind of alive) {
       const emerged = checkTechEmergence(ind, this.discoveredTechs);
       for (const techId of emerged) {
         const techTrigger = this.worldState.food_abundance < 0.3 ? 'food scarcity'
@@ -851,8 +852,8 @@ export class SimulationEngine {
         this.logEvent(day, 'belief', beliefEvent.description, enrichedBelief, beliefEvent.importance === 'high' ? 4 : 2);
       }
     }
-    // Belief spread: was O(N_alive × N_beliefs × N_believers) every tick — run every 3 days
-    if (day % T3 === 0) {
+    // Belief spread — staggered to S2 slot so it doesn't collide with language/fear (both T3 slot 0)
+    if (day % T3 === S2) {
       const spreadEvents = updateBeliefSpread(alive, this.discoveredBeliefs, this.groups, day);
       tickEvents.push(...spreadEvents);
       for (const group of this.groups) {
@@ -864,8 +865,8 @@ export class SimulationEngine {
       }
     }
 
-    // 15. Culture — cultural drift is slow; every 2 days is sufficient
-    if (day % T2 === 0) {
+    // 15. Culture — staggered to S1 slot (groups/consciousness take slot 0)
+    if (day % T2 === S1) {
       if (!this.running) return;
       await new Promise(resolve => setImmediate(resolve));
       const cultureEvents = processCultureTick(alive, this.groups, this.discoveredTechs, day);
@@ -878,8 +879,8 @@ export class SimulationEngine {
       await new Promise(resolve => setImmediate(resolve));
     }
 
-    // 16. Art — creation events are rare; every 3 days is sufficient
-    if (day % T3 === 0) {
+    // 16. Art — staggered to S3 slot (belief at S2, fear/lang at 0)
+    if (day % T3 === S3) {
       const artEvents = processArtTick(alive, this.discoveredArts, this.discoveredTechs, this.worldState, day);
       for (const ev of artEvents) {
         tickEvents.push(ev);
@@ -917,8 +918,8 @@ export class SimulationEngine {
       }
     }
 
-    // 18. Law & norms — laws change slowly; every 7 days is sufficient
-    if (day % T7 === 0) {
+    // 18. Law & norms — staggered by 1 day from architecture (both T7)
+    if (day % T7 === 1) {
       for (const group of this.groups) {
         const lawEvents = processLawTick(group, alive, this.discoveredTechs, day);
         for (const ev of lawEvents) {
