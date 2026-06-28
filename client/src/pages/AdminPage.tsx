@@ -63,13 +63,14 @@ export default function AdminPage() {
   }
 
   async function runCleanup() {
-    if (!confirm('Veritabanı temizlensin mi? (VACUUM FULL — birkaç saniye sürebilir)')) return;
     setCleaning(true);
     try {
       await axios.post('/api/admin/cleanup', {}, { headers });
-      alert('Temizlik tamamlandı.');
-    } catch { alert('Temizlik başarısız.'); }
-    finally { setCleaning(false); }
+    } catch (err) {
+      console.error('cleanup failed', err);
+    } finally {
+      setCleaning(false);
+    }
   }
 
   async function deleteUser(id: string) {
