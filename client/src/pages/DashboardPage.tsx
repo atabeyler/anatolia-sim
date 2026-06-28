@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const [loading, setLoading]       = useState(false);
   const [restoring, setRestoring]   = useState<string | null>(null);
   const [cleaning, setCleaning]     = useState(false);
+  const [cleanMsg, setCleanMsg]     = useState<{ ok: boolean; text: string } | null>(null);
   const headers = { Authorization: `Bearer ${accessToken}` };
 
   useEffect(() => {
@@ -100,9 +101,17 @@ export default function DashboardPage() {
 
   async function runCleanup() {
     setCleaning(true);
-    try { await axios.post('/api/admin/cleanup', {}, { headers }); }
-    catch (err) { console.error('cleanup failed', err); }
-    finally { setCleaning(false); }
+    setCleanMsg(null);
+    try {
+      const { data } = await axios.post('/api/admin/cleanup', {}, { headers });
+      const total = (data.checkpoints_deleted ?? 0) + (data.events_deleted ?? 0) + (data.dead_individuals_deleted ?? 0);
+      setCleanMsg({ ok: true, text: `✓ ${total} kayıt silindi` });
+    } catch {
+      setCleanMsg({ ok: false, text: '✗ Temizlik başarısız' });
+    } finally {
+      setCleaning(false);
+      setTimeout(() => setCleanMsg(null), 4000);
+    }
   }
 
   async function createSim(form: any, founder1: any, founder2: any) {
@@ -163,6 +172,11 @@ export default function DashboardPage() {
                   {runningCount} {text(lang as LangCode, { tr: 'AKTİF', en: 'ACTIVE', de: 'AKTIV', fr: 'ACTIF', ar: 'نشط' })}
                 </span>
               </div>
+            )}
+            {cleanMsg && (
+              <span className="hidden sm:inline font-share-tech tracking-widest" style={{ fontSize: 12, color: cleanMsg.ok ? '#4ecb71' : '#e05a5a' }}>
+                {cleanMsg.text}
+              </span>
             )}
             <button onClick={runCleanup} disabled={cleaning} title="Veritabanı temizle"
               className="flex items-center gap-1.5 transition-colors"
