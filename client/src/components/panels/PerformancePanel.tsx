@@ -40,7 +40,7 @@ export default function PerformancePanel() {
       axios.get(`/api/simulations/${currentSim.id}/db-status`, { headers }).then(r => setDbStatus(r.data)).catch(() => {});
     };
     fetchAll();
-    pollRef.current = setInterval(fetchAll, 10000);
+    pollRef.current = setInterval(fetchAll, 5000);
     return () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
   }, [activePanel, currentSim?.id, accessToken]);
 
@@ -94,8 +94,16 @@ export default function PerformancePanel() {
       {m ? (
         <>
           <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 12, color: '#4f6ef7', letterSpacing: '0.14em', marginBottom: 8 }}>{t('TİCK ZAMANLAMA', 'TICK TIMING', 'TICK-TIMING', 'TIMING TICK', 'توقيت التيك')}</div>
+            <div style={{ fontSize: 12, color: '#4f6ef7', letterSpacing: '0.14em', marginBottom: 8 }}>
+              {t('TİCK ZAMANLAMA', 'TICK TIMING', 'TICK-TIMING', 'TIMING TICK', 'توقيت التيك')}
+              {m.heavy_mode && (
+                <span style={{ marginLeft: 8, fontSize: 10, color: '#d4a838', background: 'rgba(212,168,56,0.12)', border: '1px solid rgba(212,168,56,0.3)', padding: '1px 5px', letterSpacing: '0.08em' }}>
+                  {t('AĞIR MOD', 'HEAVY', 'HEAVY', 'HEAVY', 'ثقيل')}
+                </span>
+              )}
+            </div>
             {[
+              { label: t('Son ms', 'Last ms', 'Letzt ms', 'Dern. ms', 'آخر ms'), value: m.tick_last_ms != null ? m.tick_last_ms.toFixed(0) : '—', color: '#fbbf24' },
               { label: t('Ort. ms', 'Avg ms', 'Ø ms', 'Moy. ms', 'متوسط ms'), value: m.tick_avg_ms?.toFixed(1) ?? '—', color: '#00e887' },
               { label: t('Maks ms', 'Max ms', 'Max ms', 'Max ms', 'أقصى ms'), value: m.tick_max_ms?.toFixed(1) ?? '—', color: '#e05a5a' },
               { label: t('Min ms', 'Min ms', 'Min ms', 'Min ms', 'أدنى ms'), value: m.tick_min_ms?.toFixed(1) ?? '—', color: '#4ecb71' },
@@ -105,6 +113,7 @@ export default function PerformancePanel() {
                 <span style={{ color, fontFamily: 'Orbitron, monospace', fontWeight: 700 }}>{value}</span>
               </div>
             ))}
+            {m.tick_last_ms != null && bar(m.tick_last_ms, 500, '#fbbf24')}
             {m.tick_avg_ms !== undefined && bar(m.tick_avg_ms, 200, '#4f6ef7')}
           </div>
 

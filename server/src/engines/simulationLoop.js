@@ -224,6 +224,7 @@ export class SimulationEngine {
       const tickStart = Date.now();
       await this.tick();
       const tickMs = Date.now() - tickStart;
+      this._lastTickMs = tickMs;
 
       // Feature 14: record tick timing (rolling window, last 120 ticks)
       this._tickHistory.push(tickMs);
@@ -274,11 +275,13 @@ export class SimulationEngine {
     this._newDeadThisTick = [];
     const day = this.currentDay;
     // Speed-adaptive throttle intervals — doubled at 100x to halve per-tick subsystem cost
+    // Also doubled when population exceeds 280 (each O(N) loop is 48%+ heavier at 350+ alive)
     const hi = this.speedMultiplier >= 100;
-    const T2 = hi ? 4  : 2;
-    const T3 = hi ? 6  : 3;
-    const T5 = hi ? 10 : 5;
-    const T7 = hi ? 14 : 7;
+    const heavy = this._aliveIds.size > 280;
+    const T2 = (hi || heavy) ? 4 : 2;
+    const T3 = (hi || heavy) ? 6 : 3;
+    const T5 = (hi || heavy) ? 10 : 5;
+    const T7 = (hi || heavy) ? 14 : 7;
     // Stagger offsets — spread same-interval subsystems across different days to avoid spikes
     // Without stagger, day % LCM(2,3,5,7)=210 fires all 15+ systems at once → 600ms+ spike
     const S1 = T2 > 2 ? 2 : 1; // second slot within T2 window
@@ -766,8 +769,8 @@ export class SimulationEngine {
     // Language peer learning — every 2 days (staggered: slot S1 within T2)
     if (day % T2 === S1) this.processLanguageLearning(alive, spatialGrid);
 
-    // 12b. Social learning: children near parents learn faster
-    this.processFamilyLearning(alive, day, tickEvents);
+    // 12b. Social learning: children near parents learn faster — T3 (was every tick O(N))
+    if (day % T3 === 0) this.processFamilyLearning(alive, day, tickEvents);
 
     // 12c. FOXP2 expression — slow developmental plasticity, every 5 days is sufficient
     if (day % T5 === 0) {
@@ -831,7 +834,8 @@ export class SimulationEngine {
     }
 
     // 14. Belief formation & spread
-    for (const ind of alive) {
+    // Throttled to T2: was every tick O(N) — at 350+ alive this is 350+ fn calls saved per tick
+    if (day % T2 === 0) for (const ind of alive) {
       const beliefEvent = tryFormBelief(ind, this.discoveredBeliefs, this.discoveredTechs, this.worldState, day);
       if (beliefEvent) {
         const beliefTrigger = this.worldState.recent_disaster ? `natural disaster (${this.worldState.recent_disaster})`
@@ -1696,8 +1700,9 @@ export class SimulationEngine {
   computeStats(day, alive) {
     const n = alive.length;
     const maxN = Math.max(1, n);
-    // Cache expensive O(N) sub-stats — recompute every 3 days; use stale values otherwise
-    if (!this._subStatCache || day - (this._subStatCacheDay ?? -3) >= 3) {
+    // Cache expensive O(N) sub-stats — 3 days normally, 5 days at 280+ alive (heavy mode)
+    const _statInterval = this._aliveIds.size > 280 ? 5 : 3;
+    if (!this._subStatCache || day - (this._subStatCacheDay ?? -_statInterval) >= _statInterval) {
       const econ = computeEconomicStats(alive);
       this._subStatCache = {
         econ,
@@ -1917,8 +1922,10 @@ export class SimulationEngine {
       tick_avg_ms: Math.round(avg * 10) / 10,
       tick_max_ms: max,
       tick_min_ms: min,
+      tick_last_ms: this._lastTickMs ?? null,
       tick_samples: hist.length,
       ticks_per_second: avg > 0 ? Math.round(1000 / avg * 10) / 10 : 0,
+      heavy_mode: this._aliveIds.size > 280,
       speed_multiplier: this.speedMultiplier,
       population: this._aliveIds.size,
       total_ever: this.population.size,
