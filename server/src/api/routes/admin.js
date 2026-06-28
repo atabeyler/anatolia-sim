@@ -255,45 +255,53 @@ router.post('/cleanup', authenticate, async (req, res) => {
   try {
     const results = {};
 
-    // Kullanıcının sim'lerindeki son 5 checkpoint hariç hepsini sil
+    // Kullanıcının sim id'lerini önce çek
+    const simIdsRes = await simQuery(`SELECT id FROM simulations WHERE user_id = $1`, [userId]);
+    const simIds = simIdsRes.rows.map(r => r.id);
+
+    if (simIds.length === 0) {
+      return res.json({ success: true, checkpoints_deleted: 0, events_deleted: 0, dead_individuals_deleted: 0, vacuum: {} });
+    }
+
+    const idList = simIds.map((_, i) => `$${i + 1}`).join(',');
+
+    // Son 5 checkpoint hariç hepsini sil
     const cpRes = await simQuery(`
       DELETE FROM checkpoints
-      WHERE simulation_id IN (SELECT id FROM simulations WHERE user_id = $1)
+      WHERE simulation_id IN (${idList})
       AND id NOT IN (
         SELECT id FROM (
           SELECT id, ROW_NUMBER() OVER (PARTITION BY simulation_id ORDER BY sim_day DESC) AS rn
-          FROM checkpoints
-          WHERE simulation_id IN (SELECT id FROM simulations WHERE user_id = $1)
+          FROM checkpoints WHERE simulation_id IN (${idList})
         ) t WHERE rn <= 5
       )
-    `, [userId, userId]);
+    `, simIds);
     results.checkpoints_deleted = cpRes.rowCount;
 
-    // Her simülasyonda en fazla 200 event tut (en yeniler kalır)
+    // Her simülasyonda en fazla 200 event tut
     const evRes = await simQuery(`
       DELETE FROM simulation_events
-      WHERE simulation_id IN (SELECT id FROM simulations WHERE user_id = $1)
+      WHERE simulation_id IN (${idList})
       AND id IN (
         SELECT id FROM (
           SELECT id, ROW_NUMBER() OVER (PARTITION BY simulation_id ORDER BY sim_day DESC) AS rn
-          FROM simulation_events
-          WHERE simulation_id IN (SELECT id FROM simulations WHERE user_id = $1)
+          FROM simulation_events WHERE simulation_id IN (${idList})
         ) t WHERE rn > 200
       )
-    `, [userId, userId]);
+    `, simIds);
     results.events_deleted = evRes.rowCount;
 
     // 1000 günden eski ölü bireyleri sil
     const indRes = await simQuery(`
       DELETE FROM individuals
       WHERE alive = false
-      AND simulation_id IN (SELECT id FROM simulations WHERE user_id = $1)
+      AND simulation_id IN (${idList})
       AND id IN (
         SELECT i.id FROM individuals i
         JOIN simulations s ON s.id = i.simulation_id
         WHERE i.alive = false AND i.death_day < (s.current_day - 1000)
       )
-    `, [userId]);
+    `, simIds);
     results.dead_individuals_deleted = indRes.rowCount;
 
     // VACUUM FULL: dead tuple'ları fiziksel olarak siler, OS'a alan geri döner
