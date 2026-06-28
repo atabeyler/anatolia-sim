@@ -728,8 +728,16 @@ router.get('/:id/report', authenticate, requireSimulationOwner, async (req, res)
     // Death statistics
     const deathByAge = { infant_0_1: 0, child_1_15: 0, young_adult_15_30: 0, adult_30_50: 0, elder_50plus: 0 };
     const deathByCause = {};
-    const individuals = individualsRes.rows.map(ind => {
-      const ph = typeof ind.phenotype === 'string' ? JSON.parse(ind.phenotype) : (ind.phenotype ?? {});
+    // When engine is running, read from Map — dead individuals have _name/_intel after stripping.
+    const rawIndividuals = engine
+      ? [...engine.population.values()].sort((a, b) => (a.birth_day ?? 0) - (b.birth_day ?? 0))
+      : individualsRes.rows;
+    const individuals = rawIndividuals.map(ind => {
+      const ph = engine
+        ? (ind.phenotype ?? {})
+        : (typeof ind.phenotype === 'string' ? JSON.parse(ind.phenotype) : (ind.phenotype ?? {}));
+      const indName = ind._name ?? ph.name ?? `${ind.sex === 'male' ? '♂' : '♀'}-${(ind.id ?? '').slice(-4)}`;
+      const indIntel = ind._intel ?? (ph.fluid_intelligence != null ? Math.round(ph.fluid_intelligence * 100) / 100 : null);
       const ageAtDeath = ind.death_day != null && ind.birth_day != null
         ? Math.round((ind.death_day - ind.birth_day) / 365 * 10) / 10 : null;
       if (ageAtDeath != null) {
@@ -743,7 +751,7 @@ router.get('/:id/report', authenticate, requireSimulationOwner, async (req, res)
       }
       return {
         id: ind.id,
-        name: ph.name ?? `${ind.sex}-${ind.id.slice(-4)}`,
+        name: indName,
         sex: ind.sex,
         is_founder: ind.is_founder,
         birth_year: ind.birth_day != null ? Math.floor(ind.birth_day / 365) : null,
@@ -751,7 +759,7 @@ router.get('/:id/report', authenticate, requireSimulationOwner, async (req, res)
         age_at_death: ageAtDeath,
         death_cause: ind.death_cause,
         is_dead: ind.is_dead,
-        intelligence: ph.fluid_intelligence != null ? Math.round(ph.fluid_intelligence * 100) / 100 : null,
+        intelligence: indIntel,
       };
     });
 

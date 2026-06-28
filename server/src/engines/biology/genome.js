@@ -87,6 +87,7 @@ export function createGenome(overrides = {}) {
 export function createGamete(genome, stressMultiplier = 1.0) {
   const gamete = {};
   for (const locusId of LOCI_KEYS) {
+    if (!genome) { gamete[locusId] = randomAllele(); continue; }
     const locus = genome[locusId];
     if (!locus) continue;
     const crossover = Math.random() < 0.5;

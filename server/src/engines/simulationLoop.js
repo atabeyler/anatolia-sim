@@ -28,7 +28,7 @@ import { accumulateExperience, checkTechEmergence } from './agent/activityEngine
 
 // 2 degrees ≈ 220 km — more realistic for prehistoric band territory; was 5 (~500 km)
 const SOCIAL_INTERACTION_RADIUS = 2;
-const CHECKPOINT_INTERVAL = 90;
+const CHECKPOINT_INTERVAL = 1095;
 
 // Spatial grid for O(n) neighbour lookups instead of O(n²) full scans.
 // Cell size equals the interaction radius so a 3×3 neighbourhood covers all
@@ -122,6 +122,19 @@ export class SimulationEngine {
   load(individuals) {
     const groupMap = new Map();
     for (const ind of individuals) {
+      if (ind.is_dead) {
+        // Strip heavy fields immediately — mirrors onDeath stripping for pre-existing dead.
+        // _name/_intel preserved for report/UI display.
+        ind._name = ind._name ?? (typeof ind.phenotype === 'object' ? ind.phenotype?.name : null) ?? null;
+        ind._intel = ind._intel ?? (typeof ind.phenotype === 'object' ? ind.phenotype?.fluid_intelligence : null) ?? null;
+        ind.genome = null; ind.epigenome = null; ind.phenotype = null;
+        ind.mind = null; ind.social = null; ind.memory = null; ind.psychology = null;
+        ind.inventory = null; ind.beliefs = null; ind.language = null;
+        ind.skills = null; ind.health = null; ind.known_techs = new Set();
+        ind._death_logged = true;
+        this.population.set(ind.id, ind);
+        continue;
+      }
       if (!ind.inventory) ind.inventory = initializeInventory();
       if (!ind.psychology) initializePsychology(ind);
       if (!ind.epigenome) initializeEpigenome(ind);
@@ -542,7 +555,7 @@ export class SimulationEngine {
     // 8. Reproduction — BUG-01: pass spatial grid callback for O(n) male lookup
     const communityLangStage = alive.length ? Math.max(...alive.map(i => i.language?.stage ?? 0)) : 0;
     const _repNearbyMalesFn = (female) => getNeighbours(female, spatialGrid);
-    const newborns = checkReproduction(this.population, day, this.simId, communityLangStage, this.phonology, _repNearbyMalesFn);
+    const newborns = checkReproduction(this.population, day, this.simId, communityLangStage, this.phonology, _repNearbyMalesFn, alive);
     for (const nb of newborns) {
       nb.inventory = initializeInventory();
       nb.beliefs = new Set(); // must be Set in-memory

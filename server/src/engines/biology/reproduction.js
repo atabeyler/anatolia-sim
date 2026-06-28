@@ -4,15 +4,17 @@ const PREGNANCY_MIN = 266;
 const MATING_RADIUS  = 2; // degrees (~220 km) — matches SOCIAL_INTERACTION_RADIUS
 
 // BUG-01: accepts optional nearbyMalesFn callback for O(n) spatial lookup from simulationLoop
-export function checkReproduction(population, currentDay, simulationId, communityLangStage = 0, phonology = null, nearbyMalesFn = null) {
+// aliveArray: pre-filtered alive array from simulationLoop (avoids O(N_total) Map spread)
+export function checkReproduction(population, currentDay, simulationId, communityLangStage = 0, phonology = null, nearbyMalesFn = null, aliveArray = null) {
   const newborns = [];
+  const pool = aliveArray ?? [...population.values()];
 
   // Only build the O(n) full scan when no spatial grid callback is provided (fallback)
-  const fertileMales = nearbyMalesFn ? null : [...population.values()].filter(i =>
+  const fertileMales = nearbyMalesFn ? null : pool.filter(i =>
     i.alive && i.sex === 'male' && isFertile(i, currentDay)
   );
 
-  const females = [...population.values()].filter(i =>
+  const females = pool.filter(i =>
     i.alive && i.sex === 'female' && isFertile(i, currentDay) && !(i.health?.pregnancy)
   );
 
@@ -38,7 +40,7 @@ export function checkReproduction(population, currentDay, simulationId, communit
     }
   }
 
-  for (const female of [...population.values()].filter(i => i.alive && i.health?.pregnancy)) {
+  for (const female of pool.filter(i => i.alive && i.health?.pregnancy)) {
     const preg = female.health.pregnancy;
     if (currentDay >= preg.due_day) {
       const father = population.get(preg.father_id);

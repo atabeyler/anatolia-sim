@@ -158,18 +158,16 @@ class SimulationManager {
         console.warn('[onDeath] persist error after retries:', err.message);
       });
       // Free large heap objects from dead individuals — they stay in population Map
-      // for parent-id lookups and posthumous births. Keep genetic/phenotype data:
-      // pregnancies conceived before a disease death still need the dead parent genome.
+      // for parent-id lookups. createGamete is null-safe (random fallback) so stripping
+      // genome is safe even if a conceived pregnancy outlives the father.
+      // _name/_intel preserved for report/UI display.
       for (const ind of dead) {
-        ind.mind = null;
-        ind.social = null;
-        ind.memory = null;
-        ind.psychology = null;
-        ind.inventory = null;
-        ind.beliefs = null;
-        ind.language = null;
-        ind.skills = null;
-        ind.health = null;
+        ind._name = ind.phenotype?.name ?? null;
+        ind._intel = ind.phenotype?.fluid_intelligence ?? null;
+        ind.genome = null; ind.epigenome = null; ind.phenotype = null;
+        ind.mind = null; ind.social = null; ind.memory = null; ind.psychology = null;
+        ind.inventory = null; ind.beliefs = null; ind.language = null;
+        ind.skills = null; ind.health = null;
       }
     };
 
