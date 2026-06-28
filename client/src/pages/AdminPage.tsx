@@ -3,7 +3,7 @@ import FooterBar from '../components/layout/FooterBar';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
-import { LogOut, CheckCircle, XCircle, Ban, Trash2, ShieldOff, Clock, Globe, DatabaseZap } from 'lucide-react';
+import { LogOut, CheckCircle, XCircle, Ban, Trash2, ShieldOff, Clock, Globe } from 'lucide-react';
 
 type UserRow = {
   id: string; user_code: string; first_name: string; last_name: string;
@@ -27,7 +27,6 @@ export default function AdminPage() {
   const [tab, setTab] = useState<'pending' | 'approved' | 'all'>('pending');
   const [banReason, setBanReason] = useState('');
   const [banTarget, setBanTarget] = useState<string | null>(null);
-  const [cleaning, setCleaning] = useState(false);
   const headers = { Authorization: `Bearer ${accessToken}` };
 
   useEffect(() => {
@@ -60,17 +59,6 @@ export default function AdminPage() {
   async function unban(id: string) {
     await axios.post(`/api/admin/users/${id}/unban`, {}, { headers });
     load();
-  }
-
-  async function runCleanup() {
-    setCleaning(true);
-    try {
-      await axios.post('/api/admin/cleanup', {}, { headers });
-    } catch (err) {
-      console.error('cleanup failed', err);
-    } finally {
-      setCleaning(false);
-    }
   }
 
   async function deleteUser(id: string) {
@@ -118,12 +106,6 @@ export default function AdminPage() {
                 <span className="font-share-tech text-sim-gold tracking-widest" style={{ fontSize: 13 }}>{pending.length} BEKLEYEN</span>
               </div>
             )}
-            <button onClick={runCleanup} disabled={cleaning} title="Veritabanı temizle (VACUUM FULL)"
-              className="flex items-center gap-1.5 transition-colors"
-              style={{ fontFamily: 'Share Tech Mono,monospace', fontSize: 13, letterSpacing: '0.08em', color: cleaning ? 'rgba(212,168,56,0.5)' : 'rgba(212,168,56,0.85)', border: 'none', background: 'transparent', padding: '4px 8px', cursor: cleaning ? 'wait' : 'pointer' }}>
-              <DatabaseZap size={13} />
-              <span className="hidden sm:inline">{cleaning ? 'TEMİZLENİYOR...' : 'DB TEMİZLE'}</span>
-            </button>
             <span className="hidden sm:block font-share-tech tracking-widest font-bold" style={{ fontSize: 14, color: '#ffffff' }}>{user?.username?.toUpperCase()}</span>
             <button onClick={() => { logout(); navigate('/login'); }}
               className="flex items-center gap-1.5 transition-colors"

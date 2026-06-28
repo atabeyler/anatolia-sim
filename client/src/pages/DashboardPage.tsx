@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { text, type LangCode } from '../utils/i18n';
 import FooterBar from '../components/layout/FooterBar';
 import { useNavigate } from 'react-router-dom';
-import { Globe, Plus, Play, LogOut, BarChart2, Trash2 } from 'lucide-react';
+import { Globe, Plus, Play, LogOut, BarChart2, Trash2, DatabaseZap } from 'lucide-react';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
 import SimCreationWizard from '../components/SimCreationWizard';
@@ -20,6 +20,7 @@ export default function DashboardPage() {
   const [compareMode, setCompareMode] = useState(false);
   const [loading, setLoading]       = useState(false);
   const [restoring, setRestoring]   = useState<string | null>(null);
+  const [cleaning, setCleaning]     = useState(false);
   const headers = { Authorization: `Bearer ${accessToken}` };
 
   useEffect(() => {
@@ -97,6 +98,13 @@ export default function DashboardPage() {
     } catch { alert(text(lang as LangCode, { tr: 'Silme başarısız.', en: 'Delete failed.', de: 'Löschen fehlgeschlagen.', fr: 'Échec de la suppression.', ar: 'فشل الحذف.' })); }
   }
 
+  async function runCleanup() {
+    setCleaning(true);
+    try { await axios.post('/api/admin/cleanup', {}, { headers }); }
+    catch (err) { console.error('cleanup failed', err); }
+    finally { setCleaning(false); }
+  }
+
   async function createSim(form: any, founder1: any, founder2: any) {
     setLoading(true);
     try {
@@ -156,6 +164,12 @@ export default function DashboardPage() {
                 </span>
               </div>
             )}
+            <button onClick={runCleanup} disabled={cleaning} title="Veritabanı temizle"
+              className="flex items-center gap-1.5 transition-colors"
+              style={{ fontFamily: 'Share Tech Mono,monospace', fontSize: 13, letterSpacing: '0.08em', color: cleaning ? 'rgba(212,168,56,0.4)' : 'rgba(212,168,56,0.85)', border: 'none', background: 'transparent', padding: '4px 8px', cursor: cleaning ? 'wait' : 'pointer' }}>
+              <DatabaseZap size={13} />
+              <span className="hidden sm:inline">{cleaning ? 'TEMİZLENİYOR...' : 'DB TEMİZLE'}</span>
+            </button>
             <span className="hidden sm:block font-share-tech tracking-widest font-bold" style={{ fontSize: 14, color: '#ffffff' }}>{user?.username?.toUpperCase()}</span>
             <button onClick={() => { logout(); navigate('/login'); }}
               className="flex items-center gap-1.5 transition-colors"

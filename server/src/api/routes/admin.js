@@ -249,46 +249,51 @@ router.post('/seed-admin', async (req, res) => {
   }
 });
 
-// Emergency disk cleanup — deletes old events/checkpoints/dead individuals and runs VACUUM FULL
-// Accepts admin JWT or x-seed-token header
-router.post('/cleanup', authenticate, requireAdmin, async (req, res) => {
+// Disk cleanup — kullanıcının kendi sim verilerini temizler, ardından VACUUM FULL çalışır
+router.post('/cleanup', authenticate, async (req, res) => {
+  const userId = req.user.id;
   try {
     const results = {};
 
-    // Son 5 checkpoint hariç hepsini sil (UPDATE yerine DELETE — dead tuple bırakmaz)
+    // Kullanıcının sim'lerindeki son 5 checkpoint hariç hepsini sil
     const cpRes = await simQuery(`
       DELETE FROM checkpoints
-      WHERE id NOT IN (
+      WHERE simulation_id IN (SELECT id FROM simulations WHERE user_id = $1)
+      AND id NOT IN (
         SELECT id FROM (
           SELECT id, ROW_NUMBER() OVER (PARTITION BY simulation_id ORDER BY sim_day DESC) AS rn
           FROM checkpoints
+          WHERE simulation_id IN (SELECT id FROM simulations WHERE user_id = $1)
         ) t WHERE rn <= 5
       )
-    `);
+    `, [userId, userId]);
     results.checkpoints_deleted = cpRes.rowCount;
 
     // Her simülasyonda en fazla 200 event tut (en yeniler kalır)
     const evRes = await simQuery(`
       DELETE FROM simulation_events
-      WHERE id IN (
+      WHERE simulation_id IN (SELECT id FROM simulations WHERE user_id = $1)
+      AND id IN (
         SELECT id FROM (
           SELECT id, ROW_NUMBER() OVER (PARTITION BY simulation_id ORDER BY sim_day DESC) AS rn
           FROM simulation_events
+          WHERE simulation_id IN (SELECT id FROM simulations WHERE user_id = $1)
         ) t WHERE rn > 200
       )
-    `);
+    `, [userId, userId]);
     results.events_deleted = evRes.rowCount;
 
     // 1000 günden eski ölü bireyleri sil
     const indRes = await simQuery(`
       DELETE FROM individuals
       WHERE alive = false
+      AND simulation_id IN (SELECT id FROM simulations WHERE user_id = $1)
       AND id IN (
         SELECT i.id FROM individuals i
         JOIN simulations s ON s.id = i.simulation_id
         WHERE i.alive = false AND i.death_day < (s.current_day - 1000)
       )
-    `);
+    `, [userId]);
     results.dead_individuals_deleted = indRes.rowCount;
 
     // VACUUM FULL: dead tuple'ları fiziksel olarak siler, OS'a alan geri döner
