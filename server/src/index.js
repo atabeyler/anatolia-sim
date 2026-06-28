@@ -20,6 +20,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { existsSync } from 'fs';
 import { migrate } from './db/database.js';
+import { sendStorageWarningEmail } from './utils/email.js';
 import authRouter from './api/routes/auth.js';
 import simulationsRouter from './api/routes/simulations.js';
 import godRouter from './api/routes/god.js';
@@ -255,10 +256,29 @@ async function main() {
 main();
 
 // Keep Render free-tier instance awake — ping self every 4 minutes to prevent spin-down
+// Every 15 pings (~1 hour) also check DB storage and warn if > 80%
 const SELF_URL = process.env.RENDER_EXTERNAL_URL;
+let _lastStorageWarnAt = 0;
+let _pingCount = 0;
+async function checkStorageAndWarn() {
+  try {
+    const { rows } = await simQuery(`SELECT pg_database_size(current_database()) AS size`);
+    const usedBytes = parseInt(rows[0].size, 10);
+    const totalBytes = 1073741824; // 1 GB Render free tier
+    const pct = Math.round((usedBytes / totalBytes) * 100);
+    if (pct >= 80 && Date.now() - _lastStorageWarnAt > 24 * 60 * 60 * 1000) {
+      _lastStorageWarnAt = Date.now();
+      const usedMb = Math.round(usedBytes / 1024 / 1024);
+      const totalMb = Math.round(totalBytes / 1024 / 1024);
+      await sendStorageWarningEmail(usedMb, totalMb, pct).catch(() => {});
+      console.warn(`[STORAGE] %${pct} dolu — uyarı e-postası gönderildi`);
+    }
+  } catch {}
+}
 if (SELF_URL) {
   setInterval(() => {
     fetch(`${SELF_URL}/api/health`).catch(() => {});
+    if (++_pingCount % 15 === 0) checkStorageAndWarn();
   }, 4 * 60 * 1000);
 }
 

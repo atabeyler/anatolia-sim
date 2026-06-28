@@ -88,3 +88,9 @@ export async function sendRejectionEmail({ first_name, last_name, email }) {
 export async function sendTestEmail() {
   await deliver(ADMIN_EMAIL, 'ANATOLiA-SiM - Test', `E-posta sistemi calisiyor.\nTarih: ${new Date().toISOString()}`);
 }
+
+export async function sendStorageWarningEmail(usedMb, totalMb, pct) {
+  const subject = `[UYARI] ANATOLiA-SiM Veritabani Dolulugu %${pct}`;
+  const text = `Veritabani depolama alani kritik seviyeye ulasti.\n\nKullanilan: ${usedMb} MB / ${totalMb} MB (%${pct})\n\nOnlem: Yonetim panelinden "DB TEMiZLE" butonuna basin veya eski simulasyonlari silin.\n\nApp: ${APP_URL}`;
+  await deliver(ADMIN_EMAIL, subject, text);
+}

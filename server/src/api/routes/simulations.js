@@ -866,6 +866,32 @@ router.get('/:id/diagnostics', authenticate, requireSimulationOwner, (req, res) 
   res.json(engine.getDiagnostics());
 });
 
+// ─── JSON Export ─────────────────────────────────────────────────────────────
+
+router.get('/:id/export', authenticate, requireSimulationOwner, async (req, res) => {
+  const simId = req.params.id;
+  try {
+    const [simRes, cpRes, evRes, indRes] = await Promise.all([
+      query('SELECT * FROM simulations WHERE id=$1', [simId]),
+      query('SELECT sim_day, sim_year, population_count, stats, world_state FROM checkpoints WHERE simulation_id=$1 ORDER BY sim_day DESC LIMIT 20', [simId]),
+      query('SELECT sim_day, sim_year, event_type, description, importance FROM simulation_events WHERE simulation_id=$1 ORDER BY sim_day DESC LIMIT 500', [simId]),
+      query('SELECT id, sex, birth_day, death_day, alive, is_dead, x, y, phenotype FROM individuals WHERE simulation_id=$1 AND alive=true', [simId]),
+    ]);
+    if (!simRes.rows[0]) return res.status(404).json({ error: 'Simulation not found' });
+    const sim = simRes.rows[0];
+    const safeName = (sim.name ?? 'sim').replace(/[^a-z0-9_\-]/gi, '_');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeName}_backup.json"`);
+    res.setHeader('Content-Type', 'application/json');
+    res.json({
+      exported_at: new Date().toISOString(),
+      simulation: { id: sim.id, name: sim.name, status: sim.status, current_day: sim.current_day, current_year: sim.current_year, start_latitude: sim.start_latitude, start_longitude: sim.start_longitude },
+      checkpoints: cpRes.rows,
+      events: evRes.rows,
+      alive_individuals: indRes.rows,
+    });
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Export failed' }); }
+});
+
 // ─── DB Status ────────────────────────────────────────────────────────────────
 
 router.get('/:id/db-status', authenticate, requireSimulationOwner, async (req, res) => {

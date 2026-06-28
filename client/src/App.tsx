@@ -24,6 +24,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const { user, setUser, setUpdatePercent, setUpdateReady } = useSimStore();
+  const [serverDown, setServerDown] = useState(false);
 
   // Electron auto-update IPC — global listener (tüm sayfalarda çalışır)
   useEffect(() => {
@@ -67,6 +68,22 @@ export default function App() {
     }, 14 * 60 * 1000);
     return () => clearInterval(interval);
   }, [user, setUser]);
+
+  // Axios interceptor: retry on network errors (server down) with exponential backoff
+  useEffect(() => {
+    const retryInterceptor = axios.interceptors.response.use(
+      res => { setServerDown(false); return res; },
+      async err => {
+        const cfg = err.config;
+        if (!cfg || cfg._retryCount >= 3) { if (!err.response) setServerDown(true); return Promise.reject(err); }
+        if (err.response) return Promise.reject(err); // HTTP error — don't retry
+        cfg._retryCount = (cfg._retryCount ?? 0) + 1;
+        await new Promise(r => setTimeout(r, cfg._retryCount * 1000));
+        return axios(cfg);
+      }
+    );
+    return () => axios.interceptors.response.eject(retryInterceptor);
+  }, []);
 
   // Axios interceptor: on 401, try refresh once then retry original request
   useEffect(() => {
@@ -128,6 +145,15 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      {serverDown && (
+        <div className="fixed top-0 left-0 right-0 z-[9999] flex items-center justify-center gap-2 py-2"
+          style={{ background: 'rgba(200,34,34,0.92)', backdropFilter: 'blur(8px)' }}>
+          <span className="inline-block w-2 h-2 rounded-full bg-white" style={{ animation: 'pulse 1s infinite' }} />
+          <span className="font-share-tech tracking-widest text-white" style={{ fontSize: 13 }}>
+            SUNUCU BAĞLANTISI KESİLDİ — YENİDEN DENENİYOR...
+          </span>
+        </div>
+      )}
       {user && <AriaButton />}
       <UpdateBanner />
       <Routes>

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { text, type LangCode } from '../utils/i18n';
 import FooterBar from '../components/layout/FooterBar';
 import { useNavigate } from 'react-router-dom';
-import { Globe, Plus, Play, LogOut, BarChart2, Trash2, DatabaseZap } from 'lucide-react';
+import { Globe, Plus, Play, LogOut, BarChart2, Trash2, DatabaseZap, Download } from 'lucide-react';
 import axios from 'axios';
 import { useSimStore } from '../store/simStore';
 import SimCreationWizard from '../components/SimCreationWizard';
@@ -97,6 +97,17 @@ export default function DashboardPage() {
       await axios.delete(`/api/simulations/${id}`, { headers });
       setSims(s => s.filter(sim => sim.id !== id));
     } catch { alert(text(lang as LangCode, { tr: 'Silme başarısız.', en: 'Delete failed.', de: 'Löschen fehlgeschlagen.', fr: 'Échec de la suppression.', ar: 'فشل الحذف.' })); }
+  }
+
+  async function exportSim(id: string, name: string) {
+    try {
+      const res = await fetch(`/api/simulations/${id}/export`, { headers: { Authorization: `Bearer ${accessToken}` } });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `${name.replace(/[^a-z0-9_\-]/gi, '_')}_backup.json`;
+      a.click(); URL.revokeObjectURL(url);
+    } catch { console.error('export failed'); }
   }
 
   async function runCleanup() {
@@ -442,6 +453,16 @@ export default function DashboardPage() {
                       {sim.status.toUpperCase()}
                     </div>
 
+                    <button
+                      onClick={e => { e.stopPropagation(); exportSim(sim.id, sim.name); }}
+                      className="flex-shrink-0 p-2 transition-all duration-150"
+                      title={text(lang as LangCode, { tr: 'Yedek Al', en: 'Export', de: 'Exportieren', fr: 'Exporter', ar: 'تصدير' })}
+                      style={{ background: 'transparent', border: '1px solid rgba(79,158,247,0.2)', color: '#3a6070', lineHeight: 0,
+                        clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#4f9ef7'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(79,158,247,0.6)'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = '#3a6070'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(79,158,247,0.2)'; }}>
+                      <Download size={13} />
+                    </button>
                     <button
                       onClick={e => { e.stopPropagation(); deleteSim(sim.id, sim.name); }}
                       className="flex-shrink-0 p-2 transition-all duration-150"
