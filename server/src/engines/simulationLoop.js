@@ -251,7 +251,13 @@ export class SimulationEngine {
           await new Promise(resolve => setImmediate(resolve));
         }
       } else {
-        await new Promise(resolve => setImmediate(resolve));
+        // At 100x: add a minimal sleep when ticks are very fast so V8 GC + async DB
+        // work (event flush, checkpoint) get breathing room between ticks
+        if (tickMs < 8) {
+          await new Promise(resolve => setTimeout(resolve, 2));
+        } else {
+          await new Promise(resolve => setImmediate(resolve));
+        }
       }
     }
   }
@@ -267,6 +273,12 @@ export class SimulationEngine {
     this._todayDeaths = 0;
     this._newDeadThisTick = [];
     const day = this.currentDay;
+    // Speed-adaptive throttle intervals — doubled at 100x to halve per-tick subsystem cost
+    const hi = this.speedMultiplier >= 100;
+    const T2 = hi ? 4  : 2;
+    const T3 = hi ? 6  : 3;
+    const T5 = hi ? 10 : 5;
+    const T7 = hi ? 14 : 7;
     let alive = [...this._aliveIds].map(id => this.population.get(id)).filter(Boolean);
     for (const ind of alive) {
       ind.alive = true;
@@ -380,9 +392,9 @@ export class SimulationEngine {
           if (!ind._behaviorCounts) ind._behaviorCounts = {};
           ind._behaviorCounts[ind._currentAction] = (ind._behaviorCounts[ind._currentAction] ?? 0) + 1;
           // Epigenetic methylation changes over weeks — every 7 days is biologically adequate
-          if (day % 7 === 0) updateEpigenome(ind, this.worldState, day);
+          if (day % T7 === 0) updateEpigenome(ind, this.worldState, day);
           // Gut microbiome diversity shifts slowly — every 3 days is sufficient
-          if (day % 3 === 0) updateGutMicrobiome(ind, this.worldState);
+          if (day % T3 === 0) updateGutMicrobiome(ind, this.worldState);
           const gathered = gatherResources(ind, this.worldState, this.discoveredTechs);
           for (const [res, qty] of Object.entries(gathered)) {
             ind.inventory[res] = (ind.inventory[res] ?? 0) + qty;
@@ -401,7 +413,7 @@ export class SimulationEngine {
           }
           updateMentalState(ind, tickEvents, this.worldState, day);
           // Consciousness is a slow-moving integrative state — every 2 days is sufficient
-          if (day % 2 === 0) updateConsciousness(ind);
+          if (day % T2 === 0) updateConsciousness(ind);
           accumulateExperience(ind, this.worldState);
         }
       }
@@ -495,18 +507,18 @@ export class SimulationEngine {
       // the child physically didn't go anywhere.
     }
 
-    // 4c. All fears diminish over time — run every 3 days, rates × 3 to preserve long-run decay
-    if (day % 3 === 0) {
+    // 4c. All fears diminish over time — rates × T3 to preserve long-run decay regardless of interval
+    if (day % T3 === 0) {
       for (const ind of alive) {
         if ((ind._waterFear ?? 0) > 0) {
-          ind._waterFear = Math.max(0, ind._waterFear - 0.0006);   // 0.0002 × 3
+          ind._waterFear = Math.max(0, ind._waterFear - 0.0002 * T3);
         }
         if (ind._fears) {
           for (const key of Object.keys(ind._fears)) {
             if (ind._fears[key] > 0) {
-              const decayRate = (key === 'predator' || key === 'disaster') ? 0.0009
-                              : (key === 'scarcity' || key === 'infection')  ? 0.003
-                              : 0.0015;
+              const decayRate = (key === 'predator' || key === 'disaster') ? 0.0003 * T3
+                              : (key === 'scarcity' || key === 'infection')  ? 0.001 * T3
+                              : 0.0005 * T3;
               ind._fears[key] = Math.max(0, ind._fears[key] - decayRate);
             }
           }
@@ -548,7 +560,7 @@ export class SimulationEngine {
     // 5 + 5b. Psychology & consciousness — handled by worker pool (above)
 
     // 6. Social groups — every 2 days is sufficient for group dynamics
-    if (day % 2 === 0) {
+    if (day % T2 === 0) {
       const socialEvents = processGroupDynamics(alive, this.groups, day);
       tickEvents.push(...socialEvents);
       // Purge defunct groups (0 alive members) to prevent unbounded accumulation
@@ -556,7 +568,7 @@ export class SimulationEngine {
     }
 
     // Assign roles every 5 days using pre-built groupMembersMap — O(N_alive) total, not O(N×G)
-    if (day % 5 === 0) {
+    if (day % T5 === 0) {
       for (const group of this.groups) {
         assignGroupRoles(groupMembersMap.get(group.id) ?? [], group);
       }
@@ -758,7 +770,7 @@ export class SimulationEngine {
     this.processFamilyLearning(alive, day, tickEvents);
 
     // 12c. FOXP2 expression — slow developmental plasticity, every 5 days is sufficient
-    if (day % 5 === 0) {
+    if (day % T5 === 0) {
       const _groupSizeMap = new Map();
       for (const ind of alive) {
         if (ind.group_id) _groupSizeMap.set(ind.group_id, (_groupSizeMap.get(ind.group_id) ?? 0) + 1);
@@ -770,7 +782,7 @@ export class SimulationEngine {
     }
 
     // 12d. Organic vocabulary acquisition — every 5 days (language acquisition is gradual)
-    if (day % 5 === 0) {
+    if (day % T5 === 0) {
       for (const ind of alive) {
         if ((ind.language?.stage ?? 0) < 2) continue;
         const unknownConcepts = CORE_CONCEPTS.filter(c => !ind.language.vocabulary?.[c]);
@@ -807,7 +819,7 @@ export class SimulationEngine {
     }
 
     // 13b. Technology observational learning — every 2 days (learning doesn't need daily resolution)
-    if (day % 2 === 0) {
+    if (day % T2 === 0) {
       for (const ind of alive) {
         if ((ind.phenotype?.fluid_intelligence ?? 0) < 0.2) continue;
         const nearby = getNeighbours(ind, spatialGrid).filter(o =>
@@ -840,7 +852,7 @@ export class SimulationEngine {
       }
     }
     // Belief spread: was O(N_alive × N_beliefs × N_believers) every tick — run every 3 days
-    if (day % 3 === 0) {
+    if (day % T3 === 0) {
       const spreadEvents = updateBeliefSpread(alive, this.discoveredBeliefs, this.groups, day);
       tickEvents.push(...spreadEvents);
       for (const group of this.groups) {
@@ -853,7 +865,7 @@ export class SimulationEngine {
     }
 
     // 15. Culture — cultural drift is slow; every 2 days is sufficient
-    if (day % 2 === 0) {
+    if (day % T2 === 0) {
       if (!this.running) return;
       await new Promise(resolve => setImmediate(resolve));
       const cultureEvents = processCultureTick(alive, this.groups, this.discoveredTechs, day);
@@ -867,7 +879,7 @@ export class SimulationEngine {
     }
 
     // 16. Art — creation events are rare; every 3 days is sufficient
-    if (day % 3 === 0) {
+    if (day % T3 === 0) {
       const artEvents = processArtTick(alive, this.discoveredArts, this.discoveredTechs, this.worldState, day);
       for (const ev of artEvents) {
         tickEvents.push(ev);
@@ -881,7 +893,7 @@ export class SimulationEngine {
     }
 
     // 17. Architecture — construction is slow; every 7 days is sufficient
-    if (day % 7 === 0) {
+    if (day % T7 === 0) {
       for (const settlement of this.settlements) {
         const { events: archEvents } = processArchitectureTick(settlement, alive, this.discoveredTechs, this.worldState, day);
         for (const ev of archEvents) {
@@ -906,7 +918,7 @@ export class SimulationEngine {
     }
 
     // 18. Law & norms — laws change slowly; every 7 days is sufficient
-    if (day % 7 === 0) {
+    if (day % T7 === 0) {
       for (const group of this.groups) {
         const lawEvents = processLawTick(group, alive, this.discoveredTechs, day);
         for (const ev of lawEvents) {
@@ -919,7 +931,7 @@ export class SimulationEngine {
     }
 
     // 19. Astronomy — celestial observations are seasonal; every 5 days is sufficient
-    if (day % 5 === 0) {
+    if (day % T5 === 0) {
       const astroEvents = processAstronomyTick(alive, this.celestialObservations, this.astronomyKnowledge, this.discoveredTechs, day);
       for (const ev of astroEvents) {
         if (ev.importance !== 'low') this.logEvent(day, 'astronomy', ev.description, ev, ev.importance === 'high' ? 4 : 2);
@@ -943,7 +955,9 @@ export class SimulationEngine {
 
     // 22. Checkpoint (fire-and-forget — never block the simulation loop)
     // BUG-08: skip day 0 — would checkpoint only 2 founders with no history yet
-    if (day > 0 && day % CHECKPOINT_INTERVAL === 0 && this.onCheckpoint) {
+    // At 100x, triple the interval — real-time checkpoint frequency would otherwise be 5x higher
+    const checkpointInterval = hi ? CHECKPOINT_INTERVAL * 3 : CHECKPOINT_INTERVAL;
+    if (day > 0 && day % checkpointInterval === 0 && this.onCheckpoint) {
       this.onCheckpoint({
         sim_day: day,
         sim_year: Math.floor(day / 365),
