@@ -544,22 +544,28 @@ export class SimulationEngine {
 
     // 5 + 5b. Psychology & consciousness — handled by worker pool (above)
 
-    // 6. Social groups
-    const socialEvents = processGroupDynamics(alive, this.groups, day);
-    tickEvents.push(...socialEvents);
+    // 6. Social groups — every 2 days is sufficient for group dynamics
+    if (day % 2 === 0) {
+      const socialEvents = processGroupDynamics(alive, this.groups, day);
+      tickEvents.push(...socialEvents);
+      // Purge defunct groups (0 alive members) to prevent unbounded accumulation
+      this.groups = this.groups.filter(g => (groupMembersMap.get(g.id) ?? []).length > 0);
+    }
 
-    // Assign roles in each group — use Set for O(1) membership test
-    for (const group of this.groups) {
-      const memberIdSet = new Set(group.member_ids);
-      const members = alive.filter(i => memberIdSet.has(i.id));
-      assignGroupRoles(members, group);
+    // Assign roles every 5 days using pre-built groupMembersMap — O(N_alive) total, not O(N×G)
+    if (day % 5 === 0) {
+      for (const group of this.groups) {
+        assignGroupRoles(groupMembersMap.get(group.id) ?? [], group);
+      }
     }
 
     // 7. Social interactions, mating, bonding, disease spread
     this.processSocialInteractions(alive, day, tickEvents, spatialGrid);
 
     // 8. Reproduction — BUG-01: pass spatial grid callback for O(n) male lookup
-    const communityLangStage = alive.length ? Math.max(...alive.map(i => i.language?.stage ?? 0)) : 0;
+    // communityLangStage: single pass max instead of alive.map spread into Math.max
+    let communityLangStage = 0;
+    for (const ind of alive) { const s = ind.language?.stage ?? 0; if (s > communityLangStage) communityLangStage = s; }
     const _repNearbyMalesFn = (female) => getNeighbours(female, spatialGrid);
     const newborns = checkReproduction(this.population, day, this.simId, communityLangStage, this.phonology, _repNearbyMalesFn, alive);
     for (const nb of newborns) {
@@ -830,13 +836,16 @@ export class SimulationEngine {
         this.logEvent(day, 'belief', beliefEvent.description, enrichedBelief, beliefEvent.importance === 'high' ? 4 : 2);
       }
     }
-    const spreadEvents = updateBeliefSpread(alive, this.discoveredBeliefs, this.groups, day);
-    tickEvents.push(...spreadEvents);
-    for (const group of this.groups) {
-      const ritualEvent = checkRitualEmergence(group, alive, this.discoveredBeliefs, day);
-      if (ritualEvent) {
-        tickEvents.push(ritualEvent);
-        this.logEvent(day, 'ritual', ritualEvent.description ?? 'Ritual emerged', ritualEvent, 3);
+    // Belief spread: was O(N_alive × N_beliefs × N_believers) every tick — run every 3 days
+    if (day % 3 === 0) {
+      const spreadEvents = updateBeliefSpread(alive, this.discoveredBeliefs, this.groups, day);
+      tickEvents.push(...spreadEvents);
+      for (const group of this.groups) {
+        const ritualEvent = checkRitualEmergence(group, alive, this.discoveredBeliefs, day);
+        if (ritualEvent) {
+          tickEvents.push(ritualEvent);
+          this.logEvent(day, 'ritual', ritualEvent.description ?? 'Ritual emerged', ritualEvent, 3);
+        }
       }
     }
 

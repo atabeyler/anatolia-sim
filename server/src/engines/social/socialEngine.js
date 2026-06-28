@@ -40,7 +40,8 @@ export function computeSocialStatus(individual, group) {
 }
 
 export function processGroupDynamics(population, groups, simDay) {
-  const popMap = new Map(population.map(i => [i.id, i]));
+  const popMap = new Map();
+  for (const i of population) popMap.set(i.id, i);
   const events = [];
   const ungrouped = population.filter(i => !i.group_id && i.life_stage !== 'INFANT');
   for (const ind of ungrouped) {
@@ -89,7 +90,7 @@ export function processGroupDynamics(population, groups, simDay) {
       const fission = attemptGroupFission(group, members, simDay);
       if (fission) {
         fission.newGroup.member_ids.forEach(id => {
-          const m = population.find(p => p.id === id);
+          const m = popMap.get(id);
           if (m) {
             m.group_id = fission.newGroup.id;
             if (m.social) m.social.group_id = fission.newGroup.id;

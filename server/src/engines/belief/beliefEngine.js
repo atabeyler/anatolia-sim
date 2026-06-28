@@ -87,31 +87,36 @@ export function updateBeliefSpread(population, existingBeliefs, groups, simDay) 
   if (existingBeliefs.size === 0) return [];
   const events = [];
 
-  // Cache group lookup by individual id — avoids O(groups × members) inside hot loop
   const groupById = new Map(groups.map(g => [g.id, g]));
   const indGroupMap = new Map();
   for (const ind of population) {
     if (ind.group_id) indGroupMap.set(ind.id, groupById.get(ind.group_id) ?? null);
   }
 
-  const holdersByBelief = new Map();
+  // O(N) pre-pass: for each belief, build a Set<group_id> of groups that have at least one
+  // believer, and keep the holders array only for the O(N_holders) proximity fallback.
+  // This makes the inGroup check O(1) instead of O(N_holders) — the main O(N²) culprit.
+  const groupsWithBelief = new Map();
+  const holdersByBelief  = new Map();
   for (const belief of existingBeliefs) {
-    holdersByBelief.set(belief, population.filter(p => p.beliefs instanceof Set && p.beliefs.has(belief)));
+    const holders = population.filter(p => p.beliefs instanceof Set && p.beliefs.has(belief));
+    holdersByBelief.set(belief, holders);
+    const gSet = new Set();
+    for (const h of holders) if (h.group_id) gSet.add(h.group_id);
+    groupsWithBelief.set(belief, gSet);
   }
 
   for (const ind of population) {
     if (!(ind.beliefs instanceof Set)) ind.beliefs = new Set(Array.isArray(ind.beliefs) ? ind.beliefs : []);
     for (const belief of existingBeliefs) {
       if (ind.beliefs.has(belief)) continue;
-      const believers = holdersByBelief.get(belief) ?? [];
-      if (believers.length === 0) continue;
-      const inGroup = ind.group_id && believers.some(h => h.group_id === ind.group_id);
-      const nearby = !inGroup && believers.some(h =>
+      // O(1) group check — no longer scans all believers
+      const inGroup = !!(ind.group_id && groupsWithBelief.get(belief)?.has(ind.group_id));
+      // Proximity check only when not in a believing group (rare case after initial spread)
+      const nearby = !inGroup && (holdersByBelief.get(belief) ?? []).some(h =>
         Math.hypot((h.x ?? 0) - (ind.x ?? 0), (h.y ?? 0) - (ind.y ?? 0)) < 2
       );
       if (!inGroup && !nearby) continue;
-      // Pure exposure: 1 point/day near a believer.
-      // THRESHOLD from genetics: susceptible individuals need fewer exposure days.
       const sus = ind.phenotype.religiosity ?? ((ind.phenotype.anxiety + ind.phenotype.curiosity) / 2);
       if (!ind._beliefExposure) ind._beliefExposure = {};
       ind._beliefExposure[belief] = (ind._beliefExposure[belief] ?? 0) + 1;
@@ -135,7 +140,8 @@ export function updateBeliefSpread(population, existingBeliefs, groups, simDay) 
 
 export function checkRitualEmergence(group, population, existingBeliefs, simDay) {
   if (!group || existingBeliefs.size === 0) return null;
-  const members = population.filter(i => group.member_ids?.includes(i.id));
+  const memberSet = new Set(group.member_ids ?? []);
+  const members = population.filter(i => memberSet.has(i.id));
   if (members.length < 3) return null;
   for (const belief of existingBeliefs) {
     if (
