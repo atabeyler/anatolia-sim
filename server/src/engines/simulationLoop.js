@@ -107,6 +107,8 @@ export class SimulationEngine {
     // BUG-05: cached word count — expensive O(n×v) calc, updated only at checkpoints
     this._wordCountCache = 0;
     this._wordCountCacheDay = -1;
+    // Cache of founder individuals — avoids O(N_total) population scan in computeStats every tick
+    this._foundersCache = [];
 
     // Diagnostic system: startup validation results + runtime error circular buffer (max 20)
     this._startupLog = null;
@@ -162,9 +164,12 @@ export class SimulationEngine {
     }
     this.groups = [...groupMap.values()];
 
+    // Build founders cache — O(1) lookup in computeStats instead of O(N_total) every tick
+    this._foundersCache = [...this.population.values()].filter(i => i.is_founder);
+
     // Restore counters from loaded state — otherwise resumed simulations show 0.
     this.totalDeaths = this.population.size - this._aliveIds.size;
-    this.totalBirths = [...this.population.values()].filter(i => !i.is_founder).length;
+    this.totalBirths = this.population.size - this._foundersCache.length;
 
     // Rebuild _deathStats from all dead individuals so resumed simulations show
     // correct historical death counts, not the 0 a cold-start initialises.
@@ -487,19 +492,20 @@ export class SimulationEngine {
       // the child physically didn't go anywhere.
     }
 
-    // 4c. All fears diminish over time (forgetting / re-adaptation)
-    for (const ind of alive) {
-      if ((ind._waterFear ?? 0) > 0) {
-        ind._waterFear = Math.max(0, ind._waterFear - 0.0002);   // ~5000 days (~14 yrs)
-      }
-      if (ind._fears) {
-        for (const key of Object.keys(ind._fears)) {
-          if (ind._fears[key] > 0) {
-            // Predator/disaster fear decays more slowly; scarcity/infection decays faster
-            const decayRate = (key === 'predator' || key === 'disaster') ? 0.0003
-                            : (key === 'scarcity' || key === 'infection')  ? 0.001
-                            : 0.0005;
-            ind._fears[key] = Math.max(0, ind._fears[key] - decayRate);
+    // 4c. All fears diminish over time — run every 3 days, rates × 3 to preserve long-run decay
+    if (day % 3 === 0) {
+      for (const ind of alive) {
+        if ((ind._waterFear ?? 0) > 0) {
+          ind._waterFear = Math.max(0, ind._waterFear - 0.0006);   // 0.0002 × 3
+        }
+        if (ind._fears) {
+          for (const key of Object.keys(ind._fears)) {
+            if (ind._fears[key] > 0) {
+              const decayRate = (key === 'predator' || key === 'disaster') ? 0.0009
+                              : (key === 'scarcity' || key === 'infection')  ? 0.003
+                              : 0.0015;
+              ind._fears[key] = Math.max(0, ind._fears[key] - decayRate);
+            }
           }
         }
       }
@@ -742,24 +748,28 @@ export class SimulationEngine {
     // 12b. Social learning: children near parents learn faster
     this.processFamilyLearning(alive, day, tickEvents);
 
-    // 12c. FOXP2 expression — grows through social language use (developmental plasticity)
-    const _groupSizeMap = new Map();
-    for (const ind of alive) {
-      if (ind.group_id) _groupSizeMap.set(ind.group_id, (_groupSizeMap.get(ind.group_id) ?? 0) + 1);
-    }
-    for (const ind of alive) {
-      const groupSize = ind.group_id ? Math.max(0, (_groupSizeMap.get(ind.group_id) ?? 1) - 1) : 0;
-      updateFoxp2Expression(ind, groupSize);
+    // 12c. FOXP2 expression — slow developmental plasticity, every 5 days is sufficient
+    if (day % 5 === 0) {
+      const _groupSizeMap = new Map();
+      for (const ind of alive) {
+        if (ind.group_id) _groupSizeMap.set(ind.group_id, (_groupSizeMap.get(ind.group_id) ?? 0) + 1);
+      }
+      for (const ind of alive) {
+        const groupSize = ind.group_id ? Math.max(0, (_groupSizeMap.get(ind.group_id) ?? 1) - 1) : 0;
+        updateFoxp2Expression(ind, groupSize);
+      }
     }
 
-    // 12d. Organic vocabulary acquisition — individuals coin words from their environment
-    for (const ind of alive) {
-      if ((ind.language?.stage ?? 0) < 2) continue;
-      const unknownConcepts = CORE_CONCEPTS.filter(c => !ind.language.vocabulary?.[c]);
-      if (unknownConcepts.length === 0) continue;
-      const concept = unknownConcepts[Math.floor(Math.random() * Math.min(4, unknownConcepts.length))];
-      ind._sim_day = this.day;
-      tryAcquireWordFromEnvironment(ind, concept, ind.group_id ?? 'global');
+    // 12d. Organic vocabulary acquisition — every 5 days (language acquisition is gradual)
+    if (day % 5 === 0) {
+      for (const ind of alive) {
+        if ((ind.language?.stage ?? 0) < 2) continue;
+        const unknownConcepts = CORE_CONCEPTS.filter(c => !ind.language.vocabulary?.[c]);
+        if (unknownConcepts.length === 0) continue;
+        const concept = unknownConcepts[Math.floor(Math.random() * Math.min(4, unknownConcepts.length))];
+        ind._sim_day = this.day;
+        tryAcquireWordFromEnvironment(ind, concept, ind.group_id ?? 'global');
+      }
     }
 
     // 13. Technology emergence — experience already accumulated in worker pool; check thresholds here
@@ -787,13 +797,15 @@ export class SimulationEngine {
       }
     }
 
-    // 13b. Technology observational learning — nearby individuals learn from each other
-    for (const ind of alive) {
-      if ((ind.phenotype?.fluid_intelligence ?? 0) < 0.2) continue;
-      const nearby = getNeighbours(ind, spatialGrid).filter(o =>
-        Math.hypot((o.x ?? 0) - (ind.x ?? 0), (o.y ?? 0) - (ind.y ?? 0)) < SOCIAL_INTERACTION_RADIUS
-      );
-      learnTechFromObservation(ind, nearby, this.discoveredTechs);
+    // 13b. Technology observational learning — every 2 days (learning doesn't need daily resolution)
+    if (day % 2 === 0) {
+      for (const ind of alive) {
+        if ((ind.phenotype?.fluid_intelligence ?? 0) < 0.2) continue;
+        const nearby = getNeighbours(ind, spatialGrid).filter(o =>
+          Math.hypot((o.x ?? 0) - (ind.x ?? 0), (o.y ?? 0) - (ind.y ?? 0)) < SOCIAL_INTERACTION_RADIUS
+        );
+        learnTechFromObservation(ind, nearby, this.discoveredTechs);
+      }
     }
 
     // 14. Belief formation & spread
@@ -828,66 +840,79 @@ export class SimulationEngine {
       }
     }
 
-    // 15. Culture
-    if (!this.running) return;
-    await new Promise(resolve => setImmediate(resolve));
-    const cultureEvents = processCultureTick(alive, this.groups, this.discoveredTechs, day);
-    for (const ev of cultureEvents) {
-      if (ev.importance !== 'low') this.logEvent(day, 'culture', ev.description ?? ev.meme_id, ev, 2);
-    }
-    tickEvents.push(...cultureEvents);
-
-    // 16. Art
-    const artEvents = processArtTick(alive, this.discoveredArts, this.discoveredTechs, this.worldState, day);
-    for (const ev of artEvents) {
-      tickEvents.push(ev);
-      this.logEvent(day, 'art', ev.description, ev, ev.importance === 'high' ? 4 : 2);
-    }
-    for (const ind of alive) {
-      const indGroup = ind.group_id ? this.groups.find(g => g.id === ind.group_id) : undefined;
-      applyArtEffects(ind, indGroup, this.discoveredArts);
+    // 15. Culture — cultural drift is slow; every 2 days is sufficient
+    if (day % 2 === 0) {
+      if (!this.running) return;
+      await new Promise(resolve => setImmediate(resolve));
+      const cultureEvents = processCultureTick(alive, this.groups, this.discoveredTechs, day);
+      for (const ev of cultureEvents) {
+        if (ev.importance !== 'low') this.logEvent(day, 'culture', ev.description ?? ev.meme_id, ev, 2);
+      }
+      tickEvents.push(...cultureEvents);
+    } else {
+      if (!this.running) return;
+      await new Promise(resolve => setImmediate(resolve));
     }
 
-    // 17. Architecture
-    for (const settlement of this.settlements) {
-      const { events: archEvents } = processArchitectureTick(settlement, alive, this.discoveredTechs, this.worldState, day);
-      for (const ev of archEvents) {
+    // 16. Art — creation events are rare; every 3 days is sufficient
+    if (day % 3 === 0) {
+      const artEvents = processArtTick(alive, this.discoveredArts, this.discoveredTechs, this.worldState, day);
+      for (const ev of artEvents) {
         tickEvents.push(ev);
-        this.logEvent(day, 'architecture', ev.description, ev, ev.importance === 'high' ? 4 : 2);
+        this.logEvent(day, 'art', ev.description, ev, ev.importance === 'high' ? 4 : 2);
       }
-      const groupSize = (groupMembersMap.get(settlement.group_id) ?? []).length;
-      const crowdEv = checkSettlementOvercrowding(settlement, groupSize, day);
-      if (crowdEv && (!settlement._last_crowd_log || day - settlement._last_crowd_log >= 30)) {
-        settlement._last_crowd_log = day;
-        tickEvents.push(crowdEv);
-        this.logEvent(day, 'architecture', crowdEv.description, crowdEv, 3);
-      }
-    }
-    // Create settlement for new groups
-    for (const group of this.groups) {
-      if (!this.settlements.find(s => s.group_id === group.id)) {
-        this.settlements.push(createSettlement(group, this.worldState, day));
+      for (const ind of alive) {
+        const indGroup = ind.group_id ? this.groups.find(g => g.id === ind.group_id) : undefined;
+        applyArtEffects(ind, indGroup, this.discoveredArts);
       }
     }
 
-    // 18. Law & norms
-    for (const group of this.groups) {
-      const lawEvents = processLawTick(group, alive, this.discoveredTechs, day);
-      for (const ev of lawEvents) {
-        if (ev.importance !== 'low') this.logEvent(day, 'law', ev.description ?? ev.norm_id, ev, ev.importance === 'high' ? 4 : 2);
+    // 17. Architecture — construction is slow; every 7 days is sufficient
+    if (day % 7 === 0) {
+      for (const settlement of this.settlements) {
+        const { events: archEvents } = processArchitectureTick(settlement, alive, this.discoveredTechs, this.worldState, day);
+        for (const ev of archEvents) {
+          tickEvents.push(ev);
+          this.logEvent(day, 'architecture', ev.description, ev, ev.importance === 'high' ? 4 : 2);
+        }
+        const groupSize = (groupMembersMap.get(settlement.group_id) ?? []).length;
+        const crowdEv = checkSettlementOvercrowding(settlement, groupSize, day);
+        if (crowdEv && (!settlement._last_crowd_log || day - settlement._last_crowd_log >= 30)) {
+          settlement._last_crowd_log = day;
+          tickEvents.push(crowdEv);
+          this.logEvent(day, 'architecture', crowdEv.description, crowdEv, 3);
+        }
       }
-      tickEvents.push(...lawEvents);
-      // Update social order metric — affects trade willingness and cooperation signals
-      group.social_order = computeSocialOrder(group);
+      // Create settlement for new groups
+      for (const group of this.groups) {
+        if (!this.settlements.find(s => s.group_id === group.id)) {
+          this.settlements.push(createSettlement(group, this.worldState, day));
+        }
+      }
     }
 
-    // 19. Astronomy
-    const astroEvents = processAstronomyTick(alive, this.celestialObservations, this.astronomyKnowledge, this.discoveredTechs, day);
-    for (const ev of astroEvents) {
-      if (ev.importance !== 'low') this.logEvent(day, 'astronomy', ev.description, ev, ev.importance === 'high' ? 4 : 2);
+    // 18. Law & norms — laws change slowly; every 7 days is sufficient
+    if (day % 7 === 0) {
+      for (const group of this.groups) {
+        const lawEvents = processLawTick(group, alive, this.discoveredTechs, day);
+        for (const ev of lawEvents) {
+          if (ev.importance !== 'low') this.logEvent(day, 'law', ev.description ?? ev.norm_id, ev, ev.importance === 'high' ? 4 : 2);
+        }
+        tickEvents.push(...lawEvents);
+        // Update social order metric — affects trade willingness and cooperation signals
+        group.social_order = computeSocialOrder(group);
+      }
     }
 
-    // 19b. Social narrative events (communication, activity, sleep)
+    // 19. Astronomy — celestial observations are seasonal; every 5 days is sufficient
+    if (day % 5 === 0) {
+      const astroEvents = processAstronomyTick(alive, this.celestialObservations, this.astronomyKnowledge, this.discoveredTechs, day);
+      for (const ev of astroEvents) {
+        if (ev.importance !== 'low') this.logEvent(day, 'astronomy', ev.description, ev, ev.importance === 'high' ? 4 : 2);
+      }
+    }
+
+    // 19b. Social narrative events — 1% sample rate (was 3%), enough for story texture
     const narrativeEvents = this.processSocialNarrative(alive, day, spatialGrid);
     for (const ev of narrativeEvents) {
       this.logEvent(day, ev.type, ev.description, ev.data ?? {}, ev.importance ?? 1);
@@ -1028,9 +1053,9 @@ export class SimulationEngine {
     };
 
     // --- Communication: individuals with language.stage >= 1 signal nearby group members ---
-    // ~3% of alive fire per tick to keep volume manageable
+    // ~1% of alive fire per tick to keep volume manageable
     for (const ind of alive) {
-      if (Math.random() > 0.03) continue;
+      if (Math.random() > 0.01) continue;
       if ((ind.language?.stage ?? 0) < 1) continue;
 
       const groupMembers = getNeighbours(ind, spatialGrid).filter(o =>
@@ -1629,20 +1654,68 @@ export class SimulationEngine {
   }
 
   computeStats(day, alive) {
-    const ages = alive.map(i => getAge(i, day));
-    const avgAge = ages.length ? ages.reduce((a, b) => a + b, 0) / ages.length : 0;
+    const n = alive.length;
+    const maxN = Math.max(1, n);
     const econStats = computeEconomicStats(alive);
     const psychStats = computePopulationPsychStats(alive, econStats.gini ?? 0);
     const healthStats = computeHealthStats(alive);
 
+    // Single-pass accumulator — replaces 15+ separate alive.map/reduce calls
+    const EPI_LOCI = ['HPA_AXIS','BDNF_PROMOTER','MAOA_REGULATION','LEPTIN_RESIST','INSULIN_SENS','AVP_REGULATION','OXTR_METHYL','IMMUNE_PRIMING'];
+    const PYRAMID_BANDS = ['0-4','5-9','10-14','15-19','20-24','25-29','30-34','35-39','40-44','45-49','50-54','55-59','60-64','65+'];
+    const pyramidM = new Array(PYRAMID_BANDS.length).fill(0);
+    const pyramidF = new Array(PYRAMID_BANDS.length).fill(0);
+    const epiSums  = new Array(EPI_LOCI.length).fill(0);
+    const cx = this._bandCentroid?.x ?? 0;
+    const cy = this._bandCentroid?.y ?? 0;
+    let ageSum = 0, maleCount = 0, intelSum = 0, consciousnessSum = 0;
+    let langStageSum = 0, langStageMax = 0, healthSum = 0, wellbeingSum = 0;
+    let tomMax = 0, urgeSum = 0, calSum = 0, hydSum = 0, distSum = 0;
+    for (let idx = 0; idx < n; idx++) {
+      const i = alive[idx];
+      const age = (i.age ?? (day - (i.birth_day ?? 0))) / 365;
+      ageSum += age;
+      if (i.sex === 'male') maleCount++;
+      intelSum        += (i.phenotype?.fluid_intelligence ?? 0);
+      consciousnessSum += (i.mind?.consciousness ?? 0);
+      langStageSum    += (i.language?.stage ?? 0);
+      if ((i.language?.stage ?? 0) > langStageMax) langStageMax = i.language?.stage ?? 0;
+      healthSum       += (i.health_score ?? 0.5);
+      wellbeingSum    += (i.psychology?.wellbeing ?? 0.5);
+      if ((i.psychology?.theory_of_mind ?? 0) > tomMax) tomMax = i.psychology?.theory_of_mind ?? 0;
+      for (let j = 0; j < EPI_LOCI.length; j++) {
+        epiSums[j] += i.epigenome?.[EPI_LOCI[j]]?.methylation ?? 0.5;
+      }
+      const ageFloor = Math.floor(age);
+      const pBand = ageFloor >= 65 ? PYRAMID_BANDS.length - 1 : Math.floor(ageFloor / 5);
+      if (i.sex === 'male') pyramidM[pBand]++; else pyramidF[pBand]++;
+      urgeSum += (i.mating_urge ?? 0);
+      calSum  += (i.health?.calories  ?? 0.7);
+      hydSum  += (i.health?.hydration ?? 0.7);
+      distSum += Math.hypot((i.x ?? 0) - cx, (i.y ?? 0) - cy);
+    }
+    const avgAge          = ageSum / maxN;
+    const avgCons         = consciousnessSum / maxN;
+    const avgLangStg      = langStageSum / maxN;
+    const avgHealth       = healthSum / maxN;
+    const avgWellbeing    = wellbeingSum / maxN;
+    const avgUrge         = urgeSum / maxN;
+    const avgCal          = calSum / maxN;
+    const avgHyd          = hydSum / maxN;
+    const epiResult = {};
+    for (let j = 0; j < EPI_LOCI.length; j++) {
+      epiResult[EPI_LOCI[j]] = Math.round(epiSums[j] / maxN * 100) / 100;
+    }
+    const dominantDrive = avgCal < 0.38 ? 'food seeking' : avgHyd < 0.32 ? 'water seeking' : avgUrge > 0.65 ? 'mate seeking' : 'band cohesion (staying together)';
+
     return {
       day,
       year: Math.floor(day / 365),
-      population: alive.length,
+      population: n,
       total_ever: this.population.size,
       avg_age: Math.round(avgAge * 10) / 10,
-      sex_ratio: alive.filter(i => i.sex === 'male').length / Math.max(1, alive.length),
-      avg_intelligence: alive.reduce((s, i) => s + (i.phenotype?.fluid_intelligence ?? 0), 0) / Math.max(1, alive.length),
+      sex_ratio: maleCount / maxN,
+      avg_intelligence: Math.round(intelSum / maxN * 1000) / 1000,
       technologies: this.discoveredTechs.size,
       total_techs: Object.keys(TECH_TREE).length,
       beliefs: this.discoveredBeliefs.size,
@@ -1660,43 +1733,18 @@ export class SimulationEngine {
       weather_intensity: Math.round((this.worldState.weather_intensity ?? 0.5) * 100) / 100,
       births: this.totalBirths,
       deaths: this.totalDeaths,
-      // BUG-05: use cached word count (updated at each checkpoint) to avoid O(n×vocab) every tick
       word_count: this._wordCountCache,
-      max_language_stage: Math.max(0, ...alive.map(i => i.language?.stage ?? 0)),
-      avg_consciousness: Math.round(alive.reduce((s, i) => s + (i.mind?.consciousness ?? 0), 0) / Math.max(1, alive.length) * 1000) / 1000,
-      max_tom_stage: Math.max(0, ...alive.map(i => i.psychology?.theory_of_mind ?? 0)),
+      max_language_stage: langStageMax,
+      avg_consciousness: Math.round(avgCons * 1000) / 1000,
+      max_tom_stage: tomMax,
       tech_progress: {},
-      qol_index: (() => {
-        const c = alive.reduce((s, i) => s + (i.mind?.consciousness ?? 0), 0) / Math.max(1, alive.length);
-        const langStg = alive.reduce((s, i) => s + (i.language?.stage ?? 0), 0) / Math.max(1, alive.length);
-        const hp = alive.reduce((s, i) => s + (i.health_score ?? 0.5), 0) / Math.max(1, alive.length);
-        const wb = alive.reduce((s, i) => s + (i.psychology?.wellbeing ?? 0.5), 0) / Math.max(1, alive.length);
-        return Math.round((c * 0.3 + (langStg / 6) * 0.2 + hp * 0.3 + wb * 0.2) * 1000) / 1000;
-      })(),
+      qol_index: Math.round((avgCons * 0.3 + (avgLangStg / 6) * 0.2 + avgHealth * 0.3 + avgWellbeing * 0.2) * 1000) / 1000,
       mean_wealth: Math.round(econStats.mean_wealth * 100) / 100,
       gini: Math.round(econStats.gini * 100) / 100,
       happiness_index: Math.round(psychStats.happiness_index * 100) / 100,
       sick_rate: Math.round(healthStats.sick_rate * 100) / 100,
-      epigenetics: (() => {
-        const loci = ['HPA_AXIS', 'BDNF_PROMOTER', 'MAOA_REGULATION', 'LEPTIN_RESIST', 'INSULIN_SENS', 'AVP_REGULATION', 'OXTR_METHYL', 'IMMUNE_PRIMING'];
-        const result = {};
-        for (const id of loci) {
-          const vals = alive.map(i => i.epigenome?.[id]?.methylation ?? 0.5);
-          result[id] = Math.round(vals.reduce((a, b) => a + b, 0) / Math.max(1, vals.length) * 100) / 100;
-        }
-        return result;
-      })(),
-      age_pyramid: (() => {
-        const bands = ['0-4','5-9','10-14','15-19','20-24','25-29','30-34','35-39','40-44','45-49','50-54','55-59','60-64','65+'];
-        const counts = {};
-        for (const b of bands) counts[b] = { male: 0, female: 0 };
-        for (let idx = 0; idx < alive.length; idx++) {
-          const age = Math.floor(ages[idx]);
-          const b = age >= 65 ? '65+' : `${Math.floor(age / 5) * 5}-${Math.floor(age / 5) * 5 + 4}`;
-          if (counts[b]) counts[b][alive[idx].sex === 'male' ? 'male' : 'female']++;
-        }
-        return bands.map(b => ({ group: b, male: counts[b].male, female: counts[b].female }));
-      })(),
+      epigenetics: epiResult,
+      age_pyramid: PYRAMID_BANDS.map((b, idx) => ({ group: b, male: pyramidM[idx], female: pyramidF[idx] })),
       death_stats: (() => {
         // Incrementally maintained — avoids scanning all-time population every tick
         if (!this._deathStats) {
@@ -1717,7 +1765,7 @@ export class SimulationEngine {
         return { count: ds.count, avg_age: avgDeathAge, infant_deaths: ds.infant_deaths, child_deaths: ds.child_deaths, causes: { ...ds.causes } };
       })(),
       founders: (() => {
-        const all = [...this.population.values()].filter(i => i.is_founder);
+        const all = this._foundersCache;
         return all.map(i => ({
           sex: i.sex,
           age: Math.round(getAge(i, day)),
@@ -1728,20 +1776,13 @@ export class SimulationEngine {
       centroid_x: Math.round((this._bandCentroid?.x ?? this.worldState.longitude ?? 0) * 10000) / 10000,
       centroid_y: Math.round((this._bandCentroid?.y ?? this.worldState.latitude ?? 0) * 10000) / 10000,
       movement_context: (() => {
-        if (!alive.length) return null;
-        const avgUrge   = alive.reduce((s, i) => s + (i.mating_urge ?? 0), 0) / alive.length;
-        const avgCal    = alive.reduce((s, i) => s + (i.health?.calories ?? 0.7), 0) / alive.length;
-        const avgHyd    = alive.reduce((s, i) => s + (i.health?.hydration ?? 0.7), 0) / alive.length;
-        const cx = this._bandCentroid?.x ?? 0;
-        const cy = this._bandCentroid?.y ?? 0;
-        const avgDist   = alive.reduce((s, i) => s + Math.hypot((i.x??0)-cx, (i.y??0)-cy), 0) / alive.length;
-        const dominant  = avgCal < 0.38 ? 'food seeking' : avgHyd < 0.32 ? 'water seeking' : avgUrge > 0.65 ? 'mate seeking' : 'band cohesion (staying together)';
+        if (!n) return null;
         return {
-          dominant_drive: dominant,
+          dominant_drive: dominantDrive,
           avg_mating_urge: Math.round(avgUrge * 100) / 100,
           avg_calories: Math.round(avgCal * 100) / 100,
           avg_hydration: Math.round(avgHyd * 100) / 100,
-          avg_dist_from_center_deg: Math.round(avgDist * 100) / 100,
+          avg_dist_from_center_deg: Math.round(distSum / maxN * 100) / 100,
         };
       })(),
     };
