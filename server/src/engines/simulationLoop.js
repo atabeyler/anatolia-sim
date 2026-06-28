@@ -927,9 +927,11 @@ export class SimulationEngine {
     }
 
     // 19b. Social narrative events — 1% sample rate (was 3%), enough for story texture
+    // persist=false: narrative events are ephemeral — ring buffer + WebSocket only, not DB
+    // (at 300+ alive these fire ~9/tick = 50+/sec; persisting them saturates DB writes)
     const narrativeEvents = this.processSocialNarrative(alive, day, spatialGrid);
     for (const ev of narrativeEvents) {
-      this.logEvent(day, ev.type, ev.description, ev.data ?? {}, ev.importance ?? 1);
+      this.logEvent(day, ev.type, ev.description, ev.data ?? {}, ev.importance ?? 1, false);
     }
 
     // 20. Update human environmental impact
@@ -1821,7 +1823,7 @@ export class SimulationEngine {
     };
   }
 
-  logEvent(day, type, description, data = {}, importance = 1) {
+  logEvent(day, type, description, data = {}, importance = 1, persist = true) {
     const event = {
       simulation_id: this.simId,
       sim_day: day,
@@ -1834,7 +1836,7 @@ export class SimulationEngine {
     };
     this.events.push(event);
     if (this.events.length > 1000) this.events.shift();
-    if (this.onEvent) {
+    if (persist && this.onEvent) {
       Promise.resolve(this.onEvent(event)).catch(err => {
         console.error('[SimulationEngine] event persist error:', err);
       });
