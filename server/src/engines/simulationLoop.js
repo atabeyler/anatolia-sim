@@ -946,8 +946,13 @@ export class SimulationEngine {
         stats,
       }).catch(err => console.error('[SimulationEngine] checkpoint error:', err));
 
-      // BUG-05: update word_count cache at checkpoint (expensive O(n×vocab) calc)
-      this._wordCountCache = new Set(currentAlive.flatMap(i => Object.keys(i.language?.vocabulary ?? {}))).size;
+      // BUG-05: update word_count cache at checkpoint — single loop avoids flatMap's intermediate array
+      const wordSet = new Set();
+      for (const ind of currentAlive) {
+        const vocab = ind.language?.vocabulary;
+        if (vocab) for (const w of Object.keys(vocab)) wordSet.add(w);
+      }
+      this._wordCountCache = wordSet.size;
       this._wordCountCacheDay = day;
 
       // Feature 1: update centroid trail (last 20 checkpoint positions for globe migration overlay)
@@ -959,15 +964,19 @@ export class SimulationEngine {
         }].slice(-20);
       }
 
-      // Feature 15: allele frequency snapshot — population averages per locus, stored in stats
+      // Feature 15: allele frequency snapshot — single pass (was 34 separate map+filter+reduce passes)
       const alleleFreqs = {};
       if (currentAlive.length > 0) {
         const lociKeys = Object.keys(currentAlive[0]?.genome ?? {});
+        const lociSums = {};
+        for (const locus of lociKeys) lociSums[locus] = 0;
+        for (const ind of currentAlive) {
+          for (const locus of lociKeys) {
+            lociSums[locus] += ((ind.genome?.[locus]?.allele1?.value ?? 0.5) + (ind.genome?.[locus]?.allele2?.value ?? 0.5)) / 2;
+          }
+        }
         for (const locus of lociKeys) {
-          const vals = currentAlive
-            .map(i => ((i.genome?.[locus]?.allele1?.value ?? 0.5) + (i.genome?.[locus]?.allele2?.value ?? 0.5)) / 2)
-            .filter(v => !isNaN(v));
-          if (vals.length > 0) alleleFreqs[locus] = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length * 1000) / 1000;
+          alleleFreqs[locus] = Math.round(lociSums[locus] / currentAlive.length * 1000) / 1000;
         }
       }
       stats.allele_frequencies = alleleFreqs;
