@@ -379,8 +379,10 @@ export class SimulationEngine {
           ind._currentAction = selectAction(ind, this.worldState);
           if (!ind._behaviorCounts) ind._behaviorCounts = {};
           ind._behaviorCounts[ind._currentAction] = (ind._behaviorCounts[ind._currentAction] ?? 0) + 1;
-          updateEpigenome(ind, this.worldState, day);
-          updateGutMicrobiome(ind, this.worldState);
+          // Epigenetic methylation changes over weeks — every 7 days is biologically adequate
+          if (day % 7 === 0) updateEpigenome(ind, this.worldState, day);
+          // Gut microbiome diversity shifts slowly — every 3 days is sufficient
+          if (day % 3 === 0) updateGutMicrobiome(ind, this.worldState);
           const gathered = gatherResources(ind, this.worldState, this.discoveredTechs);
           for (const [res, qty] of Object.entries(gathered)) {
             ind.inventory[res] = (ind.inventory[res] ?? 0) + qty;
@@ -398,7 +400,8 @@ export class SimulationEngine {
             ind.inventory[good] = (ind.inventory[good] ?? 0) + qty;
           }
           updateMentalState(ind, tickEvents, this.worldState, day);
-          updateConsciousness(ind);
+          // Consciousness is a slow-moving integrative state — every 2 days is sufficient
+          if (day % 2 === 0) updateConsciousness(ind);
           accumulateExperience(ind, this.worldState);
         }
       }
@@ -870,8 +873,9 @@ export class SimulationEngine {
         tickEvents.push(ev);
         this.logEvent(day, 'art', ev.description, ev, ev.importance === 'high' ? 4 : 2);
       }
+      const artGroupById = new Map(this.groups.map(g => [g.id, g]));
       for (const ind of alive) {
-        const indGroup = ind.group_id ? this.groups.find(g => g.id === ind.group_id) : undefined;
+        const indGroup = ind.group_id ? artGroupById.get(ind.group_id) : undefined;
         applyArtEffects(ind, indGroup, this.discoveredArts);
       }
     }
@@ -892,9 +896,10 @@ export class SimulationEngine {
           this.logEvent(day, 'architecture', crowdEv.description, crowdEv, 3);
         }
       }
-      // Create settlement for new groups
+      // Create settlement for new groups — use Set for O(1) membership check
+      const settledGroups = new Set(this.settlements.map(s => s.group_id));
       for (const group of this.groups) {
-        if (!this.settlements.find(s => s.group_id === group.id)) {
+        if (!settledGroups.has(group.id)) {
           this.settlements.push(createSettlement(group, this.worldState, day));
         }
       }
@@ -1674,9 +1679,19 @@ export class SimulationEngine {
   computeStats(day, alive) {
     const n = alive.length;
     const maxN = Math.max(1, n);
-    const econStats = computeEconomicStats(alive);
-    const psychStats = computePopulationPsychStats(alive, econStats.gini ?? 0);
-    const healthStats = computeHealthStats(alive);
+    // Cache expensive O(N) sub-stats — recompute every 3 days; use stale values otherwise
+    if (!this._subStatCache || day - (this._subStatCacheDay ?? -3) >= 3) {
+      const econ = computeEconomicStats(alive);
+      this._subStatCache = {
+        econ,
+        psych: computePopulationPsychStats(alive, econ.gini ?? 0),
+        health: computeHealthStats(alive),
+      };
+      this._subStatCacheDay = day;
+    }
+    const econStats   = this._subStatCache.econ;
+    const psychStats  = this._subStatCache.psych;
+    const healthStats = this._subStatCache.health;
 
     // Single-pass accumulator — replaces 15+ separate alive.map/reduce calls
     const EPI_LOCI = ['HPA_AXIS','BDNF_PROMOTER','MAOA_REGULATION','LEPTIN_RESIST','INSULIN_SENS','AVP_REGULATION','OXTR_METHYL','IMMUNE_PRIMING'];
