@@ -7,6 +7,13 @@ import { simulationManager } from '../simulationManager.js';
 
 const router = Router();
 
+async function vacuumSimTablesAsync() {
+  for (const table of ['checkpoints', 'simulation_events', 'individuals']) {
+    try { await query(`VACUUM FULL ${table}`); }
+    catch { try { await query(`VACUUM ANALYZE ${table}`); } catch {} }
+  }
+}
+
 const TRAIT_LOCI = {
   // ── Mind ──────────────────────────────────────────────────────────────────
   fluid_intelligence: ['BDNF_01', 'COMT_01', 'DTNBP1_01', 'NRG1_01', 'DISC1_01'],
@@ -607,6 +614,7 @@ router.post('/:id/terminate', authenticate, requireSimulationOwner, async (req, 
     cloudQuery('DELETE FROM cloud_checkpoints WHERE simulation_id = $1 AND user_id = $2', [req.params.id, req.user.id]).catch(() => {});
     cloudQuery('DELETE FROM live_snapshots WHERE simulation_id = $1 AND user_id = $2', [req.params.id, req.user.id]).catch(() => {});
     res.json({ message: 'Simulation terminated' });
+    setImmediate(() => vacuumSimTablesAsync().catch(() => {}));
   } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to terminate simulation' }); }
 });
 
@@ -622,6 +630,7 @@ router.delete('/:id', authenticate, async (req, res) => {
     cloudQuery('DELETE FROM cloud_checkpoints WHERE simulation_id = $1 AND user_id = $2', [req.params.id, req.user.id]).catch(() => {});
     cloudQuery('DELETE FROM live_snapshots WHERE simulation_id = $1 AND user_id = $2', [req.params.id, req.user.id]).catch(() => {});
     res.json({ message: 'Simulation deleted' });
+    setImmediate(() => vacuumSimTablesAsync().catch(() => {}));
   } catch (err) { console.error(err); res.status(500).json({ error: 'Failed to delete simulation' }); }
 });
 
