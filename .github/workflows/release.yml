@@ -23,6 +23,8 @@ jobs:
           node-version: '24'
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.96.0
 
       - name: Root build
         run: npm run build

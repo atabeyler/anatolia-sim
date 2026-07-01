@@ -10,14 +10,18 @@ jobs:
   server-tests:
     name: Rust Server Tests
     runs-on: ubuntu-latest
+    env:
+      RUST_BACKTRACE: 1
     steps:
       - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.96.0
 
       - name: Testleri çalıştır
         working-directory: rust
-        run: cargo test -p sim-server -- --test-threads=1
+        run: cargo test -p sim-server -- --test-threads=1 --nocapture
 
   client-tests:
     name: Client Tests
