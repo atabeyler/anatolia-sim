@@ -310,7 +310,7 @@ export default function LoginPage() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const f = (k: string) => (e: any) => setForm(p => ({ ...p, [k]: e.target.value }));
 
-  // Fetch real engine/db stats for the status panel
+  // Fetch real runtime/db stats for the status panel
   useEffect(() => {
     axios.get<SysStatus>('/api/system/status').then(r => setSysStatus(r.data)).catch(() => {});
   }, []);
@@ -328,9 +328,9 @@ export default function LoginPage() {
       lon: `${Math.abs(lon).toFixed(4)}°${lon >= 0 ? 'E' : 'W'}`,
     });
 
-    const el = (window as any).electronLocation;
+    const el = (window as any).desktopLocation ?? (window as any).electronLocation;
     if (el) {
-      // Electron: use OS location API via main process (Windows / macOS)
+      // Desktop shell path: use native coordinates when a shell bridge is available.
       el.getCoords().then((c: { lat: number; lon: number } | null) => {
         if (c) fmt(c.lat, c.lon);
       }).catch(() => {});

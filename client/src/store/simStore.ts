@@ -82,8 +82,8 @@ export interface MilestoneEvent {
   day: number;
 }
 
-// Feature 14: engine performance metrics
-export interface EngineMetrics {
+// Feature 14: runtime performance metrics
+export interface RuntimeMetrics {
   tick_avg_ms: number;
   tick_max_ms: number;
   tick_min_ms: number;
@@ -196,10 +196,10 @@ interface SimStore {
   clearMilestones: () => void;
 
   // Engine performance metrics (Feature 14)
-  engineMetrics: EngineMetrics | null;
-  setEngineMetrics: (m: EngineMetrics | null) => void;
+  runtimeMetrics: RuntimeMetrics | null;
+  setRuntimeMetrics: (m: RuntimeMetrics | null) => void;
 
-  // Desktop auto-update
+  // Desktop shell update state
   updatePercent: number | null;
   updateReady: { version?: string } | null;
   setUpdatePercent: (p: number | null) => void;
@@ -247,7 +247,7 @@ export const useSimStore = create<SimStore>((set) => ({
     });
     set({ events: deduped });
   },
-  resetLiveState: () => set({ stats: null, events: [], simulationEnded: null, milestones: [], centroidTrail: [], isWarping: false, fastForwardTarget: null, engineMetrics: null }),
+  resetLiveState: () => set({ stats: null, events: [], simulationEnded: null, milestones: [], centroidTrail: [], isWarping: false, fastForwardTarget: null, runtimeMetrics: null }),
 
   simulationEnded: null,
   setSimulationEnded: (reason) => set({ simulationEnded: reason }),
@@ -292,8 +292,8 @@ export const useSimStore = create<SimStore>((set) => ({
   addMilestone: (m) => set(s => ({ milestones: [m, ...s.milestones].slice(0, 50) })),
   clearMilestones: () => set({ milestones: [] }),
 
-  engineMetrics: null,
-  setEngineMetrics: (m) => set({ engineMetrics: m }),
+  runtimeMetrics: null,
+  setRuntimeMetrics: (m) => set({ runtimeMetrics: m }),
 
   updatePercent: null,
   updateReady: null,

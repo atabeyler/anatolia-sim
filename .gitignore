@@ -145,3 +145,10 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 .claude/
+
+# Rust build artifacts
+rust/target/
+rust/*.db
+rust/*.sqlite
+rust/*.sqlite3
+desktop/src-tauri/target/

@@ -42,12 +42,12 @@ export function useSimWebSocket(simId: string | null) {
           } else if (data.type === 'milestone') {
             addMilestone({ key: data.key, description: data.description, icon: data.icon ?? '🏆', day: data.day });
           } else if (data.type === 'status') {
-            // Server tells us the real engine state on connect.
+            // Server tells us the real Rust runtime state on connect.
             if (typeof data.is_warping === 'boolean') setIsWarping(data.is_warping);
             if ('fast_forward_target' in data) setFastForwardTarget(data.fast_forward_target ?? null);
             // Auto-trigger start only on the first connection per session,
             // not on reconnects — prevents restart loop when user intentionally pauses.
-            if (data.engine_running === false && isFirstConnect.current) {
+            if (data.runtime_running === false && isFirstConnect.current) {
               const { currentSim, accessToken: tok } = useSimStore.getState();
               if (currentSim?.status === 'running' && tok) {
                 fetch(`/api/simulations/${currentSim.id}/start`, {

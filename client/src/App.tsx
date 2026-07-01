@@ -26,9 +26,9 @@ export default function App() {
   const { user, setUser, setUpdatePercent, setUpdateReady } = useSimStore();
   const [serverDown, setServerDown] = useState(false);
 
-  // Electron auto-update IPC — global listener (tüm sayfalarda çalışır)
+  // Desktop updater hook. Tauri can provide this later; the legacy fallback stays harmless.
   useEffect(() => {
-    const eu = (window as any).electronUpdater;
+    const eu = (window as any).desktopUpdater ?? (window as any).electronUpdater;
     if (!eu) return;
     const off1 = eu.onDownloadProgress((d: { percent: number }) => setUpdatePercent(Math.round(d.percent)));
     const off2 = eu.onUpdateDownloaded((d: { version?: string }) => { setUpdatePercent(null); setUpdateReady(d); });

@@ -76,12 +76,13 @@ QoL = consciousness×0.3 + (lang_stage/6)×0.2 + health×0.3 + wellbeing×0.2
 
 | Layer | Technology |
 |---|---|
-| **Simulation** | Node.js (ES modules), agent-based loop |
-| **API** | Express, JWT auth, WebSocket (live stats) |
-| **Database** | PostgreSQL (checkpoints, events, conversations) |
+| **Simulation** | Rust (`sim-core` + `sim-server`), agent-based loop |
+| **API** | Axum, JWT auth, WebSocket (live stats) |
+| **Database** | SQLx async, SQLite-only runtime |
 | **Frontend** | React 18, TypeScript, Vite, Tailwind CSS |
-| **AI** | Anthropic Claude (hypothesis testing, individual conversations) |
-| **Deploy** | Render.com (auto-deploy on main push) |
+| **AI** | Rust heuristic endpoints, optional external model integration |
+| **Desktop** | Tauri shell launching the Rust server |
+| **Deploy** | Render.com native Rust binary (no Node backend) |
 
 ---
 
@@ -89,7 +90,8 @@ QoL = consciousness×0.3 + (lang_stage/6)×0.2 + health×0.3 + wellbeing×0.2
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL 14+
+- Rust toolchain
+- SQLite database file created automatically at `rust/sim.db`
 
 ### Installation
 
@@ -97,19 +99,15 @@ QoL = consciousness×0.3 + (lang_stage/6)×0.2 + health×0.3 + wellbeing×0.2
 git clone https://github.com/atabeyler/anatolia-sim.git
 cd anatolia-sim
 
-# Server
-cd server && npm install
-cp .env.example .env   # fill DATABASE_URL, JWT_SECRET, ANTHROPIC_API_KEY
-
 # Client
-cd ../client && npm install
+cd client && npm install
 ```
 
 ### Database Setup
 
 ```bash
-cd server
-npm run db:migrate
+cd rust
+cargo run -p sim-server
 ```
 
 Then seed the admin account via API (requires `ADMIN_SEED_TOKEN` from `.env`):
@@ -123,8 +121,8 @@ curl -X POST http://localhost:3001/api/admin/seed-admin \
 ### Run Locally
 
 ```bash
-# Terminal 1 — API server (port 3001)
-cd server && npm run dev
+# Terminal 1 — Rust server (port 3001)
+cd rust && cargo run -p sim-server
 
 # Terminal 2 — React client (port 5173)
 cd client && npm run dev

@@ -1,20 +1,16 @@
 services:
   - type: web
     name: anatolia-sim
-    env: node
+    env: rust
     branch: main
     plan: free
     autoDeployTrigger: commit
-    buildCommand: cd client && npm install --include=dev && npm run build && cd ../server && npm install --include=dev
-    startCommand: cd server && npm start
+    buildCommand: cd client && npm install --include=dev && npm run build && cd ../rust && cargo build --release -p sim-server
+    startCommand: cd rust && cargo run -p sim-server
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DISABLE_WORKERS
-        value: "true"
-      - key: DATABASE_URL
-        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET

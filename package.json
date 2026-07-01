@@ -2,106 +2,21 @@
   "name": "anatolia-sim",
   "version": "2.2.9",
   "private": true,
-  "main": "desktop/main.mjs",
   "engines": {
     "node": ">=18"
   },
   "scripts": {
-    "build": "cd client && npm install --include=dev && npm run build && cd ../server && npm install --include=dev",
-    "desktop": "npm run build && electron desktop/main.mjs",
-    "dist": "node desktop/inject-config.mjs && npm run build && electron-builder --win nsis",
-    "dist:mac": "node desktop/inject-config.mjs && npm run build && electron-builder --mac dmg",
-    "dist:linux": "node desktop/inject-config.mjs && npm run build && electron-builder --linux AppImage",
-    "start": "cd server && npm start",
-    "test": "cd server && npm test && cd ../client && npm test"
+    "build": "cd client && npm install --include=dev && npm run build && cd ../rust && cargo build --release -p sim-server",
+    "desktop": "npm run build && cd desktop/src-tauri && cargo run",
+    "dist": "npm run build && cd desktop/src-tauri && cargo build --release",
+    "dist:mac": "npm run build && cd desktop/src-tauri && cargo build --release",
+    "dist:linux": "npm run build && cd desktop/src-tauri && cargo build --release",
+    "start": "npm run rust:serve",
+    "test": "cd rust && cargo test -p sim-server -- --test-threads=1 && cd ../client && npm test",
+    "rust:build": "rust\\scripts\\build.cmd",
+    "rust:test": "rust\\scripts\\test.cmd",
+    "rust:check": "rust\\scripts\\check.cmd",
+    "rust:serve": "rust\\scripts\\serve.cmd"
   },
-  "devDependencies": {
-    "electron": "^31.6.0",
-    "electron-builder": "^25.1.8"
-  },
-  "build": {
-    "appId": "com.atabeylers.anatoliasim",
-    "productName": "Anatolia Sim",
-    "copyright": "Copyright © 2024 Atabeyler",
-    "files": [
-      "desktop/**/*",
-      "package.json",
-      "node_modules/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "client/dist",
-        "to": "client/dist"
-      },
-      {
-        "from": "server/src",
-        "to": "server/src"
-      },
-      {
-        "from": "server/node_modules",
-        "to": "server/node_modules"
-      },
-      {
-        "from": "server/package.json",
-        "to": "server/package.json"
-      }
-    ],
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ]
-    },
-    "nsis": {
-      "oneClick": true,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": false,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Anatolia Sim",
-      "deleteAppDataOnUninstall": false,
-      "license": "LICENSE.txt",
-      "language": "1033"
-    },
-    "mac": {
-      "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        }
-      ],
-      "category": "public.app-category.education"
-    },
-    "linux": {
-      "target": [
-        {
-          "target": "AppImage",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "category": "Education"
-    },
-    "directories": {
-      "output": "release/installer",
-      "buildResources": "desktop/build-assets"
-    },
-    "publish": {
-      "provider": "github",
-      "owner": "atabeyler",
-      "repo": "anatolia-sim",
-      "releaseType": "release"
-    }
-  },
-  "dependencies": {
-    "electron-updater": "^6.8.9"
-  }
+  "devDependencies": {}
 }

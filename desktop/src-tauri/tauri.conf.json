@@ -1,0 +1,47 @@
+{
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "devPath": "http://127.0.0.1:3001",
+    "distDir": "../client/dist"
+  },
+  "package": {
+    "productName": "Anatolia Sim",
+    "version": "1.7.9"
+  },
+  "tauri": {
+    "bundle": {
+      "active": true,
+      "identifier": "com.atabeylers.anatoliasim",
+      "targets": "all",
+      "resources": [
+        "../../client/dist/*",
+        "../../rust/target/release/sim-server.exe"
+      ]
+    },
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "sidecar": false,
+        "open": false,
+        "execute": false
+      }
+    },
+    "windows": [
+      {
+        "title": "Anatolia Sim",
+        "url": "http://127.0.0.1:3001",
+        "width": 1600,
+        "height": 1000,
+        "minWidth": 1280,
+        "minHeight": 800,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  }
+}

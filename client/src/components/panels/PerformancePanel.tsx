@@ -23,7 +23,7 @@ interface DbStatus {
 }
 
 export default function PerformancePanel() {
-  const { activePanel, currentSim, accessToken, engineMetrics, setEngineMetrics, lang, isWarping, fastForwardTarget } = useSimStore();
+  const { activePanel, currentSim, accessToken, runtimeMetrics, setRuntimeMetrics, lang, isWarping, fastForwardTarget } = useSimStore();
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [diag, setDiag] = useState<Diagnostics | null>(null);
   const [dbStatus, setDbStatus] = useState<DbStatus | null>(null);
@@ -35,7 +35,7 @@ export default function PerformancePanel() {
     }
     const headers = { Authorization: `Bearer ${accessToken}` };
     const fetchAll = () => {
-      axios.get(`/api/simulations/${currentSim.id}/metrics`, { headers }).then(r => setEngineMetrics(r.data)).catch(() => {});
+      axios.get(`/api/simulations/${currentSim.id}/metrics`, { headers }).then(r => setRuntimeMetrics(r.data)).catch(() => {});
       axios.get(`/api/simulations/${currentSim.id}/diagnostics`, { headers }).then(r => setDiag(r.data)).catch(() => {});
       axios.get(`/api/simulations/${currentSim.id}/db-status`, { headers }).then(r => setDbStatus(r.data)).catch(() => {});
     };
@@ -55,7 +55,7 @@ export default function PerformancePanel() {
     );
   }
 
-  const m = engineMetrics;
+  const m = runtimeMetrics;
   const warpYear = fastForwardTarget ? Math.floor(fastForwardTarget / 365) : null;
   const currentYear = m ? Math.floor(m.current_day / 365) : null;
   const warpPct = (warpYear && currentYear && warpYear > currentYear)

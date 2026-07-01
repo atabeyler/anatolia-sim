@@ -12,36 +12,36 @@ This rule must never be violated. Before adding any logic that sets a property o
 
 ## Architecture
 
-- Stack: Node.js (ES modules) + Express API + React 18 + TypeScript + PostgreSQL
-- Simulation: `server/src/engines/simulationLoop.js` — 20+ engines per tick (1 tick = 1 sim day)
+- Stack: Rust backend (`rust/sim-core` + `rust/sim-server`) + React 18 + TypeScript
+- Simulation: `rust/sim-core` + `rust/sim-server` — runtime loop and DB-backed tick orchestration
 - Client: `client/src/` — Vite + Tailwind, panels in `components/panels/`
-- Deploy: Render.com, auto-deploy on `main` push
+- Desktop: Tauri shell that launches the Rust server locally
+- Deploy: Render.com, auto-deploy on `main` push with native Rust binary
 
 ## Key Engine Files
 
 | File | Purpose |
 |---|---|
-| `engines/biology/genome.js` | 32-locus Mendelian inheritance, stress-scaled mutation |
-| `engines/biology/individual.js` | `createFounder()`, `createChild()`, volatile field init |
-| `engines/biology/mortality.js` | Daily death risk, 10 death causes |
-| `engines/biology/reproduction.js` | Conception probability, MHC bonus, twin/triplet logic |
-| `engines/consciousness/consciousnessEngine.js` | `updateConsciousness()` — sole entry point |
-| `engines/language/languageEngine.js` | FOXP2 expression, 7-stage emergence, vocabulary |
-| `engines/language/nameEngine.js` | Phonology-based name generation |
-| `engines/belief/beliefEngine.js` | 6 belief archetypes, ritual emergence |
-| `engines/technology/technologyEngine.js` | 25-tech tree, cumulative `techProgress` Map |
-| `engines/culture/cultureEngine.js` | 18 memes, consciousness-scaled spread |
-| `engines/art/artEngine.js` | 12 art forms, wellbeing bonus |
-| `engines/law/lawEngine.js` | 13 norms, enforcement, exile |
-| `engines/architecture/architectureEngine.js` | 12 structure types, settlements |
-| `engines/astronomy/astronomyEngine.js` | 8 celestial events, 5 knowledge types |
-| `engines/epigenetics/epigeneticsEngine.js` | 8 methylation loci, heritability-weighted inheritance |
-| `engines/social/socialEngine.js` | Groups, 6 roles, fission, intergroup conflict |
-| `engines/economy/economyEngine.js` | 12 resources, 11 goods, trade, Gini coefficient |
-| `engines/environment/environmentEngine.js` | 10 biomes, 8 weather types, worldState |
-| `engines/psychology/psychologyEngine.js` | Mental states, ToM (0–3), attachment, trauma |
-| `engines/microbiome/microbiomeEngine.js` | 9 pathogens, transmission modes, immunity |
-| `engines/simulationLoop.js` | Main tick orchestrator |
+| `rust/sim-core/src/biology/genome.rs` | 32-locus Mendelian inheritance, stress-scaled mutation |
+| `rust/sim-core/src/biology/individual.rs` | `create_founder()`, `create_child()`, volatile field init |
+| `rust/sim-core/src/biology/mortality.rs` | Daily death risk, death causes |
+| `rust/sim-core/src/biology/reproduction.rs` | Conception probability, MHC bonus, twin/triplet logic |
+| `rust/sim-core/src/consciousness.rs` | `update_consciousness()` — sole entry point |
+| `rust/sim-core/src/language.rs` | FOXP2 expression, 7-stage emergence, vocabulary |
+| `rust/sim-core/src/belief.rs` | 6 belief archetypes, ritual emergence |
+| `rust/sim-core/src/technology.rs` | Tech tree, cumulative learning |
+| `rust/sim-core/src/culture.rs` | Cultural memes, spread |
+| `rust/sim-core/src/art.rs` | 12 art forms, wellbeing bonus |
+| `rust/sim-core/src/law.rs` | 13 norms, enforcement, exile |
+| `rust/sim-core/src/architecture.rs` | 12 structure types, settlements |
+| `rust/sim-core/src/astronomy.rs` | 8 celestial events, 5 knowledge types |
+| `rust/sim-core/src/epigenetics.rs` | 8 methylation loci, heritability-weighted inheritance |
+| `rust/sim-core/src/social.rs` | Groups, 6 roles, fission, intergroup conflict |
+| `rust/sim-core/src/economy.rs` | 12 resources, 11 goods, trade, Gini coefficient |
+| `rust/sim-core/src/environment.rs` | 10 biomes, 8 weather types, worldState |
+| `rust/sim-core/src/psychology.rs` | Mental states, ToM (0–3), attachment, trauma |
+| `rust/sim-core/src/microbiome.rs` | 9 pathogens, transmission modes, immunity |
+| `rust/sim-core/src/tick.rs` | Main tick orchestrator |
 
 ## Simulation State (SimulationEngine)
 
@@ -92,7 +92,7 @@ age                   // sim days since birth (recomputed but cached)
 
 ## Consciousness Formula
 
-Implemented exclusively in `engines/consciousness/consciousnessEngine.js`.
+Implemented exclusively in `rust/sim-core/src/consciousness.rs`.
 Cardinal rule: no other code may directly set `ind.mind.consciousness`.
 
 ```
@@ -274,7 +274,7 @@ Trade: two individuals exchange surplus based on needs and reputation. Gini coef
 | AVP_REGULATION | vasopressin sensitivity | yes | 0.30 |
 | IMMUNE_PRIMING | immune strength | no | 0.60 |
 
-Cardinal rule clarification: methylation responses are pre-programmed by the genome; the environment triggers a genetically encoded mechanism. Code touching epigenome outside of `epigeneticsEngine.js` still requires review.
+Cardinal rule clarification: methylation responses are pre-programmed by the genome; the environment triggers a genetically encoded mechanism. Code touching epigenome outside of `rust/sim-core/src/epigenetics.rs` still requires review.
 
 ## Genome — 32 Loci & Phenotype Traits
 
@@ -378,14 +378,11 @@ const effectiveAnxiety = Math.min(1, (p.anxiety ?? 0.3) + (ps.trauma_anxiety ?? 
 ## Dev Commands
 
 ```bash
-# Server (port 3001)
-cd server && npm run dev
+# Rust server (port 3001)
+cd rust && cargo run -p sim-server
 
 # Client (port 5173)
 cd client && npm run dev
-
-# DB migration
-cd server && npm run db:migrate
 
 # Admin seed (after migration)
 curl -X POST http://localhost:3001/api/admin/seed-admin \

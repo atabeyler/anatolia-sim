@@ -44,7 +44,7 @@ export default function UpdateBanner() {
             {lang === 'tr' ? 'yüklemek için tıkla' : 'click to install'}
           </span>
           <button
-            onClick={() => (window as any).electronUpdater?.install()}
+            onClick={() => ((window as any).desktopUpdater ?? (window as any).electronUpdater)?.install()}
             style={{ fontFamily: 'Share Tech Mono, monospace', fontSize: 13, color: '#fff', background: 'rgba(0,232,135,0.2)', border: '1px solid rgba(0,232,135,0.6)', padding: '4px 16px', cursor: 'pointer', letterSpacing: '0.08em' }}
           >
             {lang === 'tr' ? 'YÜKLE & YENİDEN BAŞLAT' : 'INSTALL & RESTART'}
