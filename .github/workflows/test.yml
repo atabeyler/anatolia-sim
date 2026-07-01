@@ -8,27 +8,19 @@ on:
 
 jobs:
   server-tests:
-    name: Server (Vitest)
+    name: Rust Server Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: server/package-lock.json
-
-      - name: Bağımlılıkları yükle
-        working-directory: server
-        run: npm ci
+      - uses: dtolnay/rust-toolchain@stable
 
       - name: Testleri çalıştır
-        working-directory: server
-        run: npm test
+        working-directory: rust
+        run: cargo test -p sim-server -- --test-threads=1
 
   client-tests:
-    name: Client (Vitest)
+    name: Client Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

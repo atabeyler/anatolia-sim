@@ -1,13 +1,15 @@
-name: Windows Installer Build
+name: Desktop Build
 
 on:
   push:
     branches: [main]
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
   build-windows:
-    name: Build Windows NSIS Installer
+    name: Build Windows Desktop
     runs-on: windows-latest
 
     permissions:
@@ -20,45 +22,17 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Client bağımlılıklarını yükle
-        working-directory: client
-        run: npm ci
+      - uses: dtolnay/rust-toolchain@stable
 
-      - name: Client build
-        working-directory: client
+      - name: Root build
         run: npm run build
 
-      - name: Server bağımlılıklarını yükle (sadece prod)
-        working-directory: server
-        run: npm ci --omit=dev
+      - name: Desktop release build
+        working-directory: desktop/src-tauri
+        run: cargo build --release
 
-      - name: Root bağımlılıklarını yükle
-        run: npm ci
-
-      # DATABASE_URL ve GEMINI_API_KEY'i exe'ye göm — kodda görünmez, sadece build sırasında yazılır
-      - name: Uygulama config dosyasını oluştur
-        shell: bash
-        run: |
-          echo '{"DATABASE_URL":"${{ secrets.DATABASE_URL }}","GEMINI_API_KEY":"${{ secrets.GEMINI_API_KEY }}"}' > desktop/bundled-config.json
-
-      - name: Versiyon kontrolü — zaten yayınlandıysa atla
-        id: check
-        shell: bash
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          if gh release view "v$VERSION" --repo $GITHUB_REPOSITORY > /dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "v$VERSION zaten yayınlanmış, publish atlanıyor."
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "v$VERSION yeni, publish yapılacak."
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Windows installer oluştur ve yayınla
-        if: steps.check.outputs.exists == 'false'
-        run: npx electron-builder --win nsis --x64 --publish always
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload desktop binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: anatolia-sim-desktop-windows
+          path: desktop/src-tauri/target/release/anatolia-sim-desktop.exe
