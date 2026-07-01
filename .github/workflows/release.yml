@@ -2,8 +2,9 @@ name: Desktop Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   publish-windows:
@@ -17,9 +18,13 @@ jobs:
       RUST_BACKTRACE: 1
       TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
       TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -28,6 +33,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.96.0
+
+      - name: Read version
+        id: version
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version "^1" --locked
@@ -39,12 +51,23 @@ jobs:
         working-directory: desktop/src-tauri
         run: cargo tauri build
 
+      - name: Create release tag
+        shell: pwsh
+        run: |
+          $tag = "v${{ steps.version.outputs.version }}"
+          git fetch --tags
+          git rev-parse --verify --quiet $tag | Out-Null
+          if ($LASTEXITCODE -ne 0) {
+            git tag $tag
+            git push origin $tag
+          }
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Anatolia Sim ${{ github.ref_name }}
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Anatolia Sim v${{ steps.version.outputs.version }}
           files: |
             desktop/src-tauri/target/release/bundle/**/*
