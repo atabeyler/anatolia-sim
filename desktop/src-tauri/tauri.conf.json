@@ -3,7 +3,7 @@
     "beforeBuildCommand": "",
     "beforeDevCommand": "",
     "devPath": "http://127.0.0.1:3001",
-    "distDir": "../client/dist"
+    "distDir": "../../client/dist"
   },
   "package": {
     "productName": "Anatolia Sim",
