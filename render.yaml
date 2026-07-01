@@ -2,6 +2,7 @@ services:
   - type: web
     name: anatolia-sim
     env: rust
+    rootDir: .
     branch: main
     plan: free
     autoDeployTrigger: commit
