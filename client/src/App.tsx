@@ -23,17 +23,64 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const { user, setUser, setUpdatePercent, setUpdateReady } = useSimStore();
+  const { user, setUser, setUpdatePercent, setUpdateReady, setUpdateInstall } = useSimStore();
   const [serverDown, setServerDown] = useState(false);
 
-  // Desktop updater hook. Tauri can provide this later; the legacy fallback stays harmless.
   useEffect(() => {
-    const eu = (window as any).desktopUpdater ?? (window as any).electronUpdater;
-    if (!eu) return;
-    const off1 = eu.onDownloadProgress((d: { percent: number }) => setUpdatePercent(Math.round(d.percent)));
-    const off2 = eu.onUpdateDownloaded((d: { version?: string }) => { setUpdatePercent(null); setUpdateReady(d); });
-    return () => { off1?.(); off2?.(); };
-  }, [setUpdatePercent, setUpdateReady]);
+    let cancelled = false;
+    let unlisten: null | (() => void) = null;
+
+    const isTauriDesktop =
+      typeof window !== 'undefined' &&
+      !!((window as any).__TAURI_IPC__ || (window as any).__TAURI__);
+
+    if (!isTauriDesktop) return;
+
+    (async () => {
+      try {
+        const [{ checkUpdate, installUpdate, onUpdaterEvent }, { relaunch }] = await Promise.all([
+          import('@tauri-apps/api/updater'),
+          import('@tauri-apps/api/process'),
+        ]);
+
+        if (cancelled) return;
+
+        setUpdateInstall(async () => {
+          setUpdatePercent(0);
+          try {
+            await installUpdate();
+            await relaunch();
+          } finally {
+            setUpdatePercent(null);
+            setUpdateReady(null);
+          }
+        });
+
+        unlisten = await onUpdaterEvent(({ error, status }) => {
+          if (error) {
+            console.error('[updater]', error);
+            return;
+          }
+          console.debug('[updater]', status);
+        });
+
+        const { shouldUpdate, manifest } = await checkUpdate();
+        if (cancelled) return;
+
+        if (shouldUpdate) {
+          setUpdateReady({ version: manifest?.version });
+        }
+      } catch (err) {
+        console.warn('[updater] unavailable:', err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      try { unlisten?.(); } catch {}
+      setUpdateInstall(null);
+    };
+  }, [setUpdateInstall, setUpdatePercent, setUpdateReady]);
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {

@@ -202,8 +202,10 @@ interface SimStore {
   // Desktop shell update state
   updatePercent: number | null;
   updateReady: { version?: string } | null;
+  updateInstall: (() => Promise<void>) | null;
   setUpdatePercent: (p: number | null) => void;
   setUpdateReady: (info: { version?: string } | null) => void;
+  setUpdateInstall: (install: (() => Promise<void>) | null) => void;
 }
 
 function normalizeEventKey(event: SimEvent) {
@@ -297,6 +299,8 @@ export const useSimStore = create<SimStore>((set) => ({
 
   updatePercent: null,
   updateReady: null,
+  updateInstall: null,
   setUpdatePercent: (p) => set({ updatePercent: p }),
   setUpdateReady: (info) => set({ updateReady: info }),
+  setUpdateInstall: (install) => set({ updateInstall: install }),
 }));
