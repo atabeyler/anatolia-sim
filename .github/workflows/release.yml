@@ -1,19 +1,20 @@
-name: Desktop Build
+name: Desktop Release
 
 on:
   push:
-    branches: [main]
     tags:
       - 'v*'
-  workflow_dispatch:
 
 jobs:
-  build-windows:
-    name: Build Windows Desktop
+  publish-windows:
+    name: Publish Windows Desktop
     runs-on: windows-latest
 
     permissions:
       contents: write
+
+    env:
+      RUST_BACKTRACE: 1
 
     steps:
       - uses: actions/checkout@v4
@@ -26,15 +27,22 @@ jobs:
         with:
           toolchain: 1.96.0
 
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^1" --locked
+
       - name: Root build
         run: npm run build
 
-      - name: Desktop release build
+      - name: Build Tauri bundle
         working-directory: desktop/src-tauri
-        run: cargo build --release
+        run: cargo tauri build
 
-      - name: Upload desktop binary
-        uses: actions/upload-artifact@v4
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: anatolia-sim-desktop-windows
-          path: desktop/src-tauri/target/release/anatolia-sim-desktop.exe
+          tag_name: ${{ github.ref_name }}
+          name: Anatolia Sim ${{ github.ref_name }}
+          files: |
+            desktop/src-tauri/target/release/bundle/**/*

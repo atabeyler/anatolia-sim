@@ -6,7 +6,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "cd client && npm install --include=dev && npm run build && cd ../rust && cargo build --release -p sim-server",
+    "build": "cd client && npm ci --include=dev && npm run build && cd ../rust && cargo build --release -p sim-server",
     "desktop": "npm run build && cd desktop/src-tauri && cargo run",
     "dist": "npm run build && cd desktop/src-tauri && cargo build --release",
     "dist:mac": "npm run build && cd desktop/src-tauri && cargo build --release",
