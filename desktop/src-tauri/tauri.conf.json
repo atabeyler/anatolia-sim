@@ -13,7 +13,7 @@
     "bundle": {
       "active": true,
       "identifier": "com.atabeylers.anatoliasim",
-      "targets": "all",
+      "targets": ["nsis", "updater"],
       "resources": [
         "../../client/dist/*",
         "../../rust/target/release/sim-server.exe"
@@ -42,6 +42,14 @@
     ],
     "security": {
       "csp": null
+    },
+    "updater": {
+      "active": true,
+      "dialog": false,
+      "endpoints": [
+        "https://github.com/atabeyler/anatolia-sim/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDMyQ0EwQTcwRDAxQjM1MjEKUldRaE5SdlFjQXJLTXBvMStNQWVvOGVCbG82SW85ZE84dzRHckV1R0J0YmpNMFBhd1Bmd0hHZVAK"
     }
   }
 }
