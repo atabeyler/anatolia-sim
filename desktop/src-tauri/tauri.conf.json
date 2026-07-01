@@ -13,6 +13,11 @@
     "bundle": {
       "active": true,
       "identifier": "com.atabeylers.anatoliasim",
+      "icon": [
+        "icons/icon.ico",
+        "icons/icon-192.png",
+        "icons/icon-512.png"
+      ],
       "targets": ["nsis", "updater"],
       "resources": [
         "../../client/dist/*",
