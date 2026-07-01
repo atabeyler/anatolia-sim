@@ -6,8 +6,8 @@ services:
     branch: main
     plan: free
     autoDeployTrigger: commit
-    buildCommand: cd client && npm install --include=dev && npm run build && cd ../rust && cargo build --release -p sim-server
-    startCommand: cd rust && cargo run -p sim-server
+    buildCommand: cd client && npm ci --include=dev && npm run build && cd ../rust && cargo build --release -p sim-server
+    startCommand: ./rust/target/release/sim-server
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
