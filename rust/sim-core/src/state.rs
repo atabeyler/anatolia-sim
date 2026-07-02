@@ -124,6 +124,19 @@ pub struct SimulationState {
     #[serde(default)]
     pub discovered_arts: Vec<String>,
     #[serde(default)]
+    pub astronomy_knowledge: Vec<String>,
+    #[serde(default)]
+    pub celestial_observations: Vec<String>,
+    #[serde(default)]
+    pub groups: Vec<Value>,
+    #[serde(default)]
+    pub settlements: Vec<Value>,
+    /// Conceived individuals whose `birth_day` is still in the future. They are
+    /// spliced into `individuals` (and only then count toward population/events)
+    /// once `current_day >= birth_day`, so a pregnancy is not a phantom living member.
+    #[serde(default)]
+    pub pending_births: Vec<Individual>,
+    #[serde(default)]
     pub events: Vec<Value>,
     #[serde(flatten)]
     pub extra: Map<String, Value>,

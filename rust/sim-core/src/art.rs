@@ -58,6 +58,57 @@ pub fn process_art_tick(
     events
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::state::Individual;
+
+    fn artistic_individual(action: &str) -> Individual {
+        Individual {
+            phenotype: json!({ "fluid_intelligence": 0.9, "artistic_sense": 0.9 }),
+            language: json!({ "foxp2_expression": 0.9 }),
+            extra: {
+                let mut m = serde_json::Map::new();
+                m.insert("_currentAction".to_string(), json!(action));
+                m
+            },
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn no_visual_art_emerges_without_a_matching_craft_activity() {
+        // Cardinal rule: art must arise from what the individual actually does
+        // (a "craft" action for visual art), never from a trait scan alone.
+        let population = vec![artistic_individual("socialize")]; // high artistic_sense, wrong action
+        let mut discovered = HashSet::new();
+        let techs = HashSet::new();
+        let world = json!({ "food_abundance": 1.0 });
+        for day in 0..3000 {
+            let evs = process_art_tick(&population, &mut discovered, &techs, &world, day);
+            assert!(evs.is_empty() || evs.iter().all(|e| e["medium"] != "visual"));
+        }
+        assert!(!discovered.contains("cave_painting"));
+    }
+
+    #[test]
+    fn visual_art_can_emerge_once_the_individual_is_actually_crafting() {
+        let population = vec![artistic_individual("craft")];
+        let mut discovered = HashSet::new();
+        let techs = HashSet::new();
+        let world = json!({ "food_abundance": 1.0 });
+        let mut emerged = false;
+        for day in 0..200_000 {
+            let evs = process_art_tick(&population, &mut discovered, &techs, &world, day);
+            if evs.iter().any(|e| e["art_id"] == "cave_painting") {
+                emerged = true;
+                break;
+            }
+        }
+        assert!(emerged, "a highly artistic individual actually crafting should eventually produce cave_painting");
+    }
+}
+
 pub fn apply_art_effects(individual: &mut crate::state::Individual, group: Option<&mut Value>, discovered_arts: &HashSet<String>) {
     if discovered_arts.is_empty() {
         return;

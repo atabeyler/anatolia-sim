@@ -210,6 +210,106 @@ pub fn compute_inbreeding_coefficient(individual: &crate::state::Individual, pop
     f.min(1.0)
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::state::Individual;
+
+    #[test]
+    fn gamete_allele_without_mutation_is_always_one_of_the_two_parental_alleles() {
+        let genome = create_genome(None);
+        // stress_multiplier = 0.0 makes apply_mutation's probability exactly 0.
+        for _ in 0..200 {
+            let gamete = create_gamete(&genome, 0.0);
+            for (locus_id, ..) in LOCI {
+                let a1 = genome[*locus_id]["allele1"]["value"].as_f64().unwrap();
+                let a2 = genome[*locus_id]["allele2"]["value"].as_f64().unwrap();
+                let chosen = gamete[*locus_id].as_f64().unwrap();
+                assert!(
+                    (chosen - a1).abs() < 1e-9 || (chosen - a2).abs() < 1e-9,
+                    "gamete allele for {locus_id} must come from a parental allele, got {chosen} vs ({a1}, {a2})"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn child_genome_is_built_only_from_the_two_gametes_no_third_source() {
+        let g1 = create_gamete(&create_genome(None), 0.0);
+        let g2 = create_gamete(&create_genome(None), 0.0);
+        let child = combine_gametes(&g1, &g2, "female");
+        for (locus_id, ..) in LOCI {
+            assert_eq!(child[*locus_id]["allele1"]["value"], g1[*locus_id]);
+            assert_eq!(child[*locus_id]["allele2"]["value"], g2[*locus_id]);
+        }
+    }
+
+    #[test]
+    fn x_linked_locus_gives_males_a_single_hemizygous_maternal_allele() {
+        let g1 = create_gamete(&create_genome(None), 0.0); // paternal gamete
+        let g2 = create_gamete(&create_genome(None), 0.0); // maternal gamete
+        let son = combine_gametes(&g1, &g2, "male");
+        // MAOA_01 is x_linked: a son must get it only from the maternal gamete (g2),
+        // never the paternal one (g1), and allele2 must be absent (hemizygous).
+        assert_eq!(son["MAOA_01"]["allele1"]["value"], g2["MAOA_01"]);
+        assert_eq!(son["MAOA_01"]["expressionType"], "hemizygous");
+        assert!(son["MAOA_01"]["allele2"]["value"].is_null());
+
+        let daughter = combine_gametes(&g1, &g2, "female");
+        assert_eq!(daughter["MAOA_01"]["allele1"]["value"], g1["MAOA_01"]);
+        assert_eq!(daughter["MAOA_01"]["allele2"]["value"], g2["MAOA_01"]);
+    }
+
+    #[test]
+    fn mutation_probability_zero_never_perturbs_the_value() {
+        for _ in 0..500 {
+            assert_eq!(apply_mutation(0.42, 0.0), 0.42);
+        }
+    }
+
+    #[test]
+    fn compute_phenotype_is_a_pure_function_of_the_genome() {
+        let genome = create_genome(None);
+        let p1 = compute_phenotype(&genome);
+        let p2 = compute_phenotype(&genome);
+        assert_eq!(p1, p2, "identical genome must always yield identical phenotype");
+    }
+
+    fn make_individual(id: &str, parent_1: Option<&str>, parent_2: Option<&str>, inbreeding: f64) -> Individual {
+        Individual {
+            id: id.to_string(),
+            parent_1_id: parent_1.map(str::to_string),
+            parent_2_id: parent_2.map(str::to_string),
+            inbreeding_coeff: Some(inbreeding),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn full_sibling_mating_yields_expected_inbreeding_coefficient() {
+        // Unrelated founders -> two full siblings -> siblings mate -> their child.
+        let mut population = HashMap::new();
+        population.insert("dad".to_string(), make_individual("dad", None, None, 0.0));
+        population.insert("mom".to_string(), make_individual("mom", None, None, 0.0));
+        population.insert("sib1".to_string(), make_individual("sib1", Some("dad"), Some("mom"), 0.0));
+        population.insert("sib2".to_string(), make_individual("sib2", Some("dad"), Some("mom"), 0.0));
+        let child = make_individual("child", Some("sib1"), Some("sib2"), 0.0);
+
+        let f = compute_inbreeding_coefficient(&child, &population);
+        // Full-sibling mating classically gives F = 0.25.
+        assert!((f - 0.25).abs() < 1e-6, "expected F ~= 0.25 for full-sibling mating, got {f}");
+    }
+
+    #[test]
+    fn unrelated_parents_yield_zero_inbreeding_coefficient() {
+        let mut population = HashMap::new();
+        population.insert("a".to_string(), make_individual("a", None, None, 0.0));
+        population.insert("b".to_string(), make_individual("b", None, None, 0.0));
+        let child = make_individual("child", Some("a"), Some("b"), 0.0);
+        assert_eq!(compute_inbreeding_coefficient(&child, &population), 0.0);
+    }
+}
+
 fn ancestor_probs(start_ind: &crate::state::Individual, population: &HashMap<String, crate::state::Individual>, max_depth: usize) -> HashMap<String, f64> {
     let mut probs = HashMap::new();
     let mut stack = vec![(start_ind, 0usize)];

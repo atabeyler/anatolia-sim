@@ -67,29 +67,93 @@ pub fn process_group_dynamics(population: &mut [Individual], groups: &mut [Value
     events
 }
 
+/// Shared by `assign_group_roles` (contiguous member slices, e.g. tests) and the
+/// tick orchestrator (which assigns roles across a scattered population by group
+/// membership rather than a contiguous slice).
+pub fn compute_role_for(member: &Individual, leader_id: Option<&str>) -> &'static str {
+    if member.is_founder {
+        return "anchor";
+    }
+    if leader_id.is_some_and(|leader| leader == member.id) {
+        return "leader";
+    }
+    let age_years = member.age_days.unwrap_or(0) as f64 / 365.0;
+    let dominant = member
+        .extra
+        .get("_behaviorCounts")
+        .and_then(Value::as_object)
+        .and_then(|counts| counts.iter().max_by_key(|(_, v)| v.as_i64().unwrap_or(0)).map(|(k, _)| k.clone()));
+    match dominant.as_deref() {
+        Some("hunt") => "warrior",
+        Some("socialize") => "healer",
+        Some("forage") => "gatherer",
+        _ if age_years > 40.0 => "elder",
+        _ => "member",
+    }
+}
+
 pub fn assign_group_roles(members: &mut [Individual], leader_id: Option<&str>) {
     for member in members {
-        if member.is_founder {
-            member.extra.insert("group_role".to_string(), json!("anchor"));
-            continue;
-        }
-        if leader_id.is_some_and(|leader| leader == member.id) {
-            member.extra.insert("group_role".to_string(), json!("leader"));
-            continue;
-        }
-        let age_years = member.age_days.unwrap_or(0) as f64 / 365.0;
-        let dominant = member
-            .extra
-            .get("_behaviorCounts")
-            .and_then(Value::as_object)
-            .and_then(|counts| counts.iter().max_by_key(|(_, v)| v.as_i64().unwrap_or(0)).map(|(k, _)| k.clone()));
-        let role = match dominant.as_deref() {
-            Some("hunt") => "warrior",
-            Some("socialize") => "healer",
-            Some("forage") => "gatherer",
-            _ if age_years > 40.0 => "elder",
-            _ => "member",
-        };
+        let role = compute_role_for(member, leader_id);
         member.extra.insert("group_role".to_string(), json!(role));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn member_with_behavior(dominant_action: &str) -> Individual {
+        let mut m = Individual { age_days: Some(365 * 25), ..Default::default() };
+        m.extra.insert("_behaviorCounts".to_string(), json!({ dominant_action: 50, "socialize": 1 }));
+        m
+    }
+
+    #[test]
+    fn role_emerges_from_behavior_counts_not_from_dominance_or_other_phenotype() {
+        // Cardinal rule: roles emerge from `_behaviorCounts`, never assigned from
+        // phenotype. Two members with identical (high) dominance but different
+        // behavior histories must get different roles.
+        let mut hunter = member_with_behavior("hunt");
+        let mut gatherer = member_with_behavior("forage");
+        hunter.phenotype = json!({ "dominance": 0.95 });
+        gatherer.phenotype = json!({ "dominance": 0.95 }); // same dominance, different behavior
+
+        assert_eq!(compute_role_for(&hunter, None), "warrior");
+        assert_eq!(compute_role_for(&gatherer, None), "gatherer");
+    }
+
+    #[test]
+    fn high_dominance_phenotype_alone_never_grants_the_leader_role() {
+        // Only an explicit leader_id (itself derived from compute_social_status,
+        // which is a behavioral/social computation, not a raw phenotype lookup)
+        // may grant "leader" -- never dominance by itself.
+        let mut ambitious = member_with_behavior("hunt");
+        ambitious.phenotype = json!({ "dominance": 1.0 });
+        assert_ne!(compute_role_for(&ambitious, None), "leader");
+        assert_eq!(compute_role_for(&ambitious, Some("someone-else")), "warrior");
+    }
+
+    #[test]
+    fn only_the_designated_leader_id_receives_the_leader_role() {
+        let mut member = member_with_behavior("hunt");
+        member.id = "chief".to_string();
+        assert_eq!(compute_role_for(&member, Some("chief")), "leader");
+    }
+
+    #[test]
+    fn founders_are_always_anchors_regardless_of_behavior_or_leadership() {
+        let mut founder = member_with_behavior("hunt");
+        founder.is_founder = true;
+        founder.id = "founder-1".to_string();
+        assert_eq!(compute_role_for(&founder, Some("founder-1")), "anchor");
+    }
+
+    #[test]
+    fn assign_group_roles_applies_the_same_rule_across_a_contiguous_slice() {
+        let mut members = vec![member_with_behavior("hunt"), member_with_behavior("forage")];
+        assign_group_roles(&mut members, None);
+        assert_eq!(members[0].extra.get("group_role").and_then(Value::as_str), Some("warrior"));
+        assert_eq!(members[1].extra.get("group_role").and_then(Value::as_str), Some("gatherer"));
     }
 }

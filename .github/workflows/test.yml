@@ -7,6 +7,18 @@ on:
     branches: [main]
 
 jobs:
+  core-tests:
+    name: Rust Core Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Testleri çalıştır
+        working-directory: rust
+        run: cargo test -p sim-core
+
   server-tests:
     name: Rust Server Tests
     runs-on: ubuntu-latest

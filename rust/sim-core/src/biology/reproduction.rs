@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::state::Individual;
 use rand::Rng;
 
@@ -9,19 +7,19 @@ const PREGNANCY_MIN: i32 = 266;
 const MATING_RADIUS: f64 = 2.0;
 
 pub fn check_reproduction(
-    population: &HashMap<String, Individual>,
+    population: &[Individual],
     current_day: i32,
     simulation_id: &str,
     community_lang_stage: i32,
 ) -> Vec<Individual> {
     let mut newborns = Vec::new();
     let fertile_males: Vec<&Individual> = population
-        .values()
+        .iter()
         .filter(|i| i.alive && i.sex == "male" && is_fertile(i, current_day))
         .collect();
 
-    for female in population.values().filter(|i| i.alive && i.sex == "female" && is_fertile(i, current_day)) {
-        if female.health.get("pregnancy").is_some() {
+    for female in population.iter().filter(|i| i.alive && i.sex == "female" && is_fertile(i, current_day)) {
+        if female.health.get("pregnancy").is_some_and(|v| !v.is_null()) {
             continue;
         }
         let nearby_males: Vec<&Individual> = fertile_males

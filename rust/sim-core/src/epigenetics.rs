@@ -100,6 +100,95 @@ fn apply_fx(ind: &mut Individual) {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn stressed_individual() -> Individual {
+        Individual {
+            psychology: json!({ "stress_level": 0.9 }),
+            health: json!({ "hydration": 0.9 }),
+            group_id: Some("g1".to_string()),
+            age_days: Some(365 * 30),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn irreversible_loci_never_decrease_even_under_relaxing_conditions() {
+        // MAOA_REGULATION and IMMUNE_PRIMING are marked irreversible: once methylated,
+        // no combination of low stress / good nutrition may lower them again.
+        let mut ind = stressed_individual();
+        ind.age_days = Some(1); // < 5 years old, high stress -> MAOA_REGULATION bump
+        update_epigenome(&mut ind, None, 1);
+        let maoa_after_stress = ind.epigenome["MAOA_REGULATION"]["methylation"].as_f64().unwrap();
+        assert!(maoa_after_stress > 0.5, "high early-life stress should raise MAOA_REGULATION methylation");
+
+        // Now flip to maximally relaxed conditions and tick many times.
+        ind.psychology = json!({ "stress_level": 0.0 });
+        ind.extra.insert("satiation".to_string(), json!(1.0));
+        ind.health = json!({ "hydration": 1.0 });
+        ind.group_id = Some("g1".to_string());
+        for day in 2..500 {
+            update_epigenome(&mut ind, None, day);
+        }
+        let maoa_after_relaxation = ind.epigenome["MAOA_REGULATION"]["methylation"].as_f64().unwrap();
+        assert!(
+            maoa_after_relaxation >= maoa_after_stress - 1e-9,
+            "irreversible locus MAOA_REGULATION decreased from {maoa_after_stress} to {maoa_after_relaxation}"
+        );
+    }
+
+    #[test]
+    fn reversible_loci_can_both_rise_and_fall() {
+        let mut ind = stressed_individual();
+        update_epigenome(&mut ind, None, 1);
+        let hpa_high_stress = ind.epigenome["HPA_AXIS"]["methylation"].as_f64().unwrap();
+
+        ind.psychology = json!({ "stress_level": 0.0 });
+        for day in 2..50 {
+            update_epigenome(&mut ind, None, day);
+        }
+        let hpa_after_calm = ind.epigenome["HPA_AXIS"]["methylation"].as_f64().unwrap();
+        assert!(hpa_after_calm < hpa_high_stress, "reversible HPA_AXIS should relax back down once stress drops");
+    }
+
+    #[test]
+    fn methylation_is_driven_only_by_the_individuals_own_signals_not_external_injection() {
+        // Cardinal rule (non-founder): epigenome may only move in response to the
+        // individual's own internal state passed into update_epigenome, never by
+        // another system writing the map directly. This test locks the *pathway*:
+        // identical internal signals on two distinct individuals must produce
+        // identical epigenetic outcomes (no hidden per-individual external inputs).
+        let mut a = stressed_individual();
+        let mut b = stressed_individual();
+        for day in 1..30 {
+            update_epigenome(&mut a, None, day);
+            update_epigenome(&mut b, None, day);
+        }
+        assert_eq!(a.epigenome, b.epigenome);
+    }
+
+    #[test]
+    fn inherit_epigenome_blends_parents_weighted_by_heritability() {
+        let mut p1 = Individual::default();
+        let mut p2 = Individual::default();
+        initialize_epigenome(&mut p1);
+        initialize_epigenome(&mut p2);
+        p1.epigenome["HPA_AXIS"]["methylation"] = json!(0.9);
+        p2.epigenome["HPA_AXIS"]["methylation"] = json!(0.9);
+        let mut child = Individual::default();
+        inherit_epigenome(&mut child, &mut p1, &mut p2);
+        // heritability(HPA_AXIS) = 0.3, so a child of two 0.9 parents should land
+        // partway between the population baseline (0.5) and the parental average,
+        // never inheriting the full parental value directly.
+        let child_hpa = child.epigenome["HPA_AXIS"]["methylation"].as_f64().unwrap();
+        assert!(child_hpa > 0.5 && child_hpa < 0.9, "expected partial heritability, got {child_hpa}");
+        let expected = 0.5 + (0.9 - 0.5) * 0.3;
+        assert!((child_hpa - expected).abs() < 1e-9);
+    }
+}
+
 pub fn compute_epigenetic_age(individual: &Individual) -> f64 {
     let age_days = individual.age_days.unwrap_or(individual.birth_day.abs()).max(0) as f64;
     let ca = age_days / 365.0;

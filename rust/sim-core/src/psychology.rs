@@ -165,6 +165,35 @@ pub fn process_bonding(ind_a: &mut Individual, ind_b: &mut Individual, interacti
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn trauma_anxiety_accumulates_without_ever_mutating_the_genetic_anxiety_phenotype() {
+        let mut ind = Individual {
+            phenotype: json!({ "anxiety": 0.3, "fluid_intelligence": 0.5, "empathy": 0.5, "social_drive": 0.5 }),
+            language: json!({ "stage": 1 }),
+            mind: json!({ "consciousness": 0.0 }),
+            group_id: None,
+            ..Default::default()
+        };
+        initialize_psychology(&mut ind);
+        let events = vec![json!({ "individual_id": ind.id, "type": "death_of_kin" })];
+        let world = json!({});
+        for day in 0..20 {
+            update_mental_state(&mut ind, &events, &world, day);
+        }
+        let trauma_anxiety = ind.psychology.get("trauma_anxiety").and_then(Value::as_f64).unwrap_or(0.0);
+        assert!(trauma_anxiety > 0.0, "repeated kin-death events should accumulate trauma_anxiety");
+        assert_eq!(
+            ind.phenotype.get("anxiety").and_then(Value::as_f64),
+            Some(0.3),
+            "phenotype.anxiety is genetic and must never be mutated by lived experience"
+        );
+    }
+}
+
 pub fn compute_population_psych_stats(population: &[Individual], gini: f64) -> Value {
     let living: Vec<&Individual> = population.iter().filter(|i| !i.is_dead && i.psychology.is_object()).collect();
     if living.is_empty() {

@@ -68,6 +68,67 @@ pub fn process_law_tick(
     events
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::state::Individual;
+
+    fn group_with_members(n: usize, foxp2: f64, iq: f64) -> (Value, Vec<Individual>) {
+        let members: Vec<Individual> = (0..n)
+            .map(|i| Individual {
+                id: format!("m{i}"),
+                phenotype: json!({ "fluid_intelligence": iq }),
+                language: json!({ "foxp2_expression": foxp2 }),
+                ..Default::default()
+            })
+            .collect();
+        let group = json!({
+            "id": "g1",
+            "member_ids": members.iter().map(|m| json!(m.id)).collect::<Vec<_>>(),
+            "leader_id": Value::Null,
+            "norms": [],
+            "internal_tension": 0.9,
+        });
+        (group, members)
+    }
+
+    #[test]
+    fn a_group_below_the_size_and_language_thresholds_never_gets_any_norm() {
+        let (mut group, members) = group_with_members(1, 0.0, 0.0); // below every norm's group_min
+        let techs = HashSet::new();
+        for day in 0..5000 {
+            process_law_tick(&mut group, &members, &techs, day);
+        }
+        assert!(group["norms"].as_array().unwrap().is_empty());
+    }
+
+    #[test]
+    fn a_qualifying_group_can_eventually_emerge_a_norm() {
+        let (mut group, members) = group_with_members(3, 0.5, 0.5); // meets reciprocity/no_theft/incest_taboo minimums
+        let techs = HashSet::new();
+        let mut emerged = false;
+        for day in 0..200_000 {
+            process_law_tick(&mut group, &members, &techs, day);
+            if !group["norms"].as_array().unwrap().is_empty() {
+                emerged = true;
+                break;
+            }
+        }
+        assert!(emerged, "a qualifying group should eventually emerge at least one stage-1 norm");
+    }
+
+    #[test]
+    fn written_law_never_emerges_without_the_writing_system_prerequisite() {
+        let (mut group, members) = group_with_members(30, 0.9, 0.9);
+        let techs = HashSet::new(); // writing_system deliberately absent
+        for day in 0..50_000 {
+            process_law_tick(&mut group, &members, &techs, day);
+        }
+        let norms: Vec<String> = group["norms"].as_array().unwrap().iter().filter_map(|v| v.as_str().map(String::from)).collect();
+        assert!(!norms.contains(&"written_law".to_string()));
+    }
+}
+
 pub fn compute_social_order(group: &Value) -> f64 {
     let member_count = group.get("member_ids").and_then(Value::as_array).map(|arr| arr.len().max(2)).unwrap_or(2) as f64;
     let norm_count = group.get("norms").and_then(Value::as_array).map(|arr| arr.len()).unwrap_or(0) as f64;

@@ -211,6 +211,11 @@ async fn create_simulation(
         discovered_techs: vec![],
         discovered_beliefs: vec![],
         discovered_arts: vec![],
+        astronomy_knowledge: vec![],
+        celestial_observations: vec![],
+        groups: vec![],
+        settlements: vec![],
+        pending_births: vec![],
         events: vec![],
         extra: Default::default(),
     };

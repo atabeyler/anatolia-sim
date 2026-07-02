@@ -66,3 +66,71 @@ pub fn learn_tech_from_observation(individual: &mut Individual, nearby: &[Indivi
 pub fn known_techs_json(individual: &Individual) -> serde_json::Value {
     json!(individual.known_techs)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn capable_individual(id: &str, techs: &[&str]) -> Individual {
+        Individual {
+            id: id.to_string(),
+            known_techs: techs.iter().map(|s| s.to_string()).collect(),
+            phenotype: json!({ "fluid_intelligence": 0.9, "curiosity": 0.9, "learning_rate": 0.9 }),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn an_individual_never_learns_a_tech_that_no_nearby_peer_knows() {
+        // Cardinal rule: tech can only be learned by observing a nearby peer who
+        // personally knows it. With no nearby individuals at all, nothing may appear.
+        let mut learner = capable_individual("solo", &[]);
+        let mut discovered = HashSet::new();
+        for _ in 0..1000 {
+            learn_tech_from_observation(&mut learner, &[], &mut discovered);
+        }
+        assert!(learner.known_techs.iter().all(|t| t == "swimming"));
+        assert!(discovered.is_empty());
+    }
+
+    #[test]
+    fn learning_a_tech_requires_its_prerequisites_to_already_be_known() {
+        // hunting_spear requires stone_tools; observing someone who has hunting_spear
+        // but not stone_tools should never transmit it.
+        let teacher = capable_individual("teacher", &["hunting_spear"]);
+        let mut learner = capable_individual("learner", &[]);
+        let mut discovered = HashSet::new();
+        for _ in 0..2000 {
+            learn_tech_from_observation(&mut learner, std::slice::from_ref(&teacher), &mut discovered);
+        }
+        assert!(!learner.known_techs.contains(&"hunting_spear".to_string()));
+    }
+
+    #[test]
+    fn a_known_tech_can_eventually_be_learned_from_a_nearby_peer_who_knows_it() {
+        let teacher = capable_individual("teacher", &["stone_tools"]);
+        let mut learner = capable_individual("learner", &[]);
+        let mut discovered = HashSet::new();
+        let mut learned = false;
+        for _ in 0..5000 {
+            learn_tech_from_observation(&mut learner, std::slice::from_ref(&teacher), &mut discovered);
+            if learner.known_techs.contains(&"stone_tools".to_string()) {
+                learned = true;
+                break;
+            }
+        }
+        assert!(learned, "a capable learner near a knowledgeable peer should eventually pick up stone_tools");
+        assert!(discovered.contains("stone_tools"));
+    }
+
+    #[test]
+    fn own_known_techs_are_never_relearned_or_duplicated() {
+        let teacher = capable_individual("teacher", &["stone_tools"]);
+        let mut learner = capable_individual("learner", &["stone_tools"]);
+        let mut discovered = HashSet::new();
+        for _ in 0..200 {
+            learn_tech_from_observation(&mut learner, std::slice::from_ref(&teacher), &mut discovered);
+        }
+        assert_eq!(learner.known_techs.iter().filter(|t| *t == "stone_tools").count(), 1);
+    }
+}
