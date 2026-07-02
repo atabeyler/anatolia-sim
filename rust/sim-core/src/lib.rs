@@ -15,6 +15,7 @@ pub mod architecture;
 pub mod belief;
 pub mod agent;
 pub mod psychology;
+pub mod spatial;
 mod state;
 mod tick;
 
@@ -23,14 +24,14 @@ pub use biology::individual::{create_child, create_founder, get_age, get_life_st
 pub use biology::mortality::{compute_daily_death_risk, roll_death, DeathCause};
 pub use biology::reproduction::check_reproduction;
 pub use consciousness::{update_consciousness, update_inner_thought};
-pub use environment::{compute_resource_pressure, create_world_state, get_biome, update_world_state};
+pub use environment::{compute_resource_pressure, create_world_state, get_biome, is_on_land, update_world_state};
 pub use epigenetics::{compute_epigenetic_age, inherit_epigenome, initialize_epigenome, update_epigenome};
 pub use language::{generate_proto_word, get_language_summary, learn_from_teacher, try_acquire_word_from_environment, update_foxp2_expression, update_language_stage, CORE_CONCEPTS, LANGUAGE_STAGES};
 pub use technology::{known_techs_json, learn_tech_from_observation, TECH_TREE};
 pub use economy::{attempt_trade, compute_economic_stats, consume_resources, gather_resources, initialize_inventory, produce_goods, GOODS_TYPES, RESOURCE_TYPES};
 pub use social::{assign_group_roles, compute_social_status, process_group_dynamics, GROUP_ROLES, RELATIONSHIP_TYPES};
 pub use culture::{compute_cultural_prestige, process_culture_tick, CULTURAL_MEMES};
-pub use law::{compute_social_order, process_law_tick, NORM_TYPES};
+pub use law::{check_norm_violation, compute_social_order, process_law_tick, process_norm_enforcement, NORM_TYPES};
 pub use astronomy::{get_astronomy_bonus, process_astronomy_tick, ASTRONOMY_KNOWLEDGE};
 pub use microbiome::{compute_health_stats, process_microbiome_tick, spread_infection, update_gut_microbiome, PATHOGEN_TYPES};
 pub use art::{apply_art_effects, process_art_tick, ART_FORMS};

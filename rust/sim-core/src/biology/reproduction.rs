@@ -1,3 +1,4 @@
+use crate::spatial::SpatialGrid;
 use crate::state::Individual;
 use rand::Rng;
 
@@ -17,14 +18,17 @@ pub fn check_reproduction(
         .iter()
         .filter(|i| i.alive && i.sex == "male" && is_fertile(i, current_day))
         .collect();
+    let male_positions: Vec<(f64, f64)> = fertile_males.iter().map(|m| (m.x, m.y)).collect();
+    let male_grid = SpatialGrid::build(&male_positions, MATING_RADIUS);
 
     for female in population.iter().filter(|i| i.alive && i.sex == "female" && is_fertile(i, current_day)) {
         if female.health.get("pregnancy").is_some_and(|v| !v.is_null()) {
             continue;
         }
-        let nearby_males: Vec<&Individual> = fertile_males
-            .iter()
-            .copied()
+        let nearby_males: Vec<&Individual> = male_grid
+            .candidates_within(female.x, female.y, MATING_RADIUS)
+            .into_iter()
+            .filter_map(|idx| fertile_males.get(idx).copied())
             .filter(|male| distance(male, female) < MATING_RADIUS)
             .collect();
         if nearby_males.is_empty() {

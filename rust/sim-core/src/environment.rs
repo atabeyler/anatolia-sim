@@ -13,6 +13,26 @@ const BIOMES: &[(&str, [f64; 2], f64, f64, f64)] = &[
     ("coastal", [5.0, 25.0], 0.85, 0.90, 0.15),
 ];
 
+/// Coarse continent bounding boxes (lat_min, lat_max, lon_min, lon_max) used as a
+/// land/ocean approximation so migrating individuals don't wander into open water.
+/// This is intentionally conservative (favors land) rather than cartographically
+/// exact -- it exists to bound movement, not to model coastlines precisely.
+const LAND_BOXES: &[(f64, f64, f64, f64)] = &[
+    (34.0, 72.0, -12.0, 60.0),   // Europe + Anatolia + Caucasus
+    (-35.0, 38.0, -18.0, 52.0),  // Africa
+    (5.0, 82.0, 60.0, 180.0),    // Asia
+    (-45.0, -9.0, 110.0, 155.0), // Australia
+    (7.0, 84.0, -170.0, -50.0),  // North America
+    (-56.0, 13.0, -82.0, -34.0), // South America
+];
+
+pub fn is_on_land(latitude: f64, longitude: f64) -> bool {
+    let lon = ((longitude + 180.0).rem_euclid(360.0)) - 180.0;
+    LAND_BOXES
+        .iter()
+        .any(|(lat_min, lat_max, lon_min, lon_max)| latitude >= *lat_min && latitude <= *lat_max && lon >= *lon_min && lon <= *lon_max)
+}
+
 pub fn get_biome(latitude: f64, longitude: f64) -> &'static str {
     let abs_lat = latitude.abs();
     let lon_mod = longitude.rem_euclid(90.0).abs();
@@ -104,4 +124,25 @@ pub fn compute_resource_pressure(world_state: &Value, population_size: usize) ->
         "carrying_capacity": carrying_capacity.round() as i64,
         "overpopulated": pressure > 1.0
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn anatolia_starting_region_is_on_land() {
+        assert!(is_on_land(38.0, 35.0), "Anatolia (the sim's starting region) must be on land");
+    }
+
+    #[test]
+    fn mid_atlantic_and_mid_pacific_are_not_on_land() {
+        assert!(!is_on_land(20.0, -40.0), "mid-Atlantic must not be classified as land");
+        assert!(!is_on_land(0.0, -150.0), "mid-Pacific must not be classified as land");
+    }
+
+    #[test]
+    fn longitude_wraps_correctly_across_the_antimeridian() {
+        assert_eq!(is_on_land(38.0, 35.0), is_on_land(38.0, 35.0 + 360.0));
+    }
 }

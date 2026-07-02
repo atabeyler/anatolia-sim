@@ -1,4 +1,4 @@
-use sim_core::{advance_one_day, create_founder, create_world_state, SimulationState, WorldState};
+use sim_core::{advance_one_day, create_founder, create_world_state, is_on_land, SimulationState, WorldState};
 use std::collections::HashSet;
 
 fn two_founders_state() -> SimulationState {
@@ -75,4 +75,35 @@ fn discovered_tech_set_only_grows_from_known_starting_set() {
     }
     // No assertion on which techs (probabilistic), just that the vector stays well-formed.
     assert!(state.discovered_techs.len() == techs.len());
+}
+
+#[test]
+fn individuals_actually_move_over_time_instead_of_staying_frozen_at_birth_position() {
+    let mut state = two_founders_state();
+    let start = (state.individuals[0].x, state.individuals[0].y);
+    for _ in 0..500 {
+        advance_one_day(&mut state);
+    }
+    let moved = state
+        .individuals
+        .iter()
+        .any(|i| (i.x - start.0).abs() > 1e-9 || (i.y - start.1).abs() > 1e-9);
+    assert!(moved, "at least one individual should have a different position after 500 days of decisions/movement");
+}
+
+#[test]
+fn nobody_ever_drifts_off_the_land_mask() {
+    let mut state = two_founders_state();
+    for _ in 0..2000 {
+        advance_one_day(&mut state);
+        for individual in state.individuals.iter().filter(|i| i.alive && !i.is_dead) {
+            assert!(
+                is_on_land(individual.y, individual.x),
+                "individual {} drifted to (lat={}, lon={}) which is off the land mask",
+                individual.id,
+                individual.y,
+                individual.x
+            );
+        }
+    }
 }

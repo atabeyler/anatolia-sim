@@ -5,13 +5,15 @@ use serde_json::{json, Value};
 
 use crate::{
     agent, architecture, art, astronomy, belief, biology, consciousness, culture, economy,
-    environment, epigenetics, language, law, microbiome, psychology, social, technology,
-    SimulationState, TickReport,
+    environment, epigenetics, language, law, microbiome, psychology, social, spatial::SpatialGrid,
+    technology, SimulationState, TickReport,
 };
 
 const GROUP_RADIUS: f64 = 3.0;
 const NEARBY_RADIUS: f64 = 2.0;
+const MATE_SEARCH_RADIUS: f64 = 4.0;
 const MAX_EVENTS: usize = 200;
+const DAILY_STEP: f64 = 0.015;
 
 fn as_string_set(items: &[String]) -> HashSet<String> {
     items.iter().cloned().collect()
@@ -67,7 +69,8 @@ fn form_groups(state: &mut SimulationState, current_day: i32) {
         }
     }
 
-    // Cluster the rest via union-find on proximity.
+    // Cluster the rest via union-find, using a spatial grid so only nearby
+    // pairs are ever distance-checked instead of every pair in the population.
     let n = still_ungrouped.len();
     let mut parent: Vec<usize> = (0..n).collect();
     fn find(parent: &mut [usize], i: usize) -> usize {
@@ -76,17 +79,16 @@ fn form_groups(state: &mut SimulationState, current_day: i32) {
         }
         parent[i]
     }
+    let local_positions: Vec<(f64, f64)> = still_ungrouped.iter().map(|&i| (state.individuals[i].x, state.individuals[i].y)).collect();
+    let local_grid = SpatialGrid::build(&local_positions, GROUP_RADIUS);
     for a in 0..n {
-        for b in (a + 1)..n {
-            let ia = still_ungrouped[a];
-            let ib = still_ungrouped[b];
-            let d = distance(
-                state.individuals[ia].x,
-                state.individuals[ia].y,
-                state.individuals[ib].x,
-                state.individuals[ib].y,
-            );
-            if d < GROUP_RADIUS {
+        let (ax, ay) = local_positions[a];
+        for b in local_grid.candidates_within(ax, ay, GROUP_RADIUS) {
+            if b <= a {
+                continue;
+            }
+            let (bx, by) = local_positions[b];
+            if distance(ax, ay, bx, by) < GROUP_RADIUS {
                 let ra = find(&mut parent, a);
                 let rb = find(&mut parent, b);
                 if ra != rb {
@@ -147,6 +149,95 @@ fn push_member(group: &mut Value, id: &str) {
             members.push(json!(id));
         }
         obj.insert("member_ids".to_string(), Value::Array(members));
+    }
+}
+
+fn nearest_fertile_opposite_sex<'a>(
+    ind: &crate::state::Individual,
+    snapshot: &'a [crate::state::Individual],
+    grid: &SpatialGrid,
+    current_day: i32,
+) -> Option<&'a crate::state::Individual> {
+    grid.candidates_within(ind.x, ind.y, MATE_SEARCH_RADIUS)
+        .into_iter()
+        .filter_map(|idx| snapshot.get(idx))
+        .filter(|other| {
+            other.id != ind.id
+                && other.alive
+                && !other.is_dead
+                && other.sex != ind.sex
+                && biology::individual::is_fertile(other, current_day)
+        })
+        .min_by(|a, b| {
+            distance(ind.x, ind.y, a.x, a.y)
+                .partial_cmp(&distance(ind.x, ind.y, b.x, b.y))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
+}
+
+/// Movement follows the priority order documented for the simulation: survival
+/// stress (already expressed as the chosen action) -> band cohesion -> a
+/// persisted wander heading -> mating drive. A move is only committed if the
+/// destination is still on land, so bands never drift out into open ocean.
+fn apply_movement(state: &mut SimulationState, snapshot: &[crate::state::Individual], grid: &SpatialGrid, current_day: i32) {
+    let mut group_centroids: HashMap<String, (f64, f64, usize)> = HashMap::new();
+    for ind in snapshot.iter().filter(|i| i.alive && !i.is_dead) {
+        if let Some(gid) = &ind.group_id {
+            let entry = group_centroids.entry(gid.clone()).or_insert((0.0, 0.0, 0));
+            entry.0 += ind.x;
+            entry.1 += ind.y;
+            entry.2 += 1;
+        }
+    }
+    let group_centroids: HashMap<String, (f64, f64)> = group_centroids
+        .into_iter()
+        .map(|(gid, (sx, sy, n))| (gid, (sx / n as f64, sy / n as f64)))
+        .collect();
+
+    for individual in state.individuals.iter_mut() {
+        if !individual.alive || individual.is_dead {
+            continue;
+        }
+        let action = individual.extra.get("_currentAction").and_then(Value::as_str).unwrap_or("explore").to_string();
+        if action == "rest" || action == "craft" {
+            continue;
+        }
+        let persisted_angle = individual.extra.get("_moveAngle").and_then(Value::as_f64).unwrap_or_else(|| rand::random::<f64>() * std::f64::consts::TAU);
+
+        let (mut angle, mut step) = match action.as_str() {
+            "flee" => (persisted_angle + std::f64::consts::PI + (rand::random::<f64>() - 0.5), DAILY_STEP * 4.0),
+            "explore" => (persisted_angle + (rand::random::<f64>() - 0.5) * 1.2, DAILY_STEP * 2.5),
+            "mate" => {
+                if let Some(target) = nearest_fertile_opposite_sex(individual, snapshot, grid, current_day) {
+                    ((target.y - individual.y).atan2(target.x - individual.x), DAILY_STEP)
+                } else if let Some((cx, cy)) = individual.group_id.as_ref().and_then(|g| group_centroids.get(g)) {
+                    ((cy - individual.y).atan2(cx - individual.x), DAILY_STEP)
+                } else {
+                    (persisted_angle, DAILY_STEP * 0.5)
+                }
+            }
+            "socialize" => {
+                if let Some((cx, cy)) = individual.group_id.as_ref().and_then(|g| group_centroids.get(g)) {
+                    ((cy - individual.y).atan2(cx - individual.x), DAILY_STEP)
+                } else {
+                    (persisted_angle, DAILY_STEP * 0.5)
+                }
+            }
+            _ => (persisted_angle + (rand::random::<f64>() - 0.5) * 0.3, DAILY_STEP), // forage/hunt/drink/seek_warmth
+        };
+        angle = angle.rem_euclid(std::f64::consts::TAU);
+
+        let candidate_x = individual.x + angle.cos() * step;
+        let candidate_y = individual.y + angle.sin() * step;
+        if environment::is_on_land(candidate_y, candidate_x) {
+            individual.x = candidate_x;
+            individual.y = candidate_y;
+        } else {
+            // Coastline: don't strand the band, just stop advancing this tick.
+            step = 0.0;
+        }
+        let _ = step;
+        individual.extra.insert("_moveAngle".to_string(), json!(angle));
     }
 }
 
@@ -247,15 +338,28 @@ pub fn advance_one_day(state: &mut SimulationState) -> TickReport {
         individual.extra.insert("_currentAction".to_string(), json!(action));
     });
 
-    // 5. Technology: observation-based learning only (cardinal rule). Snapshot
-    //    positions/known_techs before mutating so borrows stay simple.
+    // 5. Movement: band cohesion / mating drive / persisted wander heading, gated
+    //    by the land mask so nobody drifts into open ocean. Built from a snapshot
+    //    taken before anyone moves (standard simultaneous-update flocking).
+    let pre_move_snapshot = state.individuals.clone();
+    let pre_move_positions: Vec<(f64, f64)> = pre_move_snapshot.iter().map(|i| (i.x, i.y)).collect();
+    let pre_move_grid = SpatialGrid::build(&pre_move_positions, NEARBY_RADIUS);
+    apply_movement(state, &pre_move_snapshot, &pre_move_grid, current_day);
+
+    // 6. Technology + language: observation-based learning only (cardinal rule).
+    //    A spatial grid bounds the neighbor search to nearby cells instead of
+    //    scanning the whole population for every individual.
     let snapshot = state.individuals.clone();
+    let positions: Vec<(f64, f64)> = snapshot.iter().map(|i| (i.x, i.y)).collect();
+    let grid = SpatialGrid::build(&positions, NEARBY_RADIUS);
     for individual in state.individuals.iter_mut() {
         if !individual.alive || individual.is_dead {
             continue;
         }
-        let nearby: Vec<crate::state::Individual> = snapshot
-            .iter()
+        let nearby: Vec<crate::state::Individual> = grid
+            .candidates_within(individual.x, individual.y, NEARBY_RADIUS)
+            .into_iter()
+            .filter_map(|idx| snapshot.get(idx))
             .filter(|other| other.id != individual.id && other.alive && !other.is_dead)
             .filter(|other| distance(individual.x, individual.y, other.x, other.y) < NEARBY_RADIUS)
             .cloned()
@@ -271,7 +375,7 @@ pub fn advance_one_day(state: &mut SimulationState) -> TickReport {
         }
     }
 
-    // 6. Reproduction (biology cardinal path: only genetic inheritance + mutation).
+    // 7. Reproduction (biology cardinal path: only genetic inheritance + mutation).
     let alive_snapshot: Vec<crate::state::Individual> = state
         .individuals
         .iter()
@@ -347,7 +451,7 @@ pub fn advance_one_day(state: &mut SimulationState) -> TickReport {
         state.individuals.push(child);
     }
 
-    // 7. Mortality.
+    // 8. Mortality.
     for individual in state.individuals.iter_mut() {
         if !individual.alive || individual.is_dead {
             continue;
@@ -361,10 +465,10 @@ pub fn advance_one_day(state: &mut SimulationState) -> TickReport {
         }
     }
 
-    // 8. Microbiome outbreaks (population-wide contagion).
+    // 9. Microbiome outbreaks (population-wide contagion).
     events.extend(microbiome::process_microbiome_tick(&mut state.individuals, &world_value, current_day));
 
-    // 9. Belief formation (per-individual reflection) + spread + ritual emergence.
+    // 10. Belief formation (per-individual reflection) + spread + ritual emergence.
     for individual in state.individuals.iter_mut() {
         if !individual.alive || individual.is_dead {
             continue;
@@ -380,7 +484,7 @@ pub fn advance_one_day(state: &mut SimulationState) -> TickReport {
         }
     }
 
-    // 10. Culture, art.
+    // 11. Culture, art.
     events.extend(culture::process_culture_tick(&state.individuals, &mut state.groups, &discovered_techs, current_day));
     events.extend(art::process_art_tick(&state.individuals, &mut discovered_arts, &discovered_techs, &world_value, current_day));
     for individual in state.individuals.iter_mut() {
@@ -390,7 +494,7 @@ pub fn advance_one_day(state: &mut SimulationState) -> TickReport {
         art::apply_art_effects(individual, None, &discovered_arts);
     }
 
-    // 11. Social: leadership + roles + fission signalling.
+    // 12. Social: leadership + roles + fission signalling.
     events.extend(social::process_group_dynamics(&mut state.individuals, &mut state.groups, current_day));
     let leader_by_group: HashMap<String, String> = state
         .groups
@@ -410,12 +514,37 @@ pub fn advance_one_day(state: &mut SimulationState) -> TickReport {
         individual.extra.insert("group_role".to_string(), json!(role));
     });
 
-    // 12. Law (per group).
+    // 13. Law: norm emergence, then per-member violation checks (cardinal rule:
+    //     driven by the violator's own phenotype, never a random external pick)
+    //     and exile enforcement once a group has adopted punishment_exile.
     for group in state.groups.iter_mut() {
         events.extend(law::process_law_tick(group, &state.individuals, &discovered_techs, current_day));
+
+        let norms: HashSet<String> = group
+            .get("norms")
+            .and_then(Value::as_array)
+            .map(|arr| arr.iter().filter_map(Value::as_str).map(String::from).collect())
+            .unwrap_or_default();
+        if norms.is_empty() {
+            continue;
+        }
+        let member_ids: Vec<String> = group
+            .get("member_ids")
+            .and_then(Value::as_array)
+            .map(|arr| arr.iter().filter_map(Value::as_str).map(String::from).collect())
+            .unwrap_or_default();
+        for member_id in member_ids {
+            let Some(individual) = state.individuals.iter_mut().find(|i| i.id == member_id) else { continue };
+            if individual.is_dead {
+                continue;
+            }
+            if let Some(violated_norm) = law::check_norm_violation(individual, &norms) {
+                events.push(law::process_norm_enforcement(group, individual, violated_norm, current_day));
+            }
+        }
     }
 
-    // 13. Architecture: form settlements once a group is large enough, then build.
+    // 14. Architecture: form settlements once a group is large enough, then build.
     let mut new_settlements = Vec::new();
     for group in state.groups.iter() {
         let Some(group_id) = group.get("id").and_then(Value::as_str) else { continue };
@@ -445,7 +574,7 @@ pub fn advance_one_day(state: &mut SimulationState) -> TickReport {
         }
     }
 
-    // 14. Astronomy.
+    // 15. Astronomy.
     events.extend(astronomy::process_astronomy_tick(
         &state.individuals,
         &mut celestial_observations,
@@ -454,7 +583,7 @@ pub fn advance_one_day(state: &mut SimulationState) -> TickReport {
         current_day,
     ));
 
-    // 15. Trade between adjacent living individuals (cheap pairing pass).
+    // 16. Trade between adjacent living individuals (cheap pairing pass).
     let alive_ids: Vec<String> = state.individuals.iter().filter(|i| i.alive).map(|i| i.id.clone()).collect();
     for pair in alive_ids.chunks(2) {
         let [a, b] = pair else { continue };
